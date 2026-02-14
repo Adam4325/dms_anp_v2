@@ -1,0 +1,10 @@
+cd d:\DMS_ANP\dms_anp
+git add -A
+git commit -m "Update: deskripsi singkat perubahan"
+git push
+
+# Semua file yang berubah
+git add -A
+
+# Atau file tertentu saja
+git add lib/src/pages/FrmInspeksiVehicle.dart
