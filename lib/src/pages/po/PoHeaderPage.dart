@@ -92,7 +92,12 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        _goBack(context);
+        return false;
+      },
+      child: Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
         elevation: 0,
@@ -212,6 +217,7 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
           ),
         ],
       ),
+    ),
     );
   }
 }

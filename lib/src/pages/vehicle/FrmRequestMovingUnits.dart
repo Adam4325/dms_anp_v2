@@ -1561,7 +1561,12 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
           color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
     );
 
-    return DefaultTabController(
+    return WillPopScope(
+      onWillPop: () async {
+        _goBack(globalScaffoldKey.currentContext!);
+        return false;
+      },
+      child: DefaultTabController(
       length: lengTabs,
       child: Scaffold(
         backgroundColor: backgroundColor,
@@ -1938,6 +1943,7 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
           ],
         ),
       ),
+    ),
     );
   }
 }

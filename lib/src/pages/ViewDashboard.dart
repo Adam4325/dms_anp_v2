@@ -353,7 +353,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
           _anpServiceList.add(new AnpService(
               image: Icons.donut_large,
               color: Colors.red,
-              idKey: 30,
+              idKey: 31,
               title: "Tyre"));
         }
       }
@@ -3232,7 +3232,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
               "error");
         }
       }
-    } else if (anpService.idKey == 30) {
+    } else if (anpService.idKey == 31) {
       if (loginname == "DRIVER") {
         alert(
             globalScaffoldKey.currentContext!, 0, "Access Not Allowed", "error");
