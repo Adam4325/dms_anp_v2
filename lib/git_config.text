@@ -8,3 +8,6 @@ git add -A
 
 # Atau file tertentu saja
 git add lib/src/pages/FrmInspeksiVehicle.dart
+
+git pull	Ambil update terbaru dari GitHub ke PC Anda
+git push	Kirim commit Anda dari PC ke GitHub

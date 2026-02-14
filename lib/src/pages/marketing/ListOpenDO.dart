@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'FrmOpenDO.dart';
+import 'FrmUploadDO.dart';
 
 class ListOpenDO extends StatefulWidget {
   @override
@@ -99,6 +100,29 @@ class _ListOpenDOState extends State<ListOpenDO> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _onUploadDO() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const FrmUploadDO(),
+      ),
+    );
+  }
+
+  void _onUploadDOFromItem(Map<String, dynamic> item) {
+    if (item == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FrmUploadDO(
+          dlododetailnumber: item['dlododetailnumber']?.toString(),
+          dlocustdonbr: item['dlocustdonbr']?.toString(),
+          dlooriginaldonbr: item['dlooriginaldonbr']?.toString(),
+        ),
       ),
     );
   }
@@ -380,11 +404,27 @@ class _ListOpenDOState extends State<ListOpenDO> {
             },
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _onAdd,
-          backgroundColor: accentOrange,
-          icon: const Icon(Icons.add),
-          label: const Text("Add DO"),
+        floatingActionButton: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton.extended(
+              heroTag: 'upload_do',
+              onPressed: _onUploadDO,
+              backgroundColor: primaryOrange,
+              icon: const Icon(Icons.upload_file, color: Colors.white),
+              label: const Text("Upload DO",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            ),
+            const SizedBox(width: 8),
+            FloatingActionButton.extended(
+              heroTag: 'add_do',
+              onPressed: _onAdd,
+              backgroundColor: accentOrange,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text("Add DO",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            ),
+          ],
         ),
         body: Padding(
           padding: const EdgeInsets.all(16),
@@ -486,6 +526,8 @@ class _ListOpenDOState extends State<ListOpenDO> {
                               children: [
                                 _actionButton(Icons.edit, "Edit",
                                     accentOrange, () => _onEdit(item)),
+                                _actionButton(Icons.upload_file, "Upload",
+                                    primaryOrange, () => _onUploadDOFromItem(item)),
                                 _actionButton(Icons.cancel, "Cancel",
                                     primaryOrange, () => _onCancel(item)),
                                 _actionButton(Icons.delete, "Delete",
@@ -510,16 +552,18 @@ class _ListOpenDOState extends State<ListOpenDO> {
       IconData icon, String label, Color color, VoidCallback onPressed) {
     return TextButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon, color: color),
+      icon: Icon(icon, color: Colors.white, size: 18),
       label: Text(
         label,
-        style: TextStyle(
-          color: color,
+        style: const TextStyle(
+          color: Colors.white,
           fontWeight: FontWeight.w600,
+          fontSize: 12,
         ),
       ),
       style: TextButton.styleFrom(
         backgroundColor: color,
+        foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),

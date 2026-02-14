@@ -29,8 +29,8 @@ class MapPlayBackUnits extends StatefulWidget {
 class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
   final controller = FloatingSearchBarController();
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
-  late LocationData currentLocation;
-  late LocationData destinationLocation;
+  LocationData? currentLocation;
+  LocationData? destinationLocation;
   double pinPillPosition = -170;
   List dataVehicle = [];
   List dataVehicleTemp = [];
@@ -106,8 +106,8 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
   void getShareDateSession() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      vhcgps = prefs.getString("pb_")!;
-      is_driver = prefs.getString("is_driver")!;
+      vhcgps = prefs.getString("pb_") ?? "";
+      is_driver = prefs.getString("is_driver") ?? "";
     });
   }
 
@@ -704,13 +704,17 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
     }
 
     if (currentLocation != null) {
-      controller.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(
-          bearing: 0,
-          target: LatLng(currentLocation.latitude!, currentLocation.longitude!),
-          zoom: 17.0,
-        ),
-      ));
+      final lat = currentLocation!.latitude ?? 0.0;
+      final lon = currentLocation!.longitude ?? 0.0;
+      if (lat != 0.0 || lon != 0.0) {
+        controller.animateCamera(CameraUpdate.newCameraPosition(
+          CameraPosition(
+            bearing: 0,
+            target: LatLng(lat, lon),
+            zoom: 17.0,
+          ),
+        ));
+      }
     }
   }
 
@@ -720,11 +724,21 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
 
     CameraPosition initialCameraPosition;
     if (currentLocation != null) {
-      initialCameraPosition = CameraPosition(
-          target: LatLng(currentLocation.latitude!, currentLocation.longitude!),
-          zoom: CAMERA_ZOOM,
-          tilt: CAMERA_TILT,
-          bearing: CAMERA_BEARING);
+      final lat = currentLocation!.latitude ?? 0.0;
+      final lon = currentLocation!.longitude ?? 0.0;
+      if (lat != 0.0 || lon != 0.0) {
+        initialCameraPosition = CameraPosition(
+            target: LatLng(lat, lon),
+            zoom: CAMERA_ZOOM,
+            tilt: CAMERA_TILT,
+            bearing: CAMERA_BEARING);
+      } else {
+        initialCameraPosition = CameraPosition(
+            zoom: CAMERA_ZOOM,
+            bearing: CAMERA_BEARING,
+            tilt: CAMERA_TILT,
+            target: LatLng(-6.181866111111, 106.829632777778));
+      }
     } else {
       initialCameraPosition = CameraPosition(
           zoom: CAMERA_ZOOM,

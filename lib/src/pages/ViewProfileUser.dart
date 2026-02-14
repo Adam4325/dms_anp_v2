@@ -55,6 +55,8 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
   String simExpired = "";
   String statusVehicle = "";
   String stnkBerlaku = "";
+  String kryid = "";
+  String status_karyawan = "";
 
   @override
   void initState() {
@@ -441,24 +443,46 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
   }
 
   List<Widget> _buildUserProfileItems() {
-    List<Map<String, String>> items = [
-      {"title": "Name", "subtitle": name},
-      {"title": "User ID", "subtitle": username},
-      {"title": "Units", "subtitle": vhcid},
-      {"title": "Driver ID", "subtitle": drvid},
-      {"title": "Company", "subtitle": cpyname},
-    ];
+    if(!kryid.isEmpty && status_karyawan=="KARYAWAN"){
+      List<Map<String, String>> items = [
+        {"title": "Name", "subtitle": name},
+        {"title": "User ID", "subtitle": username},
+        //{"title": "Units", "subtitle": vhcid},
+        {"title": "Driver ID", "subtitle": drvid},
+        {"title": "Company", "subtitle": cpyname},
+      ];
 
-    return items.asMap().entries.map((entry) {
-      int index = entry.key;
-      Map<String, String> item = entry.value;
-      return Column(
-        children: [
-          _buildListItem(item["title"]!, item["subtitle"]!),
-          if (index < items.length - 1) Divider(height: 1, color: Colors.grey.shade300),
-        ],
-      );
-    }).toList();
+      return items.asMap().entries.map((entry) {
+        int index = entry.key;
+        Map<String, String> item = entry.value;
+        return Column(
+          children: [
+            _buildListItem(item["title"]!, item["subtitle"]!),
+            if (index < items.length - 1) Divider(height: 1, color: Colors.grey.shade300),
+          ],
+        );
+      }).toList();
+    }else{
+      List<Map<String, String>> items = [
+        {"title": "Name", "subtitle": name},
+        {"title": "User ID", "subtitle": username},
+        {"title": "Units", "subtitle": vhcid},
+        {"title": "KryID ID", "subtitle": kryid},
+        {"title": "Company", "subtitle": cpyname},
+      ];
+
+      return items.asMap().entries.map((entry) {
+        int index = entry.key;
+        Map<String, String> item = entry.value;
+        return Column(
+          children: [
+            _buildListItem(item["title"]!, item["subtitle"]!),
+            if (index < items.length - 1) Divider(height: 1, color: Colors.grey.shade300),
+          ],
+        );
+      }).toList();
+    }
+
   }
 
   Widget _buildAccountSettingsSection() {

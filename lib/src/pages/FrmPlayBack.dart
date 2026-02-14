@@ -421,7 +421,7 @@ class FrmPlayBackState extends State<FrmPlayBack> {
                         ),
                         SizedBox(width: 12),
                         Text(
-                          'Search History',
+                          'Search History 2',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

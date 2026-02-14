@@ -191,6 +191,7 @@ class _LoginPageState extends State<LoginPage> {
           var cpyname = result["data"][0]["cpyname"];
           var ismixer = result["data"][0]["ismixer"];
           var status_karyawan = result["data"][0]["status_karyawan"];
+          var kryid = result["data"][0]["kryid"];
           var login_type = result["data"][0]["login_type"];
           await getAksesMenuForeMan(_identifier);
           if (loginname != null && loginname != "DRIVER") {
@@ -241,7 +242,8 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('ismixer', ismixer);
           prefs.setString('login_type', login_type);
           prefs.setString('status_karyawan', status_karyawan);
-
+          prefs.setString('kryid', kryid);
+          print('IMMEIID $_identifier');
           Timer(Duration(seconds: 1), () {
             EasyLoading.dismiss();
             final ctx = globalScaffoldKey.currentContext;
