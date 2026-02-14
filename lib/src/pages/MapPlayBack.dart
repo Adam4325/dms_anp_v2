@@ -499,18 +499,8 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
     });
   }
 
-  // Get delay based on playback speed
-  int _getPlaybackDelay() {
-    if (_playbackSpeed == 1.0) {
-      return 1000; // 1 second
-    } else if (_playbackSpeed == 2.0) {
-      return 500;  // 0.5 seconds
-    } else if (_playbackSpeed == 3.0) {
-      return 333;  // ~0.33 seconds
-    } else {
-      return 1000; // default
-    }
-  }
+  // Delay antar titik (ms)
+  int _getPlaybackDelay() => 1000;
 
   Future prevStartPlayBack() async {
     setState(() {
@@ -649,10 +639,20 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
               item['odometer']);
           _updatePolyline(item['gps_sn'], double.parse(item['lat']),
               double.parse(item['lon']));
-          // Use dynamic delay based on playback speed
-          await Future.delayed(Duration(milliseconds: _getPlaybackDelay()));
+          int waited = 0;
+          final delayMs = _getPlaybackDelay();
+          while (waited < delayMs && !isShowPause && mounted) {
+            await Future.delayed(const Duration(milliseconds: 100));
+            waited += 100;
+          }
           index_his++;
         }
+      }
+      if (mounted) {
+        setState(() {
+          isShowPlay = true;
+          isShowPause = true;
+        });
       }
     }
   }
@@ -731,7 +731,7 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
                     child: GoogleMap(
                       mapToolbarEnabled: false,
                       buildingsEnabled: true,
-                      myLocationEnabled: true,
+                      myLocationEnabled: isShowPlay,
                       trafficEnabled: false,
                       compassEnabled: false,
                       tiltGesturesEnabled: false,
@@ -1038,11 +1038,28 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
               ] else ...[
                 _buildControlButton(
                   icon: Icons.pause_rounded,
-                  onPressed: () {
+                  onPressed: () async {
                     setState(() {
                       isShowPlay = true;
                       isShowPause = true;
                     });
+                    if (data_list_history['Data'] != null &&
+                        index_his < data_list_history['Data'].length &&
+                        index_his > 0) {
+                      var item = data_list_history['Data'][index_his - 1];
+                      final controller = await _controller.future;
+                      controller.moveCamera(CameraUpdate.newCameraPosition(
+                        CameraPosition(
+                          target: LatLng(
+                            double.parse(item['lat'].toString()),
+                            double.parse(item['lon'].toString()),
+                          ),
+                          zoom: 15,
+                          tilt: CAMERA_TILT,
+                          bearing: CAMERA_BEARING,
+                        ),
+                      ));
+                    }
                   },
                   isbackgroundColor: true,
                   size: 32,

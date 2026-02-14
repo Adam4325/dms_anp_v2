@@ -66,7 +66,7 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
   double pinPillPosition = -170;
   List dataVehicle = [];
   List dataVehicleTemp = [];
-
+  var is_driver = "";
   late Location location;
   late Timer _timer;
   String new_vhcid = "";
@@ -103,7 +103,7 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
   bool _showMapControls = false;
 
   // Marker interpolation
-  late LatLng _previousPosition;
+  LatLng? _previousPosition;
   late LatLng _targetPosition;
 
   PinInformation currentlySelectedPin = PinInformation(
@@ -126,7 +126,7 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
       tilt: 59.440717697143555,
       zoom: 15);
 
-  var is_driver = "";
+
 
   void ReverseAddress() async {
     var request = http.Request(
@@ -148,6 +148,8 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
       vhcid = prefs.getString("vhcidOPR")!;
       vhcgps = prefs.getString("vhcgps")!;
       is_driver = prefs.getString("is_driver")!;
+      print('is_driver');
+      print(is_driver);
     });
   }
 
@@ -225,6 +227,7 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _previousPosition = null;
 
     // Initialize animation controllers
     _fadeController = AnimationController(
@@ -332,12 +335,13 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
       String _no_do,
       String _ketStatusDo) async {
     LatLng newPosition = LatLng(_lat, _lon);
+    final prevPos = _previousPosition;
 
     // Smooth marker interpolation
-    if (_previousPosition != null) {
+    if (prevPos != null) {
       _targetPosition = newPosition;
       _markerAnimation = LatLngTween(
-        begin: _previousPosition,
+        begin: prevPos,
         end: _targetPosition,
       ).animate(CurvedAnimation(
         parent: _markerController,

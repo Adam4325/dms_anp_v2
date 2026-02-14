@@ -28,6 +28,7 @@ import 'package:dms_anp/src/pages/ViewListRitase.dart';
 import 'package:dms_anp/src/pages/ViewPelanggaran.dart';
 import 'package:dms_anp/src/pages/ViewProfileUser.dart';
 import 'package:dms_anp/src/pages/hrd/ApvRewards.dart';
+import 'package:dms_anp/src/pages/hrd/ListAbsensiKaryawanV1.dart';
 import 'package:dms_anp/src/pages/hrd/frmAssset.dart';
 import 'package:dms_anp/src/pages/inventory/FrmWareHouseOpName.dart';
 import 'package:dms_anp/src/pages/inventory/ListInventoryTransNew.dart';
@@ -1976,13 +1977,16 @@ class _ViewDashboardState extends State<ViewDashboard> {
           _buildInfoItem(Icons.handyman, 'Outstanding Jobs', out_standing_jobs,
               primaryOrange, // ✅ UPDATED: Orange theme
               onTap: () => _navigateToWoMCN()),
-        _buildInfoItem(Icons.work, 'Storing', storing,
-            primaryOrange), // ✅ UPDATED: Orange theme
-        _buildInfoItem(Icons.check_circle, 'Hadir', hadir, Colors.green),
-        _buildInfoItem(Icons.sick, 'Sakit', sakit, Colors.red),
-        _buildInfoItem(Icons.schedule, 'Izin', izin,
-            accentOrange), // ✅ UPDATED: Orange theme
-        _buildInfoItem(Icons.people, 'Cuti', cuti, Colors.purple),
+        _buildInfoItem(Icons.work, 'Storing', storing, primaryOrange,
+            onTap: () => _navigateToListAbsensi('storing')),
+        _buildInfoItem(Icons.check_circle, 'Hadir', hadir, Colors.green,
+            onTap: () => _navigateToListAbsensi('hadir')),
+        _buildInfoItem(Icons.sick, 'Sakit', sakit, Colors.red,
+            onTap: () => _navigateToListAbsensi('sakit')),
+        _buildInfoItem(Icons.schedule, 'Izin', izin, accentOrange,
+            onTap: () => _navigateToListAbsensi('izin')),
+        _buildInfoItem(Icons.people, 'Cuti', cuti, Colors.purple,
+            onTap: () => _navigateToListAbsensi('cuti')),
       ],
     );
   }
@@ -2548,6 +2552,15 @@ class _ViewDashboardState extends State<ViewDashboard> {
     );
   }
 
+  void _navigateToListAbsensi(String method) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ListAbsensiKaryawanV1(method: method),
+      ),
+    );
+  }
+
   void _handleScheduleAction(dynamic item) async {
     print("nameButton ${item['incustomer'].toString()}");
     EasyLoading.show();
@@ -2619,8 +2632,10 @@ class _ViewDashboardState extends State<ViewDashboard> {
     }
 
     // ✅ Original menu handling logic remains the same
-    print("MAPS ${loginname}");
+
     if (anpService.idKey == 1) {
+      print("MAPS ${loginname}");
+      //return;
       if (loginname == "DRIVER") {
         EasyLoading.show();
         //var tokenAuth =GlobalData.token_vts;// new GenerateTokenAuth();

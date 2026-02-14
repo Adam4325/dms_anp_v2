@@ -19,6 +19,10 @@ import '../flusbar.dart';
 const double CAMERA_ZOOM = 16;
 const double CAMERA_TILT = 0;
 const double CAMERA_BEARING = 30;
+
+// Playback: delay antar titik (ms). 60000 = 1 menit per titik.
+const int PLAYBACK_DELAY_MS = 1000;  // 2 menit per titik
+const int PLAYBACK_CAMERA_ANIMATION_MS = 5000;  // 5 detik per perpindahan kamera
 const LatLng SOURCE_LOCATION = LatLng(-6.181866111111, 106.829632777778);
 
 class MapPlayBackUnits extends StatefulWidget {
@@ -38,7 +42,7 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
   var isShowToolsPlayBack = false;
   var isShowContainsSlidePanel = true;
   late Location location;
-  late Timer _timer;
+  Timer? _timer;
   String new_vhcid = "";
   String vendor_id = "";
   String vhcid = "";
@@ -233,6 +237,7 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
     setSourceAndDestinationIcons();
     getShareDateSession();
     GetStartData();
+    GetDataVehicle();
     if (EasyLoading.isShow) {
       EasyLoading.dismiss();
     }
@@ -241,9 +246,7 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
 
   @override
   void dispose() {
-    if (_timer != null) {
-      _timer.cancel();
-    }
+    _timer?.cancel();
     controllerUI.dispose();
     super.dispose();
   }
@@ -308,7 +311,7 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
     });
   }
 
-  void updatePinOnMap(
+  Future<void> updatePinOnMap(
       double _lat,
       double _lon,
       String direction,
@@ -321,7 +324,8 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
       String _no_do,
       String _statusKendaraan,
       String _report_nm,
-      String _odometer) async {
+      String _odometer,
+      {int? cameraAnimationMs}) async {
 
     // Camera position setup (Same zoom logic as LiveMaps.dart)
     CameraPosition cPosition = CameraPosition(
@@ -332,7 +336,13 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
     );
 
     final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(CameraUpdate.newCameraPosition(cPosition));
+    final duration = cameraAnimationMs != null
+        ? Duration(milliseconds: cameraAnimationMs)
+        : null;
+    await controller.animateCamera(
+      CameraUpdate.newCameraPosition(cPosition),
+      duration: duration,
+    );
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
@@ -607,7 +617,7 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
   }
 
   Future runPlayBack() async {
-    print("isShowPause ${isShowPause}");
+    print("runPlayBack isShowPause=$isShowPause index_his=$index_his");
     if (isLastDataInfo) {
       setState(() {
         isLastDataInfo = false;
@@ -625,36 +635,45 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
         index_his = 1;
       });
     }
-    if (data_list_history.isNotEmpty) {
-      print(data_list_history['Data']);
-      if (data_list_history['Data'] != null) {
-        for (var i = index_his;
-        index_his < data_list_history['Data'].length;
-        i++) {
-          if (isShowPause == true) {
-            break;
-          } else {
-            var item = data_list_history['Data'][i];
-            updatePinOnMap(
-                double.parse(item['lat']),
-                double.parse(item['lon']),
-                item['direction'],
-                item['gps_sn'],
-                item['address'],
-                item['nopol'],
-                item['gps_time'],
-                item['acc'],
-                item['speed'],
-                do_number,
-                item['statusKendaraan'],
-                item['report_nm'],
-                item['odometer']);
-            _updatePolyline(item['gps_sn'], double.parse(item['lat']),
-                double.parse(item['lon']));
-            await Future.delayed(Duration(milliseconds: 50));
-            index_his++;
-          }
+    if (data_list_history.isNotEmpty &&
+        data_list_history['Data'] != null &&
+        data_list_history['Data'].length > 0) {
+      final dataList = data_list_history['Data'] as List;
+      while (index_his < dataList.length && mounted) {
+        if (isShowPause) break;
+        var item = dataList[index_his];
+        await updatePinOnMap(
+            double.parse(item['lat'].toString()),
+            double.parse(item['lon'].toString()),
+            item['direction']?.toString() ?? '0',
+            item['gps_sn']?.toString() ?? '',
+            item['address']?.toString() ?? '',
+            item['nopol']?.toString() ?? '',
+            item['gps_time']?.toString() ?? '',
+            item['acc']?.toString() ?? '0',
+            item['speed']?.toString() ?? '0',
+            do_number,
+            item['statusKendaraan']?.toString() ?? '',
+            item['report_nm']?.toString() ?? '',
+            item['odometer']?.toString() ?? '0',
+            cameraAnimationMs: PLAYBACK_CAMERA_ANIMATION_MS);
+        _updatePolyline(item['gps_sn']?.toString() ?? '',
+            double.parse(item['lat'].toString()),
+            double.parse(item['lon'].toString()));
+        index_his++;
+        if (isShowPause) break;
+        int waited = 0;
+        while (waited < PLAYBACK_DELAY_MS && !isShowPause && mounted) {
+          await Future.delayed(const Duration(milliseconds: 100));
+          waited += 100;
         }
+      }
+      if (index_his >= dataList.length && mounted) {
+        setState(() {
+          isLastDataInfo = true;
+          isShowPlay = true;
+          isShowPause = true;
+        });
       }
     }
   }
@@ -776,7 +795,7 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
             GoogleMap(
               mapToolbarEnabled: true,
               buildingsEnabled: true,
-              myLocationEnabled: true,
+              myLocationEnabled: isShowPlay,
               trafficEnabled: false,
               compassEnabled: false,
               tiltGesturesEnabled: false,
@@ -858,7 +877,8 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
                           isShowUnitInfo = true;
                         });
                         await runPlayBack();
-                        print('play! isShowPause ${isShowPause}');
+                        if (mounted) setState(() {});
+                        print('play! isShowPause $isShowPause');
                       },
                       child: Container(
                         width: 40,
@@ -875,47 +895,62 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
                           ],
                         ),
                         child: Center(
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.play_arrow,
-                              size: 20,
-                              color: Colors.orange,
-                            ), onPressed: () {  },
+                          child: Icon(
+                            Icons.play_arrow,
+                            size: 24,
+                            color: Colors.orange,
                           ),
                         ),
                       ),
                     ),
                     SizedBox(width: 5)
                   ],
-                  if (isShowPlay == false) ...[
-                    Container(
-                      width: 40,
-                      height: 35,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: IconButton(
-                          icon: Icon(
+                  if (!isShowPlay) ...[
+                    InkWell(
+                      onTap: () async {
+                        setState(() {
+                          isShowPlay = true;
+                          isShowPause = true;
+                        });
+                        if (data_list_history['Data'] != null &&
+                            index_his > 0 &&
+                            index_his <= (data_list_history['Data'] as List).length) {
+                          var item = (data_list_history['Data'] as List)[index_his - 1];
+                          final mapController = await _controller.future;
+                          mapController.moveCamera(CameraUpdate.newCameraPosition(
+                            CameraPosition(
+                              target: LatLng(
+                                double.parse(item['lat'].toString()),
+                                double.parse(item['lon'].toString()),
+                              ),
+                              zoom: CAMERA_ZOOM,
+                              tilt: CAMERA_TILT,
+                              bearing: CAMERA_BEARING,
+                            ),
+                          ));
+                        }
+                        print('Pause pressed!');
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 35,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Icon(
                             Icons.pause,
-                            size: 20,
+                            size: 24,
                             color: Colors.orange,
                           ),
-                          onPressed: () {
-                            setState(() {
-                              isShowPlay = true;
-                              isShowPause = true;
-                            });
-                            print('IconButton pressed pause!');
-                          },
                         ),
                       ),
                     )
@@ -988,6 +1023,7 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
                 ],
               ),
             ),
+            if (is_driver == 'false') searchBarUI(),
             if (isShowUnitInfo) ...[
               Align(
                 alignment: Alignment.bottomCenter,
@@ -1187,23 +1223,17 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
         elevation: 4.0,
         physics: BouncingScrollPhysics(),
         onQueryChanged: (query) {
-          print('search data vehicle');
-          if (query == "" || query == null) {
-            dataVehicle = dataVehicleTemp;
+          if (query == null || query.isEmpty) {
+            setState(() => dataVehicle = List.from(dataVehicleTemp));
           } else {
-            var dt = dataVehicle
-                .where((element) => element['car_plate']
-                .toString()
-                .toLowerCase()
-                .contains(query.toString().toLowerCase()))
+            final q = query.toLowerCase();
+            var dt = dataVehicleTemp
+                .where((e) =>
+                    _getVehiclePlate(e).toLowerCase().contains(q) ||
+                    _getVehicleId(e).toLowerCase().contains(q) ||
+                    _getDriverName(e).toLowerCase().contains(q))
                 .toList();
-            if (dt != null && dt.length > 0) {
-              setState(() {
-                dataVehicle = dt;
-              });
-            } else {
-              dataVehicle = dataVehicleTemp;
-            }
+            setState(() => dataVehicle = dt);
           }
         },
         transitionCurve: Curves.easeInOut,
@@ -1242,15 +1272,20 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
                       shrinkWrap: true,
                       itemCount: dataVehicle.length,
                       itemBuilder: (BuildContext context, int index) {
+                        var item = dataVehicle[index];
                         return ListTile(
-                          title: Text(dataVehicle[index]['car_plate']),
-                          subtitle: Text(dataVehicle[index]['driver_name']),
+                          title: Text(_getVehiclePlate(item)),
+                          subtitle: Text(_getDriverName(item).isEmpty
+                              ? 'ID: ${_getVehicleId(item)}'
+                              : _getDriverName(item)),
                           onTap: () {
                             setState(() {
-                              vhcid = dataVehicle[index]['vhcid'];
-                              vhcgps = dataVehicle[index]['gps_sn'];
-                              new_vhcid = dataVehicle[index]['car_plate'];
-                              vendor_id = dataVehicle[index]['vendor_id'];
+                              vhcid = _getVehicleId(item);
+                              vhcgps = _getGpsSn(item);
+                              new_vhcid = _getVehicleId(item).isNotEmpty
+                                  ? _getVehicleId(item)
+                                  : _getVehiclePlate(item);
+                              vendor_id = _getVendorId(item);
                             });
                             controllerUI.close();
                             GetLastPosition();
@@ -1270,6 +1305,17 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
     }
   }
 
+  String _getVehiclePlate(dynamic item) =>
+      (item['car_plate'] ?? item['title'] ?? item['nopol'] ?? '').toString();
+  String _getVehicleId(dynamic item) =>
+      (item['vhcid'] ?? item['value'] ?? '').toString();
+  String _getDriverName(dynamic item) =>
+      (item['driver_name'] ?? item['driver_nm'] ?? '').toString();
+  String _getGpsSn(dynamic item) =>
+      (item['gps_sn'] ?? '').toString();
+  String _getVendorId(dynamic item) =>
+      (item['vendor_id'] ?? item['vendor'] ?? '').toString();
+
   void GetDataVehicle() async {
     try {
       String urlData = "${GlobalData.baseUrl}api/gt/list_vehicle.jsp?method=lookup-vehicle-v1";
@@ -1277,19 +1323,31 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response = await http.get(myUri, headers: {"Accept": "application/json"});
-      
+
+      if (!mounted) return;
       setState(() {
         if (response.statusCode == 200) {
-          dataVehicle = (jsonDecode(response.body) as List)
-              .map((dynamic e) => e as Map<String, dynamic>)
+          var decoded = jsonDecode(response.body);
+          List rawList = decoded is List
+              ? decoded
+              : (decoded is Map && decoded['data'] != null)
+                  ? decoded['data'] as List
+                  : (decoded is Map && decoded['Data'] != null)
+                      ? decoded['Data'] as List
+                      : [];
+          dataVehicle = rawList
+              .map((dynamic e) => e is Map ? Map<String, dynamic>.from(e) : <String, dynamic>{})
+              .where((m) => m.isNotEmpty)
               .toList();
-          dataVehicleTemp = dataVehicle;
+          dataVehicleTemp = List.from(dataVehicle);
         } else {
           alert(globalScaffoldKey.currentContext!, 0, "Gagal load data vehicle", "error");
         }
       });
     } catch (e) {
-      alert(globalScaffoldKey.currentContext!, 0, "Client, Load data vehicle", "error");
+      if (mounted) {
+        alert(globalScaffoldKey.currentContext!, 0, "Client, Load data vehicle", "error");
+      }
       print(e.toString());
     }
   }

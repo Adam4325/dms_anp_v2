@@ -1242,7 +1242,8 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
     String value = '',
     required Function(dynamic) onChange,
     required List<S2Choice<String>> choices,
-    bool modalFilter = false,
+    bool modalFilter = true,
+    String filterHint = 'Cari...',
   }) {
     return Container(
       margin: EdgeInsets.all(12.0),
@@ -1254,10 +1255,14 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
         choiceType: S2ChoiceType.radios,
         choiceItems: choices,
         modalType: S2ModalType.popupDialog,
-        modalHeader: false,
-        modalFilter: true,          // aktifkan search
-        modalFilterAuto: true,      // search jalan otomatis saat ketik
+        modalHeader: true,
+        modalFilter: modalFilter,
+        modalFilterAuto: modalFilter,
         modalConfig: S2ModalConfig(
+          useHeader: true,
+          useFilter: modalFilter,
+          filterAuto: modalFilter,
+          filterHint: filterHint,
           style: S2ModalStyle(
             elevation: 8,
             backgroundColor: cardColor,

@@ -14,6 +14,7 @@ import 'package:dms_anp/src/component/map_pin_pill.dart';
 import 'dart:ui' as ui;
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import '../Helper/Provider.dart';
 import 'ViewDashboard.dart';
 
 /*
@@ -207,37 +208,46 @@ class MapAddressState extends State<MapAddress> {
         context, MaterialPageRoute(builder: (context) => RegisterNewDriver()));
   }
 
+  int _searchVersion = 0;
+
   Future<String> GetDataArress(String query) async {
     var address = "";
-    if (query != null && query != "") {
-      try {
-        if (!EasyLoading.isShow) {
-          EasyLoading.show();
+    final q = query?.toString().trim() ?? "";
+    if (q.isEmpty) {
+      if (mounted) setState(() { dataAddress = []; _searchVersion++; });
+      return "";
+    }
+    try {
+      if (!EasyLoading.isShow) {
+        EasyLoading.show();
+      }
+      var urlOSM = GlobalData.baseUrlOri + "api/osm_address.jsp?query=${Uri.encodeComponent(q)}";
+      print("URL OSM ${urlOSM}");
+      final response = await http.get(Uri.parse(urlOSM));
+      print(response.body);
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            dataAddress = decoded is List ? List.from(decoded) : [];
+            _searchVersion++;
+          });
         }
-        var urlOSM =
-            "http://apps.tuluatas.com:8080/trucking/api/osm_address.jsp?query=${query}";
-        print("URL OSM ${urlOSM}");
-        var encoded = Uri.encodeFull(urlOSM);
-        print(encoded);
-        Uri urlEncode = Uri.parse(encoded);
-        final response = await http.get(urlEncode);
-        print(response.body);
-        if (response.statusCode == 200) {
-          dataAddress = json.decode(response.body);
-          address = "Success";
-          print('JOSN address ${dataAddress}');
-        } else {
-          address = "";
-        }
-        if (EasyLoading.isShow) {
-          EasyLoading.dismiss();
-        }
-      } catch ($e) {
-        if (EasyLoading.isShow) {
-          EasyLoading.dismiss();
-        }
+        address = "Success";
+        print('JSON address ${dataAddress}');
+      } else {
+        if (mounted) setState(() { dataAddress = []; _searchVersion++; });
         address = "";
       }
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
+    } catch ($e) {
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
+      if (mounted) setState(() { dataAddress = []; _searchVersion++; });
+      address = "";
     }
 
     return address;
@@ -332,6 +342,7 @@ class MapAddressState extends State<MapAddress> {
         height: 350,
         margin: const EdgeInsets.only(top: 10),
         child: ListView.builder(
+            key: ValueKey(_searchVersion),
             scrollDirection: Axis.vertical,
             padding:
                 const EdgeInsets.only(left: 5, right: 5, bottom: 5, top: 5),
@@ -344,6 +355,7 @@ class MapAddressState extends State<MapAddress> {
   Widget _builListAddress(BuildContext ctx, dynamic item, int index) {
     return InkWell(
         onTap: () async {
+          controllerUI.close();
           SharedPreferences prefs = await SharedPreferences.getInstance();
           print(item["lat"]);
           print(item["lon"]);

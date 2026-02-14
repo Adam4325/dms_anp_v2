@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/flusbar.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
@@ -23,6 +24,9 @@ class LoginPage extends StatefulWidget {
 }
 
 final globalScaffoldKey = GlobalKey<ScaffoldState>();
+
+/// Debug mode: ketika true dan login pakai fingerprint, tampilkan dialog URL
+const bool isDebug = false;
 
 class _LoginPageState extends State<LoginPage> {
   GlobalKey<ScaffoldState> scafoldGlobal = new GlobalKey<ScaffoldState>();
@@ -135,21 +139,34 @@ class _LoginPageState extends State<LoginPage> {
     EasyLoading.show();
     try {
       final JsonDecoder _decoder = new JsonDecoder();
-      var endpointUrl =
-          "https://apps.tuluatas.com/trucking/mobile/api/authorize_v6.jsp";
+      var endpointUrl = GlobalData.baseUrl + "api/authorize_v6.jsp";
 
-      String username = TxtUsername.text;
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String username = TxtUsername.text.trim();
       String password = TxtPassword.text;
-      print('_identifier ${_identifier}');
+      // Fingerprint: username/password tidak wajib, yang wajib imeiid
+      if (isFinger) {
+        if (username.isEmpty) username = prefs.getString('username') ?? '';
+        if (password.isEmpty) password = prefs.getString('password') ?? '';
+        if (_identifier.isEmpty || _identifier == 'Failed to get Unique Identifier') {
+          EasyLoading.dismiss();
+          final ctx = globalScaffoldKey.currentContext;
+          if (ctx != null) {
+            alert(ctx, 0, "IMEI/Device ID tidak tersedia. Pastikan permission telah diberikan.", "error");
+          }
+          return;
+        }
+      }
+      print('_identifier $_identifier');
       Map<String, String> queryParams = {
         'method': 'authorize-v1',
         'username': username,
         'password': password,
         'imeiid': _identifier,
-        'isfinger': isFinger == true ? "1" : "0"
+        'isfinger': isFinger ? "1" : "0"
       };
       print(queryParams);
-      print("isFinger == true  ${(isFinger == true ? "1" : "0")}");
+      print("isFinger ${isFinger ? "1" : "0"}");
       print(endpointUrl);
       var headers = {
         HttpHeaders.contentTypeHeader: 'application/json',
@@ -158,6 +175,35 @@ class _LoginPageState extends State<LoginPage> {
       String queryString = Uri(queryParameters: queryParams).query;
       var requestUrl = endpointUrl + '?' + queryString;
       Uri myUri = Uri.parse(requestUrl);
+
+      // Debug: tampilkan dialog URL saat login fingerprint
+      if (isFinger && isDebug && mounted) {
+        EasyLoading.dismiss();
+        await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Debug - Fingerprint Login'),
+            content: SingleChildScrollView(
+              child: SelectableText(requestUrl),
+            ),
+            actions: [
+              TextButton.icon(
+                icon: const Icon(Icons.copy, size: 18),
+                label: const Text('Copy URL'),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: requestUrl));
+                  showToast('URL disalin ke clipboard');
+                },
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        EasyLoading.show();
+      }
 
       var response = await http.get(myUri, headers: headers);
       if (response.statusCode != 200) {
@@ -230,6 +276,7 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('photo_driver', photo_driver);
           prefs.setString('mechanicid', mechanicid);
           prefs.setString('username', username);
+          prefs.setString('password', password);
           prefs.setString('name', name);
           prefs.setString('nickname', nickname);
           prefs.setString('loginname', loginname);

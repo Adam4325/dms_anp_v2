@@ -416,6 +416,7 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
 
   List<Widget> _buildDriverProfileItems() {
     List<Map<String, String>> items = [
+      {"title": "KryID", "subtitle": kryid},
       {"title": "Name", "subtitle": driverName},
       {"title": "Nickname", "subtitle": nickname},
       {"title": "Place of Birth", "subtitle": placeOfBirth},
