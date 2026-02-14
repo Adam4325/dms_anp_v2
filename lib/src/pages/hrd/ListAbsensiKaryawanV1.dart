@@ -51,6 +51,11 @@ class _ListAbsensiKaryawanV1State extends State<ListAbsensiKaryawanV1> {
         setState(() => _isLoading = false);
         return;
       }
+      if (kryid=='null') {
+        if (mounted) alert(globalScaffoldKey.currentContext!, 0, 'KryID null', 'error');
+        setState(() => _isLoading = false);
+        return;
+      }
 
       //String today = '2026-02-01';//DateFormat('yyyy-MM-dd').format(DateTime.now());
       String today = DateFormat('yyyy-MM-dd').format(DateTime.now());

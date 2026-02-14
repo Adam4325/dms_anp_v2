@@ -23,7 +23,49 @@ TextEditingController txtVehicleIdList = TextEditingController();
 TextEditingController txtVehicleName = TextEditingController();
 List listVehicleId = [];
 
-class _BottomSheetContentVehicle extends StatelessWidget {
+class _BottomSheetContentVehicle extends StatefulWidget {
+  @override
+  _BottomSheetContentVehicleState createState() =>
+      _BottomSheetContentVehicleState();
+}
+
+class _BottomSheetContentVehicleState extends State<_BottomSheetContentVehicle> {
+  List<Map<String, dynamic>> _filteredList = [];
+
+  void _filterList(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredList = List<Map<String, dynamic>>.from(listVehicleId);
+      } else {
+        final q = query.toLowerCase();
+        _filteredList = (listVehicleId as List<Map<String, dynamic>>)
+            .where((v) {
+          final title = (v['title'] ?? '').toString().toLowerCase();
+          final value = (v['value'] ?? '').toString().toLowerCase();
+          return title.contains(q) || value.contains(q);
+        })
+            .toList();
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _filterList(txtSearchVehicle.text);
+    txtSearchVehicle.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    _filterList(txtSearchVehicle.text);
+  }
+
+  @override
+  void dispose() {
+    txtSearchVehicle.removeListener(_onSearchChanged);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -64,6 +106,7 @@ class _BottomSheetContentVehicle extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: txtSearchVehicle,
+              onChanged: (_) => _filterList(txtSearchVehicle.text),
               decoration: InputDecoration(
                 fillColor: Colors.white,
                 filled: true,
@@ -77,8 +120,9 @@ class _BottomSheetContentVehicle extends StatelessWidget {
           // Vehicle List
           Expanded(
             child: ListView.builder(
-              itemCount: listVehicleId.length,
+              itemCount: _filteredList.length,
               itemBuilder: (context, index) {
+                final item = _filteredList[index];
                 return Container(
                   margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   child: Card(
@@ -95,14 +139,14 @@ class _BottomSheetContentVehicle extends StatelessWidget {
                         size: 28,
                       ),
                       title: Text(
-                        "${listVehicleId[index]['title']}",
+                        "${item['title']}",
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: ColorConstants.kTextColor,
                         ),
                       ),
                       subtitle: Text(
-                        "Vehicle ID: ${listVehicleId[index]['value']}",
+                        "Vehicle ID: ${item['value']}",
                         style: TextStyle(
                           color: ColorConstants.kGreyTextColor,
                           fontSize: 12,
@@ -116,9 +160,9 @@ class _BottomSheetContentVehicle extends StatelessWidget {
                       onTap: () {
                         Navigator.of(context).pop();
                         txtVehicleName.text =
-                            listVehicleId[index]['value'].toString();
+                            item['value'].toString();
                         txtVehicleIdList.text =
-                            listVehicleId[index]['value'].toString();
+                            item['value'].toString();
                       },
                     ),
                   ),
@@ -421,7 +465,7 @@ class FrmPlayBackState extends State<FrmPlayBack> {
                         ),
                         SizedBox(width: 12),
                         Text(
-                          'Search History 2',
+                          'Search History',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

@@ -210,7 +210,7 @@ class _ViewListWoMcByForeManState extends State<ViewListWoMcByForeMan> {
           color: Theme.of(context).colorScheme.onPrimary,
           child: Stack(
             children: <Widget>[
-              _buildListView(globalScaffoldKey2.currentContext!)
+              _buildListView(context)
             ],
           ),
         ),
