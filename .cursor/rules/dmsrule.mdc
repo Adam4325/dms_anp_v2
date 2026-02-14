@@ -1,0 +1,4 @@
+---
+alwaysApply: false
+---
+jangan rubah fungsi apapun, sdk jangan di rubah, jangan pake (nullsafety,require, tanda !),

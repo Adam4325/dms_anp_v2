@@ -1,0 +1,215 @@
+name: dms_anp
+description: ANP driver management
+
+# The following line prevents the package from being accidentally published to
+# pub.dev using `pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  json_annotation: ^4.10.0
+  # smart_select: 4.3.2 # deprecated and not null-safe; use awesome_select instead
+  flutter_svg: ^2.2.3
+  intl: ^0.17.0
+  date_time_picker: ^2.1.0
+  loadmore: ^2.0.1
+  fl_chart: ^1.1.1
+  flutter_spinbox: ^0.13.1
+  dio: ^5.9.1
+  # progress_dialog is not null-safe; use the null-safe fork instead.
+  progress_dialog_null_safe: ^3.1.0
+  camera: ^0.11.3+1
+  location: ^8.0.1
+  maps_toolkit: ^3.1.0
+  #geolocator: 8.2.1
+  geolocator: ^14.0.2
+  #location: ^1.4.1
+  #share_plus: ^0.3.1
+  #file_picker: ^1.9.0+1
+  unique_identifier: ^0.4.0
+  font_awesome_flutter: ^10.12.0
+  http: ^1.5.0
+  latlong2: ^0.9.1
+  flutter_easyloading: ^3.0.0
+  rflutter_alert: ^2.0.2
+  shared_preferences: ^2.0.2
+  sqflite: ^2.0.0+3
+  # image_gallery_saver: ^2.0.3 # Not compatible with AGP 8+, using plus version instead
+  image_gallery_saver_plus: ^4.0.1
+  image_picker: ^1.2.1
+  permission_handler: ^12.0.1
+  trust_location: ^2.0.13
+  sliding_up_panel: ^2.0.0+1
+  flutter_search_bar: ^3.0.0
+  material_floating_search_bar: ^0.3.3
+  implicitly_animated_reorderable_list: ^0.4.0
+  google_maps_flutter: ^2.0.1
+  another_flushbar: ^1.12.32
+  flutter_staggered_grid_view: ^0.7.0
+  # qrscan: ^0.3.1 # Not compatible with AGP 8+, using mobile_scanner instead
+  mobile_scanner: ^5.2.3
+  # OCR (google_mlkit_text_recognition) dihapus - jalankan flutter pub get bila perlu
+  cached_network_image: ^3.0.0 #^2.0.0
+  flutter_cupertino_datetime_picker: ^3.0.0
+  qr_flutter: ^4.0.0
+  #webview_flutter: ^2.0.0
+  iamport_webview_flutter: ^3.0.5
+  # Use a Dart 3 compatible version that still depends on http ^0.13.x
+  flutter_polyline_points: ^3.1.0
+  url_launcher: ^6.0.10
+  grouped_list: ^6.0.0
+  uuid: ^4.5.2
+  badges: ^3.1.2
+  local_auth: ^3.0.0
+  sliding_up_panel2: ^3.2.0+2
+  timelines: ^0.1.0
+  fluttertoast: ^9.0.0
+  carousel_slider: ^5.1.2
+  path: ^1.8.0
+  path_provider: ^2.0.0
+  #firebase_core: 1.12.0  # Last version supporting Dart 2.13.x
+  #firebase_messaging: 9.0.0  # Compatible with firebase_core 1.12.0
+  #geocoding: ^2.0.5
+  awesome_select: ^6.0.0
+  #  flutter_webview_plugin:
+  #    git:
+  #      ref: "dev/fix_alert_not_work_in_webview"
+  #      url: "https://github.com/jerryzhoujw/flutter_webview_plugin"
+  #      source: git
+  flutter:
+    sdk: flutter
+
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.2
+  google_fonts: ^8.0.1
+  share_plus: ^12.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  #unique_identifier: ^0.0.3
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/img/logo.png
+    - assets/img/truck_header.jpg
+    - assets/img/loading.gif
+    - assets/img/logo_anp.png
+    - assets/img/icon_menu.png
+    - assets/img/icon_saldo.png
+    - assets/img/icon_scan.png
+    - assets/img/icon_transfer.png
+    - assets/img/banner1.jpg
+    - assets/img/banner2.jpg
+    - assets/img/banner3.jpg
+    - assets/img/banner4.jpg
+    - assets/img/banner5.jpg
+    - assets/img/bg_anp.jpeg
+    - assets/img/car.svg
+    - assets/img/destination_map_marker.png
+    - assets/img/driving_pin.png
+    - assets/img/car01.png
+    - assets/img/car02.png
+    - assets/img/car03.png
+    - assets/img/icon_maps.png
+    - assets/img/ban.png
+    - assets/img/body-repair.png
+    - assets/img/booking.png
+    - assets/img/kelengkapan.png
+    - assets/img/repair.png
+    - assets/img/service.png
+    - assets/img/storing.png
+    - assets/img/no-image.jpg
+    - assets/img/qrcode.png
+    - assets/img/front-login.png
+    - assets/img/save.png
+    - assets/img/search.png
+    - assets/img/bg_top.png
+    - assets/img/ic_maps.png
+    - assets/img/box-add.png
+    - assets/img/box-remove.png
+    - assets/img/routing.png
+    - assets/img/new_driver.png
+    - assets/img/calendar.png
+    - assets/img/warning-2.png
+    - assets/img/menu-more.png
+    - assets/img/menu_inventory.jpg
+    - assets/img/menu_p2h.jpg
+    - assets/img/menu_sr.png
+    - assets/img/menu_tms.png
+    - assets/img/menu_performance.jpg
+    - assets/img/menu_nontera.jpg
+    - assets/img/moving_unit.png
+    - assets/img/menu_wh_opname.jpg
+    - assets/img/menu_asset.jpg
+    - assets/img/tronton.jpg
+    - assets/img/triller.jpg
+    - assets/img/lt.jpg
+    - assets/img/arrow_icon.png
+    - assets/img/truck.png
+  #assets:
+  #   - assets/images/logo.png
+  #   - images/a_dot_ham.jpeg
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/assets-and-images/#resolution-aware.
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/assets-and-images/#from-packages
+
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  fonts:
+    - family: Montserrat
+      fonts:
+        - asset: fonts/Montserrat-Regular.ttf
+    - family: NeoSans
+      fonts:
+        - asset: fonts/NeoSansStd-Regular.otf
+    - family: NeoSansBold
+      fonts:
+        - asset: fonts/NeoSansStd-Bold.otf
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/custom-fonts/#from-packages

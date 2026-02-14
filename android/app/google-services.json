@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "7501757339",
+    "project_id": "notif-driver",
+    "storage_bucket": "notif-driver.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:7501757339:android:c32d130bc51204577e3f3e",
+        "android_client_info": {
+          "package_name": "com.anp.dms_anp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCWlmD6-quQ5iiSOUFCF8SuvDk9lXHkE0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
