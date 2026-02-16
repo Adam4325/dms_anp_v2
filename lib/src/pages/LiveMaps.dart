@@ -1294,7 +1294,12 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
             ),
 
             // Search Bar
-            searchBarUI(),
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 8,
+              left: 0,
+              right: 0,
+              child: searchBarUI(),
+            ),
           ],
         ),
       ),

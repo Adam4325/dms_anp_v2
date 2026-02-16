@@ -15,7 +15,6 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
-// qrscan deprecated - scan stubbed until mobile_scanner migration
 import 'package:trust_location/trust_location.dart';
 import '../../flusbar.dart';
 

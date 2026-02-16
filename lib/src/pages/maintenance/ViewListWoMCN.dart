@@ -360,16 +360,20 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                     fontSize: 18))),
-        body: Container(
-          key: globalScaffoldKey2,
-          margin: const EdgeInsets.only(top: 5.0),
-          constraints: BoxConstraints.expand(),
-          color: Theme.of(context).colorScheme.onPrimary,
-          child: Stack(
-            children: <Widget>[
-              _buildListView(globalScaffoldKey2.currentContext!)
-            ],
-          ),
+        body: Builder(
+          builder: (builderContext) {
+            return Container(
+              key: globalScaffoldKey2,
+              margin: const EdgeInsets.only(top: 5.0),
+              constraints: BoxConstraints.expand(),
+              color: Theme.of(builderContext).colorScheme.onPrimary,
+              child: Stack(
+                children: <Widget>[
+                  _buildListView(builderContext)
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

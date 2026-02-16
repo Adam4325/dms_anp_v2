@@ -55,6 +55,7 @@ import 'package:unique_identifier/unique_identifier.dart';
 
 import '../flusbar.dart';
 import 'FrmAttendanceDriver.dart';
+import 'FrmMasterData.dart';
 import 'FrmNonTera.dart';
 import 'LiveMaps.dart';
 import 'ViewListStoring.dart';
@@ -545,6 +546,20 @@ class _ViewDashboardState extends State<ViewDashboard> {
               idKey: 30,
               title: "Open DO"));
         }
+      }
+    }
+
+    if (loginname != "DRIVER") {
+      var isOK = globals.akses_pages == null
+          ? globals.akses_pages
+          : globals.akses_pages
+              .where((x) => (x == "HTRD" || username == "ADMIN"));
+      if (isOK != null && isOK.length > 0) {
+        _anpServiceList.add(new AnpService(
+            image: Icons.storage,
+            color: Colors.blue.shade700,
+            idKey: 32,
+            title: "Mst Data"));
       }
     }
 
@@ -2047,6 +2062,49 @@ class _ViewDashboardState extends State<ViewDashboard> {
   }
 
   Widget _buildBottomNavigationBar() {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade300,
+              blurRadius: 8,
+              offset: Offset(0, -3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildBottomNavItem(
+              icon: Icons.work_outline,
+              activeIcon: Icons.work,
+              label: 'Storing',
+              index: 0,
+              badge: countNotif,
+            ),
+            _buildBottomNavItem(
+              icon: Icons.pin_drop_outlined,
+              activeIcon: Icons.pin_drop,
+              label: 'Maps',
+              index: 1,
+            ),
+            _buildBottomNavItem(
+              icon: Icons.person_outline,
+              activeIcon: Icons.person,
+              label: 'Profile',
+              index: 2,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBarOLd() {
     return Container(
       height: 75,
       decoration: BoxDecoration(
@@ -3406,6 +3464,20 @@ class _ViewDashboardState extends State<ViewDashboard> {
             MaterialPageRoute(builder: (context) => FrmNonTera()),
           );
         });
+      }
+    } else if (anpService.idKey == 32) {
+      var isOK = globals.akses_pages == null
+          ? globals.akses_pages
+          : globals.akses_pages
+              .where((x) => (x == "HRD" || username == "ADMIN"));
+      if (isOK != null && (isOK.length > 0 || username == "ADMIN")) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => FrmMasterData()),
+        );
+      } else {
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Akses ditolak. Hanya HTRD dan ADMIN yang dapat mengakses.", "error");
       }
     } else {
       final ctx = globalScaffoldKey.currentContext!;

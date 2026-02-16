@@ -1023,12 +1023,12 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
                 ],
               ),
             ),
-            if (is_driver == 'false') searchBarUI(),
             if (isShowUnitInfo) ...[
-              Align(
-                alignment: Alignment.bottomCenter,
+              Positioned(
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).padding.bottom + 20,
                 child: Container(
-                  margin: EdgeInsets.all(20),
                   padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,

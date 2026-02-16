@@ -4982,6 +4982,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
         height: MediaQuery.of(context).size.height,
         child: SingleChildScrollView(
           clipBehavior: Clip.antiAlias,
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).padding.bottom + 48),
           child: Column(
             children: <Widget>[
               if (isCreatePrNumber) ...[
@@ -5558,27 +5560,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               ),
               Container(
                 margin: EdgeInsets.only(left: 10, top: 0, right: 10, bottom: 0),
+                padding: EdgeInsets.only(bottom: 4),
                 child: Row(children: <Widget>[
-                  // Expanded(
-                  //     child: ElevatedButton.icon(
-                  //   icon: Icon(
-                  //     Icons.cancel,
-                  //     color: Colors.white,
-                  //     size: 15.0,
-                  //   ),
-                  //   label: Text("Cancel"),
-                  //   onPressed: () async {
-                  //     print('cancel');
-                  //   },
-                  //   style: ElevatedButton.styleFrom(
-                  //       elevation: 0.0,
-                  //       backgroundColor: Colors.orangeAccent,
-                  //       padding: EdgeInsets.symmetric(
-                  //           horizontal: 5, vertical: 0),
-                  //       textStyle: TextStyle(
-                  //           fontSize: 12, fontWeight: FontWeight.bold)),
-                  // )),
-                  // SizedBox(width: 10),
                   Expanded(
                       child: ElevatedButton.icon(
                     icon: Icon(
@@ -5859,7 +5842,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                         textStyle: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold)),
+                            fontSize: 14, fontWeight: FontWeight.bold,color:  Colors.white)),
                   )),
                   SizedBox(width: 5),
                   Expanded(
@@ -6090,7 +6073,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                         textStyle: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold)),
+                            fontSize: 14, fontWeight: FontWeight.bold,color:  Colors.white)),
                   )),
                   //SizedBox(width: 5),
                 ]),
@@ -6143,7 +6126,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                         textStyle: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold)),
+                            fontSize: 14, fontWeight: FontWeight.bold,color:  Colors.white)),
                   )),
                 ]),
               ),
@@ -6494,7 +6477,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                               fillColor: MaterialStateColor.resolveWith(
                                   (states) => Colors.green),
                             ),
-                            Text('Baik'),
+                            Text('Baik',overflow: TextOverflow.ellipsis, maxLines: 1),
                           ],
                         ),
                       ),
@@ -6508,7 +6491,11 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                               fillColor: MaterialStateColor.resolveWith(
                                   (states) => primaryOrange),
                             ),
-                            Text('Tdk Baik'),
+                            Expanded(
+                              child: Text('Tdk Baik',
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1),
+                            ),
                           ],
                         ),
                       ),
@@ -6522,7 +6509,11 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                               fillColor: MaterialStateColor.resolveWith(
                                   (states) => Colors.red),
                             ),
-                            Text('Tdk Ada'),
+                            Expanded(
+                              child: Text('Tdk Ada',
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1),
+                            ),
                           ],
                         ),
                       ),

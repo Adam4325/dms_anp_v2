@@ -27,12 +27,12 @@ class _ListAbsensiKaryawanV1State extends State<ListAbsensiKaryawanV1> {
 
   String get _title {
     final t = widget.method.toLowerCase();
-    if (t == 'storing') return 'List Absensi - Storing';
-    if (t == 'hadir') return 'List Absensi - Hadir';
-    if (t == 'sakit') return 'List Absensi - Sakit';
-    if (t == 'izin') return 'List Absensi - Izin';
-    if (t == 'cuti') return 'List Absensi - Cuti';
-    return 'List Absensi';
+    if (t == 'storing') return 'List - Storing';
+    if (t == 'hadir') return 'List - Hadir';
+    if (t == 'sakit') return 'List - Sakit';
+    if (t == 'izin') return 'List - Izin';
+    if (t == 'cuti') return 'List - Cuti';
+    return 'List Data';
   }
 
   void _goBack(BuildContext context) {
@@ -67,7 +67,7 @@ class _ListAbsensiKaryawanV1State extends State<ListAbsensiKaryawanV1> {
           '&currentDate=$today'
           '&company=AN';
 
-      print(url);
+      print('URL_ABSEN $url');
       Uri myUri = Uri.parse(url);
       var response = await http.get(myUri, headers: {"Accept": "application/json"});
 
