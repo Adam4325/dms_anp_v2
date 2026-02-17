@@ -65,6 +65,7 @@ import 'driver/ListDriverInspeksiV2.dart';
 import 'maintenance/FrmServiceRequestOprPM.dart';
 import 'maintenance/FrmServiceTire.dart';
 import 'maintenance/ViewListWoMcByForeMan.dart';
+import 'marketing/ListOpenDOMP.dart';
 import 'mekanik/ListMekanikInspeksiV2.dart';
 
 class ViewDashboard extends StatefulWidget {
@@ -544,7 +545,22 @@ class _ViewDashboardState extends State<ViewDashboard> {
               image: FontAwesomeIcons.delicious,
               color: Colors.red,
               idKey: 30,
-              title: "Open DO"));
+              title: "Open DO NC"));
+        }
+      }
+    }
+    if (loginname != "DRIVER") {
+      var isOK = globals.akses_pages == null
+          ? globals.akses_pages
+          : globals.akses_pages
+          .where((x) => (x == "OP" || username == "ADMIN"));
+      if (isOK != null) {
+        if (isOK.length > 0) {
+          _anpServiceList.add(new AnpService(
+              image: FontAwesomeIcons.delicious,
+              color: Colors.red,
+              idKey: 33,
+              title: "Open DO MP"));
         }
       }
     }
@@ -3192,6 +3208,25 @@ class _ViewDashboardState extends State<ViewDashboard> {
             context,
             MaterialPageRoute(
                 builder: (context) => ListOpenDO()), //ApprovedDriverRequest
+          );
+        });
+      } else {
+        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
+            "error");
+      }
+    } else if (anpService.idKey == 33) {
+      var isOK = globals.akses_pages == null
+          ? globals.akses_pages
+          : globals.akses_pages.where((x) => x == "OP");
+      if ((isOK != null && isOK.length > 0) || username == "ADMIN") {
+        if (!EasyLoading.isShow) {
+          EasyLoading.show();
+        }
+        Timer(Duration(seconds: 1), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => ListOpenDOMP()), //ApprovedDriverRequest
           );
         });
       } else {

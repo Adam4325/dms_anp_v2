@@ -79,6 +79,38 @@ class _FrmMasterDataState extends State<FrmMasterData>
   final TextEditingController txtItpalias = TextEditingController();
   List<Map<String, dynamic>> _listItemType = [];
 
+  // Client tab
+  final TextEditingController txtLocid = TextEditingController();
+  final TextEditingController txtLocationtype = TextEditingController();
+  final TextEditingController txtLocname = TextEditingController();
+  final TextEditingController txtLocaddress1 = TextEditingController();
+  final TextEditingController txtLocaddress2 = TextEditingController();
+  final TextEditingController txtLocprovince = TextEditingController();
+  String? _clientZone;
+  List<Map<String, dynamic>> _listZoneOptions = [];
+  final TextEditingController txtLoccompany = TextEditingController(text: 'AN');
+  final TextEditingController txtLoccontactperson = TextEditingController();
+  final TextEditingController txtLocphone1 = TextEditingController();
+  final TextEditingController txtLocphone2 = TextEditingController();
+  final TextEditingController txtLocfax1 = TextEditingController();
+  final TextEditingController txtLocfax2 = TextEditingController();
+  String _clientStatus = 'Active';
+  List<Map<String, dynamic>> _listClient = [];
+  int? _selectedClientIndex;
+
+  // Zone tab
+  final TextEditingController txtZoneid = TextEditingController();
+  final TextEditingController txtZonename = TextEditingController();
+  String? _zoneDefaultZone;
+  final TextEditingController txtZonetype = TextEditingController();
+  String? _zoneVhtype;
+  String? _zoneOrigin;
+  final TextEditingController txtZonetarif = TextEditingController();
+  String _zoneStatus = 'Active';
+  List<Map<String, dynamic>> _listZone = [];
+  List<Map<String, dynamic>> _listVhtypeOptions = [];
+  int? _selectedZoneIndex;
+
   int? _selectedCustomerIndex;
   int? _selectedOriginIndex;
   int? _selectedDestinationIndex;
@@ -651,6 +683,289 @@ class _FrmMasterDataState extends State<FrmMasterData>
     txtItpdescr.text = item['itpdescr'] ?? item['ITPDESCR'] ?? '';
     txtItpalias.text = item['itpalias'] ?? item['ITPALIAS'] ?? '';
     setState(() => _selectedItemTypeIndex = index);
+  }
+
+  // --- Client Tab ---
+  static const String _clientSaveApi = 'api/master/save_client_api.jsp';
+
+  // --- Zone Tab ---
+  static const String _zoneSaveApi = 'api/master/save_zone_api.jsp';
+
+  Future<void> getListZoneOptions() async {
+    try {
+      final url = Uri.parse('${GlobalData.baseUrlOri}$_refApi?method=zone');
+      final response = await http.get(url, headers: {"Accept": "application/json"});
+      if (!mounted) return;
+      if (response.statusCode == 200 && response.body.trim() != 'Data not found') {
+        try {
+          final decoded = jsonDecode(response.body) as List;
+          setState(() {
+            _listZoneOptions = decoded.map((e) => (e is Map ? e : {}) as Map<String, dynamic>).toList();
+          });
+        } catch (_) {
+          setState(() => _listZoneOptions = []);
+        }
+      } else {
+        setState(() => _listZoneOptions = []);
+      }
+    } catch (_) {
+      setState(() => _listZoneOptions = []);
+    }
+  }
+
+  Future<void> getListVhtypeOptions() async {
+    try {
+      final url = Uri.parse('${GlobalData.baseUrlOri}$_refApi?method=vhtalias-zone');
+      final response = await http.get(url, headers: {"Accept": "application/json"});
+      if (!mounted) return;
+      if (response.statusCode == 200 && response.body.trim() != 'Data not found') {
+        try {
+          final decoded = jsonDecode(response.body) as List;
+          setState(() {
+            _listVhtypeOptions = decoded.map((e) => (e is Map ? e : {}) as Map<String, dynamic>).toList();
+          });
+        } catch (_) {
+          setState(() => _listVhtypeOptions = []);
+        }
+      } else {
+        setState(() => _listVhtypeOptions = []);
+      }
+    } catch (_) {
+      setState(() => _listVhtypeOptions = []);
+    }
+  }
+
+  Future<void> getListZoneMasterList() async {
+    try {
+      EasyLoading.show();
+      final url = Uri.parse('${GlobalData.baseUrlOri}$_refApi?method=zone-master-list');
+      final response = await http.get(url, headers: {"Accept": "application/json"});
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+        final body = response.body.trim();
+        List<dynamic> decoded = [];
+        if (body.isNotEmpty && body != 'Data not found') {
+          try {
+            decoded = jsonDecode(body) is List ? jsonDecode(body) as List : [];
+          } catch (_) {}
+        }
+        setState(() {
+          _listZone = decoded.map((e) => (e is Map ? e : {}) as Map<String, dynamic>).toList();
+          _selectedZoneIndex = null;
+        });
+      } else {
+        setState(() => _listZone = []);
+      }
+    } catch (e) {
+      if (mounted) alert(globalScaffoldKey.currentContext!, 0, "Gagal load data Zone: $e", "error");
+      setState(() => _listZone = []);
+    } finally {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+    }
+  }
+
+  Future<void> _saveOrUpdateZone() async {
+    final zoneid = txtZoneid.text.trim();
+    final zonename = txtZonename.text.trim();
+    if (zonename.isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 0, "Zone Name tidak boleh kosong", "error");
+      return;
+    }
+    final method = zoneid.isEmpty ? 'add' : 'update';
+    if (method == 'update' && zoneid.isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 0, "Zone ID tidak boleh kosong untuk Update", "error");
+      return;
+    }
+    if (method == 'add') {
+      if (_zoneDefaultZone == null || _zoneDefaultZone!.isEmpty) {
+        alert(globalScaffoldKey.currentContext!, 0, "Default Zone tidak boleh kosong", "error");
+        return;
+      }
+      if (_zoneOrigin == null || _zoneOrigin!.isEmpty) {
+        alert(globalScaffoldKey.currentContext!, 0, "Origin tidak boleh kosong", "error");
+        return;
+      }
+      if (_zoneVhtype == null || _zoneVhtype!.isEmpty) {
+        alert(globalScaffoldKey.currentContext!, 0, "Vehicle Type tidak boleh kosong", "error");
+        return;
+      }
+    }
+    try {
+      EasyLoading.show();
+      final url = Uri.parse('${GlobalData.baseUrlOri}$_zoneSaveApi').replace(
+        queryParameters: {
+          'method': method,
+          'zoneid': zoneid,
+          'zonename': zonename,
+          'default_zone': _zoneDefaultZone ?? '',
+          'zonetype': txtZonetype.text,
+          'vhtype': _zoneVhtype ?? '',
+          'origin': _zoneOrigin ?? '',
+          'zonetarif': txtZonetarif.text,
+          'status': _zoneStatus,
+          'userid': userid,
+        },
+      );
+      final response = await http.get(url, headers: {"Accept": "application/json"});
+      if (!mounted) return;
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      final map = jsonDecode(response.body) as Map<String, dynamic>? ?? {};
+      final statusCode = map['status_code']?.toString() ?? '';
+      final message = map['message']?.toString() ?? 'Unknown';
+      if (statusCode == '200') {
+        alert(globalScaffoldKey.currentContext!, 1, message, "success");
+        resetZoneForm();
+        getListZoneMasterList();
+      } else {
+        alert(globalScaffoldKey.currentContext!, 0, message, "error");
+      }
+    } catch (e) {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      alert(globalScaffoldKey.currentContext!, 0, "Error: $e", "error");
+    }
+  }
+
+  void resetZoneForm() {
+    txtZoneid.clear();
+    txtZonename.clear();
+    txtZonetype.clear();
+    txtZonetarif.clear();
+    setState(() {
+      _zoneDefaultZone = null;
+      _zoneVhtype = null;
+      _zoneOrigin = null;
+      _zoneStatus = 'Active';
+    });
+  }
+
+  void _onZoneRowTap(Map<String, dynamic> item, int index) {
+    txtZoneid.text = item['zoneid'] ?? item['ZONEID'] ?? '';
+    txtZonename.text = item['zonename'] ?? item['ZONENAME'] ?? '';
+    txtZonetype.text = item['zonetype'] ?? item['ZONETYPE'] ?? '';
+    txtZonetarif.text = item['zonetarif']?.toString() ?? item['ZONETARIF']?.toString() ?? '';
+    final defaultZone = item['default_zone'] ?? item['DEFAULT_ZONE'] ?? '';
+    setState(() {
+      _zoneDefaultZone = defaultZone == '1171' ? 'CEMINDO' : (defaultZone == '1240' ? 'HOLCIM' : defaultZone);
+      _zoneVhtype = item['vhctype']?.toString() ?? item['VHCTYPE']?.toString();
+      _zoneOrigin = item['origin']?.toString() ?? item['ORIGIN']?.toString();
+      _zoneStatus = item['status'] ?? item['STATUS'] ?? 'Active';
+      _selectedZoneIndex = index;
+    });
+  }
+
+  Future<void> getListClient() async {
+    try {
+      EasyLoading.show();
+      final url = Uri.parse('${GlobalData.baseUrlOri}$_refApi?method=list-client');
+      final response = await http.get(url, headers: {"Accept": "application/json"});
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+        final body = response.body.trim();
+        List<dynamic> decoded = [];
+        if (body.isNotEmpty && body != 'Data not found') {
+          try {
+            decoded = jsonDecode(body) is List ? jsonDecode(body) as List : [];
+          } catch (_) {}
+        }
+        setState(() {
+          _listClient = decoded.map((e) => (e is Map ? e : {}) as Map<String, dynamic>).toList();
+          _selectedClientIndex = null;
+        });
+      } else {
+        setState(() => _listClient = []);
+      }
+    } catch (e) {
+      if (mounted) alert(globalScaffoldKey.currentContext!, 0, "Gagal load data Client: $e", "error");
+      setState(() => _listClient = []);
+    } finally {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+    }
+  }
+
+  Future<void> _saveOrUpdateClient() async {
+    final locid = txtLocid.text.trim();
+    final locname = txtLocname.text.trim();
+    if (locname.isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 0, "Nama tidak boleh kosong", "error");
+      return;
+    }
+    final method = locid.isEmpty ? 'add' : 'update';
+    try {
+      EasyLoading.show();
+      final url = Uri.parse('${GlobalData.baseUrlOri}$_clientSaveApi').replace(
+        queryParameters: {
+          'method': method,
+          'locid': locid,
+          'locationtype': txtLocationtype.text,
+          'locname': locname,
+          'locaddress1': txtLocaddress1.text,
+          'locaddress2': txtLocaddress2.text,
+          'locprovince': txtLocprovince.text,
+          'loczone': _clientZone ?? '',
+          'loccompany': txtLoccompany.text.isEmpty ? 'AN' : txtLoccompany.text,
+          'loccontactperson': txtLoccontactperson.text,
+          'locphone1': txtLocphone1.text,
+          'locphone2': txtLocphone2.text,
+          'locfax1': txtLocfax1.text,
+          'locfax2': txtLocfax2.text,
+          'status': _clientStatus,
+          'userid': userid,
+        },
+      );
+      final response = await http.get(url, headers: {"Accept": "application/json"});
+      if (!mounted) return;
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      final map = jsonDecode(response.body) as Map<String, dynamic>? ?? {};
+      final statusCode = map['status_code']?.toString() ?? '';
+      final message = map['message']?.toString() ?? 'Unknown';
+      if (statusCode == '200') {
+        alert(globalScaffoldKey.currentContext!, 1, message, "success");
+        resetClientForm();
+        getListClient();
+      } else {
+        alert(globalScaffoldKey.currentContext!, 0, message, "error");
+      }
+    } catch (e) {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      alert(globalScaffoldKey.currentContext!, 0, "Error: $e", "error");
+    }
+  }
+
+  void resetClientForm() {
+    txtLocid.clear();
+    txtLocationtype.clear();
+    txtLocname.clear();
+    txtLocaddress1.clear();
+    txtLocaddress2.clear();
+    txtLocprovince.clear();
+    setState(() => _clientZone = null);
+    txtLoccompany.text = 'AN';
+    txtLoccontactperson.clear();
+    txtLocphone1.clear();
+    txtLocphone2.clear();
+    txtLocfax1.clear();
+    txtLocfax2.clear();
+    setState(() => _clientStatus = 'Active');
+  }
+
+  void _onClientRowTap(Map<String, dynamic> item, int index) {
+    txtLocid.text = item['locid'] ?? item['LOCID'] ?? '';
+    txtLocationtype.text = item['locationtype'] ?? item['LOCATIONTYPE'] ?? '';
+    txtLocname.text = item['locname'] ?? item['LOCNAME'] ?? '';
+    txtLocaddress1.text = item['locaddress1'] ?? item['LOCADDRESS1'] ?? '';
+    txtLocaddress2.text = item['locaddress2'] ?? item['LOCADDRESS2'] ?? '';
+    txtLocprovince.text = item['locprovince'] ?? item['LOCPROVINCE'] ?? '';
+    txtLoccompany.text = item['loccompany'] ?? item['LOCCOMPANY'] ?? 'AN';
+    txtLoccontactperson.text = item['loccontactperson'] ?? item['LOCCONTACTPERSON'] ?? '';
+    txtLocphone1.text = item['locphone1'] ?? item['LOCPHONE1'] ?? '';
+    txtLocphone2.text = item['locphone2'] ?? item['LOCPHONE2'] ?? '';
+    txtLocfax1.text = item['locfax1'] ?? item['LOCFAX1'] ?? '';
+    txtLocfax2.text = item['locfax2'] ?? item['LOCFAX2'] ?? '';
+    setState(() {
+      _clientZone = item['loczone']?.toString() ?? item['LOCZONE']?.toString();
+      _clientStatus = item['status'] ?? item['STATUS'] ?? 'Active';
+      _selectedClientIndex = index;
+    });
   }
 
   Widget _buildCustomerTab() {
@@ -1306,6 +1621,343 @@ class _FrmMasterDataState extends State<FrmMasterData>
     );
   }
 
+  Widget _buildClientTab() {
+    final zoneChoices = _listZoneOptions
+        .map((e) => S2Choice<String>(value: e['value']?.toString() ?? e['text']?.toString() ?? '', title: e['text']?.toString() ?? e['value']?.toString() ?? ''))
+        .toList();
+    return RefreshIndicator(
+      onRefresh: () async {
+        await getListZoneOptions();
+        await getListClient();
+      },
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Form Client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    SizedBox(height: 12),
+                    TextField(controller: txtLocid, decoration: InputDecoration(labelText: 'Locid', border: OutlineInputBorder())),
+                    SizedBox(height: 8),
+                    TextField(controller: txtLocationtype, decoration: InputDecoration(labelText: 'Type', border: OutlineInputBorder())),
+                    SizedBox(height: 8),
+                    TextField(controller: txtLocname, decoration: InputDecoration(labelText: 'Nama', border: OutlineInputBorder())),
+                    SizedBox(height: 8),
+                    TextField(controller: txtLocaddress1, decoration: InputDecoration(labelText: 'Address 1', border: OutlineInputBorder())),
+                    SizedBox(height: 8),
+                    TextField(controller: txtLocaddress2, decoration: InputDecoration(labelText: 'Address 2', border: OutlineInputBorder())),
+                    SizedBox(height: 8),
+                    TextField(controller: txtLocprovince, decoration: InputDecoration(labelText: 'Provinsi', border: OutlineInputBorder())),
+                    SizedBox(height: 8),
+                    SmartSelect<String?>.single(
+                      title: 'Zone',
+                      selectedValue: _clientZone,
+                      choiceItems: zoneChoices,
+                      onChange: (s) => setState(() => _clientZone = s.value),
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Zone...',
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    TextField(controller: txtLoccompany, decoration: InputDecoration(labelText: 'Company', border: OutlineInputBorder())),
+                    SizedBox(height: 8),
+                    TextField(controller: txtLoccontactperson, decoration: InputDecoration(labelText: 'Contact Person', border: OutlineInputBorder())),
+                    SizedBox(height: 8),
+                    TextField(controller: txtLocphone1, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: 'Phone 1', border: OutlineInputBorder())),
+                    SizedBox(height: 8),
+                    TextField(controller: txtLocphone2, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: 'Phone 2', border: OutlineInputBorder())),
+                    SizedBox(height: 8),
+                    TextField(controller: txtLocfax1, decoration: InputDecoration(labelText: 'Fax 1', border: OutlineInputBorder())),
+                    SizedBox(height: 8),
+                    TextField(controller: txtLocfax2, decoration: InputDecoration(labelText: 'Fax 2', border: OutlineInputBorder())),
+                    SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: _clientStatus,
+                      decoration: InputDecoration(labelText: 'Status', border: OutlineInputBorder()),
+                      items: ['Active', 'Not Active'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+                      onChanged: (v) => setState(() => _clientStatus = v ?? 'Active'),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(onPressed: resetClientForm, child: Text('Reset')),
+                        SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                          onPressed: () async {
+                            if (await _showConfirmDialog('Konfirmasi', 'Simpan data Client?')) _saveOrUpdateClient();
+                          },
+                          child: Text('Save'),
+                        ),
+                        SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                          onPressed: () async {
+                            if (await _showConfirmDialog('Konfirmasi', 'Update data Client?')) _saveOrUpdateClient();
+                          },
+                          child: Text('Update'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+            Text('Daftar Client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            SizedBox(height: 8),
+            _listClient.isEmpty
+                ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: DataTable(
+                        columnSpacing: 16,
+                        horizontalMargin: 12,
+                        columns: [
+                          DataColumn(label: Text('Locid', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('Nama', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('Address 1', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('Contact Person', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('Phone 1', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.w600))),
+                        ],
+                        rows: _listClient.asMap().entries.map((e) {
+                          final index = e.key;
+                          final item = e.value;
+                          final locid = item['locid'] ?? item['LOCID'] ?? '';
+                          final locname = item['locname'] ?? item['LOCNAME'] ?? '';
+                          final addr = item['locaddress1'] ?? item['LOCADDRESS1'] ?? '';
+                          final contact = item['loccontactperson'] ?? item['LOCCONTACTPERSON'] ?? '';
+                          final phone = item['locphone1'] ?? item['LOCPHONE1'] ?? '';
+                          final st = item['status'] ?? item['STATUS'] ?? '';
+                          return DataRow(
+                            color: MaterialStateProperty.resolveWith((_) => _selectedClientIndex == index ? Colors.orange.withOpacity(0.25) : null),
+                            cells: [
+                              DataCell(GestureDetector(onTap: () => _onClientRowTap(item, index), child: Text(locid))),
+                              DataCell(GestureDetector(onTap: () => _onClientRowTap(item, index), child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 120), child: Text(locname, overflow: TextOverflow.ellipsis)))),
+                              DataCell(GestureDetector(onTap: () => _onClientRowTap(item, index), child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 150), child: Text(addr, overflow: TextOverflow.ellipsis)))),
+                              DataCell(GestureDetector(onTap: () => _onClientRowTap(item, index), child: Text(contact))),
+                              DataCell(GestureDetector(onTap: () => _onClientRowTap(item, index), child: Text(phone))),
+                              DataCell(GestureDetector(onTap: () => _onClientRowTap(item, index), child: Text(st))),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildZoneTab() {
+    final zoneIdChoices = _listZoneOptions
+        .map((e) => S2Choice<String>(value: e['value']?.toString() ?? e['text']?.toString() ?? '', title: e['text']?.toString() ?? e['value']?.toString() ?? ''))
+        .toList();
+    final vhtypeChoices = _listVhtypeOptions
+        .map((e) => S2Choice<String>(value: e['value']?.toString() ?? e['text']?.toString() ?? '', title: e['text']?.toString() ?? e['value']?.toString() ?? ''))
+        .toList();
+    final originChoices = _listOriginAlias
+        .map((e) => S2Choice<String>(value: e['value']?.toString() ?? e['text']?.toString() ?? '', title: e['text']?.toString() ?? e['value']?.toString() ?? ''))
+        .toList();
+    return RefreshIndicator(
+      onRefresh: () async {
+        await getListZoneOptions();
+        await getListOriginAlias();
+        await getListVhtypeOptions();
+        await getListZoneMasterList();
+      },
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Form Zone', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    SizedBox(height: 12),
+                    SmartSelect<String?>.single(
+                      title: 'Zone ID',
+                      selectedValue: txtZoneid.text.isEmpty ? null : txtZoneid.text,
+                      choiceItems: zoneIdChoices,
+                      onChange: (s) {
+                        txtZoneid.text = s.value ?? '';
+                        final idx = _listZone.indexWhere((z) => (z['zoneid'] ?? z['ZONEID'] ?? '').toString() == (s.value ?? ''));
+                        if (idx >= 0) _onZoneRowTap(_listZone[idx], idx);
+                        setState(() {});
+                      },
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Zone ID...',
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    TextField(
+                      controller: txtZonename,
+                      decoration: InputDecoration(labelText: 'Zone Name', border: OutlineInputBorder()),
+                    ),
+                    SizedBox(height: 8),
+                    DropdownButtonFormField<String?>(
+                      value: _zoneDefaultZone,
+                      decoration: InputDecoration(labelText: 'Default Zone', border: OutlineInputBorder()),
+                      items: [
+                        DropdownMenuItem(value: null, child: Text('Pilih Default Zone')),
+                        DropdownMenuItem(value: 'CEMINDO', child: Text('CEMINDO')),
+                        DropdownMenuItem(value: 'HOLCIM', child: Text('HOLCIM')),
+                      ],
+                      onChanged: (v) => setState(() => _zoneDefaultZone = v),
+                    ),
+                    SizedBox(height: 8),
+                    TextField(
+                      controller: txtZonetype,
+                      decoration: InputDecoration(labelText: 'Zone Type (optional)', border: OutlineInputBorder()),
+                    ),
+                    SizedBox(height: 8),
+                    SmartSelect<String?>.single(
+                      title: 'Vehicle Type',
+                      selectedValue: _zoneVhtype,
+                      choiceItems: vhtypeChoices,
+                      onChange: (s) => setState(() => _zoneVhtype = s.value),
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Vehicle Type...',
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    SmartSelect<String?>.single(
+                      title: 'Origin',
+                      selectedValue: _zoneOrigin,
+                      choiceItems: originChoices,
+                      onChange: (s) => setState(() => _zoneOrigin = s.value),
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Origin...',
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    TextField(
+                      controller: txtZonetarif,
+                      decoration: InputDecoration(labelText: 'Zone Tarif (optional)', border: OutlineInputBorder()),
+                    ),
+                    SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: _zoneStatus,
+                      decoration: InputDecoration(labelText: 'Status', border: OutlineInputBorder()),
+                      items: ['Active', 'Not Active'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+                      onChanged: (v) => setState(() => _zoneStatus = v ?? 'Active'),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(onPressed: resetZoneForm, child: Text('Reset')),
+                        SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                          onPressed: () async {
+                            if (await _showConfirmDialog('Konfirmasi', 'Simpan data Zone?')) _saveOrUpdateZone();
+                          },
+                          child: Text('Save'),
+                        ),
+                        SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                          onPressed: () async {
+                            if (await _showConfirmDialog('Konfirmasi', 'Update data Zone?')) _saveOrUpdateZone();
+                          },
+                          child: Text('Update'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+            Text('Daftar Zone', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            SizedBox(height: 8),
+            _listZone.isEmpty
+                ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: DataTable(
+                        columnSpacing: 16,
+                        horizontalMargin: 12,
+                        columns: [
+                          DataColumn(label: Text('Zone ID', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('Zone Name', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('Default Zone', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('Zone Type', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('VHC Type', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('Origin', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('Zone Tarif', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.w600))),
+                        ],
+                        rows: _listZone.asMap().entries.map((e) {
+                          final index = e.key;
+                          final item = e.value;
+                          final zoneid = item['zoneid'] ?? item['ZONEID'] ?? '';
+                          final zonename = item['zonename'] ?? item['ZONENAME'] ?? '';
+                          final defaultZone = item['default_zone'] ?? item['DEFAULT_ZONE'] ?? '';
+                          final zonetype = item['zonetype'] ?? item['ZONETYPE'] ?? '';
+                          final vhctype = item['vhctype'] ?? item['VHCTYPE'] ?? '';
+                          final origin = item['origin'] ?? item['ORIGIN'] ?? '';
+                          final zonetarif = item['zonetarif']?.toString() ?? item['ZONETARIF']?.toString() ?? '';
+                          final status = item['status'] ?? item['STATUS'] ?? '';
+                          return DataRow(
+                            color: MaterialStateProperty.resolveWith((_) => _selectedZoneIndex == index ? Colors.orange.withOpacity(0.25) : null),
+                            cells: [
+                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(zoneid))),
+                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 140), child: Text(zonename, overflow: TextOverflow.ellipsis)))),
+                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(defaultZone))),
+                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(zonetype))),
+                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(vhctype))),
+                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(origin))),
+                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(zonetarif))),
+                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(status))),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTabContent(String title, IconData icon) {
     return Container(
       constraints: BoxConstraints.expand(),
@@ -1346,6 +1998,16 @@ class _FrmMasterDataState extends State<FrmMasterData>
         if (_tabController.index == 3) {
           getListItemType();
         }
+        if (_tabController.index == 4) {
+          getListZoneOptions();
+          getListClient();
+        }
+        if (_tabController.index == 5) {
+          getListZoneOptions();
+          getListOriginAlias();
+          getListVhtypeOptions();
+          getListZoneMasterList();
+        }
       }
     });
     _checkAccess();
@@ -1373,6 +2035,22 @@ class _FrmMasterDataState extends State<FrmMasterData>
     txtItpid.dispose();
     txtItpdescr.dispose();
     txtItpalias.dispose();
+    txtLocid.dispose();
+    txtLocationtype.dispose();
+    txtLocname.dispose();
+    txtLocaddress1.dispose();
+    txtLocaddress2.dispose();
+    txtLocprovince.dispose();
+    txtLoccompany.dispose();
+    txtLoccontactperson.dispose();
+    txtLocphone1.dispose();
+    txtLocphone2.dispose();
+    txtLocfax1.dispose();
+    txtLocfax2.dispose();
+    txtZoneid.dispose();
+    txtZonename.dispose();
+    txtZonetype.dispose();
+    txtZonetarif.dispose();
     super.dispose();
   }
 
@@ -1447,8 +2125,8 @@ class _FrmMasterDataState extends State<FrmMasterData>
                   _buildOriginTab(),
                   _buildDestinationTab(),
                   _buildItemTypeTab(),
-                  _buildTabContent('Client', Icons.business),
-                  _buildTabContent('Zone', Icons.map),
+                  _buildClientTab(),
+                  _buildZoneTab(),
                 ],
               )
             : SizedBox.shrink(),
