@@ -60,7 +60,7 @@ class _ViewListStoringState extends State<ViewListStoring> {
           color: HexColor("#ffffff"),
           child: new Stack(
             children: <Widget>[
-              _buildListView(globalScaffoldKey2.currentContext!)
+              _buildListView(context)
             ],
           ),
         ),

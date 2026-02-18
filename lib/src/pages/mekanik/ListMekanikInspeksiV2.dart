@@ -66,117 +66,12 @@ class _ListMekanikInspeksiV2State extends State<ListMekanikInspeksiV2> {
     super.initState();
   }
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(
-  //       backgroundColor: darkOrange,
-  //       automaticallyImplyLeading: false,
-  //       title: customSearchBar,
-  //       leading: IconButton(
-  //         icon: Icon(Icons.arrow_back),
-  //         iconSize: 20.0,
-  //         onPressed: () {
-  //           _goBack(context);
-  //         },
-  //       ),
-  //       actions: <Widget>[
-  //         IconButton(
-  //           icon: customIcon,
-  //           onPressed: () {
-  //             setState(() {
-  //               print(customIcon.icon == Icons.search);
-  //               if (customIcon.icon == Icons.search) {
-  //                 customIcon = const Icon(Icons.cancel);
-  //                 customSearchBar = ListTile(
-  //                   onTap: () async {
-  //                     if (_txtSearch.text == null || _txtSearch.text == "") {
-  //                       return;
-  //                     } else {
-  //                       _searchText = _txtSearch.text;
-  //                       paginatorGlobalKey.currentState.changeState(
-  //                           pageLoadFuture: sendMekanikDataRequest,
-  //                           resetState: true);
-  //                     }
-  //                   },
-  //                   leading: Icon(
-  //                     Icons.search,
-  //                     color: Colors.white,
-  //                     size: 28,
-  //                   ),
-  //                   title: TextField(
-  //                     controller: _txtSearch,
-  //                     decoration: InputDecoration(
-  //                       hintText: 'Cari name/ mekanik...',
-  //                       hintStyle: TextStyle(
-  //                         color: Colors.white,
-  //                         fontSize: 18,
-  //                         fontStyle: FontStyle.italic,
-  //                       ),
-  //                       border: InputBorder.none,
-  //                     ),
-  //                     style: TextStyle(
-  //                       color: Colors.white,
-  //                     ),
-  //                   ),
-  //                 );
-  //               } else {
-  //                 setState(() {
-  //                   _searchText = "";
-  //                   _txtSearch.text = "";
-  //                 });
-  //                 customIcon = const Icon(Icons.search);
-  //                 customSearchBar = const Text('List Mekanik');
-  //               }
-  //             });
-  //           },
-  //         ),
-  //       ],
-  //     ),
-  //     body: Paginator.listView(
-  //       key: paginatorGlobalKey,
-  //       pageLoadFuture: sendMekanikDataRequest,
-  //       pageItemsGetter: listItemsGetter,
-  //       listItemBuilder: listItemBuilder,
-  //       loadingWidgetBuilder: loadingWidgetMaker,
-  //       errorWidgetBuilder: errorWidgetMaker,
-  //       emptyListWidgetBuilder: emptyListWidgetMaker,
-  //       totalItemsGetter: totalPagesGetter,
-  //       pageErrorChecker: pageErrorChecker,
-  //       scrollPhysics: BouncingScrollPhysics(),
-  //     ),
-  //     floatingActionButton: FloatingActionButton(
-  //       onPressed: () {
-  //         setState(() {
-  //           _searchText = "";
-  //           _txtSearch.text = "";
-  //         });
-  //         paginatorGlobalKey.currentState.changeState(
-  //             pageLoadFuture: sendMekanikDataRequest, resetState: true);
-  //       },
-  //       child: Icon(Icons.refresh),
-  //     ),
-  //   );
-  // }
+
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // if (_searchText.isNotEmpty || _txtSearch.text.isNotEmpty) {
-        //   setState(() {
-        //     _searchText = "";
-        //     _txtSearch.text = "";
-        //     customIcon = const Icon(Icons.search);
-        //     customSearchBar = const Text('List Mekanik');
-        //   });
-        //   paginatorGlobalKey.currentState.changeState(
-        //     pageLoadFuture: sendMekanikDataRequest,
-        //     resetState: true,
-        //   );
-        //   return false; // jangan keluar dulu, clear search dulu
-        // }
-        // return true; // kalau ga ada search, baru keluar
         _goBack(context);
         return false; // biar tidak auto pop, tapi pakai _goBack
       },
@@ -449,7 +344,7 @@ class _ListMekanikInspeksiV2State extends State<ListMekanikInspeksiV2> {
                         padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                         textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold)),
+                            fontSize: 12, fontWeight: FontWeight.bold,color: Colors.white)),
                   )),
                   SizedBox(width: 10)
                 ] else if (!getAkses("OPR") || username == 'ADMIN') ...[
@@ -531,26 +426,6 @@ class _ListMekanikInspeksiV2State extends State<ListMekanikInspeksiV2> {
     return mekanikDatas.statusCode != 200;
   }
 }
-
-// class MekanikData {
-//   List<dynamic> mekanikdatas;
-//   int statusCode;
-//   String errorMessage;
-//   int total;
-//   int nItems;
-//
-//   MekanikData.fromResponse(http.Response response) {
-//     this.statusCode = response.statusCode;
-//     List jsonData = json.decode(response.body);
-//     mekanikdatas = jsonData[1];
-//     total = jsonData[0]['total'];
-//     nItems = mekanikdatas.length;
-//   }
-//
-//   MekanikData.withError(String errorMessage) {
-//     this.errorMessage = errorMessage;
-//   }
-// }
 
 class MekanikData {
   late final List<Map<String, dynamic>> mekanikdatas;

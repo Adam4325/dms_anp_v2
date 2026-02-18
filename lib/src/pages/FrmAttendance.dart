@@ -33,7 +33,7 @@ class FrmAttendanceState extends State<FrmAttendance> {
   List listGeofence = [];
   List<Map<String, dynamic>> listInfoAbsensi = [];
   String address = "";
-  Position? userLocation;
+  Position? userLocation;//
   String geo_id = "";
   String geo_nm = "";
   String namaKaryawan = "";
@@ -408,7 +408,10 @@ class FrmAttendanceState extends State<FrmAttendance> {
               actions: [
                 ElevatedButton.icon(
                   icon: Icon(Icons.close, color: Colors.white, size: 20.0),
-                  label: Text("No"),
+                  label: Text(
+                    "No",
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onPressed: () {
                     Navigator.of(context).pop(false);
                   },
@@ -421,7 +424,10 @@ class FrmAttendanceState extends State<FrmAttendance> {
                 ),
                 ElevatedButton.icon(
                   icon: Icon(Icons.save, color: Colors.white, size: 20.0),
-                  label: Text("checked ${inorout.toUpperCase()}"),
+                  label: Text(
+                    "checked ${inorout.toUpperCase()}",
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onPressed: () async {
                     Navigator.of(context).pop(false);
                     print('save attend');
@@ -471,7 +477,10 @@ class FrmAttendanceState extends State<FrmAttendance> {
             actions: [
               ElevatedButton.icon(
                 icon: Icon(Icons.close, color: Colors.white, size: 20.0),
-                label: Text("No"),
+                label: Text(
+                  "No",
+                  style: TextStyle(color: Colors.white),
+                ),
                 onPressed: () {
                   Navigator.of(context).pop(false);
                 },
@@ -484,7 +493,10 @@ class FrmAttendanceState extends State<FrmAttendance> {
               ),
               ElevatedButton.icon(
                 icon: Icon(Icons.save, color: Colors.white, size: 20.0),
-                label: Text("checked ${inorout.toUpperCase()}"),
+                label: Text(
+                  "checked ${inorout.toUpperCase()}",
+                  style: TextStyle(color: Colors.white),
+                ),
                 onPressed: () async {
                   Navigator.of(context).pop(false);
                   await saveAttendance(
@@ -533,9 +545,9 @@ class FrmAttendanceState extends State<FrmAttendance> {
       },
       child: Scaffold(
         key: globalScaffoldKey,
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: const Color(0xFFFFF4E6), // soft orange background
         appBar: AppBar(
-          backgroundColor: Colors.blueAccent,
+          backgroundColor: const Color(0xFFFF8C69), // soft orange appBar
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             iconSize: 20.0,
@@ -849,7 +861,10 @@ class FrmAttendanceState extends State<FrmAttendance> {
                 Expanded(
                   child: ElevatedButton.icon(
                     icon: Icon(Icons.login, color: Colors.white),
-                    label: Text("Check IN"),
+                    label: Text(
+                      "Check IN",
+                      style: TextStyle(color: Colors.white),
+                    ),
                     onPressed: canCheckIn ? () => updatePosition("IN") : null,
                     style: ElevatedButton.styleFrom(backgroundColor: canCheckIn ? Colors.green : Colors.grey,
                       padding: EdgeInsets.symmetric(vertical: 12),
@@ -863,7 +878,10 @@ class FrmAttendanceState extends State<FrmAttendance> {
                 Expanded(
                   child: ElevatedButton.icon(
                     icon: Icon(Icons.logout, color: Colors.white),
-                    label: Text("Check OUT"),
+                    label: Text(
+                      "Check OUT",
+                      style: TextStyle(color: Colors.white),
+                    ),
                     onPressed: canCheckOut ? () => updatePosition("OUT") : null,
                     style: ElevatedButton.styleFrom(backgroundColor: canCheckOut ? Colors.orange : Colors.grey,
                       padding: EdgeInsets.symmetric(vertical: 12),
@@ -897,11 +915,15 @@ class FrmAttendanceState extends State<FrmAttendance> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                icon: Icon(Icons.create, color: Colors.white),
-                label: Text("Request Attendance"),
+                icon: const Icon(Icons.create, color: Colors.white),
+                label: const Text(
+                  "Request Attendance",
+                  style: TextStyle(color: Colors.white),
+                ),
                 onPressed: () => _navigateToRequestAttendance(),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue,
-                  padding: EdgeInsets.symmetric(vertical: 12),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF8C69), // soft orange
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

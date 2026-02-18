@@ -63,7 +63,7 @@ class _DailyMekanikCheckScreenP2HState
         ? sharedPreferences.getString("mechanicid")
         : globals.Mckryid;
     var baseUrl =
-        'https://apps.tuluatas.com/trucking/mobile/api/mekanik/master_data_inspeksi.jsp?method=list-inspeksi-v2&kryid=${mechanicid}';
+       GlobalData.baseUrl + 'api/mekanik/master_data_inspeksi.jsp?method=list-inspeksi-v2&kryid=${mechanicid}';
     print(baseUrl);
     final response = await http.get(Uri.parse(baseUrl));
 
@@ -194,7 +194,7 @@ class _DailyMekanikCheckScreenP2HState
     try {
       final response = await http.post(
         Uri.parse(
-            'https://apps.tuluatas.com/trucking/mobile/api/mekanik/create_p2h_mekanik_new.jsp'),
+            GlobalData.baseUrl + 'api/mekanik/create_p2h_mekanik_new.jsp'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -386,7 +386,7 @@ class _DailyMekanikCheckScreenP2HState
 
   Future<String?> fetchGrade(String kryid) async {
     var urlBase =
-        'https://apps.tuluatas.com/trucking/mobile/api/mekanik/mekanik_grade.jsp?kryid=${kryid}';
+       GlobalData.baseUrl + 'api/mekanik/mekanik_grade.jsp?kryid=${kryid}';
     print(urlBase);
     final url = Uri.parse(urlBase);
 

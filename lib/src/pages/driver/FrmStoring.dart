@@ -241,41 +241,6 @@ class _FrmStoringState extends State<FrmStoring> {
             Navigator.pushReplacement(context,
                 MaterialPageRoute(builder: (context) => ViewDashboard()));
           });
-          //END ALERT SUCCESS
-          // Timer(Duration(seconds: 1), () {
-          //   // 5s over, navigate to a new page
-          //   showDialog(
-          //     context: context,
-          //     builder: (context) => new AlertDialog(
-          //       title: new Text('Information'),
-          //       content: new Text(message),
-          //       actions: <Widget>[
-          //         new ElevatedButton.icon(
-          //           icon: Icon(
-          //             Icons.close,
-          //             color: Colors.white,
-          //             size: 20.0,
-          //           ),
-          //           label: Text("Ok"),
-          //           onPressed: () {
-          //             Navigator.of(context).pop(false);
-          //             Navigator.pushReplacement(
-          //                 context,
-          //                 MaterialPageRoute(
-          //                     builder: (context) => ViewDashboard()));
-          //           },
-          //           style: ElevatedButton.styleFrom(
-          //               elevation: 0.0,
-          //               backgroundColor: Colors.blue,
-          //               padding:
-          //                   EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-          //               textStyle: TextStyle(
-          //                   fontSize: 10, fontWeight: FontWeight.bold)),
-          //         )
-          //       ],
-          //     ),
-          //   );
-          // });
         }
       });
     }
@@ -357,22 +322,6 @@ class _FrmStoringState extends State<FrmStoring> {
   ProgressDialog? pr;
   @override
   Widget build(BuildContext context) {
-    // pr = new ProgressDialog(context,
-    //     type: ProgressDialogType.Normal, isDismissible: true);
-    //
-    // pr.style(
-    //   message: 'Wait...',
-    //   borderRadius: 10.0,
-    //   backgroundColor: Colors.white,
-    //   elevation: 10.0,
-    //   insetAnimCurve: Curves.easeInOut,
-    //   progress: 0.0,
-    //   maxProgress: 100.0,
-    //   progressTextStyle: TextStyle(
-    //       color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
-    //   messageTextStyle: TextStyle(
-    //       color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
-    // );
     var vehicleNopol = vhcid == null || vhcid == "" ? "[No Nopol]" : vhcid;
     return WillPopScope(
       onWillPop: () {
@@ -578,7 +527,7 @@ class _FrmStoringState extends State<FrmStoring> {
                                               horizontal: 10, vertical: 0),
                                           textStyle: TextStyle(
                                               fontSize: 10,
-                                              fontWeight: FontWeight.bold)),
+                                              fontWeight: FontWeight.bold,color: Colors.white)),
                                     ),
                                     new ElevatedButton.icon(
                                       icon: Icon(

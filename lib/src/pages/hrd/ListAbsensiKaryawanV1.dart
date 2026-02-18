@@ -45,7 +45,8 @@ class _ListAbsensiKaryawanV1State extends State<ListAbsensiKaryawanV1> {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String kryid = prefs.getString('kryid') ?? '';
-      //kryid = '1184-020118.81';
+      //kryid = '956ad8eab460883e ';
+
       if (kryid.isEmpty) {
         if (mounted) alert(globalScaffoldKey.currentContext!, 0, 'KryID tidak ditemukan', 'error');
         setState(() => _isLoading = false);
@@ -60,6 +61,7 @@ class _ListAbsensiKaryawanV1State extends State<ListAbsensiKaryawanV1> {
       //String today = '2026-02-01';//DateFormat('yyyy-MM-dd').format(DateTime.now());
       String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final method = widget.method.toLowerCase();
+      print('method ${method}');
       String url = '${GlobalData.baseUrl}api/hrd/list_hadir_karyawan.jsp'
           '?method=list-$method'
           '&kryid=$kryid'

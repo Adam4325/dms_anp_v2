@@ -1939,7 +1939,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
     for (var i = 0; i < data.length; i++) {
       if (data[i]['name'] != null) {
         if (data[i]['name'] == 'status_unit') {
-          vhcid_units = data[i]['nopol'];
+          // Antisipasi jika 'nopol' null agar tidak melempar type 'Null' is not a subtype of type 'String'
+          vhcid_units = data[i]['nopol']?.toString() ?? '';
           var nopol = data[i]['nopol'] == null ? "" : data[i]['nopol'] + " ";
           status_unit = data[i]['status'] == null
               ? ''
@@ -1991,6 +1992,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       ],
     );
   }
+  //ERRO
 
   Widget _buildStaffInfo() {
     var out_standing_jobs = "0";
@@ -2627,6 +2629,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
   }
 
   void _navigateToListAbsensi(String method) {
+    print(method);
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -2675,7 +2678,6 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
     }
   }
-
   void _viewHistory(dynamic item) async {
     print(item['do_number']);
     print(item['tgl_do']);
@@ -2725,8 +2727,11 @@ class _ViewDashboardState extends State<ViewDashboard> {
           prefs.setString("is_driver", "true");
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => LiveMaps()),
+            MaterialPageRoute(
+              builder: (context) => LiveMaps(is_driver: 'true'),
+            ),
           );
+
         } else {
           _showAlert(globalScaffoldKey.currentContext!, 0, "Terjadi kesalahan server",
               "error");
@@ -2759,14 +2764,14 @@ class _ViewDashboardState extends State<ViewDashboard> {
               prefs.setString("is_driver", "false");
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LiveMaps()),
+                MaterialPageRoute(builder: (context) => LiveMaps(is_driver:'false')),
               );
             } else {
               _showAlert(globalScaffoldKey.currentContext!, 0,
                   "Terjadi kesalahan server", "error");
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LiveMaps()),
+                MaterialPageRoute(builder: (context) => LiveMaps(is_driver:'true')),
               );
             }
           } else {
@@ -3572,7 +3577,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
           prefs.setString("is_driver", "true");
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => LiveMaps()),
+            MaterialPageRoute(builder: (context) => LiveMaps(is_driver:'true')),
           );
         } else {
           _showAlert(globalScaffoldKey.currentContext!, 0, "Terjadi kesalahan server",
@@ -3598,7 +3603,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
               prefs.setString("is_driver", "false");
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LiveMaps()),
+                MaterialPageRoute(builder: (context) => LiveMaps(is_driver:'false')),
               );
             } else {
               _showAlert(globalScaffoldKey.currentContext!, 0,

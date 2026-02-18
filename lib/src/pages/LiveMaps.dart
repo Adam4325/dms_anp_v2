@@ -53,9 +53,19 @@ class TotalKm {
   }
 }
 
+// class LiveMaps extends StatefulWidget {
+//
+//   @override
+//   LiveMapsState createState() => LiveMapsState();
+// }
+
 class LiveMaps extends StatefulWidget {
+  final String is_driver;
+
+  const LiveMaps({super.key, required this.is_driver});
+
   @override
-  LiveMapsState createState() => LiveMapsState();
+  State<LiveMaps> createState() => LiveMapsState();
 }
 
 class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
@@ -66,7 +76,7 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
   double pinPillPosition = -170;
   List dataVehicle = [];
   List dataVehicleTemp = [];
-  var is_driver = "";
+  //var is_driver = "";
   late Location location;
   late Timer _timer;
   String new_vhcid = "";
@@ -147,9 +157,9 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
     setState(() {
       vhcid = prefs.getString("vhcidOPR")!;
       vhcgps = prefs.getString("vhcgps")!;
-      is_driver = prefs.getString("is_driver")!;
+      //is_driver = prefs.getString("is_driver")!;
       print('is_driver');
-      print(is_driver);
+      print(widget.is_driver);
     });
   }
 
@@ -193,7 +203,7 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
     var dataLast = prefs.getStringList("dataLast");
     print(dataLast);
 
-    if (is_driver == "false") {
+    if (widget.is_driver == "false") {
       if (dataLast != null && dataLast.length >= 13) {
         String vendorType = safeGetListElement(dataLast, 12);
         String vehicleId = safeGetListElement(dataLast, 1);
@@ -260,6 +270,8 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
     }
 
     _fadeController.forward();
+    print("widget.is_driver");
+    print(widget.is_driver);
   }
 
   @override
@@ -585,7 +597,7 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
       vhcid = new_vhcid;
     }
 
-    if (is_driver == 'true') {
+    if (widget.is_driver == 'true') {
       vhcid = prefs.getString("vhcid")!;
     }
     vhcid = vhcid.split("/")[0];
@@ -969,51 +981,6 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
               },
             ),
 
-            // Custom App Bar
-            // SafeArea(
-            //   child: FadeTransition(
-            //     opacity: _fadeAnimation,
-            //     child: Container(
-            //       margin: EdgeInsets.only(top: 8, left: 16, right: 16),
-            //       child: Row(
-            //         children: [
-            //           _buildSoftButton(
-            //             child: Icon(
-            //               Icons.arrow_back_ios,
-            //               color: Colors.grey.shade700,
-            //               size: 20,
-            //             ),
-            //             onPressed: () => _goBack(context),
-            //           ),
-            //           Expanded(
-            //             child: Center(
-            //               child: Container(
-            //                 padding: EdgeInsets.all(10),
-            //                 decoration: BoxDecoration(
-            //                   color: Colors.white.withOpacity(0.95),
-            //                   borderRadius: BorderRadius.circular(20),
-            //                   boxShadow: [
-            //                     BoxShadow(
-            //                       color: Colors.black.withOpacity(0.05),
-            //                       blurRadius: 8,
-            //                       offset: Offset(0, 2),
-            //                     ),
-            //                   ],
-            //                 ),
-            //                 child: Icon(
-            //                   Icons.explore,
-            //                   color: Theme.of(context).primaryColor,
-            //                   size: 20,
-            //                 ),
-            //               ),
-            //             ),
-            //           ),
-            //           SizedBox(width: 8),
-            //         ],
-            //       ),
-            //     ),
-            //   ),
-            // ),
             SafeArea(
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -1036,7 +1003,7 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
             Positioned(
               right: 16,
               top: 80,
-              bottom: is_driver == 'false' ? 120 : 80,
+              bottom: widget.is_driver == 'false' ? 120 : 80,
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: Column(
@@ -1125,7 +1092,7 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
                         SizedBox(height: 12),
 
                         // Current Location Button (only for non-driver)
-                        if (is_driver == 'false')
+                        if (widget.is_driver == 'false')
                           _buildSoftButton(
                             child: Icon(
                               Icons.my_location,
@@ -1323,8 +1290,13 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
   }
 
   Widget searchBarUI() {
-    if (is_driver == 'false') {
-      return FloatingSearchBar(
+    if (widget.is_driver == 'false') {
+      final maxHeight = MediaQuery.of(context).size.height -
+          (MediaQuery.of(context).padding.top + 8) -
+          24.0;
+      return ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: FloatingSearchBar(
         controller: controllerUI,
         hint: 'Search Vehicle...',
         openAxisAlignment: 0.0,
@@ -1388,7 +1360,8 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
             ),
           );
         },
-      );
+      ),
+    );
     } else {
       return Container();
     }

@@ -335,21 +335,31 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         actions: [
           ElevatedButton.icon(
             icon: Icon(Icons.camera_alt, color: Colors.white),
-            label: Text("Camera"),
+            label: Text(
+              "Camera",
+              style: TextStyle(color: Colors.white),
+            ),
             onPressed: () {
               Navigator.pop(context);
               _pickImage(ImageSource.camera);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF8C69),
+            ),
           ),
           ElevatedButton.icon(
             icon: Icon(Icons.photo_library, color: Colors.white),
-            label: Text("Gallery"),
+            label: Text(
+              "Gallery",
+              style: TextStyle(color: Colors.white),
+            ),
             onPressed: () {
               Navigator.pop(context);
               _pickImage(ImageSource.gallery);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF8C69),
+            ),
           ),
         ],
       ),
@@ -454,18 +464,26 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         actions: [
           ElevatedButton.icon(
             icon: Icon(Icons.close, color: Colors.white),
-            label: Text("Cancel"),
+            label: Text(
+              "Cancel",
+              style: TextStyle(color: Colors.white),
+            ),
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
           ),
           ElevatedButton.icon(
             icon: Icon(Icons.check, color: Colors.white),
-            label: Text("Confirm"),
+            label: Text(
+              "Confirm",
+              style: TextStyle(color: Colors.white),
+            ),
             onPressed: () {
               Navigator.pop(context);
               _submitAttendance(type, geofence, address);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF8C69),
+            ),
           ),
         ],
       ),
@@ -632,9 +650,9 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       },
       child: Scaffold(
         key: _scaffoldKey,
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: const Color(0xFFFFF4E6), // soft orange background
         appBar: AppBar(
-          backgroundColor: Colors.blueAccent,
+          backgroundColor: const Color(0xFFFF8C69), // soft orange appBar
           title: Text('Driver Attendance'),
           centerTitle: true,
           leading: IconButton(
@@ -878,10 +896,16 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
                 Expanded(
                   child: ElevatedButton.icon(
                     icon: Icon(Icons.login, color: Colors.white),
-                    label: Text("Check IN"),
-                    onPressed: canCheckIn ? () => _processAttendance("IN") : null,
-                    style: ElevatedButton.styleFrom(backgroundColor: canCheckIn ? Colors.green : Colors.grey,
-                      padding: EdgeInsets.symmetric(vertical: 12),
+                    label: Text(
+                      "Check IN",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed:
+                        canCheckIn ? () => _processAttendance("IN") : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          canCheckIn ? const Color(0xFF4CAF50) : Colors.grey,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -892,10 +916,16 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
                 Expanded(
                   child: ElevatedButton.icon(
                     icon: Icon(Icons.logout, color: Colors.white),
-                    label: Text("Check OUT"),
-                    onPressed: canCheckOut ? () => _processAttendance("OUT") : null,
-                    style: ElevatedButton.styleFrom(backgroundColor: canCheckOut ? Colors.orange : Colors.grey,
-                      padding: EdgeInsets.symmetric(vertical: 12),
+                    label: Text(
+                      "Check OUT",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed:
+                        canCheckOut ? () => _processAttendance("OUT") : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          canCheckOut ? const Color(0xFFFF8C69) : Colors.grey,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -1022,57 +1052,6 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
     );
   }
 
-  // Widget _buildAttendanceSection() {
-  //   return Card(
-  //     elevation: 4,
-  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-  //     child: Container(
-  //       padding: EdgeInsets.all(16),
-  //       child: Column(
-  //         children: [
-  //           Text(
-  //             "Attendance Actions",
-  //             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-  //           ),
-  //           SizedBox(height: 16),
-  //           Row(
-  //             children: [
-  //               Expanded(
-  //                 child: ElevatedButton.icon(
-  //                   icon: Icon(Icons.login, color: Colors.white),
-  //                   label: Text("Check IN"),
-  //                   onPressed: () => _processAttendance("IN"),
-  //                   style: ElevatedButton.styleFrom(
-  //                     backgroundColor: Colors.green,
-  //                     padding: EdgeInsets.symmetric(vertical: 12),
-  //                     shape: RoundedRectangleBorder(
-  //                       borderRadius: BorderRadius.circular(8),
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ),
-  //               SizedBox(width: 16),
-  //               Expanded(
-  //                 child: ElevatedButton.icon(
-  //                   icon: Icon(Icons.logout, color: Colors.white),
-  //                   label: Text("Check OUT"),
-  //                   onPressed: () => _processAttendance("OUT"),
-  //                   style: ElevatedButton.styleFrom(
-  //                     backgroundColor: Colors.orange,
-  //                     padding: EdgeInsets.symmetric(vertical: 12),
-  //                     shape: RoundedRectangleBorder(
-  //                       borderRadius: BorderRadius.circular(8),
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildActionButtons() {
     return Card(
@@ -1090,11 +1069,15 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                icon: Icon(Icons.create, color: Colors.white),
-                label: Text("Request Attendance"),
+                icon: const Icon(Icons.create, color: Colors.white),
+                label: const Text(
+                  "Request Attendance",
+                  style: TextStyle(color: Colors.white),
+                ),
                 onPressed: _navigateToRequestAttendance,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue,
-                  padding: EdgeInsets.symmetric(vertical: 12),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF8C69),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

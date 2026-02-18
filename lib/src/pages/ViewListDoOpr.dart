@@ -904,10 +904,14 @@ class _ViewListDoOprState extends State<ViewListDoOpr> {
                               prefs.setStringList("dataLast", lstLast);
                             }
                             //print(lstLast);
+                            var is_driver = 'false;';
+                            if(prefs.getString("loginname")=="DRIVER"){
+                              is_driver = 'true';
+                            }
                             Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => LiveMaps()));
+                                    builder: (context) => LiveMaps(is_driver:is_driver)));
                           } else {
                             pr?.hide();
                             _showOrangeAlert(context, "Token Not Valid", "error");
@@ -932,10 +936,14 @@ class _ViewListDoOprState extends State<ViewListDoOpr> {
                           prefs.setStringList("dataLast", lstLast);
                           prefs.setString("dlocustdonbrOPR", item['dlocustdonbr']);
                           prefs.setString("statusDlocustdonbrOPR", item['bujstatus']);
+                          var is_driver = 'false;';
+                          if(prefs.getString("loginname")=="DRIVER"){
+                            is_driver = 'true';
+                          }
                           Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => LiveMaps()));
+                                  builder: (context) => LiveMaps(is_driver:is_driver)));
                         }
                       } else {
                         pr?.hide();
@@ -1025,245 +1033,6 @@ class _ViewListDoOprState extends State<ViewListDoOpr> {
       default:
         return Colors.grey.shade600;
     }
-  }
-
-  Widget _buildDMSMenuDOOld(dynamic item, int index) {
-    double c_width = MediaQuery.of(context).size.width * 0.8;
-    var gps_name = item['vhcgps'] == null ||
-        item['vhcgps'] == "" ||
-        item['vhcgps'] == 'null'
-        ? "[NO GPS VENDOR]"
-        : '(${item['vhcgps'].toString()})';
-    return new Container(
-        margin: const EdgeInsets.only(bottom: 20.0),
-        height: 240,
-        decoration: new BoxDecoration(
-            border: Border.all(color: Colors.blueAccent),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [const Color(0xfffdfcfc), const Color(0xfffdfcfc)],
-            ),
-            borderRadius: new BorderRadius.all(new Radius.circular(15.0))),
-        child: new Column(
-          children: <Widget>[
-            new Container(
-              padding: EdgeInsets.all(12.0),
-              decoration: new BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors:  [const Color(0xff027ae3), const Color(0xff027ae3)],
-                  ),
-                  borderRadius: new BorderRadius.only(
-                      topLeft: new Radius.circular(15.0),
-                      topRight: new Radius.circular(15.0))),
-              child: new Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text('BUJNBR: ${item['bujnbr']}',style: TextStyle(color: Colors.white, fontSize: 14)),
-                ],
-              ),
-            ),
-            new Container(
-              //padding: EdgeInsets.only(left: 5.0, right: 5.0, top: 12.0),
-              child: new Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: <Widget>[
-                  new Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                      Text("NOPOL : ${item['vhcid']}",
-                          style: TextStyle(color: Colors.black, fontSize: 13)),
-                      //Padding( padding: EdgeInsets.only(top: 5.0)),
-                      Text("LOCID : ${item['locid']}",
-                          style: TextStyle(color: Colors.black, fontSize: 13)),
-                      Text("GPS : ${gps_name}",
-                          style: TextStyle(color: Colors.red, fontSize: 13)),
-                      Text(
-                          "DLO UOM : ${item['dloitemuom']}, QTY : ${item['bujitemqty']}",
-                          style: TextStyle(color: Colors.black, fontSize: 13)),
-                      Text("DLOCUSTDONBR : ${item['dlocustdonbr']}",
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                          softWrap: false,
-                          style: TextStyle(color: Colors.black, fontSize: 13)),
-                      Text("ORIGIN : ${item['origin_name']}",
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                          softWrap: false,
-                          style: TextStyle(color: Colors.blue, fontSize: 13)),
-                      Text("DESTINATION : ${item['destination_name']}",
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                          softWrap: false,
-                          style: TextStyle(color: Colors.blue, fontSize: 13)),
-                      Text("STATUS : ${item['bujstatus']}",
-                          style: TextStyle(color: Colors.green, fontSize: 13)),
-                      // new Padding(
-                      //   padding: EdgeInsets.only(top: 10.0),
-                      // ),
-                      // new Text(
-                      //   "NOPOL (GPS) /LOCID : ${item['vhcid']} ${gps_name} ${item['locid']}",
-                      //   style: TextStyle(color: Colors.black, fontSize: 13.0),
-                      // )
-                    ],
-                  )
-                ],
-              ),
-            ),
-            new Container(
-              padding: EdgeInsets.only(left: 5.0, right: 5.0, top: 12.0),
-              child: new Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  new Expanded(
-                      child: ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.save,
-                          color: Colors.white,
-                          size: 24.0,
-                        ),
-                        label: Text("Close DO"),
-                        onPressed: () async {
-                          SharedPreferences prefs =
-                          await SharedPreferences.getInstance();
-                          setState(() {
-                            prefs.setString("bujnbrOPR", item['bujnbr']);
-                            prefs.setString(
-                                "dlocustdonbrOPR", item['dlocustdonbr']);
-                            prefs.setString("advbujnbrOPR", item['bujnbr']);
-                            prefs.setString("vhcidOPR", item['vhcid']);
-                            prefs.setString("originOPR", item['idorigin']);
-                            prefs.setString("origin_nameOPR", item['origin_name']);
-                            prefs.setString(
-                                "destinationOPR", item['iddestination']);
-                            prefs.setString(
-                                "destination_nameOPR", item['destination_name']);
-                            prefs.setString("tarifuomOPR", item['dloitemuom']);
-                            prefs.setString("qtyOPR", item['bujitemqty']);
-                            prefs.setString("locidOPR", item['locid']);
-                            prefs.setString("odometerOPR", item["bujinmtr"]);
-                            prefs.setString("odometerOutOPR", item["bujoutmtr"]);
-                            prefs.setString("imageDo", "");
-                          });
-                          showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              });
-                          Timer(Duration(seconds: 1), () {
-                            // 5s over, navigate to a new page
-                            Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => FrmCloseDoByOpr()));
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0.0,
-                            backgroundColor: Colors.redAccent,
-                            padding:
-                            EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                            textStyle: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
-                      )),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  new Expanded(
-                      child: ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.location_on,
-                          color: Colors.white,
-                          size: 24.0,
-                        ),
-                        label: Text("View"),
-                        onPressed: () async {
-                          SharedPreferences prefs =
-                          await SharedPreferences.getInstance();
-                          var gpsName = item['vhcgps'].toString();
-                          var vhCID = item['vhcid'].toString();
-                          prefs.setString("page", "another");
-                          var _tokens = "";
-                          print(gpsName);
-                          print(vhCID);
-                          if (gpsName != "" &&
-                              gpsName != null &&
-                              gpsName != "null") {
-                            if (gpsName
-                                .toString()
-                                .toLowerCase()
-                                .replaceAll(" ", "") ==
-                                "easygo") {
-                              var tokenAuth = new GenerateTokenAuth();
-                              _tokens = await tokenAuth.GetTokenEasyGo(
-                                  gpsName.toString(), pr!);
-                              if (_tokens != "") {
-                                setState(() {
-                                  prefs.setString("vhcgps", item['vhcgps']);
-                                  prefs.setString("vhcidOPR", item['vhcid']);
-                                  prefs.setString("tokeneasygo", _tokens);
-                                });
-                                await GetLastPositionFirst(_tokens, item['vhcid']); //"B 9646 YM/TR DP-2"
-                                //await GetLastPositionFirst(_tokens,"B 9319 YU"); //"B 9646 YM/TR DP-2"
-                                List<String> lstLast = [
-                                  gps_sn, //0
-                                  nopol, //1
-                                  gps_time, //2
-                                  acc.toString(), //3
-                                  addr, //4
-                                  speed.toString(), //5
-                                  direction, //6
-                                  lat.toString(), //7
-                                  lon.toString(), //8
-                                  no_do, //9
-                                  ket_status_do, //10
-                                  driver_nm //11
-                                ];
-                                print("GPSN SN ${gps_sn}");
-                                print("GPSN SN ${messageAPI}");
-                                if (messageAPI == "200") {
-                                  prefs.remove("dataLast");
-                                  prefs.setStringList("dataLast", lstLast);
-                                } else {
-                                  pr?.hide();
-                                  // alert(globalScaffoldKey.currentContext!, 0,
-                                  //     messageAPI, "error");
-                                  prefs.setStringList("dataLast", lstLast);
-                                }
-                                //print(lstLast);
-                                Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => LiveMaps()));
-                              } else {
-                                pr?.hide();
-                                alert(globalScaffoldKey.currentContext!, 0,
-                                    "Token Not Valid", "error");
-                              }
-                            }
-                          } else {
-                            pr?.hide();
-                            alert(globalScaffoldKey.currentContext!, 2,
-                                "Gps Vendor name Kosong", "warning");
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0.0,
-                            backgroundColor: Colors.blue,
-                            padding:
-                            EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                            textStyle: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
-                      )),
-                ],
-              ),
-            )
-          ],
-        ));
   }
 
   getDataPreference() async {
