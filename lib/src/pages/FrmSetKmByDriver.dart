@@ -160,10 +160,11 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                   },
                   style: ElevatedButton.styleFrom(
                       elevation: 0.0,
-                      backgroundColor: Colors.grey,
+                      backgroundColor: Colors.orange.shade400,
+                      foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                       textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ],
             ),
@@ -458,9 +459,9 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
         return Future.value(false);
       },
       child: Scaffold(
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.orange.shade400,
         appBar: AppBar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: Colors.orange.shade400,
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               iconSize: 20.0,
@@ -491,7 +492,29 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
     );
   }
 
-  //String vhcid="";
+  static const _inputRadius = 12.0;
+  static const _fieldPadding = EdgeInsets.symmetric(horizontal: 16, vertical: 14);
+
+  Widget _sectionLabel(String label, IconData icon) {
+    return Padding(
+      padding: EdgeInsets.only(left: 4, bottom: 8, top: 16),
+      child: Row(
+        children: [
+          Icon(icon, size: 22, color: Colors.orange.shade600),
+          SizedBox(width: 10),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _getVehicleList(BuildContext context) {
   print("dataListVehicle");
   print(dataListVehicle);
@@ -500,135 +523,202 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
       txtNopol.text = dataListVehicle[0]['id'];
       vhcid = dataListVehicle[0]['id'];
       return Container(
-        margin: EdgeInsets.only(left: 20, top: 0, right: 20, bottom: 0),
+        margin: EdgeInsets.only(bottom: 4),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(_inputRadius),
+          border: Border.all(color: Colors.orange.shade200, width: 1.5),
+        ),
         child: TextField(
           readOnly: true,
-          cursorColor: Colors.black,
+          cursorColor: Colors.orange.shade600,
           controller: txtNopol,
           keyboardType: TextInputType.text,
-          decoration: new InputDecoration(
-            fillColor: Colors.black12,
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          decoration: InputDecoration(
+            fillColor: Colors.transparent,
             filled: true,
-            border: OutlineInputBorder(),
-            isDense: true,
-            contentPadding:
-                EdgeInsets.only(left: 5, bottom: 11, top: 10, right: 5),
+            border: InputBorder.none,
+            contentPadding: _fieldPadding,
+            prefixIcon: Icon(Icons.directions_car, color: Colors.orange.shade400, size: 22),
           ),
         ),
       );
     } else {
-      return DropdownButton(
-        hint: Text('Nopol'),
-        items: dataListVehicle.map((item) {
-          return DropdownMenuItem(
-            value: item['id'].toString(),
-            child: Text(item['text'].toString()),
-          );
-        }).toList(),
-        onChanged: (newVal) {
-          setState(() {
-            vhcid = newVal!;
-            txtNopol.text = newVal!;
-          });
-        },
-        value: vhcid,
+      return Container(
+        margin: EdgeInsets.only(bottom: 4),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(_inputRadius),
+          border: Border.all(color: Colors.orange.shade200, width: 1.5),
+        ),
+        child: DropdownButton<String>(
+          hint: Row(
+            children: [
+              Icon(Icons.directions_car, color: Colors.orange.shade400, size: 22),
+              SizedBox(width: 12),
+              Text('Pilih Nopol', style: TextStyle(color: Colors.grey.shade700)),
+            ],
+          ),
+          isExpanded: true,
+          underline: SizedBox(),
+          icon: Icon(Icons.arrow_drop_down, color: Colors.orange.shade600),
+          items: dataListVehicle.map((item) {
+            return DropdownMenuItem<String>(
+              value: item['id'].toString(),
+              child: Text(item['text'].toString()),
+            );
+          }).toList(),
+          onChanged: (newVal) {
+            setState(() {
+              vhcid = newVal!;
+              txtNopol.text = newVal!;
+            });
+          },
+          value: vhcid.isEmpty ? null : vhcid,
+        ),
       );
     }
   }
 
   Widget _getContent(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 0.0),
+      padding: EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 0.0),
       child: ListView(
         children: <Widget>[
           Container(
             child: Card(
-              elevation: 14.0,
-              shadowColor: Color(0x802196F3),
+              elevation: 12.0,
+              shadowColor: Colors.orange.shade200,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15.0)),
+                  borderRadius: BorderRadius.circular(16.0)),
               clipBehavior: Clip.antiAlias,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  ListTile(title: Text("Nopol")), //BUGS
-                  _getVehicleList(context),
-                  ListTile(title: Text("Kilometer Awal")),
                   Container(
-                    margin:
-                        EdgeInsets.only(left: 20, top: 0, right: 20, bottom: 0),
-                    child: TextField(
-                      readOnly: true,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtKMOld,
-                      keyboardType: TextInputType.number,
-                      decoration: new InputDecoration(
-                        fillColor: Colors.black12,
-                        filled: true,
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                        contentPadding: EdgeInsets.only(
-                            left: 5, bottom: 11, top: 10, right: 5),
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.orange.shade400, Colors.orange.shade600],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
                     ),
-                  ),
-                  ListTile(title: Text("Kilometer Akhir")),
-                  Container(
-                    margin:
-                        EdgeInsets.only(left: 20, top: 0, right: 20, bottom: 0),
-                    child: Row(children: <Widget>[
-                      Expanded(
-                        child: TextField(
-                          cursorColor: Colors.black,
-                          //style: TextStyle(color: Colors.grey.shade800),
-                          controller: txtKM,
-                          keyboardType: TextInputType.number,
-                          decoration: new InputDecoration(
-                            //fillColor: Colors.black12, filled: true,
-                            border: OutlineInputBorder(),
-                            //labelText: 'Hello input here',
-                            isDense: true,
-                            contentPadding: EdgeInsets.only(
-                                left: 5, bottom: 11, top: 10, right: 5),
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 2,
-                      ),
-                      Expanded(
-                          child: ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.camera,
-                          color: Colors.white,
-                          size: 15.0,
-                        ),
-                        label: Text("Scan KM"),
-                        onPressed: () {
-                          _read();
-                        },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0.0,
-                            backgroundColor: Colors.blue,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 5, vertical: 0),
-                            textStyle: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
-                      )),
-                    ]),
-                  ),
-                  Container(
-                      margin: EdgeInsets.only(
-                          left: 20, top: 5, right: 20, bottom: 5),
-                      child: Row(children: <Widget>[
-                        Expanded(
-                            child: ElevatedButton.icon(
-                          icon: Icon(
-                            Icons.home_repair_service_sharp,
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit_road, color: Colors.white, size: 28),
+                        SizedBox(width: 12),
+                        Text(
+                          'Form Set KM',
+                          style: TextStyle(
                             color: Colors.white,
-                            size: 15.0,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
-                          label: Text("Service"),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _sectionLabel("Nopol", Icons.directions_car),
+                        _getVehicleList(context),
+                        _sectionLabel("Kilometer Awal", Icons.speed),
+                        Container(
+                          margin: EdgeInsets.only(bottom: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(_inputRadius),
+                            border: Border.all(color: Colors.orange.shade200, width: 1.5),
+                          ),
+                          child: TextField(
+                            readOnly: true,
+                            cursorColor: Colors.orange.shade600,
+                            style: TextStyle(color: Colors.grey.shade800, fontSize: 15),
+                            controller: txtKMOld,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              fillColor: Colors.transparent,
+                              filled: true,
+                              border: InputBorder.none,
+                              contentPadding: _fieldPadding,
+                              prefixIcon: Icon(Icons.straighten, color: Colors.orange.shade400, size: 22),
+                            ),
+                          ),
+                        ),
+                        _sectionLabel("Kilometer Akhir", Icons.flag),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Expanded(
+                              flex: 2,
+                              child: Container(
+                                margin: EdgeInsets.only(right: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(_inputRadius),
+                                  border: Border.all(color: Colors.orange.shade200, width: 1.5),
+                                ),
+                                child: TextField(
+                                  cursorColor: Colors.orange.shade600,
+                                  controller: txtKM,
+                                  keyboardType: TextInputType.number,
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                                  decoration: InputDecoration(
+                                    fillColor: Colors.transparent,
+                                    filled: true,
+                                    border: InputBorder.none,
+                                    contentPadding: _fieldPadding,
+                                    prefixIcon: Icon(Icons.straighten, color: Colors.orange.shade400, size: 22),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: SizedBox(
+                                height: 52,
+                                child: ElevatedButton.icon(
+                                  icon: Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                                  label: Text("Scan KM", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  onPressed: () => _read(),
+                                  style: ElevatedButton.styleFrom(
+                                    elevation: 2,
+                                    backgroundColor: Colors.orange.shade400,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_inputRadius)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          "Aksi",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.only(right: 6),
+                                  child: SizedBox(
+                                    height: 52,
+                                    child: ElevatedButton.icon(
+                                      icon: Icon(Icons.home_repair_service_sharp, color: Colors.white, size: 20),
+                                      label: Text("Service", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                           onPressed: () async {
                             SharedPreferences prefs =
                                 await SharedPreferences.getInstance();
@@ -700,12 +790,14 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                                       },
                                       style: ElevatedButton.styleFrom(
                                           elevation: 0.0,
-                                          backgroundColor: Colors.blue,
+                                          backgroundColor: Colors.orange.shade400,
+                                          foregroundColor: Colors.white,
                                           padding: EdgeInsets.symmetric(
                                               horizontal: 10, vertical: 0),
                                           textStyle: TextStyle(
                                               fontSize: 10,
-                                              fontWeight: FontWeight.bold)),
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white)),
                                     ),
                                     new ElevatedButton.icon(
                                       icon: Icon(
@@ -727,12 +819,14 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                                       },
                                       style: ElevatedButton.styleFrom(
                                           elevation: 0.0,
-                                          backgroundColor: Colors.blue,
+                                          backgroundColor: Colors.orange.shade400,
+                                          foregroundColor: Colors.white,
                                           padding: EdgeInsets.symmetric(
                                               horizontal: 10, vertical: 0),
                                           textStyle: TextStyle(
                                               fontSize: 10,
-                                              fontWeight: FontWeight.bold)),
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white)),
                                     ),
                                   ],
                                 ),
@@ -740,25 +834,27 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                              elevation: 0.0,
+                              elevation: 2,
                               backgroundColor: Colors.red,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 0),
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_inputRadius)),
                               textStyle: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.bold)),
-                        )),
-                        SizedBox(
-                          width: 2,
-                        ),
-                        Expanded(
-                            child: ElevatedButton.icon(
-                          icon: Icon(
-                            Icons.save,
-                            color: Colors.white,
-                            size: 15.0,
-                          ),
-                          label: Text("Antrian"), //CREATE ANTRIAN
-                          onPressed: () async {
+                                  fontSize: 13, fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 6),
+                                  child: SizedBox(
+                                    height: 52,
+                                    child: ElevatedButton.icon(
+                                      icon: Icon(Icons.save, color: Colors.white, size: 20),
+                                      label: Text("Antrian", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                      onPressed: () async {
                             var totalHaveDo = await getCountHaveDo(); //DEV
                             //totalHaveDo = 0;
                             if (totalHaveDo > 0) {
@@ -838,12 +934,14 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                                         },
                                         style: ElevatedButton.styleFrom(
                                             elevation: 0.0,
-                                            backgroundColor: Colors.orange,
+                                            backgroundColor: Colors.orange.shade400,
+                                            foregroundColor: Colors.white,
                                             padding: EdgeInsets.symmetric(
                                                 horizontal: 10, vertical: 0),
                                             textStyle: TextStyle(
                                                 fontSize: 10,
-                                                fontWeight: FontWeight.bold)),
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white)),
                                       ),
                                       SizedBox(width: 5),
                                       new ElevatedButton.icon(
@@ -865,11 +963,13 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                                         style: ElevatedButton.styleFrom(
                                             elevation: 0.0,
                                             backgroundColor: Colors.green,
+                                            foregroundColor: Colors.white,
                                             padding: EdgeInsets.symmetric(
                                                 horizontal: 10, vertical: 0),
                                             textStyle: TextStyle(
                                                 fontSize: 10,
-                                                fontWeight: FontWeight.bold)),
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white)),
                                       ),
                                       SizedBox(width: 5),
                                       new ElevatedButton.icon(
@@ -901,12 +1001,14 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                                         },
                                         style: ElevatedButton.styleFrom(
                                             elevation: 0.0,
-                                            backgroundColor: Colors.blue,
+                                            backgroundColor: Colors.orange.shade400,
+                                            foregroundColor: Colors.white,
                                             padding: EdgeInsets.symmetric(
                                                 horizontal: 10, vertical: 0),
                                             textStyle: TextStyle(
                                                 fontSize: 10,
-                                                fontWeight: FontWeight.bold)),
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white)),
                                       ),
                                     ],
                                   ),
@@ -921,27 +1023,28 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                              elevation: 0.0,
+                              elevation: 2,
                               backgroundColor: Colors.green,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 0),
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_inputRadius)),
                               textStyle: TextStyle(
-                                  fontSize: 10, fontWeight: FontWeight.bold)),
-                        )),
-                      ])),
-                  Container(
-                      margin: EdgeInsets.only(
-                          left: 20, top: 5, right: 20, bottom: 5),
-                      child: Row(children: <Widget>[
-                        Expanded(
-                            child: ElevatedButton.icon(
-                          icon: Icon(
-                            Icons.home_repair_service_sharp,
-                            color: Colors.white,
-                            size: 15.0,
-                          ),
-                          label: Text("StandBy"),
-                          onPressed: () async {
+                                  fontSize: 13, fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                        ),
+                        SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            icon: Icon(Icons.pending_actions, color: Colors.white, size: 22),
+                            label: Text("StandBy", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                            onPressed: () async {
                             SharedPreferences prefs =
                                 await SharedPreferences.getInstance();
                             String vhcidNew = prefs.getString(
@@ -1011,12 +1114,14 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                                       },
                                       style: ElevatedButton.styleFrom(
                                           elevation: 0.0,
-                                          backgroundColor: Colors.blue,
+                                          backgroundColor: Colors.orange.shade400,
+                                          foregroundColor: Colors.white,
                                           padding: EdgeInsets.symmetric(
                                               horizontal: 10, vertical: 0),
                                           textStyle: TextStyle(
                                               fontSize: 10,
-                                              fontWeight: FontWeight.bold)),
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white)),
                                     ),
                                     new ElevatedButton.icon(
                                       icon: Icon(
@@ -1040,12 +1145,14 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                                       },
                                       style: ElevatedButton.styleFrom(
                                           elevation: 0.0,
-                                          backgroundColor: Colors.blue,
+                                          backgroundColor: Colors.orange.shade400,
+                                          foregroundColor: Colors.white,
                                           padding: EdgeInsets.symmetric(
                                               horizontal: 10, vertical: 0),
                                           textStyle: TextStyle(
                                               fontSize: 10,
-                                              fontWeight: FontWeight.bold)),
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white)),
                                     ),
                                   ],
                                 ),
@@ -1053,14 +1160,20 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                              elevation: 0.0,
-                              backgroundColor: Colors.orange,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 0),
+                              elevation: 2,
+                              backgroundColor: Colors.orange.shade400,
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_inputRadius)),
                               textStyle: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.bold)),
-                        ))
-                      ]))
+                                  fontSize: 15, fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                        ),
+                      ),
+                        SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1080,7 +1193,7 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
   //         Container(
   //           child: Card(
   //             elevation: 14.0,
-  //             shadowColor: Color(0x802196F3),
+  //             shadowColor: Colors.orange.shade200,
   //             shape: RoundedRectangleBorder(
   //                 borderRadius: BorderRadius.circular(15.0)),
   //             clipBehavior: Clip.antiAlias,
@@ -1190,7 +1303,7 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                 semanticContainer: true,
                 clipBehavior: Clip.antiAliasWithSaveLayer,
                 elevation: 5.0,
-                //shadowColor: Color(0x802196F3),
+                //shadowColor: Colors.orange.shade200,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
                 child: InkWell(
@@ -1228,7 +1341,7 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
               height: 50,
               child: Card(
                 elevation: 5.0,
-                //shadowColor: Color(0x802196F3),
+                //shadowColor: Colors.orange.shade200,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
                 child: InkWell(
@@ -1240,7 +1353,7 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: <Widget>[
                         Material(
-                            color: Colors.blue,
+                            color: Colors.orange.shade400,
                             borderRadius: BorderRadius.circular(15.0),
                             child: Padding(
                               padding: EdgeInsets.all(10.0),
@@ -1265,7 +1378,7 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
               height: 50,
               child: Card(
                 elevation: 5.0,
-                //shadowColor: Color(0x802196F3),
+                //shadowColor: Colors.orange.shade200,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
                 child: InkWell(

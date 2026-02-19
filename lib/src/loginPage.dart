@@ -60,6 +60,7 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> initUniqueIdentifierState() async {
     String? identifier;
     try {
+      //identifier = "3d011a9d72e23c29";//await UniqueIdentifier.serial;
       identifier = await UniqueIdentifier.serial;
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString("androidID", identifier ?? '');
@@ -291,21 +292,21 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('status_karyawan', status_karyawan);
           prefs.setString('kryid', kryid);
           print('IMMEIID $_identifier');
-          // Timer(Duration(seconds: 1), () {
-          //   EasyLoading.dismiss();
-          //   final ctx = globalScaffoldKey.currentContext;
-          //   if (ctx != null) {
-          //     if (loginname == "MECHANIC" && isMenuForeman == false) {
-          //       Navigator.pushReplacement(ctx,
-          //           MaterialPageRoute(builder: (context) => ViewListWoMCN()));
-          //     } else {
-          //       prefs.setString(
-          //           'isMenuForeman', (isMenuForeman == true ? "1" : "0"));
-          //       Navigator.pushReplacement(ctx,
-          //           MaterialPageRoute(builder: (context) => ViewDashboard()));
-          //     }
-          //   }
-          // });
+          Timer(Duration(seconds: 1), () {
+            EasyLoading.dismiss();
+            final ctx = globalScaffoldKey.currentContext;
+            if (ctx != null) {
+              if (loginname == "MECHANIC" && isMenuForeman == false) {
+                Navigator.pushReplacement(ctx,
+                    MaterialPageRoute(builder: (context) => ViewListWoMCN()));
+              } else {
+                prefs.setString(
+                    'isMenuForeman', (isMenuForeman == true ? "1" : "0"));
+                Navigator.pushReplacement(ctx,
+                    MaterialPageRoute(builder: (context) => ViewDashboard()));
+              }
+            }
+          });
         }
       }
     } catch (e) {

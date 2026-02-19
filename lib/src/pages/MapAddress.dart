@@ -212,6 +212,89 @@ class MapAddressState extends State<MapAddress> {
 
   Future<String> GetDataArress(String query) async {
     var address = "";
+    final q = query.trim();
+
+    if (q.isEmpty) {
+      if (mounted) {
+        setState(() {
+          dataAddress = [];
+          _searchVersion++;
+        });
+      }
+      return "";
+    }
+
+    try {
+      if (!EasyLoading.isShow) {
+        EasyLoading.show();
+      }
+
+      final uri = Uri.https(
+        "nominatim.openstreetmap.org",
+        "/search",
+        {
+          "q": q,
+          "format": "json",
+          "limit": "5",
+          "addressdetails": "1"
+        },
+      );
+
+      print("URL OSM: $uri");
+
+      final response = await http.get(
+        uri,
+        headers: {
+          // WAJIB untuk OSM
+          "User-Agent": "TuluAtasTruckingApp/1.0 (admin@tuluatas.com)",
+          "Accept": "application/json"
+        },
+      );
+
+      print("Status: ${response.statusCode}");
+      print("Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+
+        if (mounted) {
+          setState(() {
+            dataAddress = decoded is List ? List.from(decoded) : [];
+            _searchVersion++;
+          });
+        }
+
+        address = "Success";
+      } else {
+        if (mounted) {
+          setState(() {
+            dataAddress = [];
+            _searchVersion++;
+          });
+        }
+      }
+
+    } catch (e) {
+      print("ERROR OSM: $e");
+
+      if (mounted) {
+        setState(() {
+          dataAddress = [];
+          _searchVersion++;
+        });
+      }
+    } finally {
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
+    }
+
+    return address;
+  }
+
+
+  Future<String> GetDataArressOLD(String query) async {
+    var address = "";
     final q = query?.toString().trim() ?? "";
     if (q.isEmpty) {
       if (mounted) setState(() { dataAddress = []; _searchVersion++; });

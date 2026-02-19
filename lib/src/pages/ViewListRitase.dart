@@ -23,11 +23,11 @@ ProgressDialog? pr;
 class _ViewListRitaseState extends State<ViewListRitase> {
   final formatCurrency = new NumberFormat.simpleCurrency(locale: 'id_ID');
   late SharedPreferences prefs;
-  late List data;
+  List data = [];
   String status_code = "";
   String message = "";
-  late int month;
-  late int year;
+  int month = DateTime.now().month;
+  int year = DateTime.now().year;
   final monthNow = new DateTime.now().month;
   final yearNow = new DateTime.now().year;
   int yearLast = 0;
@@ -47,7 +47,7 @@ class _ViewListRitaseState extends State<ViewListRitase> {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: Colors.orange,
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               iconSize: 20.0,
@@ -95,13 +95,6 @@ class _ViewListRitaseState extends State<ViewListRitase> {
       String drvid = prefs.getString("drvid")!;
       String drvids = "3188-10.2017.23.01.94";
       //4865.12.2019.10.03.65
-      if (month == null) {
-        month = monthNow;
-      }
-
-      if (year == null) {
-        year = yearNow;
-      }
       Uri myUri = Uri.parse(
           "${GlobalData.baseUrlProd}api/ritase_pelanggaran.jsp?method=ritase&driverid=" +
               drvid.toString() +
@@ -114,9 +107,10 @@ class _ViewListRitaseState extends State<ViewListRitase> {
           await http.get(myUri, headers: {"Accept": "application/json"});
       setState(() {
         // Get the JSON data
-        data = json.decode(response.body)["data"];
+        final raw = json.decode(response.body)["data"];
+        data = raw != null && raw is List ? raw : [];
         print('JSON data ${data}');
-        if (data == null || data.length == 0 || data == "") {
+        if (data.isEmpty) {
           totalRitase = 0;
           alert(globalScaffoldKey.currentContext!, 0, "Tidak ada data", "error");
         }else{
@@ -150,7 +144,7 @@ class _ViewListRitaseState extends State<ViewListRitase> {
         margin: const EdgeInsets.only(top: 210),
         child: ListView.builder(
             padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-            itemCount: data == null ? 0 : data.length,
+            itemCount: data.length,
             itemBuilder: (context, index) {
               //_controllers[index] = new TextEditingController();
               return _buildRitase(data[index], index);
@@ -162,15 +156,17 @@ class _ViewListRitaseState extends State<ViewListRitase> {
         margin: const EdgeInsets.only(left: 16, right: 16, bottom: 25),
         height: 200.0,
         decoration: new BoxDecoration(
-            border: Border.all(color: Colors.blueAccent),
+            border: Border.all(color: Colors.orange.shade300),
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [const Color(0xfffdfcfc), const Color(0xfffdfcfc)],
             ),
             borderRadius: new BorderRadius.all(new Radius.circular(15.0))),
-        child: new Column(
-          children: <Widget>[
+        child: SingleChildScrollView(
+          child: new Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
             new Container(
               padding: EdgeInsets.only(left: 10.0, right: 10.0, top: 10.0),
               child: new Row(
@@ -267,7 +263,7 @@ class _ViewListRitaseState extends State<ViewListRitase> {
                 children: <Widget>[
                   FloatingActionButton.extended(
                     backgroundColor:
-                        Colors.blueAccent, //const Color(Colors.blue),
+                        Colors.orange.shade400,
                     foregroundColor: Colors.white,
                     onPressed: () async {
                       try{
@@ -302,15 +298,15 @@ class _ViewListRitaseState extends State<ViewListRitase> {
               ),
             ),
           ],
+          ),
         ));
   }
 
   Widget _buildRitase(dynamic item, int index) {
     return new Container(
         margin: const EdgeInsets.only(bottom: 20.0),
-        height: 100.0,
         decoration: new BoxDecoration(
-            border: Border.all(color: Colors.blueAccent),
+            border: Border.all(color: Colors.orange.shade300),
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -318,6 +314,7 @@ class _ViewListRitaseState extends State<ViewListRitase> {
             ),
             borderRadius: new BorderRadius.all(new Radius.circular(15.0))),
         child: new Column(
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             new Container(
               padding: EdgeInsets.all(12.0),
@@ -325,7 +322,7 @@ class _ViewListRitaseState extends State<ViewListRitase> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.blueAccent, Colors.blue],
+                    colors: [Colors.orange.shade300, Colors.orange.shade600],
                   ),
                   borderRadius: new BorderRadius.only(
                       topLeft: new Radius.circular(15.0),

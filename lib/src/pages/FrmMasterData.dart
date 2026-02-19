@@ -86,6 +86,41 @@ class _FrmMasterDataState extends State<FrmMasterData>
   final TextEditingController txtLocaddress1 = TextEditingController();
   final TextEditingController txtLocaddress2 = TextEditingController();
   final TextEditingController txtLocprovince = TextEditingController();
+  static const List<Map<String, String>> _clientLocationTypeOptions = [
+    {'value': 'BENGKEL', 'title': 'BENGKEL - BENGKEL'},
+    {'value': 'CUSTOMER', 'title': 'CUSTOMER - CUSTOMER'},
+    {'value': 'INTERNAL', 'title': 'INTERNAL - INTERNAL'},
+    {'value': 'VENDOR', 'title': 'VENDOR - VENDOR'},
+  ];
+  static const List<String> _clientProvinceOptions = [
+    'Aceh (NAD)',
+    'Sumatra Utara',
+    'Riau',
+    'Sumatra Barat',
+    'Jambi',
+    'Sumatra Selatan',
+    'Bengkulu',
+    'Lampung',
+    'Jawa Timur',
+    'Jawa Tengah',
+    'Yogyakarta (DIY)',
+    'Jakarta (DKI)',
+    'Jawa Barat',
+    'Banten',
+    'Kalimantan Selatan',
+    'Kalimantan Timur',
+    'Kalimantan Tengah',
+    'Kalimantan Barat',
+    'Sulawesi Selatan',
+    'Sulawesi Tengah',
+    'Sulawesi Tenggara',
+    'Sulawesi Utara',
+    'Nusa Tenggara Timur',
+    'Nusa Tenggara Barat',
+    'Bali',
+    'Maluku',
+    'Papua',
+  ];
   String? _clientZone;
   List<Map<String, dynamic>> _listZoneOptions = [];
   final TextEditingController txtLoccompany = TextEditingController(text: 'AN');
@@ -495,7 +530,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
     txtDestLon.text = lon;
     setState(() => _osmDestSuggestions = []);
   }
-
+//
   Future<void> _saveOrUpdateDestination() async {
     final ctyname = txtDestCtyname.text.trim();
     if (ctyname.isEmpty) {
@@ -1644,9 +1679,21 @@ class _FrmMasterDataState extends State<FrmMasterData>
                   children: [
                     Text('Form Client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     SizedBox(height: 12),
-                    TextField(controller: txtLocid, decoration: InputDecoration(labelText: 'Locid', border: OutlineInputBorder())),
+                    TextField(controller: txtLocid, decoration: InputDecoration(labelText: 'CID', border: OutlineInputBorder())),
                     SizedBox(height: 8),
-                    TextField(controller: txtLocationtype, decoration: InputDecoration(labelText: 'Type', border: OutlineInputBorder())),
+                    SmartSelect<String?>.single(
+                      title: 'Type',
+                      selectedValue: txtLocationtype.text.isEmpty ? null : txtLocationtype.text,
+                      choiceItems: _clientLocationTypeOptions.map((e) => S2Choice<String>(value: e['value']!, title: e['title']!)).toList(),
+                      onChange: (s) => setState(() => txtLocationtype.text = s.value ?? ''),
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Type...',
+                      ),
+                    ),
                     SizedBox(height: 8),
                     TextField(controller: txtLocname, decoration: InputDecoration(labelText: 'Nama', border: OutlineInputBorder())),
                     SizedBox(height: 8),
@@ -1654,7 +1701,19 @@ class _FrmMasterDataState extends State<FrmMasterData>
                     SizedBox(height: 8),
                     TextField(controller: txtLocaddress2, decoration: InputDecoration(labelText: 'Address 2', border: OutlineInputBorder())),
                     SizedBox(height: 8),
-                    TextField(controller: txtLocprovince, decoration: InputDecoration(labelText: 'Provinsi', border: OutlineInputBorder())),
+                    SmartSelect<String?>.single(
+                      title: 'Provinsi', //SEL
+                      selectedValue: txtLocprovince.text.isEmpty ? null : txtLocprovince.text,
+                      choiceItems: _clientProvinceOptions.map((v) => S2Choice<String>(value: v, title: v)).toList(),
+                      onChange: (s) => setState(() => txtLocprovince.text = s.value ?? ''),
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Provinsi...',
+                      ),
+                    ),
                     SizedBox(height: 8),
                     SmartSelect<String?>.single(
                       title: 'Zone',
@@ -1670,7 +1729,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                       ),
                     ),
                     SizedBox(height: 8),
-                    TextField(controller: txtLoccompany, decoration: InputDecoration(labelText: 'Company', border: OutlineInputBorder())),
+                    TextField(controller: txtLoccompany, readOnly: true, decoration: InputDecoration(labelText: 'Company', border: OutlineInputBorder())),
                     SizedBox(height: 8),
                     TextField(controller: txtLoccontactperson, decoration: InputDecoration(labelText: 'Contact Person', border: OutlineInputBorder())),
                     SizedBox(height: 8),
@@ -1728,7 +1787,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                         columnSpacing: 16,
                         horizontalMargin: 12,
                         columns: [
-                          DataColumn(label: Text('Locid', style: TextStyle(fontWeight: FontWeight.w600))),
+                          DataColumn(label: Text('CID', style: TextStyle(fontWeight: FontWeight.w600))),
                           DataColumn(label: Text('Nama', style: TextStyle(fontWeight: FontWeight.w600))),
                           DataColumn(label: Text('Address 1', style: TextStyle(fontWeight: FontWeight.w600))),
                           DataColumn(label: Text('Contact Person', style: TextStyle(fontWeight: FontWeight.w600))),

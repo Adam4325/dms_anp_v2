@@ -28,7 +28,7 @@ final globalScaffoldKey = GlobalKey<ScaffoldState>();
 
 class FrmAttendanceState extends State<FrmAttendance> {
   final String BASE_URL = GlobalData.baseUrlOri;
-  bool isMock = true;
+  bool isMock = false;
   String androidID = "";
   List listGeofence = [];
   List<Map<String, dynamic>> listInfoAbsensi = [];
@@ -120,15 +120,12 @@ class FrmAttendanceState extends State<FrmAttendance> {
   }
 
   Future<Position?> _getLocation() async {
-    bool isMockLocation = await TrustLocation.isMockLocation;
-    if (isMockLocation) {
-      setState(() {
-        isMock = true;
-      });
-    } else {
-      setState(() {
-        isMock = false;
-      });
+    try {
+      bool isMockLocation = await TrustLocation.isMockLocation;
+      if (mounted) setState(() => isMock = isMockLocation);
+    } catch (e) {
+      print('TrustLocation isMockLocation check error: $e');
+      if (mounted) setState(() => isMock = false);
     }
 
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();

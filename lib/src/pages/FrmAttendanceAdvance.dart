@@ -27,10 +27,10 @@ class FrmAttendanceAdvance extends StatefulWidget {
 
 final globalScaffoldKey = GlobalKey<ScaffoldState>();
 
-class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
+class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
   final String BASE_URL =
       GlobalData.baseUrlOri;
-  bool isMock = true; //UPDATE
+  bool isMock = false;
   String androidID = "";
   List listGeofence = [];
   String address = "";
@@ -178,9 +178,13 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
       if (response.statusCode == 200) {
         setState(() {
           listGeofence = [];
-          listGeofence = (jsonDecode(response.body) as List)
-              //.map((dynamic e) => e as Map<String, dynamic>)
-              .toList();
+          final decoded = jsonDecode(response.body);
+          if (decoded is List) {
+            listGeofence = List.from(decoded);
+          } else if (decoded is Map && decoded.containsKey('data')) {
+            final raw = decoded['data'];
+            listGeofence = raw is List ? List.from(raw) : [];
+          }
         });
       } else {
         alert(globalScaffoldKey.currentContext!, 0, "Gagal load data geofence",
@@ -241,7 +245,12 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
     try {
       currentLocation = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.best);
-      isMock = await TrustLocation.isMockLocation;
+      try {
+        isMock = await TrustLocation.isMockLocation;
+      } catch (e) {
+        print('TrustLocation isMockLocation check error: $e');
+        isMock = false;
+      }
       TrustLocation.start(5);
 
       /// the stream getter where others can listen to.
@@ -262,7 +271,57 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
     return currentLocation;
   }
 
-  Future<String> getAddress(String lat, String lon) async {
+  Future<String> getAddress(String? lat, String? lon) async {
+    String address = "";
+
+    // Validasi kosong
+    if (lat == null || lon == null || lat.isEmpty || lon.isEmpty) {
+      print("LAT LON kosong!");
+      return "";
+    }
+
+    try {
+      final uri = Uri.https(
+        "nominatim.openstreetmap.org",
+        "/reverse",
+        {
+          "format": "json",
+          "lat": lat,
+          "lon": lon,
+          "zoom": "18",
+          "addressdetails": "1"
+        },
+      );
+
+      print("URL OSM: $uri");
+
+      final response = await http.get(
+        uri,
+        headers: {
+          "User-Agent": "DMS_ANP/1.0 (ANP Driver Management System)",
+          "Accept": "application/json"
+        },
+      );
+
+      print("Status: ${response.statusCode}");
+      print("Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+
+        if (decoded != null && decoded["display_name"] != null) {
+          address = decoded["display_name"];
+        }
+      }
+
+    } catch (e) {
+      print("ERROR Reverse OSM: $e");
+    }
+
+    return address;
+  }
+
+  Future<String> getAddressOLD(String lat, String lon) async {
     var address = "";
     try {
       var urlOSM ="https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=18&addressdetails=1";
@@ -280,18 +339,6 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
       }else{
         address = "";
       }
-      // var request = http.Request('GET', Uri.parse('https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=18&addressdetails=1'));
-      //
-      // http.StreamedResponse response = await request.send();
-      // print('response.statusCode get Address ${response.statusCode}');
-      // if (response.statusCode == 200) {
-      //   var resBody = await response.stream.bytesToString();
-      //   address = json.decode(resBody)["display_name"];
-      // }
-      // else {
-      //   print(response.reasonPhrase);
-      //   address = "";
-      // }
 
     } catch ($e) {
       address = "";
@@ -347,7 +394,10 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
         //lon ="106.8018423";
         address_osm = await getAddress(lat.toString(),
             lon.toString());
-        print('cetak address ${addr}');
+        if (address_osm.isEmpty && txtAddr.text.trim().isNotEmpty) {
+          address_osm = txtAddr.text.trim();
+        }
+        print('cetak address ${address_osm}');
 
         var fake = isMock == true ? '1' : '0';
         EasyLoading.show();
@@ -439,7 +489,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
     var address = await getAddress(
         userLocation!.latitude.toString(), userLocation!.longitude.toString());
     print(address);
-    //await saveAttendance(inorout, 24, 'CIOMAS -HOME', "", lat, lon,address);
+    //await saveAttendance(inorout, 24, 'CIOMAS -HOME', "", lat, lon,addressss);
   }
 
   Future updatePosition(String inorout) async {
@@ -483,15 +533,16 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
               }
             }
           } else if (distanceBetweenPoints > radius) {
-            address = await getAddress(lat_osm.toString(),
-                lon_osm.toString());
+            address = await getAddress(
+                userLocation!.latitude.toString(),
+                userLocation!.longitude.toString());
             print('cetak address ${address}');
             setState(() {
               txtAddr.text = address;
             });
             radius = 0;
             geo_idOld = 0;
-            geo_nmOld = address.isEmpty?"UNKNOWN":address;
+            geo_nmOld = address.isEmpty ? "UNKNOWN" : address;
           }
         }
         print("geo_nmOld ${geo_nmOld}");

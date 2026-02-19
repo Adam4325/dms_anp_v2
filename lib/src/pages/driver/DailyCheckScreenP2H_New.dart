@@ -921,7 +921,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
   double _lat = 0.0;
   double _lon = 0.0;
   bool _serviceEnabled = true;
-  bool _isisMock = true;
+  bool _isisMock = false;
   String androidID = "";
   List listGeofence = [];
   String txtAddr = "";
@@ -1032,7 +1032,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
     });
   }
 
-  bool isMock = true;
+  bool isMock = false;
   var truslat = "0.0";
   var trusLon = "0.0";
 
@@ -1041,7 +1041,12 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
     try {
       currentLocation = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.low);
-      isMock = await TrustLocation.isMockLocation;
+      try {
+        isMock = await TrustLocation.isMockLocation;
+      } catch (e) {
+        print('TrustLocation isMockLocation check error: $e');
+        isMock = false;
+      }
       TrustLocation.start(5);
 
       /// the stream getter where others can listen to.

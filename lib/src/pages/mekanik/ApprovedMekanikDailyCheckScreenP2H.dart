@@ -42,11 +42,21 @@ class _ApprovedMekanikDailyCheckScreenP2HState extends State<ApprovedMekanikDail
     fetchInspectionData();
   }
 
+  void printJsonFull(dynamic data) {
+    const encoder = JsonEncoder.withIndent('  ');
+    final pretty = encoder.convert(data);
+
+    final pattern = RegExp('.{1,800}');
+    pattern.allMatches(pretty).forEach((match) {
+      debugPrint(match.group(0));
+    });
+  }
 
   void fetchInspectionData() async {
     var urlBase =
-       GlobalData.baseUrl + 'api/mekanik/master_data_inspeksi.jsp?method=list-inspeksi-verifikasi-v2&p2hnumber=${globals.Mcp2hNumber.toString()}&kryid=${globals.Mckryid}';
+       GlobalData.baseUrl + 'api/mekanik/master_data_inspeksi_new.jsp?method=list-inspeksi-verifikasi-v2&p2hnumber=${globals.Mcp2hNumber.toString()}&kryid=${globals.Mckryid}';
     final response = await http.get(Uri.parse(urlBase));
+    print("INSEKSI");
     print(urlBase);
 
     if (response.statusCode == 200) {
@@ -158,8 +168,13 @@ class _ApprovedMekanikDailyCheckScreenP2HState extends State<ApprovedMekanikDail
       final originalStatus =
           int.tryParse(item['inspeksi']?.toString() ?? '0') ?? 0;
       final changed = currentStatus == originalStatus ? 0 : 1;
+      // API approved_form_inspeksiv2_mekanik_new.jsp: id_inspeksi = ID unik per baris di TBL_P2H_TOOLS (wajib dari response list API; jangan pakai item['id'] karena itu P2HNUMBER/sama semua baris)
+      final idInspeksi = item['id_inspeksi']?.toString() ?? item['ID_INSPEKSI']?.toString() ?? '';
+      final kryidVal = item['kryid']?.toString() ?? item['TKRYID']?.toString() ?? globals.Mckryid.toString();
       inspeksiData.add({
         "id": item['id'],
+        "id_inspeksi": idInspeksi,
+        "kryid": kryidVal,
         "groupid": item['groupid'],
         "nama_tools": item['nama_tools'],
         "qty": item['qty'],
@@ -177,7 +192,7 @@ class _ApprovedMekanikDailyCheckScreenP2HState extends State<ApprovedMekanikDail
       "notes_verifikasi": notesVerifikasiController.text,
       "inspeksi_data": inspeksiData,
     };
-    print(data);
+    //printJsonFull(data);
     //return; //TEST
     final jsonString = jsonEncode(data);
     print("Data to submit: $jsonString");
@@ -194,12 +209,13 @@ class _ApprovedMekanikDailyCheckScreenP2HState extends State<ApprovedMekanikDail
     if (response.statusCode == 200) {
       try {
         final responseData = jsonDecode(response.body);
+
         if (responseData['status'] == 'success') {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
               title: const Text('Sukses'),
-              content: const Text('Approved inspeksi berhasil disubmit.'),
+              content: Text(responseData['status']?.toString() ?? 'Success'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
@@ -440,7 +456,7 @@ class _ApprovedMekanikDailyCheckScreenP2HState extends State<ApprovedMekanikDail
           Text(
             text,
             style: TextStyle(
-              fontSize: isHeader ? 12 : 13,
+              fontSize: isHeader ? 9 : 13,
               fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
             ),
           ),
@@ -663,7 +679,7 @@ class _ApprovedMekanikDailyCheckScreenP2HState extends State<ApprovedMekanikDail
                                     const Text(
                                       'ADA',
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 9,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -686,7 +702,7 @@ class _ApprovedMekanikDailyCheckScreenP2HState extends State<ApprovedMekanikDail
                                     const Text(
                                       'RUSAK',
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 9,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -709,7 +725,7 @@ class _ApprovedMekanikDailyCheckScreenP2HState extends State<ApprovedMekanikDail
                                     const Text(
                                       'TIDAK ADA',
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 9,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),

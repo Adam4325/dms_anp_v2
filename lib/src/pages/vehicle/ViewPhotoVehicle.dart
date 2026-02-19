@@ -157,7 +157,7 @@ class _ViewPhotoVehicleState extends State<ViewPhotoVehicle> {
                           _buildPhotoSection(
                             context: context,
                             title: "Photo QR",
-                            image: _imageUNITS!,
+                            image: _imageUNITS,
                             isEdited: is_edit_image_status_unit,
                             filePath: filePathImageUNITS,
                             photoType: "STATUS_UNIT",
@@ -168,7 +168,7 @@ class _ViewPhotoVehicleState extends State<ViewPhotoVehicle> {
                           _buildPhotoSection(
                             context: context,
                             title: "Photo SIM",
-                            image: _imageSIM!,
+                            image: _imageSIM,
                             isEdited: is_edit_image_sim,
                             filePath: filePathImageSIM,
                             photoType: "SIM",
@@ -179,7 +179,7 @@ class _ViewPhotoVehicleState extends State<ViewPhotoVehicle> {
                           _buildPhotoSection(
                             context: context,
                             title: "Photo STNK",
-                            image: _imageSTNK!,
+                            image: _imageSTNK,
                             isEdited: is_edit_image_stnk,
                             filePath: filePathImageSTNK,
                             photoType: "STNK",
@@ -190,7 +190,7 @@ class _ViewPhotoVehicleState extends State<ViewPhotoVehicle> {
                           _buildPhotoSection(
                             context: context,
                             title: "Photo KIR",
-                            image: _imageKIR!,
+                            image: _imageKIR,
                             isEdited: is_edit_image_kir,
                             filePath: filePathImageKIR,
                             photoType: "KIR",
@@ -201,7 +201,7 @@ class _ViewPhotoVehicleState extends State<ViewPhotoVehicle> {
                           _buildPhotoSection(
                             context: context,
                             title: "Photo Keluarga",
-                            image: _imageFAMILY!,
+                            image: _imageFAMILY,
                             isEdited: is_edit_image_family,
                             filePath: filePathImageFAMILY,
                             photoType: "FAMILY",
@@ -212,7 +212,7 @@ class _ViewPhotoVehicleState extends State<ViewPhotoVehicle> {
                           _buildPhotoSection(
                             context: context,
                             title: "Photo Domisili",
-                            image: _imageDOMISILY!,
+                            image: _imageDOMISILY,
                             isEdited: is_edit_image_domisily,
                             filePath: filePathImageDOMISILY,
                             photoType: "DOMISILI",
@@ -236,7 +236,7 @@ class _ViewPhotoVehicleState extends State<ViewPhotoVehicle> {
   Widget _buildPhotoSection({
     required BuildContext context,
     required String title,
-    required File image,
+    File? image,
     required bool isEdited,
     required String filePath,
     required String photoType,
@@ -245,7 +245,7 @@ class _ViewPhotoVehicleState extends State<ViewPhotoVehicle> {
     // Cek apakah ada gambar yang tersedia:
     // - jika sudah diedit: pakai file lokal (image)
     // - jika belum diedit tetapi ada path: pakai url (filePath)
-    bool hasImage = (isEdited && image.path.isNotEmpty) || filePath.isNotEmpty;
+    bool hasImage = (isEdited && image != null && image.path.isNotEmpty) || filePath.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,7 +268,7 @@ class _ViewPhotoVehicleState extends State<ViewPhotoVehicle> {
                   print("Full screen button pressed");
                   showFullScreenImage(
                     context,
-                    imageFile: image != null && isEdited == true ? image : null,
+                    imageFile: (image != null && isEdited) ? image : null,
                     networkImageUrl: !isEdited && filePath != null && filePath != "" ? urlPath : null,
                     title: title,
                   );
@@ -320,7 +320,7 @@ class _ViewPhotoVehicleState extends State<ViewPhotoVehicle> {
                 children: [
                   // Image content
                   if (hasImage)
-                    (isEdited
+                    (isEdited && image != null
                         ? Image.file(
                             image,
                             width: double.infinity,

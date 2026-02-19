@@ -20,10 +20,10 @@ class ViewListDo extends StatefulWidget {
   _ViewListDoState createState() => _ViewListDoState();
 }
 
-class _ViewListDoState extends State<ViewListDo> {
+class _ViewListDoState extends State<ViewListDo> {//
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey globalScaffoldKey2 = GlobalKey<ScaffoldState>();
-  late List data;
+  List data = [];
   String status_code = "";
   String txtAddr = "";
   String message = "";
@@ -33,7 +33,7 @@ class _ViewListDoState extends State<ViewListDo> {
   double _lat = 0.0;
   double _lon = 0.0;
   bool _serviceEnabled = true;
-  bool _isisMock = true;
+  bool _isisMock = false;
   String androidID = "";
   List listGeofence = [];
   String address = "";
@@ -55,9 +55,10 @@ class _ViewListDoState extends State<ViewListDo> {
 
     setState(() {
       // Get the JSON data
-      data = json.decode(response.body)["data"];
+      final raw = json.decode(response.body)["data"];
+      data = raw != null && raw is List ? raw : [];
       print(data);
-      if (data == null || data.length == 0 || data == "") {
+      if (data.isEmpty) {
         alert(globalScaffoldKey.currentContext!, 0,
             "Anda tidak mempunyai data DO", "error");
       }
@@ -85,7 +86,9 @@ class _ViewListDoState extends State<ViewListDo> {
         key: globalScaffoldKey,
         backgroundColor: Colors.white,
         appBar: AppBar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: Colors.orange.shade400,
+            foregroundColor: Colors.white,
+            iconTheme: IconThemeData(color: Colors.white),
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               iconSize: 20.0,
@@ -93,10 +96,8 @@ class _ViewListDoState extends State<ViewListDo> {
                 _goBack(context);
               },
             ),
-            //backgroundColor: Colors.transparent,
-            //elevation: 0.0,
-            centerTitle: true,
-            title: Text('Form List DO')),
+            centerTitle: true,//
+            title: Text('Form List DO 2', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
         body: new Container(
           key: globalScaffoldKey2,
           margin: const EdgeInsets.only(top: 5.0),
@@ -105,7 +106,7 @@ class _ViewListDoState extends State<ViewListDo> {
           color: HexColor("#ffffff"),
           child: new Stack(
             children: <Widget>[
-              _buildListView(globalScaffoldKey2.currentContext!)
+              _buildListView(context)
             ],
           ),
         ),
@@ -118,10 +119,10 @@ class _ViewListDoState extends State<ViewListDo> {
         onRefresh: getJSONData,
         child: ListView.builder(
             padding: const EdgeInsets.all(16.0),
-            itemCount: data == null ? 0 : data.length,
+            itemCount: data.length,
             itemBuilder: (context, index) {
               //_controllers[index] = new TextEditingController();
-              return _buildDMSMenuDO(data[index], index);
+              return _buildDMSMenuDO(context, data[index], index);
             }));
   }
 
@@ -289,7 +290,7 @@ class _ViewListDoState extends State<ViewListDo> {
     }
   }
 
-  Widget _buildDMSMenuDO(dynamic value, int index) {
+  Widget _buildDMSMenuDO(BuildContext context, dynamic value, int index) {
     //print(value["drvid"]);
     return Card(
       elevation: 8.0,
@@ -408,8 +409,8 @@ class _ViewListDoState extends State<ViewListDo> {
 
                               });
                               showDialog(
-                                  context: globalScaffoldKey2.currentContext!,
-                                  builder: (BuildContext context) {
+                                  context: context,
+                                  builder: (BuildContext dialogContext) {
                                     return Center(
                                       child: CircularProgressIndicator(),
                                     );
@@ -417,7 +418,7 @@ class _ViewListDoState extends State<ViewListDo> {
                               Timer(Duration(seconds: 1), () {
                                 // 5s over, navigate to a new page
                                 Navigator.pushReplacement(
-                                    globalScaffoldKey2.currentContext!,
+                                    context,
                                     MaterialPageRoute(
                                         builder: (context) =>
                                             FrmCloseVehicle()));
@@ -426,11 +427,12 @@ class _ViewListDoState extends State<ViewListDo> {
                           },
                           style: ElevatedButton.styleFrom(
                               elevation: 0.0,
-                              backgroundColor: Colors.blueAccent,
+                              backgroundColor: Colors.orange.shade400,
+                              foregroundColor: Colors.white,
                               padding: EdgeInsets.symmetric(
                                   horizontal: 5, vertical: 5),
                               textStyle: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.bold)),
+                                  fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                         ),
                       ]),
                 ],

@@ -102,7 +102,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
   final ImagePicker _picker = ImagePicker();
 
   // Location
-  bool isMockLocation = true;
+  bool isMockLocation = false;
   String trustLatitude = "0.0";
   String trustLongitude = "0.0";
 
@@ -161,7 +161,12 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         desiredAccuracy: LocationAccuracy.best,
       );
 
-      isMockLocation = await TrustLocation.isMockLocation;
+      try {
+        isMockLocation = await TrustLocation.isMockLocation;
+      } catch (e) {
+        print('TrustLocation isMockLocation check error: $e');
+        isMockLocation = false;
+      }
       TrustLocation.start(5);
 
       TrustLocation.onChange.listen((values) {
@@ -696,7 +701,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
           SizedBox(height: 20),
           _buildAttendanceSection(),
           SizedBox(height: 20),
-          _buildActionButtons(),
+          //_buildActionButtons(),
         ],
       ),
     );
@@ -796,8 +801,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
             SizedBox(height: 16),
             _buildLocationAccuracy(),
             SizedBox(height: 16),
-            _buildShiftDropdown(),
-            SizedBox(height: 16),
+            // _buildShiftDropdown(),
+            // SizedBox(height: 16),
             _buildImeiSection(),
           ],
         ),
@@ -1051,42 +1056,44 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       ],
     );
   }
+  // 2026--2-19
+  // sekalian pa yg absen driver
+  // shift dan additional actionya di hide aja
 
-
-  Widget _buildActionButtons() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Container(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              "Additional Actions",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.create, color: Colors.white),
-                label: const Text(
-                  "Request Attendance",
-                  style: TextStyle(color: Colors.white),
-                ),
-                onPressed: _navigateToRequestAttendance,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF8C69),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _buildActionButtons() {
+  //   return Card(
+  //     elevation: 4,
+  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //     child: Container(
+  //       padding: EdgeInsets.all(16),
+  //       child: Column(
+  //         children: [
+  //           Text(
+  //             "Additional Actions",
+  //             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+  //           ),
+  //           SizedBox(height: 16),
+  //           SizedBox(
+  //             width: double.infinity,
+  //             child: ElevatedButton.icon(
+  //               icon: const Icon(Icons.create, color: Colors.white),
+  //               label: const Text(
+  //                 "Request Attendance",
+  //                 style: TextStyle(color: Colors.white),
+  //               ),
+  //               onPressed: _navigateToRequestAttendance,
+  //               style: ElevatedButton.styleFrom(
+  //                 backgroundColor: const Color(0xFFFF8C69),
+  //                 padding: const EdgeInsets.symmetric(vertical: 12),
+  //                 shape: RoundedRectangleBorder(
+  //                   borderRadius: BorderRadius.circular(8),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 }

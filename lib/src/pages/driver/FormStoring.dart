@@ -113,7 +113,7 @@ class _FormStoringState extends State<FormStoring> {
   TextEditingController txtKM = new TextEditingController();
   TextEditingController txtLon = new TextEditingController();
   TextEditingController txtLat = new TextEditingController();
-  bool isMock = true;
+  bool isMock = false;
   var isShowLonLat = false;
   Position? userLocation;
   String status_code = "";
@@ -493,7 +493,12 @@ class _FormStoringState extends State<FormStoring> {
     try {
       currentLocation = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.best);
-      isMock = await TrustLocation.isMockLocation;
+      try {
+        isMock = await TrustLocation.isMockLocation;
+      } catch (e) {
+        print('TrustLocation isMockLocation check error: $e');
+        isMock = false;
+      }
       TrustLocation.start(5);
 
       /// the stream getter where others can listen to.

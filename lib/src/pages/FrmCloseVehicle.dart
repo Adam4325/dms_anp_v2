@@ -38,8 +38,6 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
   GlobalKey globalScaffoldKey2 = GlobalKey<ScaffoldState>();
   SharedPreferences? prefs;
   String imageDo = "";
-  // String noImageImageBase64 ="";
-  // String noImage="";
   String noImageImageBase64 =
       'iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAANlBMVEXu7u64uLjx8fHt7e21tbXQ0NC9vb3ExMTm5ubj4+O5ubnIyMjq6urf39/MzMzBwcHU1NTZ2dmQfkM8AAAE2klEQVR4nO2Y2bLrKAxFwxCPePr/n21JYBvnJLeruq5zHnqtl3gAzEZCEnk8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgK3jv62t/eXN98KbZtfOncd8O6C/8dwH/yjOO4RH26zh05XnaxiiMa/fao5fHzzLLGKfyNCxxrZfnubfZSf28SM/hOYXSvmIJf1PTlWcc1vPaNVmQn9oY3TC4GBt5ffl+H90++yRasyzfNxdJaYlLqu79ZgM656Ib9RuhdRX3KnTD5I/rrND3w/n1V2NUCifp7ENW4Nx4SvKbDDBVnVZXDyh9wlI/WdSPblIpqlxMLwpN4LC07WKrvl56nArFFV3MRk+j2+2vhFGGbQ+vDfoVsVQrI9rnRIwqbHfme23oYln9XaHNb5mS90m89TL1WmHw8rLsvq6RYfqzja3MYdNJb5ute/hHty6z9lAbxi9FmtMRd4W9zqe3r/pOZ1LHkMqGyexgzaZYN/Orjbrfe5W/9OUumfCs8EZhB9l/8mSKQi8e57Z9drr+w3uFfWNLoa3U6m7OzcTj9Lm4QTai38wPyhjFH0+FNzpopdA5XeFd4T5vIy21v10UbtbTdqldNftCiEWjxJohxxo/a48Xe9Veep86RVWpsy3doTBplDhWVs0T67B4Klyj2DdqlJiyJ+S5iySN/21+lcNmCUhn1g9npBl/pNy/rtD2Wpt2hTrd8VhYC5hvFQbx5sHikLYZzlAj3hs3v+6b2aJQHq8bLMGPdbaIp7/cpjBNOofZnwrj/Krw3C2HQvXfeZGXXq6iNiubV7Ul02nbW7erpM1QxOqGveTD5gs21Hwt81s/K/RvFHYakKTSm72s0KCTz72S+qf8yk9zKrSQ0jUWZHeFuWQb7rdhdjNJ8e5QaF6aq5X5k5dKu2bq5E6SQxwf41582XPZbFPp2JWwGbQwaNvhUPi9SKNespweo5GmKirbM05cFJpT95Lr4jTGYdMcWDKHDPNc1/VZfEGK7GOLShHRVArv1XZV2DeHQh9zjAjFsfYgeVUYVMmSVOfYaHsznbwPsfjfMd4lW3S/o1AivEaboWT8I1pqA1fvykdlwxxyOyvQ5nyxmmm1RnCldtdYo8G5yY4efkuhYpWWXecZ5apt1ZnW2/BQmHJRqjW37TcNqDJ1+RlKCNEBteTVqk3q3Dzgr3mpcBTZSc9uwyaVdzfr9Md350MLJJoe7GD0yMeLNpkvtF1v6Dh9Kdtkb/YSVfTZa6S5vfJWVaoh5VhaPNbtVojLNV/tCjWQaDzSvGe77Kndw3zmRU1CFpXD0x254We2uP2Mf2ZcEVaut3ieTpv+usK7QjWQvRmzG5ueSQPTMaCGr2iL9zwH1HPU43oCvvmMH8+aYj2upyaWkDh3Ly5UFKZFlt6bsvKHxaRFzJqLMiMfIM2gYWuyRhnWTqOaQr5zxl+l8j1yn38eVbDvVz17b+HHFunkqC5G6CR5r1bqhGXLL/TJLL2mo8+kYzxsE+QB223Kmy7MbcWdZ/z6b78Qfvyb+KGHPzrq1H78QfjaNtSv86e+92/in/i0sKF+9SfvCrnp3WdcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+B/xD/alJ5yRngQVAAAAAElFTkSuQmCC';
   String noImage =
@@ -71,13 +69,13 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
   //Geolocator geolocator = Geolocator();
   //Position userLocation;
 
-  late Position userLocation;
+  Position? userLocation;
   //LocationData currentLocation;
   //Location location;
   double _lat = 0.0;
   double _lon = 0.0;
   bool _serviceEnabled = true;
-  bool _isisMock = true;
+  bool _isisMock = false;
   String androidID = "";
   List listGeofence = [];
   List listGeofenceAllowed = [];
@@ -97,7 +95,7 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
           var radius = double.parse(a['radius']);
           var distanceBetweenPoints = SphericalUtil.computeDistanceBetween(
               LatLng(double.parse(a['lon']), double.parse(a['lat'])),
-              LatLng(userLocation.longitude, userLocation.latitude));
+              LatLng(userLocation!.longitude, userLocation!.latitude));
           //print('distanceBetweenPoints ${distanceBetweenPoints} meter ${distanceBetweenPoints / 1000} KM');
           //if (distanceBetweenPoints >= radius) {
           //FOR DEV
@@ -168,7 +166,7 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
     });
   }
 
-  bool isMock = true;
+  bool isMock = false;
   var truslat = "0.0";
   var trusLon = "0.0";
 
@@ -177,7 +175,12 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
     try {
       currentLocation = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.low);
-      isMock = await TrustLocation.isMockLocation;
+      try {
+        isMock = await TrustLocation.isMockLocation;
+      } catch (e) {
+        print('TrustLocation isMockLocation check error: $e');
+        isMock = false;
+      }
       TrustLocation.start(5);
 
       /// the stream getter where others can listen to.
@@ -718,28 +721,31 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
     );
     return new Scaffold(
       key: globalScaffoldKey,
-      backgroundColor: Colors.blueAccent,
+      backgroundColor: Colors.orange.shade400,
       appBar: AppBar(
-          backgroundColor: Colors.blueAccent,
+          backgroundColor: Colors.orange.shade400,
+          foregroundColor: Colors.white,
+          iconTheme: IconThemeData(color: Colors.white),
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             iconSize: 20.0,
             onPressed: () {
-              _goBack(globalScaffoldKey.currentContext!);
+              final ctx = globalScaffoldKey.currentContext;
+              if (ctx != null) _goBack(ctx);
             },
           ),
           centerTitle: true,
-          title: Text('Form DO DiTerima')),
+          title: Text('Form DO DiTerima', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
       body: Container(
         key: globalScaffoldKey2,
         constraints: BoxConstraints.expand(),
         color: HexColor("#f0eff4"),
         child: Stack(
           children: <Widget>[
-            _getViewImage(globalScaffoldKey2.currentContext!),
-            _getContent(globalScaffoldKey2.currentContext!),
+            _getViewImage(context),
+            _getContent(context),
             Container(
-              margin: EdgeInsets.only(top: 250),
+              margin: EdgeInsets.only(top: 270),
               padding: EdgeInsets.fromLTRB(20.0, 165.0, 10.0, 0.0),
               child: Text(
                   "Untuk melakukan transaksi ini, hanya boleh di lakukan di tempat tujuan",
@@ -877,47 +883,47 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                     children: <Widget>[
                       FloatingActionButton.extended(
                         heroTag:UniqueKey(),// 'btn1',
-                        backgroundColor:
-                            Colors.black45, //const Color(Colors.blue),
+                        backgroundColor: Colors.orange.shade400,
                         foregroundColor: Colors.white,
                         onPressed: () async {
-                          getImage();
+                          try {
+                            await getImage();
+                          } catch (e) {
+                            print('Capture error: $e');
+                            final ctx = globalScaffoldKey.currentContext;
+                            if (ctx != null) alert(ctx, 0, "Gagal capture foto. Pastikan izin kamera aktif.", "error");
+                          }
                         },
-                        icon: Icon(Icons.camera),
-                        label: Text('Capture'),
+                        icon: Icon(Icons.camera, color: Colors.white),
+                        label: Text('Capture', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                       ),
                       FloatingActionButton.extended(
                         heroTag: UniqueKey(),//'btn2',
-                        backgroundColor:
-                            Colors.blueAccent, //const Color(Colors.blue),
+                        backgroundColor: Colors.orange.shade400,
                         foregroundColor: Colors.white,
                         onPressed: () async {
                           print('DO NUMBER');
                           print(GlobalData.frmDloDoNumber);
 
-                          String lat = userLocation.latitude.toString() == null
-                              ? ""
-                              : userLocation.latitude.toString();
-                          String lon = userLocation.longitude.toString() == null
-                              ? ""
-                              : userLocation.longitude.toString();
-                          String speed = userLocation.speed.toString() == null
-                              ? ""
-                              : userLocation.speed.toString();
-                          //vhckm = txtKM.value.text.toString();
-                          //var vhckmOld = txtKMOld.value.text.toString();
-                          //lat = "37.7749";
-                          //lon = "-122.4194";
-                          if (lon == null && lat == null) {
-                            alert(
-                                globalScaffoldKey.currentContext!,
-                                0,
-                                "Coordinate/Lokasi tidak di temukan,silahkan aktifkan GPS nya terlebih dahulu",
+                          final ctx = globalScaffoldKey.currentContext;
+                          if (userLocation == null) {
+                            if (ctx != null) alert(ctx, 0,
+                                "Lokasi belum tersedia. Silahkan aktifkan GPS dan tunggu sebentar.",
                                 "warning");
-                          } else {
-                            bool? isAllowed =
-                                await GetExceptionDO(GlobalData.frmDloDoNumber);
-                            if (isAllowed!) {
+                            return;
+                          }
+                          String lat = userLocation!.latitude.toString();
+                          String lon = userLocation!.longitude.toString();
+                          String speed = userLocation!.speed.toString();
+                          if (lon.isEmpty && lat.isEmpty) {
+                            if (ctx != null) alert(ctx, 0,
+                                "Coordinate/Lokasi tidak di temukan, silahkan aktifkan GPS nya terlebih dahulu",
+                                "warning");
+                            return;
+                          }
+                          bool? isAllowed =
+                              await GetExceptionDO(GlobalData.frmDloDoNumber ?? '');
+                          if (isAllowed == true) {
                               txtAddr = "OUTGEO";
                               print('NOT UPDATEPOSITION');
                             } else {
@@ -928,22 +934,20 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                             if (txtAddr != null &&
                                 txtAddr.toString() != "" &&
                                 txtAddr.toString().toUpperCase() == "INGEO") {
-                              alert(
-                                  globalScaffoldKey.currentContext!,
-                                  0,
+                              if (ctx != null) alert(ctx, 0,
                                   "Close DO tidak di ijinkan, silahkan ke tempat tujuan di diterima",
                                   "warning");
                             } else if (txtAddr == null || txtAddr == "") {
-                              alert(
-                                  globalScaffoldKey.currentContext!,
-                                  0,
+                              if (ctx != null) alert(ctx, 0,
                                   "Coba lagi untuk melakukan submit",
                                   "warning");
+                            } else if (ctx == null) {
+                              return;
                             } else {
                               //CLOSE DO
                               print('CLOSE DO');
                               await showDialog(
-                                context: globalScaffoldKey.currentContext!,
+                                context: ctx,
                                 builder: (context) => new AlertDialog(
                                   title: new Text('Information'),
                                   content: new Text(
@@ -961,43 +965,29 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                                             await SharedPreferences
                                                 .getInstance();
                                         prefs2.setString("vhcid_last_antrian", "");
+                                        final dialogCtx = globalScaffoldKey.currentContext;
                                         if (isMock == true) {
-                                          alert(
-                                              globalScaffoldKey.currentContext!,
-                                              0,
-                                              "Dilarang meenggunakan Fake GPS",
+                                          if (dialogCtx != null) alert(dialogCtx, 0,
+                                              "Dilarang menggunakan Fake GPS",
                                               "warning");
+                                        } else if (dialogCtx == null) {
+                                          Navigator.of(context).pop(false);
                                         } else {
                                           if (GlobalData.frmDloDoNumber ==
                                                   null ||
                                               GlobalData.frmDloDoNumber == "") {
-                                            Navigator.of(globalScaffoldKey
-                                                    .currentContext!)
-                                                .pop(false);
-                                            alert(
-                                                globalScaffoldKey
-                                                    .currentContext!,
-                                                0,
+                                            Navigator.of(dialogCtx).pop(false);
+                                            alert(dialogCtx, 0,
                                                 "DLOCUSTDONUMBER tidak boleh kosong",
                                                 "error");
                                           } else if (filePathImage == null ||
-                                              filePathImage == "") {
-                                            Navigator.of(globalScaffoldKey
-                                                    .currentContext!)
-                                                .pop(false);
-                                            alert(
-                                                globalScaffoldKey
-                                                    .currentContext!,
-                                                0,
+                                              filePathImage.isEmpty) {
+                                            Navigator.of(dialogCtx).pop(false);
+                                            alert(dialogCtx, 0,
                                                 "Photo tidak boleh kosong",
                                                 "error");
                                           } else {
-                                            // Navigator.of(context,
-                                            //         rootNavigator: true)
-                                            //     .pop();
-                                            Navigator.of(globalScaffoldKey
-                                                    .currentContext!)
-                                                .pop(false);
+                                            Navigator.of(dialogCtx).pop(false);
                                             print('Close Do test');
                                             var scode = await closeDo(
                                                 GlobalData.frmBujDoNumber,
@@ -1037,36 +1027,37 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                                               //     "success");
 
                                               //SHOW ALERT SUCCESS
-                                              await showDialog(
-                                                context: globalScaffoldKey
-                                                    .currentContext!,
-                                                builder: (context) =>
-                                                    new AlertDialog(
-                                                  title:
-                                                      new Text('Information'),
-                                                  content: new Text(
-                                                      "${GlobalData.responseMessage}"),
-                                                  actions: <Widget>[
-                                                    new TextButton(
-                                                      onPressed: () async {
-                                                        Navigator.pushReplacement(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        ViewDashboard()));
-                                                      },
-                                                      child: new Text('Ok'),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
+                                              final showCtx = globalScaffoldKey.currentContext;
+                                              if (showCtx != null) {
+                                                await showDialog(
+                                                  context: showCtx,
+                                                  builder: (ctx) =>
+                                                      new AlertDialog(
+                                                    title:
+                                                        new Text('Information'),
+                                                    content: new Text(
+                                                        "${GlobalData.responseMessage}"),
+                                                    actions: <Widget>[
+                                                      new TextButton(
+                                                        onPressed: () async {
+                                                          Navigator.pushReplacement(
+                                                              ctx,
+                                                              MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          ViewDashboard()));
+                                                        },
+                                                        child: new Text('Ok'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              }
                                               //END ALERT SUCCESS
                                               pr?.hide();
                                             } else {
-                                              alert(
-                                                  globalScaffoldKey
-                                                      .currentContext!,
+                                              if (dialogCtx != null) alert(
+                                                  dialogCtx,
                                                   0,
                                                   "${GlobalData.responseMessage},FAILED FOR CLOSED DO",
                                                   "error");
@@ -1081,11 +1072,10 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                                 ),
                               );
                             }
-                          }
                         },
-                        icon: Icon(Icons.save),
-                        label: Text('Submit'),
-                      )
+                        icon: Icon(Icons.save, color: Colors.white),
+                        label: Text('Submit', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                      ),
                     ],
                   ),
                 ],
@@ -1164,7 +1154,7 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: <Widget>[
                         Material(
-                            color: Colors.blueAccent,
+                            color: Colors.orange.shade400,
                             borderRadius: BorderRadius.circular(15.0),
                             child: Padding(
                               padding: EdgeInsets.all(10.0),

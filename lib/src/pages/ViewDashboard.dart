@@ -569,7 +569,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages
-              .where((x) => (x == "HTRD" || username == "ADMIN"));
+              .where((x) => (x == "MK" || username == "ADMIN"));
       if (isOK != null && isOK.length > 0) {
         _anpServiceList.add(new AnpService(
             image: Icons.storage,
@@ -3506,19 +3506,39 @@ class _ViewDashboardState extends State<ViewDashboard> {
         });
       }
     } else if (anpService.idKey == 32) {
+      // var isOK = globals.akses_pages == null
+      //     ? globals.akses_pages
+      //     : globals.akses_pages
+      //         .where((x) => (x == "HRD" || username == "ADMIN"));
+      // if (isOK != null && (isOK.length > 0 || username == "ADMIN")) {
+      //   Navigator.pushReplacement(
+      //     context,
+      //     MaterialPageRoute(builder: (context) => FrmMasterData()),
+      //   );
+      // } else {
+      //   alert(globalScaffoldKey.currentContext!, 0,
+      //       "Akses ditolak. Hanya HTRD dan ADMIN yang dapat mengakses.", "error");
+      // }
+
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "HRD" || username == "ADMIN"));
-      if (isOK != null && (isOK.length > 0 || username == "ADMIN")) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => FrmMasterData()),
-        );
+          : globals.akses_pages.where((x) => x == "MK");
+      if ((isOK != null && isOK.length > 0) || username == "ADMIN") {
+        if (!EasyLoading.isShow) {
+          EasyLoading.show();
+        }
+        Timer(Duration(seconds: 1), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => FrmMasterData()), //ApprovedDriverRequest
+          );
+        });
       } else {
-        alert(globalScaffoldKey.currentContext!, 0,
-            "Akses ditolak. Hanya HTRD dan ADMIN yang dapat mengakses.", "error");
+        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
+            "error");
       }
+
     } else {
       final ctx = globalScaffoldKey.currentContext!;
       if (ctx != null) {
