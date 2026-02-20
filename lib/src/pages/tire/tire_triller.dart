@@ -80,75 +80,75 @@ class _BottomActionBarState extends State<BottomActionBar> {
                     SizedBox(height: 16), // Spacing
                     tireDetailsLogs.isEmpty
                         ? Center(
-                      child: Text(
-                        'No detail logs!',
-                        style:
-                        TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    )
-                        : ListView.builder(
-                      shrinkWrap:
-                      true, // Allows the ListView to work inside another scrollable widget
-                      physics:
-                      NeverScrollableScrollPhysics(), // Prevent ListView from scrolling independently
-                      itemCount: tireDetailsLogs.length,
-                      itemBuilder: (context, index) {
-                        return Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                            side:
-                            BorderSide(color: Colors.grey, width: 1),
-                          ),
-                          elevation: 3,
-                          margin: EdgeInsets.symmetric(
-                              vertical: 5, horizontal: 0),
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Serial No: ${tireDetailsLogs[index]["tyresn"]}',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    Text(
-                                        'Tyre Post: ${tireDetailsLogs[index]["tyrepost"]}'),
-                                    Text(
-                                        'Pattern: ${tireDetailsLogs[index]["pattern"]}'),
-                                    Text(
-                                        'Item Size: ${tireDetailsLogs[index]["itemsize"]}'),
-                                    Text(
-                                        'ID Type: ${tireDetailsLogs[index]["idtype"]}'),
-                                    Text(
-                                        'KM Target: ${tireDetailsLogs[index]["kmtarget"]}'),
-                                    Text(
-                                        'Merk: ${tireDetailsLogs[index]["merk"]}'),
-                                    Text(
-                                        'CPK: ${tireDetailsLogs[index]["cpk"]}'),
-                                    Text(
-                                        'Date Fitted: ${tireDetailsLogs[index]["dat_fitted"]}'),
-                                    Text(
-                                        'KM Fit: ${tireDetailsLogs[index]["km_fit"]}'),
-                                    Text(
-                                        'Umur KM/Rit: ${tireDetailsLogs[index]["km_rit"]}'),
-                                    Text(
-                                        'Umur KM/Trip: ${tireDetailsLogs[index]["rit_trip"]}'),
-                                    Text(
-                                        'Days: ${tireDetailsLogs[index]["days"]}'),
-                                  ],
-                                )
-                              ],
+                            child: Text(
+                              'No detail logs!',
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.grey),
                             ),
+                          )
+                        : ListView.builder(
+                            shrinkWrap:
+                                true, // Allows the ListView to work inside another scrollable widget
+                            physics:
+                                NeverScrollableScrollPhysics(), // Prevent ListView from scrolling independently
+                            itemCount: tireDetailsLogs.length,
+                            itemBuilder: (context, index) {
+                              return Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(5),
+                                  side:
+                                      BorderSide(color: Colors.grey, width: 1),
+                                ),
+                                elevation: 3,
+                                margin: EdgeInsets.symmetric(
+                                    vertical: 5, horizontal: 0),
+                                child: Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Serial No: ${tireDetailsLogs[index]["tyresn"]}',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          Text(
+                                              'Tyre Post: ${tireDetailsLogs[index]["tyrepost"]}'),
+                                          Text(
+                                              'Pattern: ${tireDetailsLogs[index]["pattern"]}'),
+                                          Text(
+                                              'Item Size: ${tireDetailsLogs[index]["itemsize"]}'),
+                                          Text(
+                                              'ID Type: ${tireDetailsLogs[index]["idtype"]}'),
+                                          Text(
+                                              'KM Target: ${tireDetailsLogs[index]["kmtarget"]}'),
+                                          Text(
+                                              'Merk: ${tireDetailsLogs[index]["merk"]}'),
+                                          Text(
+                                              'CPK: ${tireDetailsLogs[index]["cpk"]}'),
+                                          Text(
+                                              'Date Fitted: ${tireDetailsLogs[index]["dat_fitted"]}'),
+                                          Text(
+                                              'KM Fit: ${tireDetailsLogs[index]["km_fit"]}'),
+                                          Text(
+                                              'Umur KM/Rit: ${tireDetailsLogs[index]["km_rit"]}'),
+                                          Text(
+                                              'Umur KM/Trip: ${tireDetailsLogs[index]["rit_trip"]}'),
+                                          Text(
+                                              'Days: ${tireDetailsLogs[index]["days"]}'),
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
                   ],
                 ),
               ),
@@ -167,48 +167,46 @@ class _BottomActionBarState extends State<BottomActionBar> {
     );
   }
 
-  Future getListDataTireDetailLogs(bool isload,BuildContext context) async {
+  Future getListDataTireDetailLogs(bool isload, BuildContext context) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      var vhcid = prefs.getString("tire_vhcid") ?? "";
-      var typeUnits = prefs.getString("tire_vhttype") ?? "";
+      var vhcid = prefs.getString("tire_vhcid")!;
+      var typeUnits = prefs.getString("tire_vhttype")!;
       EasyLoading.show();
       dataListTireDetail = [];
       var urlBase = "";
       urlBase =
-      "${GlobalData.baseUrl}api/maintenance/sr/list_detail_log_tire.jsp?method=lookup-list-tire-logs-v1&vhcid=${vhcid}";
+          "${GlobalData.baseUrl}api/maintenance/sr/list_detail_log_tire.jsp?method=lookup-list-tire-logs-v1&vhcid=${vhcid}";
       var urlData = urlBase;
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
           tireDetailsLogs = (jsonDecode(response.body) as List)
               .map((dynamic e) => e as Map<String, dynamic>)
               .toList();
-          if(tireDetailsLogs!=null && tireDetailsLogs.length>0){
+          if (tireDetailsLogs != null && tireDetailsLogs.length > 0) {
             log_vehicleid = vhcid;
             log_km_sekarang = tireDetailsLogs[0]['km_sekarang'];
             log_vhtype = typeUnits;
             log_location = tireDetailsLogs[0]['locid'];
-          }else{
+          } else {
             log_vehicleid = vhcid;
             log_vhtype = typeUnits;
           }
         });
       } else {
-        alert(context, 0,
-            "Gagal load data list detail opname", "error");
+        alert(context, 0, "Gagal load data list detail opname", "error");
       }
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
     } catch (e) {
-      alert(context, 0, "Client, Load data logs tire",
-          "error");
+      alert(context, 0, "Client, Load data logs tire", "error");
       print(e.toString());
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
@@ -218,41 +216,50 @@ class _BottomActionBarState extends State<BottomActionBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white, // Background color of the bar
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pushReplacement(
-                  context, MaterialPageRoute(builder: (context) => FrmServiceTire()));
-            },
-            icon: Icon(Icons.arrow_back),
-            label: Text('Back to Opname'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
-            ),
+    return new PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => FrmServiceTire()));
+        },
+        child: Container(
+          color: Colors.white, // Background color of the bar
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => FrmServiceTire()));
+                },
+                icon: Icon(Icons.arrow_back),
+                label: Text('Back to Opname'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey,
+                ),
+              ),
+              SizedBox(width: 10),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  print('Detail');
+                  getListDataTireDetailLogs(true, context);
+                  Timer(Duration(seconds: 2), () {
+                    _showDetailLog(context);
+                  });
+                },
+                icon: Icon(Icons.book),
+                label: Text('List Detail'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 10),
-          ElevatedButton.icon(
-            onPressed: () async{
-              print('Detail');
-              getListDataTireDetailLogs(true,context);
-              Timer(Duration(seconds: 2), () {
-                _showDetailLog(context);
-              });
-            },
-            icon: Icon(Icons.book),
-            label: Text('List Detail'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blueAccent,
-            ),
-          ),
-        ],
-      ),
-    );
+        ));
   }
 }
 
@@ -264,7 +271,8 @@ class TireTriller extends StatefulWidget {
 class _TireTrillerState extends State<TireTriller> {
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
   bool _showNoDataMessage = false;
-  String noImage ='iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAANlBMVEXu7u64uLjx8fHt7e21tbXQ0NC9vb3ExMTm5ubj4+O5ubnIyMjq6urf39/MzMzBwcHU1NTZ2dmQfkM8AAAE2klEQVR4nO2Y2bLrKAxFwxCPePr/n21JYBvnJLeruq5zHnqtl3gAzEZCEnk8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgK3jv62t/eXN98KbZtfOncd8O6C/8dwH/yjOO4RH26zh05XnaxiiMa/fao5fHzzLLGKfyNCxxrZfnubfZSf28SM/hOYXSvmIJf1PTlWcc1vPaNVmQn9oY3TC4GBt5ffl+H90++yRasyzfNxdJaYlLqu79ZgM656Ib9RuhdRX3KnTD5I/rrND3w/n1V2NUCifp7ENW4Nx4SvKbDDBVnVZXDyh9wlI/WdSPblIpqlxMLwpN4LC07WKrvl56nArFFV3MRk+j2+2vhFGGbQ+vDfoVsVQrI9rnRIwqbHfme23oYln9XaHNb5mS90m89TL1WmHw8rLsvq6RYfqzja3MYdNJb5ute/hHty6z9lAbxi9FmtMRd4W9zqe3r/pOZ1LHkMqGyexgzaZYN/Orjbrfe5W/9OUumfCs8EZhB9l/8mSKQi8e57Z9drr+w3uFfWNLoa3U6m7OzcTj9Lm4QTai38wPyhjFH0+FNzpopdA5XeFd4T5vIy21v10UbtbTdqldNftCiEWjxJohxxo/a48Xe9Veep86RVWpsy3doTBplDhWVs0T67B4Klyj2DdqlJiyJ+S5iySN/21+lcNmCUhn1g9npBl/pNy/rtD2Wpt2hTrd8VhYC5hvFQbx5sHikLYZzlAj3hs3v+6b2aJQHq8bLMGPdbaIp7/cpjBNOofZnwrj/Krw3C2HQvXfeZGXXq6iNiubV7Ul02nbW7erpM1QxOqGveTD5gs21Hwt81s/K/RvFHYakKTSm72s0KCTz72S+qf8yk9zKrSQ0jUWZHeFuWQb7rdhdjNJ8e5QaF6aq5X5k5dKu2bq5E6SQxwf41582XPZbFPp2JWwGbQwaNvhUPi9SKNespweo5GmKirbM05cFJpT95Lr4jTGYdMcWDKHDPNc1/VZfEGK7GOLShHRVArv1XZV2DeHQh9zjAjFsfYgeVUYVMmSVOfYaHsznbwPsfjfMd4lW3S/o1AivEaboWT8I1pqA1fvykdlwxxyOyvQ5nyxmmm1RnCldtdYo8G5yY4efkuhYpWWXecZ5apt1ZnW2/BQmHJRqjW37TcNqDJ1+RlKCNEBteTVqk3q3Dzgr3mpcBTZSc9uwyaVdzfr9Md350MLJJoe7GD0yMeLNpkvtF1v6Dh9Kdtkb/YSVfTZa6S5vfJWVaoh5VhaPNbtVojLNV/tCjWQaDzSvGe77Kndw3zmRU1CFpXD0x254We2uP2Mf2ZcEVaut3ieTpv+usK7QjWQvRmzG5ueSQPTMaCGr2iL9zwH1HPU43oCvvmMH8+aYj2upyaWkDh3Ly5UFKZFlt6bsvKHxaRFzJqLMiMfIM2gYWuyRhnWTqOaQr5zxl+l8j1yn38eVbDvVz17b+HHFunkqC5G6CR5r1bqhGXLL/TJLL2mo8+kYzxsE+QB223Kmy7MbcWdZ/z6b78Qfvyb+KGHPzrq1H78QfjaNtSv86e+92/in/i0sKF+9SfvCrnp3WdcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+B/xD/alJ5yRngQVAAAAAElFTkSuQmCC';
+  String noImage =
+      'iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAANlBMVEXu7u64uLjx8fHt7e21tbXQ0NC9vb3ExMTm5ubj4+O5ubnIyMjq6urf39/MzMzBwcHU1NTZ2dmQfkM8AAAE2klEQVR4nO2Y2bLrKAxFwxCPePr/n21JYBvnJLeruq5zHnqtl3gAzEZCEnk8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgK3jv62t/eXN98KbZtfOncd8O6C/8dwH/yjOO4RH26zh05XnaxiiMa/fao5fHzzLLGKfyNCxxrZfnubfZSf28SM/hOYXSvmIJf1PTlWcc1vPaNVmQn9oY3TC4GBt5ffl+H90++yRasyzfNxdJaYlLqu79ZgM656Ib9RuhdRX3KnTD5I/rrND3w/n1V2NUCifp7ENW4Nx4SvKbDDBVnVZXDyh9wlI/WdSPblIpqlxMLwpN4LC07WKrvl56nArFFV3MRk+j2+2vhFGGbQ+vDfoVsVQrI9rnRIwqbHfme23oYln9XaHNb5mS90m89TL1WmHw8rLsvq6RYfqzja3MYdNJb5ute/hHty6z9lAbxi9FmtMRd4W9zqe3r/pOZ1LHkMqGyexgzaZYN/Orjbrfe5W/9OUumfCs8EZhB9l/8mSKQi8e57Z9drr+w3uFfWNLoa3U6m7OzcTj9Lm4QTai38wPyhjFH0+FNzpopdA5XeFd4T5vIy21v10UbtbTdqldNftCiEWjxJohxxo/a48Xe9Veep86RVWpsy3doTBplDhWVs0T67B4Klyj2DdqlJiyJ+S5iySN/21+lcNmCUhn1g9npBl/pNy/rtD2Wpt2hTrd8VhYC5hvFQbx5sHikLYZzlAj3hs3v+6b2aJQHq8bLMGPdbaIp7/cpjBNOofZnwrj/Krw3C2HQvXfeZGXXq6iNiubV7Ul02nbW7erpM1QxOqGveTD5gs21Hwt81s/K/RvFHYakKTSm72s0KCTz72S+qf8yk9zKrSQ0jUWZHeFuWQb7rdhdjNJ8e5QaF6aq5X5k5dKu2bq5E6SQxwf41582XPZbFPp2JWwGbQwaNvhUPi9SKNespweo5GmKirbM05cFJpT95Lr4jTGYdMcWDKHDPNc1/VZfEGK7GOLShHRVArv1XZV2DeHQh9zjAjFsfYgeVUYVMmSVOfYaHsznbwPsfjfMd4lW3S/o1AivEaboWT8I1pqA1fvykdlwxxyOyvQ5nyxmmm1RnCldtdYo8G5yY4efkuhYpWWXecZ5apt1ZnW2/BQmHJRqjW37TcNqDJ1+RlKCNEBteTVqk3q3Dzgr3mpcBTZSc9uwyaVdzfr9Md350MLJJoe7GD0yMeLNpkvtF1v6Dh9Kdtkb/YSVfTZa6S5vfJWVaoh5VhaPNbtVojLNV/tCjWQaDzSvGe77Kndw3zmRU1CFpXD0x254We2uP2Mf2ZcEVaut3ieTpv+usK7QjWQvRmzG5ueSQPTMaCGr2iL9zwH1HPU43oCvvmMH8+aYj2upyaWkDh3Ly5UFKZFlt6bsvKHxaRFzJqLMiMfIM2gYWuyRhnWTqOaQr5zxl+l8j1yn38eVbDvVz17b+HHFunkqC5G6CR5r1bqhGXLL/TJLL2mo8+kYzxsE+QB223Kmy7MbcWdZ/z6b78Qfvyb+KGHPzrq1H78QfjaNtSv86e+92/in/i0sKF+9SfvCrnp3WdcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+B/xD/alJ5yRngQVAAAAAElFTkSuQmCC';
   final picker = ImagePicker();
   File? _imagePhoto1;
   File? _imagePhoto2;
@@ -295,45 +303,39 @@ class _TireTrillerState extends State<TireTriller> {
     _imagePhoto1 = null;
     _imagePhoto2 = null;
     _imagePhoto3 = null;
-    filePathImage1='';
-    filePathImage2='';
-    filePathImage3='';
+    filePathImage1 = '';
+    filePathImage2 = '';
+    filePathImage3 = '';
   }
 
   Future getPicture(String namaPhoto, opsi) async {
     if (opsi == 'CAMERA') {
       final pickedFile =
-      await picker.pickImage(source: ImageSource.camera, imageQuality: 50);
+          await picker.pickImage(source: ImageSource.camera, imageQuality: 50);
       if (pickedFile != null) {
         if (namaPhoto == "PHOTO1") {
           setState(() {
             _imagePhoto1 = File(pickedFile.path);
-            if (_imagePhoto1 != null) {
-              List<int> imageBytes = _imagePhoto1!.readAsBytesSync();
-              var kb = _imagePhoto1!.readAsBytesSync().lengthInBytes / 1024;
-              var mb = kb / 1024;
-              filePathImage1 = base64Encode(imageBytes);
-            }
+            List<int> imageBytes = _imagePhoto1!.readAsBytesSync();
+            var kb = _imagePhoto1!.readAsBytesSync().lengthInBytes / 1024;
+            var mb = kb / 1024;
+            filePathImage1 = base64Encode(imageBytes);
           });
         } else if (namaPhoto == "PHOTO2") {
           setState(() {
             _imagePhoto2 = File(pickedFile.path);
-            if (_imagePhoto2 != null) {
-              List<int> imageBytes = _imagePhoto2!.readAsBytesSync();
-              var kb = _imagePhoto2!.readAsBytesSync().lengthInBytes / 1024;
-              var mb = kb / 1024;
-              filePathImage2 = base64Encode(imageBytes);
-            }
+            List<int> imageBytes = _imagePhoto2!.readAsBytesSync();
+            var kb = _imagePhoto2!.readAsBytesSync().lengthInBytes / 1024;
+            var mb = kb / 1024;
+            filePathImage2 = base64Encode(imageBytes);
           });
         } else if (namaPhoto == "PHOTO3") {
           setState(() {
             _imagePhoto3 = File(pickedFile.path);
-            if (_imagePhoto3 != null) {
-              List<int> imageBytes = _imagePhoto3!.readAsBytesSync();
-              var kb = _imagePhoto3!.readAsBytesSync().lengthInBytes / 1024;
-              var mb = kb / 1024;
-              filePathImage3 = base64Encode(imageBytes);
-            }
+            List<int> imageBytes = _imagePhoto3!.readAsBytesSync();
+            var kb = _imagePhoto3!.readAsBytesSync().lengthInBytes / 1024;
+            var mb = kb / 1024;
+            filePathImage3 = base64Encode(imageBytes);
           });
         } else {
           setState(() {
@@ -365,16 +367,16 @@ class _TireTrillerState extends State<TireTriller> {
 
   Future GetDetailListStatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String tire_vhcid = prefs.getString("tire_vhcid") ?? "";
+    String tire_vhcid = prefs.getString("tire_vhcid")!;
     var urlBase = "";
     urlBase =
-    "${GlobalData.baseUrl}api/maintenance/sr/detail_ban_tire.jsp?method=get-status-sn-tire-ban-v1&vhcid=${tire_vhcid}";
+        "${GlobalData.baseUrl}api/maintenance/sr/detail_ban_tire.jsp?method=get-status-sn-tire-ban-v1&vhcid=${tire_vhcid}";
     var urlData = urlBase;
     var encoded = Uri.encodeFull(urlData);
     print(urlData);
     Uri myUri = Uri.parse(encoded);
     var response =
-    await http.get(myUri, headers: {"Accept": "application/json"});
+        await http.get(myUri, headers: {"Accept": "application/json"});
     if (response.statusCode == 200) {
       setState(() {
         tireDetailsStatus = (jsonDecode(response.body) as List)
@@ -434,23 +436,23 @@ class _TireTrillerState extends State<TireTriller> {
     String baseUrl =
         "${GlobalData.baseUrl}api/maintenance/sr/refference_tyre.jsp";
     String method = "list-fitpost";
-    String vhcid = (prefs.getString("tire_vhcid") ?? "").toString();
+    String vhcid = prefs.getString("tire_vhcid").toString();
 
     String url = "$baseUrl?method=$method&vhcid=$vhcid";
     Uri myUri = Uri.parse(Uri.encodeFull(url));
     print("fetchTyrePosts ${myUri}");
     try {
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
         setState(() {
           tyrePosts = data
               .map((item) => {
-            "value": item["value"].toString(),
-            "title": item["title"].toString()
-          })
+                    "value": item["value"].toString(),
+                    "title": item["title"].toString()
+                  })
               .toList();
         });
         print("tyrePosts");
@@ -473,16 +475,16 @@ class _TireTrillerState extends State<TireTriller> {
 
   Future GetDetailListBan() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String tire_vhcid = prefs.getString("tire_vhcid") ?? "";
+    String tire_vhcid = prefs.getString("tire_vhcid")!;
     var urlBase = "";
     urlBase =
-    "${GlobalData.baseUrl}api/maintenance/sr/detail_ban_tire.jsp?method=get-list-sn-tire-ban-v1&vhcid=${tire_vhcid}";
+        "${GlobalData.baseUrl}api/maintenance/sr/detail_ban_tire.jsp?method=get-list-sn-tire-ban-v1&vhcid=${tire_vhcid}";
     var urlData = urlBase;
     var encoded = Uri.encodeFull(urlData);
     print(urlData);
     Uri myUri = Uri.parse(encoded);
     var response =
-    await http.get(myUri, headers: {"Accept": "application/json"});
+        await http.get(myUri, headers: {"Accept": "application/json"});
     if (response.statusCode == 200) {
       setState(() {
         tireDetailsBan = (jsonDecode(response.body) as List)
@@ -497,19 +499,19 @@ class _TireTrillerState extends State<TireTriller> {
   Future getListDataTireDetailLogs(bool isload) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      var vhcid = prefs.getString("tire_vhcid") ?? "";
-      var typeUnits = prefs.getString("tire_vhttype") ?? "";
+      var vhcid = prefs.getString("tire_vhcid");
+      var typeUnits = prefs.getString("tire_vhttype");
       EasyLoading.show();
       dataListTireDetail = [];
       var urlBase = "";
       urlBase =
-      "${GlobalData.baseUrl}api/maintenance/sr/list_detail_log_tire.jsp?method=lookup-list-tire-logs-v1&vhcid=${vhcid}";
+          "${GlobalData.baseUrl}api/maintenance/sr/list_detail_log_tire.jsp?method=lookup-list-tire-logs-v1&vhcid=${vhcid}";
       var urlData = urlBase;
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
@@ -517,29 +519,25 @@ class _TireTrillerState extends State<TireTriller> {
               .map((dynamic e) => e as Map<String, dynamic>)
               .toList();
           if (tireDetailsLogs != null && tireDetailsLogs.length > 0) {
-            log_vehicleid = vhcid;
+            log_vehicleid = vhcid!;
             log_km_sekarang = tireDetailsLogs[0]['km_sekarang'];
-            log_vhtype = typeUnits;
+            log_vhtype = typeUnits!;
             log_location = tireDetailsLogs[0]['locid'];
           } else {
-            log_vehicleid = vhcid;
-            log_vhtype = typeUnits;
+            log_vehicleid = vhcid!;
+            log_vhtype = typeUnits!;
           }
         });
       } else {
-        final ctx = globalScaffoldKey.currentContext;
-        if (ctx != null) {
-          alert(ctx, 0, "Gagal load data list detail opname", "error");
-        }
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Gagal load data list detail opname", "error");
       }
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
     } catch (e) {
-      final ctx = globalScaffoldKey.currentContext;
-      if (ctx != null) {
-        alert(ctx, 0, "Client, Load data logs tire", "error");
-      }
+      alert(globalScaffoldKey.currentContext!, 0, "Client, Load data logs tire",
+          "error");
       print(e.toString());
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
@@ -547,8 +545,8 @@ class _TireTrillerState extends State<TireTriller> {
     }
   }
 
-  Future<void> updateTyreFitPost(
-      String id_old,String id_new, String fitPostOld, String fitPostNew) async {
+  Future<void> updateTyreFitPost(String id_old, String id_new,
+      String fitPostOld, String fitPostNew) async {
     String baseUrl =
         "${GlobalData.baseUrl}api/maintenance/sr/create_opname_sr_detai_tire.jsp";
     String method = "udpdate-tyre-fitpost";
@@ -560,7 +558,7 @@ class _TireTrillerState extends State<TireTriller> {
     print('${myUri}');
     try {
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
       print('response.statusCode ${response.statusCode}');
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
@@ -572,27 +570,21 @@ class _TireTrillerState extends State<TireTriller> {
             SnackBar(content: Text("Succes update perubahan fitpost")),
           );
         } else {
-          final ctx = globalScaffoldKey.currentContext;
-          if (ctx != null) {
-            alert(ctx, 0, "Silahkan kembali ke page opname", "error");
-          }
+          alert(globalScaffoldKey.currentContext!, 0,
+              "Silahkan kembali ke page opname", "error");
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Error: Silahkan kembali ke page opname")),
           );
         }
       } else {
         print("Failed: ${response.statusCode}");
-        final ctx = globalScaffoldKey.currentContext;
-        if (ctx != null) {
-          alert(ctx, 0, "Err,Gagal update perubahan fitpost", "error");
-        }
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Err,Gagal update perubahan fitpost", "error");
       }
     } catch (e) {
       print("Error: $e");
-      final ctx = globalScaffoldKey.currentContext;
-      if (ctx != null) {
-        alert(ctx, 0, "Exception ${e},Gagal update perubahan fitpost", "error");
-      }
+      alert(globalScaffoldKey.currentContext!, 0,
+          "Exception ${e},Gagal update perubahan fitpost", "error");
     }
   }
 
@@ -603,13 +595,13 @@ class _TireTrillerState extends State<TireTriller> {
       dataListTireDetail = [];
       var urlBase = "";
       urlBase =
-      "${GlobalData.baseUrl}api/maintenance/sr/list_data_opname_sr.jsp?method=list-detail-tire-sr&tyrepost=${tyrepost}&vhcid=${vehicle_id}";
+          "${GlobalData.baseUrl}api/maintenance/sr/list_data_opname_sr.jsp?method=list-detail-tire-sr&tyrepost=${tyrepost}&vhcid=${vehicle_id}";
       var urlData = urlBase;
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
@@ -622,19 +614,15 @@ class _TireTrillerState extends State<TireTriller> {
           }
         });
       } else {
-        final ctx = globalScaffoldKey.currentContext;
-        if (ctx != null) {
-          alert(ctx, 0, "Gagal load data list detail opname", "error");
-        }
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Gagal load data list detail opname", "error");
       }
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
     } catch (e) {
-      final ctx = globalScaffoldKey.currentContext;
-      if (ctx != null) {
-        alert(ctx, 0, "Client, Load data ban", "error");
-      }
+      alert(globalScaffoldKey.currentContext!, 0, "Client, Load data ban",
+          "error");
       print(e.toString());
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
@@ -665,7 +653,7 @@ class _TireTrillerState extends State<TireTriller> {
                         border: OutlineInputBorder(),
                         labelStyle: TextStyle(fontSize: 12),
                         contentPadding:
-                        EdgeInsets.symmetric(vertical: 2, horizontal: 10),
+                            EdgeInsets.symmetric(vertical: 2, horizontal: 10),
                       ),
                     ),
                     SizedBox(height: 5),
@@ -677,7 +665,7 @@ class _TireTrillerState extends State<TireTriller> {
                         border: OutlineInputBorder(),
                         labelStyle: TextStyle(fontSize: 12),
                         contentPadding:
-                        EdgeInsets.symmetric(vertical: 2, horizontal: 10),
+                            EdgeInsets.symmetric(vertical: 2, horizontal: 10),
                       ),
                     ),
                     SizedBox(height: 5),
@@ -775,15 +763,18 @@ class _TireTrillerState extends State<TireTriller> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.shade200, // Warna background
-                                  borderRadius: BorderRadius.circular(8), // Agar sudutnya melengkung
+                                  color: Colors.grey[200], // Warna background
+                                  borderRadius: BorderRadius.circular(
+                                      8), // Agar sudutnya melengkung
                                 ),
-                                padding: const EdgeInsets.symmetric(horizontal: 10), // Padding dalam container
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10), // Padding dalam container
                                 child: TextField(
                                   controller: tekanan_angin,
                                   decoration: const InputDecoration(
                                     labelText: 'Tek. Angin',
-                                    border: InputBorder.none, // Hilangkan border bawaan
+                                    border: InputBorder
+                                        .none, // Hilangkan border bawaan
                                     labelStyle: TextStyle(fontSize: 12),
                                   ),
                                   keyboardType: TextInputType.number,
@@ -801,7 +792,7 @@ class _TireTrillerState extends State<TireTriller> {
                         labelText: 'Alasan unit',
                         border: OutlineInputBorder(),
                         contentPadding:
-                        EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                            EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                       ),
                       items: tireDetailsStatus1.map((data) {
                         return DropdownMenuItem<String>(
@@ -810,11 +801,9 @@ class _TireTrillerState extends State<TireTriller> {
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            tire_alasan_unit = newValue;
-                          });
-                        }
+                        setState(() {
+                          tire_alasan_unit = newValue!;
+                        });
                       },
                       hint: Text("Select status"),
                       isExpanded: true,
@@ -826,7 +815,7 @@ class _TireTrillerState extends State<TireTriller> {
                         labelText: 'Status',
                         border: OutlineInputBorder(),
                         contentPadding:
-                        EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                            EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                       ),
                       items: tireDetailsStatus2.map((data) {
                         return DropdownMenuItem<String>(
@@ -835,11 +824,9 @@ class _TireTrillerState extends State<TireTriller> {
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            tire_status = newValue;
-                          });
-                        }
+                        setState(() {
+                          tire_status = newValue!;
+                        });
                       },
                       hint: Text("Select status"),
                       isExpanded: true,
@@ -851,7 +838,7 @@ class _TireTrillerState extends State<TireTriller> {
                         labelText: 'Kerusakan Ban',
                         border: OutlineInputBorder(),
                         contentPadding:
-                        EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                            EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                       ),
                       items: tireDetailsStatus3.map((data) {
                         return DropdownMenuItem<String>(
@@ -860,11 +847,9 @@ class _TireTrillerState extends State<TireTriller> {
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            tire_kerusakan_ban = newValue;
-                          });
-                        }
+                        setState(() {
+                          tire_kerusakan_ban = newValue!;
+                        });
                       },
                       hint: Text("Select kerusakan ban"),
                       isExpanded: true,
@@ -876,7 +861,7 @@ class _TireTrillerState extends State<TireTriller> {
                         labelText: 'Masalah Unit',
                         border: OutlineInputBorder(),
                         contentPadding:
-                        EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                            EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                       ),
                       items: tireDetailsStatus4.map((data) {
                         return DropdownMenuItem<String>(
@@ -885,11 +870,9 @@ class _TireTrillerState extends State<TireTriller> {
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            tire_masalah_unit = newValue;
-                          });
-                        }
+                        setState(() {
+                          tire_masalah_unit = newValue!;
+                        });
                       },
                       hint: Text("Select Masalah Unit"),
                       isExpanded: true,
@@ -902,7 +885,7 @@ class _TireTrillerState extends State<TireTriller> {
                         border: OutlineInputBorder(),
                         labelStyle: TextStyle(fontSize: 12),
                         contentPadding:
-                        EdgeInsets.symmetric(vertical: 2, horizontal: 10),
+                            EdgeInsets.symmetric(vertical: 2, horizontal: 10),
                       ),
                       keyboardType: TextInputType.text,
                     ),
@@ -912,7 +895,8 @@ class _TireTrillerState extends State<TireTriller> {
                       children: [
                         const Text(
                           'Ganti Ban',
-                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              color: Colors.black, fontWeight: FontWeight.bold),
                         ),
                         Row(
                           children: [
@@ -936,129 +920,117 @@ class _TireTrillerState extends State<TireTriller> {
                         Expanded(
                           child: Container(
                             margin: EdgeInsets.all(5.0),
-                            child: GestureDetector(
-                              onTap: () async {
-                                await getImageFromCamera(context, "PHOTO1");
-                                setState(() {});  // Force UI refresh
-                              },
-                              child: Container(
-                                alignment: Alignment.center,
-                                child: _imagePhoto1 != null
-                                    ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.file(
-                                    _imagePhoto1!,
-                                    width: double.infinity,
-                                    height: 50.0,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                                    : Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey.shade200,
-                                      borderRadius: BorderRadius.circular(10)),
-                                  width: double.infinity,
-                                  height: 50,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () async {
-                                      await getImageFromCamera(context, "PHOTO1");
-                                      setState(() {});  // Force UI refresh
-                                    },
-                                    icon: Icon(
-                                      Icons.camera,
-                                      color: Colors.white,
-                                      size: 15.0,
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: _imagePhoto1 != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.file(
+                                        _imagePhoto1!,
+                                        width: double.infinity,
+                                        height: 50.0,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      width: double.infinity,
+                                      height: 50,
+                                      child: ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.camera,
+                                          color: Colors.white,
+                                          size: 15.0,
+                                        ),
+                                        label: Text("Ban"),
+                                        onPressed: () async {
+                                          await getImageFromCamera(
+                                              context, "PHOTO1");
+                                          setState(() {});
+                                        },
+                                      ),
                                     ),
-                                    label: Text("Ban"),
-                                  ),
-                                ),
-                              ),
                             ),
                           ),
                         ),
                         Expanded(
                           child: Container(
                             margin: EdgeInsets.all(5.0),
-                            child: GestureDetector(
-                              onTap: () async {
-                                await getImageFromCamera(context, "PHOTO2");
-                                setState(() {});  // Force UI refresh
-                              },
-                              child: Container(
-                                alignment: Alignment.center,
-                                child: _imagePhoto2 != null
-                                    ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.file(
-                                    _imagePhoto2!,
-                                    width: double.infinity,
-                                    height: 50.0,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                                    : Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey.shade200,
-                                      borderRadius: BorderRadius.circular(10)),
-                                  width: double.infinity,
-                                  height: 50,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () async {
-                                      await getImageFromCamera(context, "PHOTO2");
-                                      setState(() {});  // Force UI refresh
-                                    },
-                                    icon: Icon(
-                                      Icons.camera,
-                                      color: Colors.white,
-                                      size: 15.0,
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: _imagePhoto2 != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.file(
+                                        _imagePhoto2!,
+                                        width: double.infinity,
+                                        height: 50.0,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      width: double.infinity,
+                                      height: 50,
+                                      child: ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.camera,
+                                          color: Colors.white,
+                                          size: 15.0,
+                                        ),
+                                        label: Text("Tapak"),
+                                        onPressed: () async {
+                                          await getImageFromCamera(
+                                              context, "PHOTO2");
+                                          setState(() {}); // Force UI refresh
+                                        },
+                                      ),
                                     ),
-                                    label: Text("Tapak"),
-                                  ),
-                                ),
-                              ),
                             ),
                           ),
                         ),
                         Expanded(
                           child: Container(
                             margin: EdgeInsets.all(5.0),
-                            child: GestureDetector(
-                              onTap: () async {
-                                await getImageFromCamera(context, "PHOTO3");
-                                setState(() {});  // Force UI refresh
-                              },
-                              child: Container(
-                                alignment: Alignment.center,
-                                child: _imagePhoto3 != null
-                                    ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.file(
-                                    _imagePhoto3!,
-                                    width: double.infinity,
-                                    height: 50.0,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                                    : Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey.shade200,
-                                      borderRadius: BorderRadius.circular(10)),
-                                  width: double.infinity,
-                                  height: 50,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () async {
-                                      await getImageFromCamera(context, "PHOTO3");
-                                      setState(() {});  // Force UI refresh
-                                    },
-                                    icon: Icon(
-                                      Icons.camera,
-                                      color: Colors.white,
-                                      size: 15.0,
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: _imagePhoto3 != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.file(
+                                        _imagePhoto3!,
+                                        width: double.infinity,
+                                        height: 50.0,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      width: double.infinity,
+                                      height: 50,
+                                      child: ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.camera,
+                                          color: Colors.white,
+                                          size: 15.0,
+                                        ),
+                                        label: Text("Damage"),
+                                        onPressed: () async {
+                                          await getImageFromCamera(
+                                              context, "PHOTO3");
+                                          setState(() {}); // Force UI refresh
+                                        },
+                                      ),
                                     ),
-                                    label: Text("Damage"),
-                                  ),
-                                ),
-                              ),
                             ),
                           ),
                         ),
@@ -1068,105 +1040,104 @@ class _TireTrillerState extends State<TireTriller> {
                     Expanded(
                       child: tireDetails.isEmpty
                           ? Center(
-                        child: Text(
-                          'No tires added yet!',
-                          style:
-                          TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      )
-                          : ListView.builder(
-                        itemCount: tireDetails.length,
-                        itemBuilder: (context, index) {
-                          if (index >= tireDetails.length) {
-                            return Container(); // Or handle the error case
-                          }
-                          return Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                              side: BorderSide(
-                                  color: Colors.grey, width: 1),
-                            ),
-                            elevation: 3,
-                            margin: EdgeInsets.symmetric(
-                                vertical: 5, horizontal: 0),
-                            child: Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Serial No: ${tireDetails[index]["serialNo"]},Fit Post: ${tireDetails[index]["fitpost"]}',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      Text(
-                                        'Pattern: ${tireDetails[index]["pattern"]}',
-                                      ),
-                                      Text(
-                                        'IN Depth: ${tireDetails[index]["indepth"]},MID 1 Depth: ${tireDetails[index]["mid1depth"]},MID 2 Depth: ${tireDetails[index]["mid2depth"]},OUT Depth: ${tireDetails[index]["outdepth"]},Tek Angin: ${tireDetails[index]["tek_angin"]}',
-                                      ),
-                                      Text(
-                                        'Ganti Ban: ${casing_yes==true?"Yes":""}',
-                                      ),
-                                      Text(
-                                        'Note: ${tireDetails[index]["note"]}',
-                                      ),
-                                      Text(
-                                        'Photo Ban: ${tireDetails[index]["photo_ban"]!=null || tireDetails[index]["photo_ban"]!=''?'Ada':''},Photo Tapak: ${tireDetails[index]["photo_tapak"]!=null || tireDetails[index]["photo_tapak"]!=''?'Ada':''},Photo Damage: ${tireDetails[index]["photo_damage"]!=null || tireDetails[index]["photo_damage"]!=''?'Ada':''}',
-                                      ),
-                                    ],
-                                  ),
-                                  IconButton(
-                                    onPressed: () async {
-                                      if (index >= 0 &&
-                                          tireDetails.length > 0) {
-                                        final tireDetail =
-                                        tireDetails[index];
-                                        //print('Tire ID: ${tireDetail['vhcid']}, FitPost: ${tireDetail['fitpost']}');
-                                        // Access other fields here as needed
-                                        final List<Map<String, dynamic>>
-                                        items = await DatabaseHelper
-                                            .instance
-                                            .fetchItemsLogs();
-                                        print(items);
-                                        items.forEach((item) {
-                                          print(
-                                              'after delete id_tire: ${item['id_tire']}, vhcid: ${item['vhcid']}');
-                                        });
-                                        print(
-                                            'pit post ${tireDetail['fitpost']}');
-                                        int affected =
-                                        await DatabaseHelper
-                                            .instance
-                                            .deleteItemLogsByFitPost(
-                                            tireDetail[
-                                            'fitpost']!);
-                                        print('affected ${affected}');
-                                        if (affected > 0) {
-                                          print('success deleted');
-                                          setState(() {
-                                            tireDetails.removeAt(index);
-                                          });
-                                        } else {
-                                          print('fail deleted 2');
-                                        }
-                                      }
-                                    },
-                                    icon: Icon(Icons.delete,
-                                        color: Colors.red),
-                                    tooltip: 'Delete',
-                                  ),
-                                ],
+                              child: Text(
+                                'No tires added yet!',
+                                style:
+                                    TextStyle(fontSize: 16, color: Colors.grey),
                               ),
+                            )
+                          : ListView.builder(
+                              itemCount: tireDetails.length,
+                              itemBuilder: (context, index) {
+                                if (index >= tireDetails.length) {
+                                  return Container(); // Or handle the error case
+                                }
+                                return Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    side: BorderSide(
+                                        color: Colors.grey, width: 1),
+                                  ),
+                                  elevation: 3,
+                                  margin: EdgeInsets.symmetric(
+                                      vertical: 5, horizontal: 0),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Serial No: ${tireDetails[index]["serialNo"]},Fit Post: ${tireDetails[index]["fitpost"]}',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              'Pattern: ${tireDetails[index]["pattern"]}',
+                                            ),
+                                            Text(
+                                              'IN Depth: ${tireDetails[index]["indepth"]},MID 1 Depth: ${tireDetails[index]["mid1depth"]},MID 2 Depth: ${tireDetails[index]["mid2depth"]},OUT Depth: ${tireDetails[index]["outdepth"]},Tek Angin: ${tireDetails[index]["tek_angin"]}',
+                                            ),
+                                            Text(
+                                              'Ganti Ban: ${casing_yes == true ? "Yes" : ""}',
+                                            ),
+                                            Text(
+                                              'Note: ${tireDetails[index]["note"]}',
+                                            ),
+                                            Text(
+                                              'Photo Ban: ${tireDetails[index]["photo_ban"] != null || tireDetails[index]["photo_ban"] != '' ? 'Ada' : ''},Photo Tapak: ${tireDetails[index]["photo_tapak"] != null || tireDetails[index]["photo_tapak"] != '' ? 'Ada' : ''},Photo Damage: ${tireDetails[index]["photo_damage"] != null || tireDetails[index]["photo_damage"] != '' ? 'Ada' : ''}',
+                                            ),
+                                          ],
+                                        ),
+                                        IconButton(
+                                          onPressed: () async {
+                                            if (index >= 0 &&
+                                                tireDetails.length > 0) {
+                                              final tireDetail =
+                                                  tireDetails[index];
+                                              //print('Tire ID: ${tireDetail['vhcid']}, FitPost: ${tireDetail['fitpost']}');
+                                              // Access other fields here as needed
+                                              final List<Map<String, dynamic>>
+                                                  items = await DatabaseHelper
+                                                      .instance
+                                                      .fetchItemsLogs();
+                                              print(items);
+                                              items.forEach((item) {
+                                                print(
+                                                    'after delete id_tire: ${item['id_tire']}, vhcid: ${item['vhcid']}');
+                                              });
+                                              print(
+                                                  'pit post ${tireDetail['fitpost']}');
+                                              int affected =
+                                                  await DatabaseHelper.instance
+                                                      .deleteItemLogsByFitPost(
+                                                          tireDetail[
+                                                              'fitpost']!);
+                                              print('affected ${affected}');
+                                              if (affected > 0) {
+                                                print('success deleted');
+                                                setState(() {
+                                                  tireDetails.removeAt(index);
+                                                });
+                                              } else {
+                                                print('fail deleted 2');
+                                              }
+                                            }
+                                          },
+                                          icon: Icon(Icons.delete,
+                                              color: Colors.red),
+                                          tooltip: 'Delete',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
                     )
                   ],
                 ),
@@ -1176,7 +1147,7 @@ class _TireTrillerState extends State<TireTriller> {
               TextButton(
                 onPressed: () async {
                   SharedPreferences prefs =
-                  await SharedPreferences.getInstance();
+                      await SharedPreferences.getInstance();
                   var count = await DatabaseHelper.instance.countTableTire();
                   print('COUNT ${count}');
                   if (count > 0) {
@@ -1186,7 +1157,7 @@ class _TireTrillerState extends State<TireTriller> {
                         return AlertDialog(
                           title: Text('Confirm'),
                           content:
-                          Text('Apakah ingin menghapus semua data Log?'),
+                              Text('Apakah ingin menghapus semua data Log?'),
                           actions: [
                             TextButton(
                               onPressed: () async {
@@ -1222,7 +1193,7 @@ class _TireTrillerState extends State<TireTriller> {
                 child: Text('Empty Draft'),
               ),
               TextButton(
-                onPressed: () async{
+                onPressed: () async {
                   Navigator.of(context).pop();
                   //showEditDialog(tire_vhttype);
                   showDialog(
@@ -1241,7 +1212,8 @@ class _TireTrillerState extends State<TireTriller> {
                           TextButton(
                             onPressed: () {
                               Navigator.of(context).pop(); // Tutup dialog utama
-                              showEditDialog(tire_vhttype); // Panggil dialog edit
+                              showEditDialog(
+                                  tire_vhttype); // Panggil dialog edit
                             },
                             child: const Text("Edit"),
                           ),
@@ -1250,7 +1222,6 @@ class _TireTrillerState extends State<TireTriller> {
                               // Lanjut transaksi dengan input yang sudah ada
                               //String inputText = inputController.text;
                               Navigator.of(context).pop(); // Tutup dialog
-
                             },
                             child: const Text("Cancel"),
                           ),
@@ -1277,7 +1248,7 @@ class _TireTrillerState extends State<TireTriller> {
                 onPressed: () async {
                   // Handle form submission
                   SharedPreferences prefs =
-                  await SharedPreferences.getInstance();
+                      await SharedPreferences.getInstance();
                   String serialNo = serialNoController.text;
                   String pattern = patternController.text;
                   String _indepth = indepth.text;
@@ -1292,27 +1263,22 @@ class _TireTrillerState extends State<TireTriller> {
                   // For now, just print the values
 
                   var exists =
-                  tireDetails.any((el) => el['fitpost'] == fitpost);
-                  var tire_vhcid = prefs.getString("tire_vhcid") ?? "";
-                  final ctx = globalScaffoldKey.currentContext;
-                  if (_indepth.isEmpty) {
-                    if (ctx != null) {
-                      alert(ctx, 0, "IN Depth tidak boleh kosong", "error");
-                    }
-                  } else if (_outdepth.isEmpty) {
-                    if (ctx != null) {
-                      alert(ctx, 0, "OUT Depth tidak boleh kosong", "error");
-                    }
-                  } else if (_tekanan_angin.isEmpty) {
-                    if (ctx != null) {
-                      alert(ctx, 0,
+                      tireDetails.any((el) => el['fitpost'] == fitpost);
+                  var tire_vhcid = prefs.getString("tire_vhcid");
+                  if (_indepth == null || _indepth == '') {
+                    alert(globalScaffoldKey.currentContext!, 0,
+                        "IN Depth tidak boleh kosong", "error");
+                  } else if (_outdepth == null || _outdepth == '') {
+                    alert(globalScaffoldKey.currentContext!, 0,
+                        "OUT Depth tidak boleh kosong", "error");
+                  } else if (_tekanan_angin == null || _tekanan_angin == '') {
+                    alert(globalScaffoldKey.currentContext!, 0,
                         "Tekanan angin tidak boleh kosong", "error");
-                    }
                   } else {
                     if (!exists) {
-                      if (serialNoController.text.isNotEmpty &&
-                          patternController.text.isNotEmpty &&
-                          tire_vhcid.isNotEmpty) {
+                      if (serialNoController.text != null &&
+                          patternController.text != null &&
+                          tire_vhcid != null) {
                         setState(() {
                           tireDetails.add({
                             "serialNo": serialNoController.text,
@@ -1361,7 +1327,7 @@ class _TireTrillerState extends State<TireTriller> {
                         });
                       }
                       final List<Map<String, dynamic>> items =
-                      await DatabaseHelper.instance.fetchItemsLogs();
+                          await DatabaseHelper.instance.fetchItemsLogs();
 
                       // items.forEach((item) {
                       //   print(
@@ -1400,35 +1366,27 @@ class _TireTrillerState extends State<TireTriller> {
 
   Future<String> GetSerialNo(String _fitpost) {
     return SharedPreferences.getInstance().then((prefs) {
-      String vhcid = prefs.getString("tire_vhcid") ?? "";
-      String arvhcid = vhcid.isNotEmpty ? vhcid.split("/")[0].toString() : "";
+      String vhcid = prefs.getString("tire_vhcid")!;
+      String arvhcid = vhcid.split("/")[0].toString();
       String serialNo = '';
       //print('_fitpost ${_fitpost}');
-      var nopol = vhcid.isNotEmpty ? vhcid.split("/")[0] : "";
+      var nopol = vhcid.split("/")[0];
       setState(() {
         title_header_tire = "${nopol} TRONTON";
       });
       if (tireDetailsBan.length > 0) {
-        Map<String, dynamic>? datas;
-        try {
-          datas = tireDetailsBan.firstWhere(
-            (element) =>
-                element['vhcid'] == arvhcid && element['post'] == _fitpost,
-          );
-        } catch (e) {
-          datas = null;
-        }
-        if (datas != null && datas.isNotEmpty) {
-          var km_rit = "${datas['km_rit']}/${datas['rit_trip']}";
-          var a = "${_fitpost}\nSN:${datas['serial_no']}\nUMUR KM/RIT:\n${km_rit}";
-          setState(() {
-            serialNo = a;
-          });
-        } else {
-          setState(() {
-            serialNo = _fitpost;
-          });
-        }
+        var datas = tireDetailsBan.firstWhere(
+          (element) =>
+              element['vhcid'] == arvhcid && element['post'] == _fitpost,
+          orElse: () => {},
+        );
+        var km_rit = "${datas['km_rit']}/${datas['rit_trip']}";
+        var a = datas != {}
+            ? "${_fitpost}\nSN:${datas['serial_no']}\nUMUR KM/RIT:\n${km_rit}"
+            : _fitpost;
+        setState(() {
+          serialNo = a;
+        });
         //print('serialNo ${serialNo}');
       }
       return serialNo;
@@ -1440,132 +1398,27 @@ class _TireTrillerState extends State<TireTriller> {
         context, MaterialPageRoute(builder: (context) => FrmServiceTire()));
   }
 
-  Widget _createButton(BuildContext context, String? label, String vh_fitpost,
-      ShapeBorder shape) {
-    final String displayLabel = label ?? vh_fitpost;
-    OutlinedBorder? buttonShape;
-    if (shape is RoundedRectangleBorder) {
-      buttonShape = shape;
-    } else {
-      buttonShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
-    }
-    return SizedBox(
-      width: 80, // Set desired width
-      height: 60, // Set desired height
-      child: ElevatedButton(
-        onPressed: () async {
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          resetTeks();
-          fitpost = displayLabel;
-          var nopol = prefs.getString("tire_vhcid") ?? "";
-          if (nopol.isNotEmpty) {
-            nopol = nopol.split('/')[0];
-            await getListDataTireDetail(true, vh_fitpost, nopol);
-            Timer(Duration(seconds: 1), () {
-              setState(() {
-                old_fitpost.text = vh_fitpost;
-              });
-              print("vh_fitpost ${vh_fitpost}, id_tyre_post ${id_tyre_post}");
-              _showInputDialog(context, vh_fitpost, nopol);
-            });
-          }
-        },
-        style: ElevatedButton.styleFrom(
-          shape: buttonShape,
-          padding: EdgeInsets.zero, // No padding since size is fixed
-        ),
-        child: Text(
-          displayLabel,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 9),
-        ),
-      ),
-    );
-  }
-
-  void showEditDialog(String vh_fitpost) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Pilih data baru"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                value:"0", // Make sure vh_fitpost matches the data type
-                decoration: const InputDecoration(
-                  labelText: 'Select FitPost',
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                  EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                ),
-                items: tyrePosts.map((tyre) {
-                  return DropdownMenuItem<String>(
-                    value: tyre["value"].toString(), // Ensure all values are Strings
-                    child: Text(tyre["title"].toString()), // Convert title to String
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      id_tyre_post2 = newValue.toString();
-                    });
-                  }
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                String oldfit = old_fitpost.text;
-                String idold = id_tyre_post;
-                String idnew = id_tyre_post2;
-                String newfit = new_fit_post.isEmpty
-                    ? vh_fitpost
-                    : new_fit_post;
-                updateTyreFitPost(idold, idnew, oldfit, newfit);
-              },
-              child: const Text("Simpan"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text("Cancel"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (bool didPop, dynamic result) {
-        if (didPop) return;
+    return new WillPopScope(
+      onWillPop: () {
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => FrmServiceTire()));
+        return Future.value(false);
       },
       child: new Scaffold(
           appBar: AppBar(
             elevation: 0,
             backgroundColor: Colors.white,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back,color: Colors.black),
+              icon: Icon(Icons.arrow_back, color: Colors.black),
               iconSize: 20.0,
               onPressed: () {
-                final ctx = globalScaffoldKey.currentContext;
-                if (ctx != null) {
-                  _goBack(ctx);
-                }
+                _goBack(globalScaffoldKey.currentContext!);
               },
             ),
             title: Text(
-              '${tire_vhcid.isNotEmpty ? tire_vhcid.split('/')[0] : ""}/${tire_vhttype} (${tire_total_km} KM)',
+              '${tire_vhcid.split('/')[0]}/${tire_vhttype} (${tire_total_km} KM)',
               style: TextStyle(color: Colors.black),
             ),
           ),
@@ -1593,14 +1446,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot
-                                    .data ?? 'A2','A2', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'A2', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'A2','A2', // Pass the retrieved serial number to your button
+                                'A2',
+                                'A2', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1613,7 +1467,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                                snapshot.data ?? 'A2','A2', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'A2', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1624,8 +1479,8 @@ class _TireTrillerState extends State<TireTriller> {
                   ),
                 ),
                 Positioned(
-                    top: MediaQuery.of(context).size.height * 0.05,
-                    left: MediaQuery.of(context).size.width * 0.25,
+                  top: MediaQuery.of(context).size.height * 0.05,
+                  left: MediaQuery.of(context).size.width * 0.25,
                   child: FutureBuilder<String>(
                     future: GetSerialNo("A1"), // Call the async function
                     builder: (context, snapshot) {
@@ -1634,13 +1489,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'A1','A1', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'A1', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'A1','A1', // Pass the retrieved serial number to your button
+                                'A1',
+                                'A1', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1653,8 +1510,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'A1', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'A1', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1675,13 +1532,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'B3','B3', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'B3', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'B3','B3', // Pass the retrieved serial number to your button
+                                'B3',
+                                'B3', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1694,8 +1553,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'B3', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'B3', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1716,13 +1575,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'B4','B4', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'B4', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'B4','B4', // Pass the retrieved serial number to your button
+                                'B4',
+                                'B4', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1735,8 +1596,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'B4', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'B4', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1757,13 +1618,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'B2','B2', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'B2', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'B2','B2', // Pass the retrieved serial number to your button
+                                'B2',
+                                'B2', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1776,8 +1639,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'B2', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'B2', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1798,13 +1661,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'B1','B1', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'B1', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'B1','B1', // Pass the retrieved serial number to your button
+                                'B1',
+                                'B1', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1817,8 +1682,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'B1', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'B1', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1827,7 +1692,7 @@ class _TireTrillerState extends State<TireTriller> {
                       }
                     },
                   ),
-                ),// B5-B8
+                ), // B5-B8
                 Positioned(
                   top: MediaQuery.of(context).size.height * 0.295,
                   right: MediaQuery.of(context).size.width * 0.25,
@@ -1839,13 +1704,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'B7','B7', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'B7', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'B7','B7', // Pass the retrieved serial number to your button
+                                'B7',
+                                'B7', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1858,7 +1725,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'B7','B7', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'B7', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1879,13 +1747,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'B8','B8', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'B8', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'B8','B8', // Pass the retrieved serial number to your button
+                                'B8',
+                                'B8', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1898,7 +1768,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'B8','B8', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'B8', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1907,13 +1778,14 @@ class _TireTrillerState extends State<TireTriller> {
                       }
                     },
                   ),
-                ),//SEREO
+                ), //SEREO
                 Positioned(
                   top: MediaQuery.of(context).size.height * 0.385,
                   left: MediaQuery.of(context).size.width * 0.4,
                   child: _createButton(
                       context,
-                      'S2','S2',
+                      'S2',
+                      'S2',
                       RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10))),
                 ),
@@ -1928,14 +1800,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot
-                                    .data,'B6', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'B6', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'B6','B6', // Pass the retrieved serial number to your button
+                                'B6',
+                                'B6', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1948,8 +1821,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'B6', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'B6', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1970,14 +1843,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot
-                                    .data,'B5', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'B5', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'B5','B5', // Pass the retrieved serial number to your button
+                                'B5',
+                                'B5', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1990,8 +1864,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'B5', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'B5', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2012,13 +1886,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'C3','C3', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C3', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C3','C3', // Pass the retrieved serial number to your button
+                                'C3',
+                                'C3', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -2031,7 +1907,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'C3','C3', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C3', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2052,13 +1929,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'C4','C4', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C4', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C4','C4', // Pass the retrieved serial number to your button
+                                'C4',
+                                'C4', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -2071,7 +1950,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'C4','C4', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C4', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2092,13 +1972,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'C2','C2', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C2', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C2','C2', // Pass the retrieved serial number to your button
+                                'C2',
+                                'C2', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -2111,7 +1993,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'C2','C2', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C2', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2132,13 +2015,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'C1','C1', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C1', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C1','C1', // Pass the retrieved serial number to your button
+                                'C1',
+                                'C1', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -2151,7 +2036,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'C1','C1', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C1', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2160,7 +2046,7 @@ class _TireTrillerState extends State<TireTriller> {
                       }
                     },
                   ),
-                ),//C5-C8
+                ), //C5-C8
                 Positioned(
                   top: MediaQuery.of(context).size.height * 0.606,
                   right: MediaQuery.of(context).size.width * 0.256,
@@ -2172,14 +2058,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot
-                                    .data,'C7', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C7', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C7','C7', // Pass the retrieved serial number to your button
+                                'C7',
+                                'C7', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -2192,8 +2079,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'C7', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C7', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2214,14 +2101,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot
-                                    .data,'C8', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C8', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C8','C8', // Pass the retrieved serial number to your button
+                                'C8',
+                                'C8', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -2234,8 +2122,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'C8', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C8', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2256,14 +2144,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot
-                                    .data,'C6', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C6', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C6','C6', // Pass the retrieved serial number to your button
+                                'C6',
+                                'C6', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -2276,8 +2165,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'C6', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C6', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2298,14 +2187,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot
-                                    .data,'C5', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C5', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C5','C5', // Pass the retrieved serial number to your button
+                                'C5',
+                                'C5', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -2318,8 +2208,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'C5', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C5', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2328,7 +2218,7 @@ class _TireTrillerState extends State<TireTriller> {
                       }
                     },
                   ),
-                ),//C9-C12
+                ), //C9-C12
                 Positioned(
                   top: MediaQuery.of(context).size.height * 0.7,
                   right: MediaQuery.of(context).size.width * 0.254,
@@ -2340,14 +2230,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot
-                                    .data,'C11', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C11', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C11','C11', // Pass the retrieved serial number to your button
+                                'C11',
+                                'C11', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -2360,8 +2251,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'C11', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C11', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2382,14 +2273,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot
-                                    .data,'C12', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C12', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C12','C12', // Pass the retrieved serial number to your button
+                                'C12',
+                                'C12', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -2402,8 +2294,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'C12', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C12', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2424,14 +2316,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot
-                                    .data,'C10', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C10', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C10','C10', // Pass the retrieved serial number to your button
+                                'C10',
+                                'C10', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -2444,8 +2337,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'C10', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C10', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2466,14 +2359,15 @@ class _TireTrillerState extends State<TireTriller> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot
-                                    .data,'C9', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C9', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C9','C9', // Pass the retrieved serial number to your button
+                                'C9',
+                                'C9', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -2486,8 +2380,8 @@ class _TireTrillerState extends State<TireTriller> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot
-                              .data,'C9', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C9', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -2502,31 +2396,156 @@ class _TireTrillerState extends State<TireTriller> {
                   left: MediaQuery.of(context).size.width * 0.4,
                   child: _createButton(
                       context,
-                      'S1','S1',
+                      'S1',
+                      'S1',
                       RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10))),
                 )
               ],
             ),
-          )
+          )),
+    );
+  }
+
+  void showEditDialog(String vh_fitpost) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Pilih data baru"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: "0", // Make sure vh_fitpost matches the data type
+                decoration: const InputDecoration(
+                  labelText: 'Select FitPost',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                ),
+                items: tyrePosts.map((tyre) {
+                  return DropdownMenuItem<String>(
+                    value: tyre["value"]
+                        .toString(), // Ensure all values are Strings
+                    child: Text(
+                        tyre["title"].toString()), // Convert title to String
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    id_tyre_post2 = newValue
+                        .toString(); // ?? "0"; // Default to "0" if null
+
+                    // Find the corresponding title from tyrePosts
+                    new_fit_post = tyrePosts
+                        .firstWhere(
+                            (tyre) =>
+                                tyre["value"].toString() == newValue.toString(),
+                            orElse: () => {"title": "Unknown"})["title"]
+                        .toString();
+
+                    print("Selected Title: $new_fit_post"); // Print the title
+                  });
+                },
+                hint: const Text("Select FitPost"),
+                isExpanded: true,
+              )
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                var idold = "";
+                var idnew = "";
+                var oldfit = "";
+                var newfit = "";
+                id_tyre_post = tyrePosts
+                    .firstWhere(
+                      (item) => item['title'] == old_fitpost.text,
+                      orElse: () => {'value': ""},
+                    )['value']!
+                    .toString();
+                setState(() {
+                  idold = id_tyre_post;
+                  idnew = id_tyre_post2;
+                  oldfit = old_fitpost.text;
+                  newfit = new_fit_post == null || new_fit_post == ""
+                      ? vh_fitpost
+                      : new_fit_post;
+                });
+                await updateTyreFitPost(idold, idnew, oldfit, newfit);
+                setState(() {
+                  id_tyre_post = "0";
+                  old_fitpost.text = "";
+                  new_fit_post = "";
+                });
+                await GetDetailListBan();
+                setState(() {});
+                Navigator.of(context).pop(); // Tutup dialog edit
+              },
+              child: const Text("Simpan"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _createButton(BuildContext context, String label, String vh_fitpost,
+      OutlinedBorder shape) {
+    return SizedBox(
+      width: 80, // Set desired width
+      height: 60, // Set desired height
+      child: ElevatedButton(
+        onPressed: () async {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          resetTeks();
+          fitpost = label;
+          var nopol = prefs.getString("tire_vhcid");
+          nopol = nopol?.split('/')[0];
+          await getListDataTireDetail(true, vh_fitpost, nopol!);
+          Timer(Duration(seconds: 1), () {
+            setState(() {
+              old_fitpost.text = vh_fitpost;
+            });
+            print("vh_fitpost ${vh_fitpost}, id_tyre_post ${id_tyre_post}");
+            _showInputDialog(context, vh_fitpost, nopol!);
+          });
+        },
+        style: ElevatedButton.styleFrom(
+          shape: shape, // Custom ShapeBorder
+          padding: EdgeInsets.zero, // No padding since size is fixed
+        ),
+        child: Text(
+          label,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 9),
+        ),
       ),
     );
   }
 
   void GetSession() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    tire_vhcid = prefs.getString("tire_vhcid") ?? "";
-    tire_vhttype = prefs.getString("tire_vhttype") ?? "";
-    tire_total_km = prefs.getString("tire_total_km") ?? "";
+    tire_vhcid = prefs.getString("tire_vhcid")!;
+    tire_vhttype = prefs.getString("tire_vhttype")!;
+    tire_total_km = prefs.getString("tire_total_km")!;
   }
+
   @override
   void initState() {
     GetSession();
-    super.initState();
     getListDataTireDetailLogs(true);
     GetDetailListBan();
     GetDetailListStatus();
     fetchTyrePosts();
+    super.initState();
     Future.delayed(Duration(seconds: 5), () {
       if (mounted) {
         setState(() {

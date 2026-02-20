@@ -171,8 +171,8 @@ class _BottomActionBarState extends State<BottomActionBar> {
   Future getListDataTireDetailLogs(bool isload, BuildContext context) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      var vhcid = prefs.getString("tire_vhcid") ?? "";
-      var typeUnits = prefs.getString("tire_vhttype") ?? "";
+      var vhcid = prefs.getString("tire_vhcid");
+      var typeUnits = prefs.getString("tire_vhttype");
       EasyLoading.show();
       dataListTireDetail = [];
       var urlBase = "";
@@ -190,14 +190,14 @@ class _BottomActionBarState extends State<BottomActionBar> {
           tireDetailsLogs = (jsonDecode(response.body) as List)
               .map((dynamic e) => e as Map<String, dynamic>)
               .toList();
-          if (tireDetailsLogs != null && tireDetailsLogs.length > 0) {
-            log_vehicleid = vhcid;
+          if (tireDetailsLogs.length > 0) {
+            log_vehicleid = vhcid!;
             log_km_sekarang = tireDetailsLogs[0]['km_sekarang'];
-            log_vhtype = typeUnits;
+            log_vhtype = typeUnits!;
             log_location = tireDetailsLogs[0]['locid'];
           } else {
-            log_vehicleid = vhcid;
-            log_vhtype = typeUnits;
+            log_vehicleid = vhcid!;
+            log_vhtype = typeUnits!;
           }
         });
       } else {
@@ -264,8 +264,8 @@ class _TireTrontonState extends State<TireTronton> {
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
   bool _showNoDataMessage = false;
 
-
-  String noImage ='iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAANlBMVEXu7u64uLjx8fHt7e21tbXQ0NC9vb3ExMTm5ubj4+O5ubnIyMjq6urf39/MzMzBwcHU1NTZ2dmQfkM8AAAE2klEQVR4nO2Y2bLrKAxFwxCPePr/n21JYBvnJLeruq5zHnqtl3gAzEZCEnk8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgK3jv62t/eXN98KbZtfOncd8O6C/8dwH/yjOO4RH26zh05XnaxiiMa/fao5fHzzLLGKfyNCxxrZfnubfZSf28SM/hOYXSvmIJf1PTlWcc1vPaNVmQn9oY3TC4GBt5ffl+H90++yRasyzfNxdJaYlLqu79ZgM656Ib9RuhdRX3KnTD5I/rrND3w/n1V2NUCifp7ENW4Nx4SvKbDDBVnVZXDyh9wlI/WdSPblIpqlxMLwpN4LC07WKrvl56nArFFV3MRk+j2+2vhFGGbQ+vDfoVsVQrI9rnRIwqbHfme23oYln9XaHNb5mS90m89TL1WmHw8rLsvq6RYfqzja3MYdNJb5ute/hHty6z9lAbxi9FmtMRd4W9zqe3r/pOZ1LHkMqGyexgzaZYN/Orjbrfe5W/9OUumfCs8EZhB9l/8mSKQi8e57Z9drr+w3uFfWNLoa3U6m7OzcTj9Lm4QTai38wPyhjFH0+FNzpopdA5XeFd4T5vIy21v10UbtbTdqldNftCiEWjxJohxxo/a48Xe9Veep86RVWpsy3doTBplDhWVs0T67B4Klyj2DdqlJiyJ+S5iySN/21+lcNmCUhn1g9npBl/pNy/rtD2Wpt2hTrd8VhYC5hvFQbx5sHikLYZzlAj3hs3v+6b2aJQHq8bLMGPdbaIp7/cpjBNOofZnwrj/Krw3C2HQvXfeZGXXq6iNiubV7Ul02nbW7erpM1QxOqGveTD5gs21Hwt81s/K/RvFHYakKTSm72s0KCTz72S+qf8yk9zKrSQ0jUWZHeFuWQb7rdhdjNJ8e5QaF6aq5X5k5dKu2bq5E6SQxwf41582XPZbFPp2JWwGbQwaNvhUPi9SKNespweo5GmKirbM05cFJpT95Lr4jTGYdMcWDKHDPNc1/VZfEGK7GOLShHRVArv1XZV2DeHQh9zjAjFsfYgeVUYVMmSVOfYaHsznbwPsfjfMd4lW3S/o1AivEaboWT8I1pqA1fvykdlwxxyOyvQ5nyxmmm1RnCldtdYo8G5yY4efkuhYpWWXecZ5apt1ZnW2/BQmHJRqjW37TcNqDJ1+RlKCNEBteTVqk3q3Dzgr3mpcBTZSc9uwyaVdzfr9Md350MLJJoe7GD0yMeLNpkvtF1v6Dh9Kdtkb/YSVfTZa6S5vfJWVaoh5VhaPNbtVojLNV/tCjWQaDzSvGe77Kndw3zmRU1CFpXD0x254We2uP2Mf2ZcEVaut3ieTpv+usK7QjWQvRmzG5ueSQPTMaCGr2iL9zwH1HPU43oCvvmMH8+aYj2upyaWkDh3Ly5UFKZFlt6bsvKHxaRFzJqLMiMfIM2gYWuyRhnWTqOaQr5zxl+l8j1yn38eVbDvVz17b+HHFunkqC5G6CR5r1bqhGXLL/TJLL2mo8+kYzxsE+QB223Kmy7MbcWdZ/z6b78Qfvyb+KGHPzrq1H78QfjaNtSv86e+92/in/i0sKF+9SfvCrnp3WdcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+B/xD/alJ5yRngQVAAAAAElFTkSuQmCC';
+  String noImage =
+      'iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAANlBMVEXu7u64uLjx8fHt7e21tbXQ0NC9vb3ExMTm5ubj4+O5ubnIyMjq6urf39/MzMzBwcHU1NTZ2dmQfkM8AAAE2klEQVR4nO2Y2bLrKAxFwxCPePr/n21JYBvnJLeruq5zHnqtl3gAzEZCEnk8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgK3jv62t/eXN98KbZtfOncd8O6C/8dwH/yjOO4RH26zh05XnaxiiMa/fao5fHzzLLGKfyNCxxrZfnubfZSf28SM/hOYXSvmIJf1PTlWcc1vPaNVmQn9oY3TC4GBt5ffl+H90++yRasyzfNxdJaYlLqu79ZgM656Ib9RuhdRX3KnTD5I/rrND3w/n1V2NUCifp7ENW4Nx4SvKbDDBVnVZXDyh9wlI/WdSPblIpqlxMLwpN4LC07WKrvl56nArFFV3MRk+j2+2vhFGGbQ+vDfoVsVQrI9rnRIwqbHfme23oYln9XaHNb5mS90m89TL1WmHw8rLsvq6RYfqzja3MYdNJb5ute/hHty6z9lAbxi9FmtMRd4W9zqe3r/pOZ1LHkMqGyexgzaZYN/Orjbrfe5W/9OUumfCs8EZhB9l/8mSKQi8e57Z9drr+w3uFfWNLoa3U6m7OzcTj9Lm4QTai38wPyhjFH0+FNzpopdA5XeFd4T5vIy21v10UbtbTdqldNftCiEWjxJohxxo/a48Xe9Veep86RVWpsy3doTBplDhWVs0T67B4Klyj2DdqlJiyJ+S5iySN/21+lcNmCUhn1g9npBl/pNy/rtD2Wpt2hTrd8VhYC5hvFQbx5sHikLYZzlAj3hs3v+6b2aJQHq8bLMGPdbaIp7/cpjBNOofZnwrj/Krw3C2HQvXfeZGXXq6iNiubV7Ul02nbW7erpM1QxOqGveTD5gs21Hwt81s/K/RvFHYakKTSm72s0KCTz72S+qf8yk9zKrSQ0jUWZHeFuWQb7rdhdjNJ8e5QaF6aq5X5k5dKu2bq5E6SQxwf41582XPZbFPp2JWwGbQwaNvhUPi9SKNespweo5GmKirbM05cFJpT95Lr4jTGYdMcWDKHDPNc1/VZfEGK7GOLShHRVArv1XZV2DeHQh9zjAjFsfYgeVUYVMmSVOfYaHsznbwPsfjfMd4lW3S/o1AivEaboWT8I1pqA1fvykdlwxxyOyvQ5nyxmmm1RnCldtdYo8G5yY4efkuhYpWWXecZ5apt1ZnW2/BQmHJRqjW37TcNqDJ1+RlKCNEBteTVqk3q3Dzgr3mpcBTZSc9uwyaVdzfr9Md350MLJJoe7GD0yMeLNpkvtF1v6Dh9Kdtkb/YSVfTZa6S5vfJWVaoh5VhaPNbtVojLNV/tCjWQaDzSvGe77Kndw3zmRU1CFpXD0x254We2uP2Mf2ZcEVaut3ieTpv+usK7QjWQvRmzG5ueSQPTMaCGr2iL9zwH1HPU43oCvvmMH8+aYj2upyaWkDh3Ly5UFKZFlt6bsvKHxaRFzJqLMiMfIM2gYWuyRhnWTqOaQr5zxl+l8j1yn38eVbDvVz17b+HHFunkqC5G6CR5r1bqhGXLL/TJLL2mo8+kYzxsE+QB223Kmy7MbcWdZ/z6b78Qfvyb+KGHPzrq1H78QfjaNtSv86e+92/in/i0sKF+9SfvCrnp3WdcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+B/xD/alJ5yRngQVAAAAAElFTkSuQmCC';
   final picker = ImagePicker();
   File? _imagePhoto1;
   File? _imagePhoto2;
@@ -296,45 +296,33 @@ class _TireTrontonState extends State<TireTronton> {
     _imagePhoto1 = null;
     _imagePhoto2 = null;
     _imagePhoto3 = null;
-    filePathImage1='';
-    filePathImage2='';
-    filePathImage3='';
+    filePathImage1 = '';
+    filePathImage2 = '';
+    filePathImage3 = '';
   }
 
   Future getPicture(String namaPhoto, opsi) async {
     if (opsi == 'CAMERA') {
       final pickedFile =
-      await picker.pickImage(source: ImageSource.camera, imageQuality: 50);
+          await picker.pickImage(source: ImageSource.camera, imageQuality: 50);
       if (pickedFile != null) {
         if (namaPhoto == "PHOTO1") {
           setState(() {
             _imagePhoto1 = File(pickedFile.path);
-            if (_imagePhoto1 != null) {
-              List<int> imageBytes = _imagePhoto1!.readAsBytesSync();
-              var kb = _imagePhoto1!.readAsBytesSync().lengthInBytes / 1024;
-              var mb = kb / 1024;
-              filePathImage1 = base64Encode(imageBytes);
-            }
+            List<int> imageBytes = _imagePhoto1!.readAsBytesSync();
+            filePathImage1 = base64Encode(imageBytes);
           });
         } else if (namaPhoto == "PHOTO2") {
           setState(() {
             _imagePhoto2 = File(pickedFile.path);
-            if (_imagePhoto2 != null) {
-              List<int> imageBytes = _imagePhoto2!.readAsBytesSync();
-              var kb = _imagePhoto2!.readAsBytesSync().lengthInBytes / 1024;
-              var mb = kb / 1024;
-              filePathImage2 = base64Encode(imageBytes);
-            }
+            List<int> imageBytes = _imagePhoto2!.readAsBytesSync();
+            filePathImage2 = base64Encode(imageBytes);
           });
         } else if (namaPhoto == "PHOTO3") {
           setState(() {
             _imagePhoto3 = File(pickedFile.path);
-            if (_imagePhoto3 != null) {
-              List<int> imageBytes = _imagePhoto3!.readAsBytesSync();
-              var kb = _imagePhoto3!.readAsBytesSync().lengthInBytes / 1024;
-              var mb = kb / 1024;
-              filePathImage3 = base64Encode(imageBytes);
-            }
+            List<int> imageBytes = _imagePhoto3!.readAsBytesSync();
+            filePathImage3 = base64Encode(imageBytes);
           });
         } else {
           setState(() {
@@ -364,10 +352,9 @@ class _TireTrontonState extends State<TireTronton> {
     await getPicture(namaPhoto, 'CAMERA');
   }
 
-
   Future GetDetailListStatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String tire_vhcid = prefs.getString("tire_vhcid") ?? "";
+    String tire_vhcid = prefs.getString("tire_vhcid")!;
     var urlBase = "";
     urlBase =
         "${GlobalData.baseUrl}api/maintenance/sr/detail_ban_tire.jsp?method=get-status-sn-tire-ban-v1&vhcid=${tire_vhcid}";
@@ -414,7 +401,6 @@ class _TireTrontonState extends State<TireTronton> {
             tire_kerusakan_ban = "ZIPPER";
           }
 
-
           if (tireDetailsStatus4.isNotEmpty) {
             tire_masalah_unit = tireDetailsStatus4[0]['id'];
           } else {
@@ -439,24 +425,24 @@ class _TireTrontonState extends State<TireTronton> {
     String baseUrl =
         "${GlobalData.baseUrl}api/maintenance/sr/refference_tyre.jsp";
     String method = "list-fitpost";
-    String vhcid = (prefs.getString("tire_vhcid") ?? "").toString();
-    vhttype = (prefs.getString("tire_vhttype") ?? "").toString();
+    String vhcid = prefs.getString("tire_vhcid").toString();
+    vhttype = prefs.getString("tire_vhttype").toString();
 
     String url = "$baseUrl?method=$method&vhcid=$vhcid";
     Uri myUri = Uri.parse(Uri.encodeFull(url));
     print("fetchTyrePosts ${myUri}");
     try {
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
         setState(() {
           tyrePosts = data
               .map((item) => {
-            "value": item["value"].toString(),
-            "title": item["title"].toString()
-          })
+                    "value": item["value"].toString(),
+                    "title": item["title"].toString()
+                  })
               .toList();
         });
         print("tyrePosts");
@@ -479,7 +465,7 @@ class _TireTrontonState extends State<TireTronton> {
 
   Future GetDetailListBan() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String tire_vhcid = prefs.getString("tire_vhcid") ?? "";
+    String tire_vhcid = prefs.getString("tire_vhcid")!;
     var urlBase = "";
     urlBase =
         "${GlobalData.baseUrl}api/maintenance/sr/detail_ban_tire.jsp?method=get-list-sn-tire-ban-v1&vhcid=${tire_vhcid}";
@@ -503,8 +489,8 @@ class _TireTrontonState extends State<TireTronton> {
   Future getListDataTireDetailLogs(bool isload) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      var vhcid = prefs.getString("tire_vhcid") ?? "";
-      var typeUnits = prefs.getString("tire_vhttype") ?? "";
+      var vhcid = prefs.getString("tire_vhcid");
+      var typeUnits = prefs.getString("tire_vhttype");
       EasyLoading.show();
       dataListTireDetail = [];
       var urlBase = "";
@@ -522,30 +508,26 @@ class _TireTrontonState extends State<TireTronton> {
           tireDetailsLogs = (jsonDecode(response.body) as List)
               .map((dynamic e) => e as Map<String, dynamic>)
               .toList();
-          if (tireDetailsLogs != null && tireDetailsLogs.length > 0) {
-            log_vehicleid = vhcid;
+          if (tireDetailsLogs.length > 0) {
+            log_vehicleid = vhcid!;
             log_km_sekarang = tireDetailsLogs[0]['km_sekarang'];
-            log_vhtype = typeUnits;
+            log_vhtype = typeUnits!;
             log_location = tireDetailsLogs[0]['locid'];
           } else {
-            log_vehicleid = vhcid;
-            log_vhtype = typeUnits;
+            log_vehicleid = vhcid!;
+            log_vhtype = typeUnits!;
           }
         });
       } else {
-        final ctx = globalScaffoldKey.currentContext;
-        if (ctx != null) {
-          alert(ctx, 0, "Gagal load data list detail opname", "error");
-        }
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Gagal load data list detail opname", "error");
       }
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
     } catch (e) {
-      final ctx = globalScaffoldKey.currentContext;
-      if (ctx != null) {
-        alert(ctx, 0, "Client, Load data logs tire", "error");
-      }
+      alert(globalScaffoldKey.currentContext!, 0, "Client, Load data logs tire",
+          "error");
       print(e.toString());
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
@@ -553,8 +535,8 @@ class _TireTrontonState extends State<TireTronton> {
     }
   }
 
-  Future<void> updateTyreFitPost(
-      String id_old,String id_new, String fitPostOld, String fitPostNew) async {
+  Future<void> updateTyreFitPost(String id_old, String id_new,
+      String fitPostOld, String fitPostNew) async {
     String baseUrl =
         "${GlobalData.baseUrl}api/maintenance/sr/create_opname_sr_detai_tire.jsp";
     String method = "udpdate-tyre-fitpost";
@@ -566,7 +548,7 @@ class _TireTrontonState extends State<TireTronton> {
     print('${myUri}');
     try {
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
       print('response.statusCode ${response.statusCode}');
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
@@ -578,30 +560,23 @@ class _TireTrontonState extends State<TireTronton> {
             SnackBar(content: Text("Succes update perubahan fitpost")),
           );
         } else {
-          final ctx = globalScaffoldKey.currentContext;
-          if (ctx != null) {
-            alert(ctx, 0, "Silahkan kembali ke page opname", "error");
-          }
+          alert(globalScaffoldKey.currentContext!, 0,
+              "Silahkan kembali ke page opname", "error");
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Error: Silahkan kembali ke page opname")),
           );
         }
       } else {
         print("Failed: ${response.statusCode}");
-        final ctx = globalScaffoldKey.currentContext;
-        if (ctx != null) {
-          alert(ctx, 0, "Err,Gagal update perubahan fitpost", "error");
-        }
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Err,Gagal update perubahan fitpost", "error");
       }
     } catch (e) {
       print("Error: $e");
-      final ctx = globalScaffoldKey.currentContext;
-      if (ctx != null) {
-        alert(ctx, 0, "Exception ${e},Gagal update perubahan fitpost", "error");
-      }
+      alert(globalScaffoldKey.currentContext!, 0,
+          "Exception ${e},Gagal update perubahan fitpost", "error");
     }
   }
-
 
   Future getListDataTireDetail(
       bool isload, String tyrepost, String vehicle_id) async {
@@ -623,25 +598,21 @@ class _TireTrontonState extends State<TireTronton> {
           dataListTireDetail = (jsonDecode(response.body) as List)
               .map((dynamic e) => e as Map<String, dynamic>)
               .toList();
-          if (dataListTireDetail != null && dataListTireDetail.length > 0) {
+          if (dataListTireDetail.length > 0) {
             serialNoController.text = dataListTireDetail[0]['tyresn'];
             patternController.text = dataListTireDetail[0]['pattern'];
           }
         });
       } else {
-        final ctx = globalScaffoldKey.currentContext;
-        if (ctx != null) {
-          alert(ctx, 0, "Gagal load data list detail opname", "error");
-        }
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Gagal load data list detail opname", "error");
       }
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
     } catch (e) {
-      final ctx = globalScaffoldKey.currentContext;
-      if (ctx != null) {
-        alert(ctx, 0, "Client, Load data ban", "error");
-      }
+      alert(globalScaffoldKey.currentContext!, 0, "Client, Load data ban",
+          "error");
       print(e.toString());
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
@@ -782,15 +753,18 @@ class _TireTrontonState extends State<TireTronton> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.shade200, // Warna background
-                                  borderRadius: BorderRadius.circular(8), // Agar sudutnya melengkung
+                                  color: Colors.grey[200], // Warna background
+                                  borderRadius: BorderRadius.circular(
+                                      8), // Agar sudutnya melengkung
                                 ),
-                                padding: const EdgeInsets.symmetric(horizontal: 10), // Padding dalam container
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10), // Padding dalam container
                                 child: TextField(
                                   controller: tekanan_angin,
                                   decoration: const InputDecoration(
                                     labelText: 'Tek. Angin',
-                                    border: InputBorder.none, // Hilangkan border bawaan
+                                    border: InputBorder
+                                        .none, // Hilangkan border bawaan
                                     labelStyle: TextStyle(fontSize: 12),
                                   ),
                                   keyboardType: TextInputType.number,
@@ -803,7 +777,7 @@ class _TireTrontonState extends State<TireTronton> {
                     ),
                     SizedBox(height: 5),
                     DropdownButtonFormField<String>(
-                      value: tire_alasan_unit,
+                      initialValue: tire_alasan_unit,
                       decoration: InputDecoration(
                         labelText: 'Alasan unit',
                         border: OutlineInputBorder(),
@@ -818,7 +792,7 @@ class _TireTrontonState extends State<TireTronton> {
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
-                          tire_alasan_unit = newValue ?? '';
+                          tire_alasan_unit = newValue!;
                         });
                       },
                       hint: Text("Select status"),
@@ -826,7 +800,7 @@ class _TireTrontonState extends State<TireTronton> {
                     ),
                     SizedBox(height: 5),
                     DropdownButtonFormField<String>(
-                      value: tire_status,
+                      initialValue: tire_status,
                       decoration: InputDecoration(
                         labelText: 'Status',
                         border: OutlineInputBorder(),
@@ -841,7 +815,7 @@ class _TireTrontonState extends State<TireTronton> {
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
-                          tire_status = newValue ?? '';
+                          tire_status = newValue!;
                         });
                       },
                       hint: Text("Select status"),
@@ -849,7 +823,7 @@ class _TireTrontonState extends State<TireTronton> {
                     ),
                     SizedBox(height: 5),
                     DropdownButtonFormField<String>(
-                      value: tire_kerusakan_ban,
+                      initialValue: tire_kerusakan_ban,
                       decoration: InputDecoration(
                         labelText: 'Kerusakan Ban',
                         border: OutlineInputBorder(),
@@ -864,7 +838,7 @@ class _TireTrontonState extends State<TireTronton> {
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
-                          tire_kerusakan_ban = newValue ?? '';
+                          tire_kerusakan_ban = newValue!;
                         });
                       },
                       hint: Text("Select kerusakan ban"),
@@ -872,12 +846,12 @@ class _TireTrontonState extends State<TireTronton> {
                     ),
                     SizedBox(height: 5),
                     DropdownButtonFormField<String>(
-                      value: tire_masalah_unit,
+                      initialValue: tire_masalah_unit,
                       decoration: InputDecoration(
                         labelText: 'Masalah Unit',
                         border: OutlineInputBorder(),
                         contentPadding:
-                        EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                            EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                       ),
                       items: tireDetailsStatus4.map((data) {
                         return DropdownMenuItem<String>(
@@ -887,7 +861,7 @@ class _TireTrontonState extends State<TireTronton> {
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
-                          tire_masalah_unit = newValue ?? '';
+                          tire_masalah_unit = newValue!;
                         });
                       },
                       hint: Text("Select Masalah Unit"),
@@ -911,7 +885,8 @@ class _TireTrontonState extends State<TireTronton> {
                       children: [
                         const Text(
                           'Ganti Ban',
-                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              color: Colors.black, fontWeight: FontWeight.bold),
                         ),
                         Row(
                           children: [
@@ -935,129 +910,117 @@ class _TireTrontonState extends State<TireTronton> {
                         Expanded(
                           child: Container(
                             margin: EdgeInsets.all(5.0),
-                            child: GestureDetector(
-                              onTap: () async {
-                                await getImageFromCamera(context, "PHOTO1");
-                                setState(() {});  // Force UI refresh
-                              },
-                              child: Container(
-                                alignment: Alignment.center,
-                                child: _imagePhoto1 != null
-                                    ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.file(
-                                    _imagePhoto1!,
-                                    width: double.infinity,
-                                    height: 50.0,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                                    : Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey.shade200,
-                                      borderRadius: BorderRadius.circular(10)),
-                                  width: double.infinity,
-                                  height: 50,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () async {
-                                      await getImageFromCamera(context, "PHOTO1");
-                                      setState(() {});  // Force UI refresh
-                                    },
-                                    icon: Icon(
-                                      Icons.camera,
-                                      color: Colors.white,
-                                      size: 15.0,
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: _imagePhoto1 != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.file(
+                                        _imagePhoto1!,
+                                        width: double.infinity,
+                                        height: 50.0,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      width: double.infinity,
+                                      height: 50,
+                                      child: ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.camera,
+                                          color: Colors.white,
+                                          size: 15.0,
+                                        ),
+                                        label: Text("Ban"),
+                                        onPressed: () async {
+                                          await getImageFromCamera(
+                                              context, "PHOTO1");
+                                          setState(() {}); // Force UI refresh
+                                        },
+                                      ),
                                     ),
-                                    label: Text("Ban"),
-                                  ),
-                                ),
-                              ),
                             ),
                           ),
                         ),
                         Expanded(
                           child: Container(
                             margin: EdgeInsets.all(5.0),
-                            child: GestureDetector(
-                              onTap: () async {
-                                await getImageFromCamera(context, "PHOTO2");
-                                setState(() {});  // Force UI refresh
-                              },
-                              child: Container(
-                                alignment: Alignment.center,
-                                child: _imagePhoto2 != null
-                                    ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.file(
-                                    _imagePhoto2!,
-                                    width: double.infinity,
-                                    height: 50.0,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                                    : Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey.shade200,
-                                      borderRadius: BorderRadius.circular(10)),
-                                  width: double.infinity,
-                                  height: 50,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () async {
-                                      await getImageFromCamera(context, "PHOTO2");
-                                      setState(() {});  // Force UI refresh
-                                    },
-                                    icon: Icon(
-                                      Icons.camera,
-                                      color: Colors.white,
-                                      size: 15.0,
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: _imagePhoto2 != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.file(
+                                        _imagePhoto2!,
+                                        width: double.infinity,
+                                        height: 50.0,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      width: double.infinity,
+                                      height: 50,
+                                      child: ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.camera,
+                                          color: Colors.white,
+                                          size: 15.0,
+                                        ),
+                                        label: Text("Tapak"),
+                                        onPressed: () async {
+                                          await getImageFromCamera(
+                                              context, "PHOTO2");
+                                          setState(() {}); // Force UI refresh
+                                        },
+                                      ),
                                     ),
-                                    label: Text("Tapak"),
-                                  ),
-                                ),
-                              ),
                             ),
                           ),
                         ),
                         Expanded(
                           child: Container(
                             margin: EdgeInsets.all(5.0),
-                            child: GestureDetector(
-                              onTap: () async {
-                                await getImageFromCamera(context, "PHOTO3");
-                                setState(() {});  // Force UI refresh
-                              },
-                              child: Container(
-                                alignment: Alignment.center,
-                                child: _imagePhoto3 != null
-                                    ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.file(
-                                    _imagePhoto3!,
-                                    width: double.infinity,
-                                    height: 50.0,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                                    : Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey.shade200,
-                                      borderRadius: BorderRadius.circular(10)),
-                                  width: double.infinity,
-                                  height: 50,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () async {
-                                      await getImageFromCamera(context, "PHOTO3");
-                                      setState(() {});  // Force UI refresh
-                                    },
-                                    icon: Icon(
-                                      Icons.camera,
-                                      color: Colors.white,
-                                      size: 15.0,
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: _imagePhoto3 != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.file(
+                                        _imagePhoto3!,
+                                        width: double.infinity,
+                                        height: 50.0,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      width: double.infinity,
+                                      height: 50,
+                                      child: ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.camera,
+                                          color: Colors.white,
+                                          size: 15.0,
+                                        ),
+                                        label: Text("Damage"),
+                                        onPressed: () async {
+                                          await getImageFromCamera(
+                                              context, "PHOTO3");
+                                          setState(() {}); // Force UI refresh
+                                        },
+                                      ),
                                     ),
-                                    label: Text("Damage"),
-                                  ),
-                                ),
-                              ),
                             ),
                           ),
                         ),
@@ -1110,13 +1073,13 @@ class _TireTrontonState extends State<TireTronton> {
                                               'IN Depth: ${tireDetails[index]["indepth"]},MID 1 Depth: ${tireDetails[index]["mid1depth"]},MID 2 Depth: ${tireDetails[index]["mid2depth"]},OUT Depth: ${tireDetails[index]["outdepth"]},Tek Angin: ${tireDetails[index]["tek_angin"]}',
                                             ),
                                             Text(
-                                              'Ganti Ban: ${casing_yes==true?"Yes":""}',
+                                              'Ganti Ban: ${casing_yes == true ? "Yes" : ""}',
                                             ),
                                             Text(
                                               'Note: ${tireDetails[index]["note"]}',
                                             ),
                                             Text(
-                                              'Photo Ban: ${tireDetails[index]["photo_ban"]!=null || tireDetails[index]["photo_ban"]!=''?'Ada':''},Photo Tapak: ${tireDetails[index]["photo_tapak"]!=null || tireDetails[index]["photo_tapak"]!=''?'Ada':''},Photo Damage: ${tireDetails[index]["photo_damage"]!=null || tireDetails[index]["photo_damage"]!=''?'Ada':''}',
+                                              'Photo Ban: ${tireDetails[index]["photo_ban"] != null || tireDetails[index]["photo_ban"] != '' ? 'Ada' : ''},Photo Tapak: ${tireDetails[index]["photo_tapak"] != null || tireDetails[index]["photo_tapak"] != '' ? 'Ada' : ''},Photo Damage: ${tireDetails[index]["photo_damage"] != null || tireDetails[index]["photo_damage"] != '' ? 'Ada' : ''}',
                                             ),
                                           ],
                                         ),
@@ -1140,8 +1103,7 @@ class _TireTrontonState extends State<TireTronton> {
                                               print(
                                                   'pit post ${tireDetail['fitpost']}');
                                               int affected =
-                                                  await DatabaseHelper
-                                                      .instance
+                                                  await DatabaseHelper.instance
                                                       .deleteItemLogsByFitPost(
                                                           tireDetail[
                                                               'fitpost']!);
@@ -1221,7 +1183,7 @@ class _TireTrontonState extends State<TireTronton> {
                 child: Text('Empty Draft'),
               ),
               TextButton(
-                onPressed: () async{
+                onPressed: () async {
                   Navigator.of(context).pop();
                   //showEditDialog(tire_vhttype);
                   showDialog(
@@ -1240,7 +1202,8 @@ class _TireTrontonState extends State<TireTronton> {
                           TextButton(
                             onPressed: () {
                               Navigator.of(context).pop(); // Tutup dialog utama
-                              showEditDialog(tire_vhttype); // Panggil dialog edit
+                              showEditDialog(
+                                  tire_vhttype); // Panggil dialog edit
                             },
                             child: const Text("Edit"),
                           ),
@@ -1249,7 +1212,6 @@ class _TireTrontonState extends State<TireTronton> {
                               // Lanjut transaksi dengan input yang sudah ada
                               //String inputText = inputController.text;
                               Navigator.of(context).pop(); // Tutup dialog
-
                             },
                             child: const Text("Cancel"),
                           ),
@@ -1277,12 +1239,8 @@ class _TireTrontonState extends State<TireTronton> {
                   // Handle form submission
                   SharedPreferences prefs =
                       await SharedPreferences.getInstance();
-                  String serialNo = serialNoController.text;
-                  String pattern = patternController.text;
                   String _indepth = indepth.text;
                   String _outdepth = outdepth.text;
-                  String _mid1depth = mid1depth.text;
-                  String _mid2depth = mid2depth.text;
                   String _tekanan_angin = tekanan_angin.text;
                   String _tire_note = tire_note.text;
                   var casingYes = casing_yes == true ? 1 : 0;
@@ -1292,24 +1250,20 @@ class _TireTrontonState extends State<TireTronton> {
 
                   var exists =
                       tireDetails.any((el) => el['fitpost'] == fitpost);
-                  var tire_vhcid = prefs.getString("tire_vhcid") ?? "";
-                  final ctx = globalScaffoldKey.currentContext;
-                  if (_indepth == null || _indepth == '') {
-                    if (ctx != null) {
-                      alert(ctx, 0, "IN Depth tidak boleh kosong", "error");
-                    }
-                  } else if (_outdepth == null || _outdepth == '') {
-                    if (ctx != null) {
-                      alert(ctx, 0, "OUT Depth tidak boleh kosong", "error");
-                    }
-                  } else if (_tekanan_angin == null || _tekanan_angin == '') {
-                    if (ctx != null) {
-                      alert(ctx, 0, "Tekanan angin tidak boleh kosong", "error");
-                    }
+                  var tire_vhcid = prefs.getString("tire_vhcid");
+                  if (_indepth == '') {
+                    alert(globalScaffoldKey.currentContext!, 0,
+                        "IN Depth tidak boleh kosong", "error");
+                  } else if (_outdepth == '') {
+                    alert(globalScaffoldKey.currentContext!, 0,
+                        "OUT Depth tidak boleh kosong", "error");
+                  } else if (_tekanan_angin == '') {
+                    alert(globalScaffoldKey.currentContext!, 0,
+                        "Tekanan angin tidak boleh kosong", "error");
                   } else {
                     if (!exists) {
-                      if (serialNoController.text != null &&
-                          patternController.text != null &&
+                      if (serialNoController.text.isNotEmpty &&
+                          patternController.text.isNotEmpty &&
                           tire_vhcid != null) {
                         setState(() {
                           tireDetails.add({
@@ -1358,8 +1312,7 @@ class _TireTrontonState extends State<TireTronton> {
                           "photo_damage": filePathImage3.toString()
                         });
                       }
-                      final List<Map<String, dynamic>> items =
-                          await DatabaseHelper.instance.fetchItemsLogs();
+                      await DatabaseHelper.instance.fetchItemsLogs();
 
                       // items.forEach((item) {
                       //   print(
@@ -1407,26 +1360,18 @@ class _TireTrontonState extends State<TireTronton> {
         title_header_tire = "${nopol} TRONTON";
       });
       if (tireDetailsBan.length > 0) {
-        Map<String, dynamic>? datas;
-        try {
-          datas = tireDetailsBan.firstWhere(
-            (element) =>
-                element['vhcid'] == arvhcid && element['post'] == _fitpost,
-          );
-        } catch (e) {
-          datas = null;
-        }
-        if (datas != null) {
-          var km_rit = "${datas['km_rit']}/${datas['rit_trip']}";
-          var a = "${_fitpost}\nSN:${datas['serial_no']}\nUMUR KM/RIT:\n${km_rit}";
-          setState(() {
-            serialNo = a;
-          });
-        } else {
-          setState(() {
-            serialNo = _fitpost;
-          });
-        }
+        var datas = tireDetailsBan.firstWhere(
+          (element) =>
+              element['vhcid'] == arvhcid && element['post'] == _fitpost,
+          orElse: () => {},
+        );
+        var km_rit = "${datas['km_rit']}/${datas['rit_trip']}";
+        var a = datas.isNotEmpty
+            ? "${_fitpost}\nSN:${datas['serial_no']}\nUMUR KM/RIT:\n${km_rit}"
+            : _fitpost;
+        setState(() {
+          serialNo = a;
+        });
         //print('serialNo ${serialNo}');
       }
       return serialNo;
@@ -1441,28 +1386,28 @@ class _TireTrontonState extends State<TireTronton> {
   @override
   Widget build(BuildContext context) {
     //prefs.setString("tire_vhcid","B 9867 YN/B 9867 YN")
-    return PopScope(
+    return new PopScope(
       canPop: false,
       onPopInvokedWithResult: (bool didPop, dynamic result) {
         if (didPop) return;
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => FrmServiceTire()));
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => FrmServiceTire()));
       },
       child: new Scaffold(
-          appBar: AppBar(
+            appBar: AppBar(
             elevation: 0,
             backgroundColor: Colors.white,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back,color: Colors.black),
+              icon: Icon(Icons.arrow_back, color: Colors.black),
               iconSize: 20.0,
               onPressed: () {
                 _goBack(globalScaffoldKey.currentContext!);
               },
             ),
-              title: Text(
-                '${tire_vhcid.split('/')[0]}/${tire_vhttype} (${tire_total_km} KM)',//DEV
-                style: TextStyle(color: Colors.black),
-              ),
+            title: Text(
+              '${tire_vhcid.split('/')[0]}/${tire_vhttype} (${tire_total_km} KM)', //DEV
+              style: TextStyle(color: Colors.black),
+            ),
           ),
           bottomNavigationBar: BottomActionBar(),
           body: SafeArea(
@@ -1488,20 +1433,21 @@ class _TireTrontonState extends State<TireTronton> {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         //print('_showNoDataMessage ${_showNoDataMessage}');
                         if (_showNoDataMessage) {
-                            if (snapshot.hasData) {
-                              return _createButton(
-                                  context,
-                                  snapshot.data ?? 'A2','A2', // Pass the retrieved serial number to your button
-                                  RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)));
-                            }else{
-                              return _createButton(
-                                  context,
-                                  'A2','A2',  // Pass the retrieved serial number to your button
-                                  RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)));
-                            }
-
+                          if (snapshot.hasData) {
+                            return _createButton(
+                                context,
+                                snapshot.data!,
+                                'A2', // Pass the retrieved serial number to your button
+                                RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)));
+                          } else {
+                            return _createButton(
+                                context,
+                                'A2',
+                                'A2', // Pass the retrieved serial number to your button
+                                RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)));
+                          }
                         } else {
                           return CircularProgressIndicator(); // Show loading indicator
                         }
@@ -1511,7 +1457,8 @@ class _TireTrontonState extends State<TireTronton> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'A2','A2',  // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'A2', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1532,13 +1479,15 @@ class _TireTrontonState extends State<TireTronton> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'A1','A1',  // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'A1', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'A1','A1',  // Pass the retrieved serial number to your button
+                                'A1',
+                                'A1', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1551,7 +1500,8 @@ class _TireTrontonState extends State<TireTronton> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'A1','A1',  // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'A1', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1572,13 +1522,15 @@ class _TireTrontonState extends State<TireTronton> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'B3','B3',  // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'B3', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'B3','B3', // Pass the retrieved serial number to your button
+                                'B3',
+                                'B3', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1591,7 +1543,8 @@ class _TireTrontonState extends State<TireTronton> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'B3','B3', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'B3', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1612,13 +1565,15 @@ class _TireTrontonState extends State<TireTronton> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'B4','B4', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'B4', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'B4','B4', // Pass the retrieved serial number to your button
+                                'B4',
+                                'B4', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1631,7 +1586,8 @@ class _TireTrontonState extends State<TireTronton> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'B4','B4', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'B4', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1653,13 +1609,15 @@ class _TireTrontonState extends State<TireTronton> {
                             if (snapshot.hasData) {
                               return _createButton(
                                   context,
-                                  snapshot.data ?? 'B1','B1', // Pass the retrieved serial number to your button
+                                  snapshot.data!,
+                                  'B1', // Pass the retrieved serial number to your button
                                   RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10)));
-                            }else{
+                            } else {
                               return _createButton(
                                   context,
-                                  'B1','B1', // Pass the retrieved serial number to your button
+                                  'B1',
+                                  'B1', // Pass the retrieved serial number to your button
                                   RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10)));
                             }
@@ -1672,7 +1630,8 @@ class _TireTrontonState extends State<TireTronton> {
                         } else if (snapshot.hasData) {
                           return _createButton(
                             context,
-                            snapshot.data ?? 'B1','B1', // Pass the retrieved serial number to your button
+                            snapshot.data!,
+                            'B1', // Pass the retrieved serial number to your button
                             RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10)),
                           );
@@ -1693,13 +1652,15 @@ class _TireTrontonState extends State<TireTronton> {
                             if (snapshot.hasData) {
                               return _createButton(
                                   context,
-                                  snapshot.data ?? 'B2','B2', // Pass the retrieved serial number to your button
+                                  snapshot.data!,
+                                  'B2', // Pass the retrieved serial number to your button
                                   RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10)));
-                            }else{
+                            } else {
                               return _createButton(
                                   context,
-                                  'B2','B2', // Pass the retrieved serial number to your button
+                                  'B2',
+                                  'B2', // Pass the retrieved serial number to your button
                                   RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10)));
                             }
@@ -1712,7 +1673,8 @@ class _TireTrontonState extends State<TireTronton> {
                         } else if (snapshot.hasData) {
                           return _createButton(
                             context,
-                            snapshot.data ?? 'B2','B2', // Pass the retrieved serial number to your button
+                            snapshot.data!,
+                            'B2', // Pass the retrieved serial number to your button
                             RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10)),
                           );
@@ -1732,13 +1694,15 @@ class _TireTrontonState extends State<TireTronton> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'C3','C3', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C3', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C3','C3', // Pass the retrieved serial number to your button
+                                'C3',
+                                'C3', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1751,7 +1715,8 @@ class _TireTrontonState extends State<TireTronton> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'C3','C3', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C3', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1772,13 +1737,15 @@ class _TireTrontonState extends State<TireTronton> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'C4','C4', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C4', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C4','C4', // Pass the retrieved serial number to your button
+                                'C4',
+                                'C4', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1791,7 +1758,8 @@ class _TireTrontonState extends State<TireTronton> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'C4','C4', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C4', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1812,13 +1780,15 @@ class _TireTrontonState extends State<TireTronton> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'C2','C2', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C2', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C2','C2', // Pass the retrieved serial number to your button
+                                'C2',
+                                'C2', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1831,7 +1801,8 @@ class _TireTrontonState extends State<TireTronton> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'C2','C2', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C2', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1852,13 +1823,15 @@ class _TireTrontonState extends State<TireTronton> {
                           if (snapshot.hasData) {
                             return _createButton(
                                 context,
-                                snapshot.data ?? 'C1','C1', // Pass the retrieved serial number to your button
+                                snapshot.data!,
+                                'C1', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
-                          }else{
+                          } else {
                             return _createButton(
                                 context,
-                                'C1','C1', // Pass the retrieved serial number to your button
+                                'C1',
+                                'C1', // Pass the retrieved serial number to your button
                                 RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)));
                           }
@@ -1871,7 +1844,8 @@ class _TireTrontonState extends State<TireTronton> {
                       } else if (snapshot.hasData) {
                         return _createButton(
                           context,
-                          snapshot.data ?? 'C1','C1', // Pass the retrieved serial number to your button
+                          snapshot.data!,
+                          'C1', // Pass the retrieved serial number to your button
                           RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                         );
@@ -1886,7 +1860,8 @@ class _TireTrontonState extends State<TireTronton> {
                   left: MediaQuery.of(context).size.width * 0.4,
                   child: _createButton(
                       context,
-                      'S1','S1',
+                      'S1',
+                      'S1',
                       RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10))),
                 )
@@ -1906,34 +1881,35 @@ class _TireTrontonState extends State<TireTronton> {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
-                value:"0", // Make sure vh_fitpost matches the data type
+                value: "0", // Make sure vh_fitpost matches the data type
                 decoration: const InputDecoration(
                   labelText: 'Select FitPost',
                   border: OutlineInputBorder(),
                   contentPadding:
-                  EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                 ),
                 items: tyrePosts.map((tyre) {
                   return DropdownMenuItem<String>(
-                    value: tyre["value"].toString(), // Ensure all values are Strings
-                    child: Text(tyre["title"].toString()), // Convert title to String
+                    value: tyre["value"]
+                        .toString(), // Ensure all values are Strings
+                    child: Text(
+                        tyre["title"].toString()), // Convert title to String
                   );
                 }).toList(),
                 onChanged: (String? newValue) {
                   setState(() {
-                    id_tyre_post2 = newValue?.toString() ?? "0"; // Default to "0" if null
+                    id_tyre_post2 = newValue
+                        .toString(); // ?? "0"; // Default to "0" if null
 
                     // Find the corresponding title from tyrePosts
-                    if (newValue != null) {
-                      new_fit_post = tyrePosts
-                          .firstWhere(
-                              (tyre) =>
-                          tyre["value"].toString() == newValue.toString(),
-                          orElse: () => {"title": "Unknown"})["title"]
-                          .toString();
+                    new_fit_post = tyrePosts
+                        .firstWhere(
+                            (tyre) =>
+                                tyre["value"].toString() == newValue.toString(),
+                            orElse: () => {"title": "Unknown"})["title"]
+                        .toString();
 
-                      print("Selected Title: $new_fit_post"); // Print the title
-                    }
+                    print("Selected Title: $new_fit_post"); // Print the title
                   });
                 },
                 hint: const Text("Select FitPost"),
@@ -1954,10 +1930,12 @@ class _TireTrontonState extends State<TireTronton> {
                 var idnew = "";
                 var oldfit = "";
                 var newfit = "";
-                id_tyre_post = tyrePosts.firstWhere(
+                id_tyre_post = tyrePosts
+                    .firstWhere(
                       (item) => item['title'] == old_fitpost.text,
-                  orElse: () => <String, String>{'value': ''},
-                )['value']!.toString();
+                      orElse: () => {'value': ""},
+                    )['value']!
+                    .toString();
 
                 setState(() {
                   idold = id_tyre_post;
@@ -1967,7 +1945,7 @@ class _TireTrontonState extends State<TireTronton> {
                       ? vh_fitpost
                       : new_fit_post;
                 });
-                await updateTyreFitPost(idold,idnew, oldfit, newfit);
+                await updateTyreFitPost(idold, idnew, oldfit, newfit);
                 setState(() {
                   id_tyre_post = "0";
                   old_fitpost.text = "";
@@ -1985,9 +1963,8 @@ class _TireTrontonState extends State<TireTronton> {
     );
   }
 
-  Widget _createButton(BuildContext context, String? label, String vh_fitpost,
-      ShapeBorder shape) {
-    final String displayLabel = label ?? vh_fitpost;
+  Widget _createButton(BuildContext context, String label, String vh_fitpost,
+      OutlinedBorder shape) {
     return SizedBox(
       width: 80, // Set desired width
       height: 60, // Set desired heightvh_fitpost
@@ -1995,26 +1972,24 @@ class _TireTrontonState extends State<TireTronton> {
         onPressed: () async {
           SharedPreferences prefs = await SharedPreferences.getInstance();
           resetTeks();
-          fitpost = displayLabel;
-          var nopol = prefs.getString("tire_vhcid") ?? "";
-          if (nopol.isNotEmpty) {
-            nopol = nopol.split('/')[0];
-            await getListDataTireDetail(true, vh_fitpost, nopol);
-            Timer(Duration(seconds: 1), () {
-              setState(() {
-                old_fitpost.text = vh_fitpost;
-              });
-              print("vh_fitpost ${vh_fitpost}, id_tyre_post ${id_tyre_post}");
-              _showInputDialog(context, vh_fitpost, nopol);
+          fitpost = label;
+          var nopol = prefs.getString("tire_vhcid");
+          nopol = nopol?.split('/')[0];
+          await getListDataTireDetail(true, vh_fitpost, nopol!);
+          Timer(Duration(seconds: 1), () {
+            setState(() {
+              old_fitpost.text = vh_fitpost;
             });
-          }
+            print("vh_fitpost ${vh_fitpost}, id_tyre_post ${id_tyre_post}");
+            _showInputDialog(context, vh_fitpost, nopol!);
+          });
         },
         style: ElevatedButton.styleFrom(
-          shape: shape is RoundedRectangleBorder ? shape as OutlinedBorder : RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)) as OutlinedBorder,
+          shape: shape, // Custom ShapeBorder
           padding: EdgeInsets.zero, // No padding since size is fixed
         ),
         child: Text(
-          displayLabel,
+          label,
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 9),
         ),
       ),
@@ -2024,13 +1999,14 @@ class _TireTrontonState extends State<TireTronton> {
   void GetSession() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      tire_vhcid = prefs.getString("tire_vhcid") ?? "";
-      tire_vhttype = prefs.getString("tire_vhttype") ?? "";
-      tire_total_km = prefs.getString("tire_total_km") ?? "";
+      tire_vhcid = prefs.getString("tire_vhcid")!;
+      tire_vhttype = prefs.getString("tire_vhttype")!;
+      tire_total_km = prefs.getString("tire_total_km")!;
     });
     print(' tire_vhttype ${tire_vhttype}');
   }
-   late Future<String> _serialNoFuture;
+
+  late Future<String> _serialNoFuture;
   @override
   void initState() {
     GetSession();
