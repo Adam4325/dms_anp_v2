@@ -19,6 +19,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trust_location/trust_location.dart';
 
+import '../../helpers/GpsSecurityChecker.dart';
+
 // Constants
 class AttendanceConstants {
   static const String noImageBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAANlBMVEXu7u64uLjx8fHt7e21tbXQ0NC9vb3ExMTm5ubj4+O5ubnIyMjq6urf39/MzMzBwcHU1NTZ2dmQfkM8AAAE2klEQVR4nO2Y2bLrKAxFwxCPePr/n21JYBvnJLeruq5zHnqtl3gAzEZCEnk8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgK3jv62t/eXN98KbZtfOncd8O6C/8dwH/yjOO4RH26zh05XnaxiiMa/fao5fHzzLLGKfyNCxxrZfnubfZSf28SM/hOYXSvmIJf1PTlWcc1vPaNVmQn9oY3TC4GBt5ffl+H90++yRasyzfNxdJaYlLqu79ZgM656Ib9RuhdRX3KnTD5I/rrND3w/n1V2NUCifp7ENW4Nx4SvKbDDBVnVZXDyh9wlI/WdSPblIpqlxMLwpN4LC07WKrvl56nArFFV3MRk+j2+2vhFGGbQ+vDfoVsVQrI9rnRIwqbHfme23oYln9XaHNb5mS90m89TL1WmHw8rLsvq6RYfqzja3MYdNJb5ute/hHty6z9lAbxi9FmtMRd4W9zqe3r/pOZ1LHkMqGyexgzaZYN/Orjbrfe5W/9OUumfCs8EZhB9l/8mSKQi8e57Z9drr+w3uFfWNLoa3U6m7OzcTj9Lm4QTai38wPyhjFH0+FNzpopdA5XeFd4T5vIy21v10UbtbTdqldNftCiEWjxJohxxo/a48Xe9Veep86RVWpsy3doTBplDhWVs0T67B4Klyj2DdqlJiyJ+S5iySN/21+lcNmCUhn1g9npBl/pNy/rtD2Wpt2hTrd8VhYC5hvFQbx5sHikLYZzlAj3hs3v+6b2aJQHq8bLMGPdbaIp7/cpjBNOofZnwrj/Krw3C2HQvXfeZGXXq6iNiubV7Ul02nbW7erpM1QxOqGveTD5gs21Hwt81s/K/RvFHYakKTSm72s0KCTz72S+qf8yk9zKrSQ0jUWZHeFuWQb7rdhdjNJ8e5QaF6aq5X5k5dKu2bq5E6SQxwf41582XPZbFPp2JWwGbQwaNvhUPi9SKNespweo5GmKirbM05cFJpT95Lr4jTGYdMcWDKHDPNc1/VZfEGK7GOLShHRVArv1XZV2DeHQh9zjAjFsfYgeVUYVMmSVOfYaHsznbwPsfjfMd4lW3S/o1AivEaboWT8I1pqA1fvykdlwxxyOyvQ5nyxmmm1RnCldtdYo8G5yY4efkuhYpWWXecZ5apt1ZnW2/BQmHJRqjW37TcNqDJ1+RlKCNEBteTVqk3q3Dzgr3mpcBTZSc9uwyaVdzfr9Md350MLJJoe7GD0yMeLNpkvtF1v6Dh9Kdtkb/YSVfTZa6S5vfJWVaoh5VhaPNbtVojLNV/tCjWQaDzSvGe77Kndw3zmRU1CFpXD0x254We2uP2Mf2ZcEVaut3ieTpv+usK7QjWQvRmzG5ueSQPTMaCGr2iL9zwH1HPU43oCvvmMH8+aYj2upyaWkDh3Ly5UFKZFlt6bsvKHxaRFzJqLMiMfIM2gYWuyRhnWTqOaQr5zxl+l8j1yn38eVbDvVz17b+HHFunkqC5G6CR5r1bqhGXLL/TJLL2mo8+kYzxsE+QB223Kmy7MbcWdZ/z6b78Qfvyb+KGHPzrq1H78QfjaNtSv86e+92/in/i0sKF+9SfvCrnp3WdcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+B/xD/alJ5yRngQVAAAAAElFTkSuQmCC';
@@ -155,26 +157,28 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
     }
   }
 
+
+
   Future<void> _getCurrentLocation() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.best,
       );
 
-      try {
-        isMockLocation = await TrustLocation.isMockLocation;
-      } catch (e) {
-        print('TrustLocation isMockLocation check error: $e');
-        isMockLocation = false;
-      }
-      TrustLocation.start(5);
-
-      TrustLocation.onChange.listen((values) {
-        trustLatitude = values.latitude.toString();
-        trustLongitude = values.longitude.toString();
-      });
-
-      TrustLocation.stop();
+      // try {
+      //   isMockLocation = await TrustLocation.isMockLocation;
+      // } catch (e) {
+      //   print('TrustLocation isMockLocation check error: $e');
+      //   isMockLocation = false;
+      // }
+      // TrustLocation.start(5);
+      //
+      // TrustLocation.onChange.listen((values) {
+      //   trustLatitude = values.latitude.toString();
+      //   trustLongitude = values.longitude.toString();
+      // });
+      //
+      // TrustLocation.stop();
 
       setState(() {
         userLocation = position;
@@ -496,13 +500,19 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
   }
 
   Future<void> _submitAttendance(String type, GeofenceArea geofence, String address) async {
-    // Show loading
+    // Tidak blokir submit di client (TrustLocation sering false positive).
+    // is_mock dikirim ke server. Server: pakai is_mock hanya sebagai SALAH SATU sinyal,
+    // jangan reject HANYA karena is_mock=='1' (gabungkan dengan geofence/pola/lokasi).
+    // Lihat docs/API_ATTENDANCE_IS_MOCK.md untuk kontrak backend.
     EasyLoading.show(status: 'Submitting attendance...');
 
     try {
+
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String userId = prefs.getString("name") ?? "";
-
+      isMockLocation = false;
+      var result = await GpsSecurityChecker.checkGpsSecurity();
+      // Jangan blokir di client karena fake GPS (banyak false positive).
       // Validation
       if (!_validateAttendanceData(userId)) {
         return;
@@ -648,10 +658,11 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         _navigateBack();
-        return false;
       },
       child: Scaffold(
         key: _scaffoldKey,
@@ -862,19 +873,9 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
               "Accuracy: ${userLocation?.accuracy.toStringAsFixed(1)}m",
               style: TextStyle(color: Colors.green.shade600, fontSize: 11),
             ),
-          if (isMockLocation)
-            Container(
-              margin: EdgeInsets.only(top: 4),
-              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.orange,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                "Mock Location Detected",
-                style: TextStyle(color: Colors.white, fontSize: 10),
-              ),
-            ),
+          // Tidak menampilkan mock banner (banyak false positive dari TrustLocation)
+          // if (isMockLocation)
+          //   Container(... "Mock Location Detected" ...),
         ],
       ),
     );

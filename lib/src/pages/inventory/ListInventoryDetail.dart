@@ -50,11 +50,12 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
 
   @override
   Widget build(BuildContext context) {
-    return new WillPopScope(
-        onWillPop: () {
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
           Navigator.pushReplacement(
               context, MaterialPageRoute(builder: (context) => ListInventoryTransNew(tabName: '',)));
-          return Future.value(false);
         },
       child: Scaffold(
         appBar: AppBar(

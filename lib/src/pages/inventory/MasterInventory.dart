@@ -141,11 +141,12 @@ class MasterInventoryState extends State<MasterInventory> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder: (context) => SubMenuInventory()));
-        return Future.value(false);
       },
       child: Scaffold(
         appBar: AppBar(

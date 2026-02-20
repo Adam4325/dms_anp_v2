@@ -122,11 +122,12 @@ class ViewMapsState extends State<ViewMaps> {
         target: LatLng(-6.2293796, 106.6647034) //SOURCE_LOCATION
     );
 
-    return new WillPopScope(
-      onWillPop: () {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder: (context) => ViewDashboard()));
-        return Future.value(false);
       },
       child: Scaffold(
         backgroundColor: Colors.white,

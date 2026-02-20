@@ -65,53 +65,47 @@ class _FrmOpenDOState extends State<FrmOpenDO>
   bool isLoadingCompany = true;
   void setDataWidget() {
     print(widget.item);
-    if (widget.item != null) {
+    // Add mode: item bisa {} (kosong). Edit mode: item berisi data. Hanya isi form kalau ada data.
+    if (widget.item.isNotEmpty) {
       setState(() {
-        doNumber.text = widget.item['dlododetailnumber'] ?? '';
-
-        doDate.text = _formatDate(widget.item['dlodate']);
-        customerId = widget.item['dlocustomer'] ?? '';
-        subCustomer.text = widget.item['dlolocid2'] ?? '';
-        salesOrder.text = widget.item['dlooriginaldonbr'] ?? '';
-        custDONumber.text = widget.item['dlocustdonbr'] ?? '';
-        custOrderDate.text = _formatDate(widget.item['dlocustdodate']);
+        doNumber.text = (widget.item['dlododetailnumber'] ?? '').toString();
+        doDate.text = _formatDate((widget.item['dlodate'] ?? '').toString());
+        customerId = (widget.item['dlocustomer'] ?? '').toString();
+        subCustomer.text = (widget.item['dlolocid2'] ?? '').toString();
+        salesOrder.text = (widget.item['dlooriginaldonbr'] ?? '').toString();
+        custDONumber.text = (widget.item['dlocustdonbr'] ?? '').toString();
+        custOrderDate.text = _formatDate((widget.item['dlocustdodate'] ?? '').toString());
         qty.text = widget.item['dloitemqty']?.toString() ?? '';
-        originId = widget.item['dloorigin'] ?? '';
+        originId = (widget.item['dloorigin'] ?? '').toString();
         print('doNumber.text 2 ${doNumber.text}');
         // Validasi destination - tidak boleh empty string
-        String destTemp = widget.item['dlodestination'];
-        if (destTemp != null &&
-            destTemp.isNotEmpty &&
-            destinationList.contains(destTemp)) {
+        String destTemp = (widget.item['dlodestination'] ?? '').toString();
+        if (destTemp.isNotEmpty && destinationList.contains(destTemp)) {
           destination = destTemp;
         } else {
           destination = '-';
         }
 
-        zoneId = widget.item['zone'] ?? '';
-        deliveryDate.text = _formatDate(widget.item['dlodeliverydate']);
-        notes.text = widget.item['dlonotes'] ?? '';
-        locationId = widget.item['locid'] ?? '';
+        zoneId = (widget.item['zone'] ?? '').toString();
+        deliveryDate.text = _formatDate((widget.item['dlodeliverydate'] ?? '').toString());
+        notes.text = (widget.item['dlonotes'] ?? '').toString();
+        locationId = (widget.item['locid'] ?? '').toString();
         print('dlolocid2 ${locationId}');
         // Validasi status value - tidak boleh empty string
-        String statusTemp = widget.item['dlostatus'];
-        if (statusTemp != null &&
-            statusTemp.isNotEmpty &&
-            statusList.contains(statusTemp)) {
+        String statusTemp = (widget.item['dlostatus'] ?? '').toString();
+        if (statusTemp.isNotEmpty && statusList.contains(statusTemp)) {
           statusValue = statusTemp;
         } else {
           statusValue = 'OPEN';
         }
 
-        truckTypeId = widget.item['vhcid'] ?? "";
-        itemTypeId = widget.item['dloitemtype'] ?? "";
-        itemUomId = widget.item['dloitemuom'] ?? "";
+        truckTypeId = (widget.item['vhcid'] ?? '').toString();
+        itemTypeId = (widget.item['dloitemtype'] ?? '').toString();
+        itemUomId = (widget.item['dloitemuom'] ?? '').toString();
 
         // Validasi doStatus - tidak boleh empty string
-        String doStatusTemp = widget.item['status'];
-        if (doStatusTemp != null &&
-            doStatusTemp.isNotEmpty &&
-            doStatusList.contains(doStatusTemp)) {
+        String doStatusTemp = (widget.item['status'] ?? '').toString();
+        if (doStatusTemp.isNotEmpty && doStatusList.contains(doStatusTemp)) {
           doStatus = doStatusTemp;
         } else {
           doStatus = 'NORMAL';
@@ -161,7 +155,7 @@ class _FrmOpenDOState extends State<FrmOpenDO>
 
   // 🔹 Helper function untuk format date yyyy-MM-dd
   String _formatDate(String dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return '';
+    if (dateStr.isEmpty) return '';
 
     try {
       // Coba parse berbagai format date yang mungkin dari database
@@ -929,14 +923,10 @@ class _FrmOpenDOState extends State<FrmOpenDO>
       );
       return;
     }
-    var message ="";
-    if(widget.item!=null){
-      message = widget.item['dlocustdonbr'] == null ||
-          widget.item['dlocustdonbr'].toString() == ""
-          ? "simpan"
-          : "update";
-    }else{
-      message="simpan";
+    var message = "simpan";
+    if (widget.item.isNotEmpty) {
+      final donbr = widget.item['dlocustdonbr']?.toString() ?? '';
+      message = donbr.isEmpty ? "simpan" : "update";
     }
 
     final confirm = await showDialog<bool>(

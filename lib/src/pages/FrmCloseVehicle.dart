@@ -23,6 +23,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:camera/camera.dart';
 
+import '../../helpers/GpsSecurityChecker.dart';
 import 'PageMessageResponse.dart';
 
 class FrmCloseVehicle extends StatefulWidget {
@@ -175,25 +176,6 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
     try {
       currentLocation = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.low);
-      try {
-        isMock = await TrustLocation.isMockLocation;
-      } catch (e) {
-        print('TrustLocation isMockLocation check error: $e');
-        isMock = false;
-      }
-      TrustLocation.start(5);
-
-      /// the stream getter where others can listen to.
-      TrustLocation.onChange.listen((values) => {
-            print(
-                'TrustLocation ${values.latitude} ${values.longitude} ${values.isMockLocation}'),
-            truslat = values.latitude!,
-            trusLon = values.longitude!
-          });
-
-      /// stop repeating by timer
-      TrustLocation.stop();
-      //pos.
     } catch (e) {
       currentLocation = null;
     }
@@ -966,13 +948,16 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                                                 .getInstance();
                                         prefs2.setString("vhcid_last_antrian", "");
                                         final dialogCtx = globalScaffoldKey.currentContext;
-                                        if (isMock == true) {
-                                          if (dialogCtx != null) alert(dialogCtx, 0,
-                                              "Dilarang menggunakan Fake GPS",
-                                              "warning");
-                                        } else if (dialogCtx == null) {
+                                        // Cek keamanan GPS sebelum submit close DO
+                                        if (dialogCtx == null) {
                                           Navigator.of(context).pop(false);
                                         } else {
+                                          var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
+                                          if (gpsResult["isFake"] == true) {
+                                            final fakeReason = gpsResult["reason"] ?? "";
+                                            alert(dialogCtx, 0, "FAKE GPS terdeteksi: $fakeReason", "error");
+                                            return;
+                                          }
                                           if (GlobalData.frmDloDoNumber ==
                                                   null ||
                                               GlobalData.frmDloDoNumber == "") {

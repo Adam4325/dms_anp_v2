@@ -325,13 +325,14 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => ViewDashboard()),
         );
-        return false;
       },
       child: Scaffold(
         backgroundColor: HexColor("#f0eff4"),

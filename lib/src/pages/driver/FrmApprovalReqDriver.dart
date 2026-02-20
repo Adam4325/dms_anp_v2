@@ -141,10 +141,11 @@ class _FrmApprovalReqDriverState extends State<FrmApprovalReqDriver> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         goBack(context);
-        return false;
       },
       child: Scaffold(
         appBar: AppBar(

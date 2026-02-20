@@ -1441,11 +1441,12 @@ class _TireTrontonState extends State<TireTronton> {
   @override
   Widget build(BuildContext context) {
     //prefs.setString("tire_vhcid","B 9867 YN/B 9867 YN")
-    return new WillPopScope(
-      onWillPop: () {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => FrmServiceTire()));
-        return Future.value(false);
       },
       child: new Scaffold(
           appBar: AppBar(

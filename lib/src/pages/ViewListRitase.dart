@@ -38,11 +38,12 @@ class _ViewListRitaseState extends State<ViewListRitase> {
 
   @override
   Widget build(BuildContext context) {
-    return new WillPopScope(
-      onWillPop: () {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => ViewDashboard()));
-        return Future.value(false);
       },
       child: Scaffold(
         backgroundColor: Colors.white,

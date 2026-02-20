@@ -713,11 +713,12 @@ class _FrmAssetState extends State<FrmAsset> {
   Widget build(BuildContext context) {
     // TODO: implement build
 
-    return WillPopScope(
-      onWillPop: () {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder: (context) => ViewDashboard()));
-        return Future.value(false);
       },
       child: Scaffold(
         backgroundColor: Colors.grey,

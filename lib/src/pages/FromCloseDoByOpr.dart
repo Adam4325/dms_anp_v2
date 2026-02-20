@@ -18,6 +18,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:camera/camera.dart';
 
+import '../../helpers/GpsSecurityChecker.dart';
 import 'PageMessageResponse.dart';
 
 class FrmCloseDoByOpr extends StatefulWidget {
@@ -607,6 +608,18 @@ class _FrmCloseDoByOprState extends State<FrmCloseDoByOpr> {
                                             if (ctx != null) {
                                               Navigator.of(ctx).pop(false);
                                             }
+
+                                            // Cek keamanan GPS sebelum submit close DO
+                                            var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
+                                            if (gpsResult["isFake"] == true) {
+                                              final fakeReason = gpsResult["reason"] ?? "";
+                                              final fakeCtx = globalScaffoldKey.currentContext;
+                                              if (fakeCtx != null) {
+                                                alert(fakeCtx, 0, "FAKE GPS terdeteksi: $fakeReason", "error");
+                                              }
+                                              return;
+                                            }
+
                                             var scode = await closeDo(
                                                 _dlocustdonbr,
                                                 _bujnbr,

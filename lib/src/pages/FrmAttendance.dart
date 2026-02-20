@@ -19,6 +19,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' as Io;
 import 'package:trust_location/trust_location.dart';
 
+import '../../helpers/GpsSecurityChecker.dart';
+
 class FrmAttendance extends StatefulWidget {
   @override
   FrmAttendanceState createState() => FrmAttendanceState();
@@ -120,13 +122,14 @@ class FrmAttendanceState extends State<FrmAttendance> {
   }
 
   Future<Position?> _getLocation() async {
-    try {
-      bool isMockLocation = await TrustLocation.isMockLocation;
-      if (mounted) setState(() => isMock = isMockLocation);
-    } catch (e) {
-      print('TrustLocation isMockLocation check error: $e');
-      if (mounted) setState(() => isMock = false);
-    }
+    // try {
+    //   bool isMockLocation = await TrustLocation.isMockLocation;
+    //   // Banyak device false positive; tidak pakai hasil untuk tampilan agar tidak salah deteksi
+    //   if (mounted) setState(() => isMock = false);
+    // } catch (e) {
+    //   print('TrustLocation isMockLocation check error: $e');
+    //   if (mounted) setState(() => isMock = false);
+    // }
 
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -145,17 +148,17 @@ class FrmAttendanceState extends State<FrmAttendance> {
       return Future.error('Location permissions are permanently denied, we cannot request permissions.');
     }
 
-    try {
-      TrustLocation.start(5);
-      TrustLocation.onChange.listen((values) => {
-        print('TrustLocation ${values.latitude} ${values.longitude} ${values.isMockLocation}'),
-        truslat = values.longitude as double,
-        trusLon = values.longitude as double
-      });
-      TrustLocation.stop();
-    } catch (e) {
-      print('TrustLocation error: $e');
-    }
+    // try {
+    //   TrustLocation.start(5);
+    //   TrustLocation.onChange.listen((values) => {
+    //     print('TrustLocation ${values.latitude} ${values.longitude} ${values.isMockLocation}'),
+    //     truslat = values.longitude as double,
+    //     trusLon = values.longitude as double
+    //   });
+    //   TrustLocation.stop();
+    // } catch (e) {
+    //   print('TrustLocation error: $e');
+    // }
 
     final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     setState(() {
@@ -265,7 +268,7 @@ class FrmAttendanceState extends State<FrmAttendance> {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       var user_id = prefs.getString("name");
-
+      var result = await GpsSecurityChecker.checkGpsSecurity();
       if (androidID.isEmpty) {
         alert(globalScaffoldKey.currentContext!, 0, "IMEI ID kosong, silahkan kontak Administrator", "error");
         return "";
@@ -273,6 +276,8 @@ class FrmAttendanceState extends State<FrmAttendance> {
         alert(globalScaffoldKey.currentContext!, 0, "USER ID tidak boleh kosong", "error");
         return "";
       } else {
+        // Jangan blokir di client karena fake GPS (banyak false positive).
+        // Jika ingin, bisa kirim info tambahan ke server dari result (belum dipakai di sini).
         if (EasyLoading.isShow) {
           EasyLoading.dismiss();
         }
@@ -287,8 +292,8 @@ class FrmAttendanceState extends State<FrmAttendance> {
 
         var data = {
           'method': inorout == "IN" ? "checkin-attendance-v3" : "checkout-attendance-v3",
-          //'imeiid': "e8cb27d0493648cd",
-          'imeiid': androidID.toString(),
+          'imeiid': "3d011a9d72e23c29",
+          //'imeiid': androidID.toString(),
           'userid': user_id,
           'address': address,
           'lat': lat,
@@ -535,10 +540,11 @@ class FrmAttendanceState extends State<FrmAttendance> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ViewDashboard()));
-        return Future.value(false);
       },
       child: Scaffold(
         key: globalScaffoldKey,
@@ -583,8 +589,8 @@ class FrmAttendanceState extends State<FrmAttendance> {
           _buildInfoSection(),
           SizedBox(height: 20),
           _buildAttendanceSection(),
-          SizedBox(height: 20),
-          _buildActionButtons(),
+          // SizedBox(height: 20),
+          // _buildActionButtons(),
         ],
       ),
     );
@@ -676,8 +682,8 @@ class FrmAttendanceState extends State<FrmAttendance> {
             _buildInfoRow("Time OUT", timeOUT),
             _buildInfoRow("Duration", duration_check_out),
             SizedBox(height: 12),
-            _buildShiftDropdown(),
-            SizedBox(height: 12),
+            // _buildShiftDropdown(),
+            // SizedBox(height: 12),
             _buildLocationInfo(),
             SizedBox(height: 12),
             _buildImeiSection(),
@@ -845,7 +851,7 @@ class FrmAttendanceState extends State<FrmAttendance> {
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.only(top:16,left: 16,right: 16,bottom: 50),
         child: Column(
           children: [
             Text(

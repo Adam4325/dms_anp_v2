@@ -29,11 +29,12 @@ class _SubMenuInventoryState extends State<SubMenuInventory> {
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => DetailMenu()));
-        return Future.value(false);
       },
       child: new Scaffold(
         backgroundColor: Colors.blueAccent,

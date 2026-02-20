@@ -710,11 +710,12 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
           target: LatLng(-6.181866111111, 106.829632777778));
     }
 
-    return WillPopScope(
-      onWillPop: () {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => MapHistory()));
-        return Future.value(false);
       },
       child: Scaffold(
         backgroundColor: Colors.grey.shade50,

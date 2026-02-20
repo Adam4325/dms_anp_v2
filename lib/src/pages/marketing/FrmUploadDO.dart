@@ -380,13 +380,14 @@ class _FrmUploadDOState extends State<FrmUploadDO> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => ListOpenDO()),
         );
-        return false;
       },
       child: Scaffold(
         backgroundColor: backgroundColor,

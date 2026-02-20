@@ -497,11 +497,12 @@ class MapAddressState extends State<MapAddress> {
   Widget build(BuildContext context) {
     height = MediaQuery.of(context).size.height;
     width = MediaQuery.of(context).size.width;
-    return WillPopScope(
-        onWillPop: () {
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
           Navigator.pushReplacement(context,
               MaterialPageRoute(builder: (context) => RegisterNewDriver()));
-          return Future.value(false);
         },
         child: Scaffold(
           backgroundColor: Colors.white,

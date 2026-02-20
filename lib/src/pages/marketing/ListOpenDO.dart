@@ -378,13 +378,14 @@ class _ListOpenDOState extends State<ListOpenDO> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => ViewDashboard()),
         );
-        return false;
       },
       child: Scaffold(
         key: globalScaffoldKey,
@@ -526,8 +527,8 @@ class _ListOpenDOState extends State<ListOpenDO> {
                               children: [
                                 _actionButton(Icons.edit, "Edit",
                                     accentOrange, () => _onEdit(item)),
-                                _actionButton(Icons.upload_file, "Upload",
-                                    primaryOrange, () => _onUploadDOFromItem(item)),
+                                // _actionButton(Icons.upload_file, "Upload",
+                                //     primaryOrange, () => _onUploadDOFromItem(item)),
                                 _actionButton(Icons.cancel, "Cancel",
                                     primaryOrange, () => _onCancel(item)),
                                 _actionButton(Icons.delete, "Delete",

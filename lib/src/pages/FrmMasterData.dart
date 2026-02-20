@@ -1711,7 +1711,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                         type: S2ModalType.bottomSheet,
                         useFilter: true,
                         filterAuto: true,
-                        filterHint: 'Cari Provinsi...',
+                        filterHint: 'Cari Provinsi...',//LIST
                       ),
                     ),
                     SizedBox(height: 8),

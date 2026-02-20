@@ -328,7 +328,16 @@ class _FrmCHKState extends State<FrmCHK> {
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return WillPopScope(
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
+          if (this.mounted) {
+            DeleteDraft();
+          }
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => ViewDashboard()));
+        },
         child: Scaffold(
             backgroundColor: Colors.white54,
             appBar: AppBar(
@@ -707,15 +716,7 @@ class _FrmCHKState extends State<FrmCHK> {
                   )
                 ],
               ),
-            )),
-        onWillPop: () {
-          if (this.mounted) {
-            DeleteDraft();
-          }
-          Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (context) => ViewDashboard()));
-          return Future.value(false);
-        });
+            )));
   }
 
   var dataOject = [];

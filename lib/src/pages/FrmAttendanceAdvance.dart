@@ -20,6 +20,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trust_location/trust_location.dart';
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 
+import '../../helpers/GpsSecurityChecker.dart';
+
 class FrmAttendanceAdvance extends StatefulWidget {
   @override
   FrmAttendanceAdvanceState createState() => FrmAttendanceAdvanceState();
@@ -27,9 +29,9 @@ class FrmAttendanceAdvance extends StatefulWidget {
 
 final globalScaffoldKey = GlobalKey<ScaffoldState>();
 
-class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
-  final String BASE_URL =
-      GlobalData.baseUrlOri;
+class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
+  //
+  final String BASE_URL = GlobalData.baseUrlOri;
   bool isMock = false;
   String androidID = "";
   List listGeofence = [];
@@ -61,6 +63,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
   final picker = ImagePicker();
   var status_absensi = "";
   ProgressDialog? pr;
+  bool _isUpdatingPosition = false;
   _goBack(BuildContext context) {
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => ViewDashboard()));
@@ -125,15 +128,15 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
             ),
             onPressed: () async {
               Navigator.of(contexs).pop(false);
-               getPicture('CAMERA');
+              getPicture('CAMERA');
             },
             style: ElevatedButton.styleFrom(
                 elevation: 0.0,
                 backgroundColor: const Color(0xFFFF8C69),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                textStyle: const TextStyle(
-                    fontSize: 10, fontWeight: FontWeight.bold)),
+                textStyle:
+                    const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
           ),
           new ElevatedButton.icon(
             icon: Icon(
@@ -147,15 +150,15 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
             ),
             onPressed: () async {
               Navigator.of(contexs).pop(false);
-               getPicture('GALLERY');
+              getPicture('GALLERY');
             },
             style: ElevatedButton.styleFrom(
                 elevation: 0.0,
                 backgroundColor: const Color(0xFFFF8C69),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                textStyle: const TextStyle(
-                    fontSize: 10, fontWeight: FontWeight.bold)),
+                textStyle:
+                    const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -245,24 +248,24 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
     try {
       currentLocation = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.best);
-      try {
-        isMock = await TrustLocation.isMockLocation;
-      } catch (e) {
-        print('TrustLocation isMockLocation check error: $e');
-        isMock = false;
-      }
-      TrustLocation.start(5);
-
-      /// the stream getter where others can listen to.
-      TrustLocation.onChange.listen((values) {
-            print(
-                'TrustLocation ${values.latitude} ${values.longitude} ${values.isMockLocation}');
-            truslat = values.latitude!;
-            trusLon = values.longitude!;
-          });
-
-      /// stop repeating by timer
-      TrustLocation.stop();
+      // try {
+      //   isMock = await TrustLocation.isMockLocation;
+      // } catch (e) {
+      //   print('TrustLocation isMockLocation check error: $e');
+      //   isMock = false;
+      // }
+      // TrustLocation.start(5);
+      //
+      // /// the stream getter where others can listen to.
+      // TrustLocation.onChange.listen((values) {
+      //   print(
+      //       'TrustLocation ${values.latitude} ${values.longitude} ${values.isMockLocation}');
+      //   truslat = values.latitude!;
+      //   trusLon = values.longitude!;
+      // });
+      //
+      // /// stop repeating by timer
+      // TrustLocation.stop();
       //pos.
     } catch (e) {
       currentLocation = null;
@@ -313,7 +316,6 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
           address = decoded["display_name"];
         }
       }
-
     } catch (e) {
       print("ERROR Reverse OSM: $e");
     }
@@ -324,7 +326,8 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
   Future<String> getAddressOLD(String lat, String lon) async {
     var address = "";
     try {
-      var urlOSM ="https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=18&addressdetails=1";
+      var urlOSM =
+          "https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=18&addressdetails=1";
       print("URL OSM ${urlOSM}");
       var encoded = Uri.encodeFull(urlOSM);
       print(encoded);
@@ -336,10 +339,9 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
       if (response.statusCode == 200) {
         address = json.decode(response.body)["display_name"];
         print('JOSN address ${address}');
-      }else{
+      } else {
         address = "";
       }
-
     } catch ($e) {
       address = "";
     }
@@ -351,6 +353,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
     print('ADDRESS ${addr}');
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
+      var result = await GpsSecurityChecker.checkGpsSecurity();
       var user_id = prefs.getString("name"); //Pilih Absensi
       if (androidID.isEmpty) {
         alert(globalScaffoldKey.currentContext!, 0,
@@ -359,23 +362,25 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
         alert(globalScaffoldKey.currentContext!, 0,
             "Type Absensi belum di pilih", "error");
       } else if (user_id == null || user_id == "") {
-        alert(globalScaffoldKey.currentContext!, 0, "USER ID tidak boleh kosong",
-            "error");
+        alert(globalScaffoldKey.currentContext!, 0,
+            "USER ID tidak boleh kosong", "error");
       } else if ((dropdownvalue.toString() == 'cuti' ||
               dropdownvalue.toString() == 'sakit' ||
               dropdownvalue.toString() == 'izin') &&
           (txtNote.text == null || txtNote.text == '')) {
         alert(globalScaffoldKey.currentContext!, 0, "Note tidak boleh kosong",
             "error");
-      }else if ((dropdownvalue.toString() == 'cuti') &&
+      } else if ((dropdownvalue.toString() == 'cuti') &&
           (start_date == null || start_date == '')) {
-        alert(globalScaffoldKey.currentContext!, 0, "Start Date tidak boleh kosong",
-            "error");
-      }else if ((dropdownvalue.toString() == 'cuti') &&
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Start Date tidak boleh kosong", "error");
+      } else if ((dropdownvalue.toString() == 'cuti') &&
           (end_date == null || end_date == '')) {
-        alert(globalScaffoldKey.currentContext!, 0, "End Date tidak boleh kosong",
-            "error");
+        alert(globalScaffoldKey.currentContext!, 0,
+            "End Date tidak boleh kosong", "error");
       } else {
+        // Jangan blokir di client karena fake GPS (banyak false positive).
+        // Jika ingin, bisa kirim info tambahan ke server dari result (belum dipakai di sini).
         if (EasyLoading.isShow) {
           EasyLoading.dismiss();
         }
@@ -392,8 +397,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
         }
         //lat ="-6.4538741";
         //lon ="106.8018423";
-        address_osm = await getAddress(lat.toString(),
-            lon.toString());
+        address_osm = await getAddress(lat.toString(), lon.toString());
         if (address_osm.isEmpty && txtAddr.text.trim().isNotEmpty) {
           address_osm = txtAddr.text.trim();
         }
@@ -404,7 +408,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
         var data = {
           'method': inorout,
           //'imeiid':"956ad8eab460883e",//androidID.toString(),
-          'imeiid':androidID.toString(),
+          'imeiid': androidID.toString(),
           'status_absensi': dropdownvalue.toString(),
           'geo_id': geo_id.toString(),
           'geo_nm': geo_nm,
@@ -422,56 +426,58 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
           'note': txtNote.text,
         };
         print("Data param ${data}"); //DEMO
-        print("SAVE "+"${BASE_URL}api/${url_base}.jsp");
+        print("SAVE " + "${BASE_URL}api/${url_base}.jsp");
         var encoded = Uri.encodeFull("${BASE_URL}api/${url_base}.jsp");
         print(encoded);
         Uri urlEncode = Uri.parse(encoded);
         print(isMock);
         final response = await http.post(
-            urlEncode,
-            body: data,
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            encoding: Encoding.getByName('utf-8'),
-          );
-          print(response.body);
-          if (EasyLoading.isShow) {
-            EasyLoading.dismiss();
-          }
-          setState(() {
-            String? message = "";
-            var status_code = 100;
-            var _tgl_absen = "";
-            var _duration = "";
-            var _timeIN = "";
-            var _timeOUT = "";
-            if (response.statusCode == 200) {
-              message = json.decode(response.body)["message"];
-              status_code = json.decode(response.body)["status_code"];
-              _tgl_absen = json.decode(response.body)["tgl_absen"];
-              _duration = json.decode(response.body)["duration"];
-              _timeIN = json.decode(response.body)["timein"];
-              _timeOUT = json.decode(response.body)["timeout"];
+          urlEncode,
+          body: data,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          encoding: Encoding.getByName('utf-8'),
+        );
+        print(response.body);
+        if (EasyLoading.isShow) {
+          EasyLoading.dismiss();
+        }
+        setState(() {
+          String? message = "";
+          var status_code = 100;
+          var _tgl_absen = "";
+          var _duration = "";
+          var _timeIN = "";
+          var _timeOUT = "";
+          if (response.statusCode == 200) {
+            message = json.decode(response.body)["message"];
+            status_code = json.decode(response.body)["status_code"];
+            _tgl_absen = json.decode(response.body)["tgl_absen"];
+            _duration = json.decode(response.body)["duration"];
+            _timeIN = json.decode(response.body)["timein"];
+            _timeOUT = json.decode(response.body)["timeout"];
 
-              if (status_code == 200) {
-                tglAbsen = _tgl_absen;
-                duration_check_out = _duration;
-                timeIN = _timeIN;
-                timeOUT = _timeOUT;
-                alert(
-                    globalScaffoldKey.currentContext!, 1, "${message}", "success");
-              } else if (status_code == 304) {
-                tglAbsen = _tgl_absen;
-                alert(
-                    globalScaffoldKey.currentContext!, 2, "${message}", "Warning");
-              } else {
-                alert(globalScaffoldKey.currentContext!, 0, "${message}", "error");
-              }
+            if (status_code == 200) {
+              tglAbsen = _tgl_absen;
+              duration_check_out = _duration;
+              timeIN = _timeIN;
+              timeOUT = _timeOUT;
+              alert(globalScaffoldKey.currentContext!, 1, "${message}",
+                  "success");
+            } else if (status_code == 304) {
+              tglAbsen = _tgl_absen;
+              alert(globalScaffoldKey.currentContext!, 2, "${message}",
+                  "Warning");
             } else {
-              message = response.reasonPhrase;//json.decode(response.reasonPhrase)["message"];
-              alert(globalScaffoldKey.currentContext!, 0, "${message}", "error");
+              alert(
+                  globalScaffoldKey.currentContext!, 0, "${message}", "error");
             }
+          } else {
+            message = response
+                .reasonPhrase; //json.decode(response.reasonPhrase)["message"];
+            alert(globalScaffoldKey.currentContext!, 0, "${message}", "error");
+          }
         });
       }
     } catch (e) {
@@ -483,6 +489,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
     }
     return "";
   }
+
   var address_osm = "";
   Future updatePositionTest(String inorout, String lat, String lon) async {
     print(androidID.toString());
@@ -493,269 +500,123 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
   }
 
   Future updatePosition(String inorout) async {
-    print(androidID.toString());
-    print("userLocation ${userLocation}");
-    //LatLongPosition position = await TrustLocation.getLatLong();
-    var address = "";
-    if (userLocation != null) {
-      print(userLocation);
-      if (listGeofence.length > 0) {
-        txtAddr.text = "";
-        var radiusOld = 0.0;
-        var geo_idOld = 0;
-        var geo_nmOld = "";
-        var isValid = false;
-        var lat_osm = "";
-        var lon_osm = "";
-        for (var i = 0; i < listGeofence.length; i++) {
-          var a = listGeofence[i];
-          var radius = double.parse(a['radius']);
-          var distanceBetweenPoints = SphericalUtil.computeDistanceBetween(
-              LatLng(double.parse(a['lat']), double.parse(a['lon'])),
-              LatLng(userLocation!.latitude, userLocation!.longitude));
-          print(
-              'distanceBetweenPoints ${distanceBetweenPoints} meter ${distanceBetweenPoints / 1000} KM');
-          //userLocation.latitude =  -6.4538741;
-          //userLocation.longitude = 106.8018423;
-         //if (distanceBetweenPoints >= radius) { //FOR DEV
-          //lat_osm = "-6.4538741";//userLocation.latitude.toString();
-          //lon_osm = "106.8018423"; //userLocation.longitude.toString();
-          if (distanceBetweenPoints <= radius) {
-            if (i == 0) {
-              radiusOld = radius;
-              geo_idOld = int.parse(a['geo_id']);
-              geo_nmOld = a['name'];
-            } else {
-              if (radiusOld < radius) {
-                radius = radiusOld;
-                geo_idOld = int.parse(a['geo_id']);
-                geo_nmOld = a['name'];
-              }
-            }
-          } else if (distanceBetweenPoints > radius) {
-            address = await getAddress(
-                userLocation!.latitude.toString(),
-                userLocation!.longitude.toString());
-            print('cetak address ${address}');
-            setState(() {
-              txtAddr.text = address;
-            });
-            radius = 0;
-            geo_idOld = 0;
-            geo_nmOld = address.isEmpty ? "UNKNOWN" : address;
-          }
-        }
-        print("geo_nmOld ${geo_nmOld}");
-        //geo_nmOld="";
-        if (geo_nmOld != "" && geo_nmOld != null) {
-          setState(() {
-            txtAddr.text = geo_nmOld;
-            isValid = true;
-          });
-        } else {
-          print("ADDRESS 2");
-          // address = await getAddress(userLocation.latitude.toString(),
-          //     userLocation.longitude.toString());
-          // print('cetak address ${address}');
-          setState(() {
-            txtAddr.text = address;
-          });
-          showDialog(
-            context: context,
-            builder: (context) => new AlertDialog(
-              title: new Text('Information'),
-              content: new Text(
-                  "checked ${inorout.toUpperCase()} absensi ${dropdownvalue.toString()}?"),
-              actions: <Widget>[
-                new ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 20.0,
-                  ),
-                  label: Text(
-                    "No",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.red,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      textStyle:
-                          TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-                new ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.save,
-                    color: Colors.white,
-                    size: 20.0,
-                  ),
-                  label: Text(
-                    "checked ${inorout.toUpperCase()}",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onPressed: () async {
-                    Navigator.of(context).pop(false);
-                    await saveAttendance(
-                        inorout,
-                        0,
-                        "",
-                        "",
-                        userLocation!.latitude.toString(),
-                        userLocation!.longitude.toString(),
-                        address);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: const Color(0xFFFF8C69),
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      textStyle:
-                          const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          );
-          print('Address ${address}');
-        }
-
-        if (isValid == true) {
-          print('create ${inorout} attendance');
-          showDialog(
-            context: context,
-            builder: (context) => new AlertDialog(
-              title: new Text('Information'),
-              content: new Text(
-                  "checked ${inorout.toUpperCase()} absensi ${dropdownvalue.toString()}?"),
-              actions: <Widget>[
-                new ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 20.0,
-                  ),
-                  label: Text(
-                    "No",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.red,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      textStyle:
-                          TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-                new ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.save,
-                    color: Colors.white,
-                    size: 20.0,
-                  ),
-                  label: Text(
-                    "checked ${inorout.toUpperCase()}",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onPressed: () async {
-                    Navigator.of(context).pop(false);
-                    await saveAttendance(
-                        inorout,
-                        geo_idOld,
-                        geo_nmOld,
-                        "",
-                        userLocation!.latitude.toString(),
-                        userLocation!.longitude.toString(),
-                        address);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: const Color(0xFFFF8C69),
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      textStyle:
-                          const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          );
-        }
-      } else {
-        //getListGeofenceArea(true);
+    if (_isUpdatingPosition) return;
+    _isUpdatingPosition = true;
+    if (!EasyLoading.isShow) EasyLoading.show(status: 'Mengambil lokasi & alamat...');
+    try {
+      if (userLocation == null) {
+        print('No location');
+        _getLocation();
+        return;
+      }
+      var address = "";
+      if (listGeofence.isEmpty) {
         address = await getAddress(userLocation!.latitude.toString(),
             userLocation!.longitude.toString());
-        txtAddr.text = address;
-        showDialog(
-          context: context,
-          builder: (context) => new AlertDialog(
-            title: new Text('Information'),
-            content: new Text(
-                "checked ${inorout.toUpperCase()} absensi ${dropdownvalue.toString()}?"),
-            actions: <Widget>[
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 20.0,
-                ),
-                label: Text(
-                  "No",
-                  style: TextStyle(color: Colors.white),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop(false);
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.red,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-              ),
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.save,
-                  color: Colors.white,
-                  size: 20.0,
-                ),
-                label: Text(
-                  "checked ${inorout.toUpperCase()}",
-                  style: TextStyle(color: Colors.white),
-                ),
-                onPressed: () async {
-                  Navigator.of(context).pop(false);
-                  await saveAttendance(
-                      inorout,
-                      0,
-                      "",
-                      "",
-                      userLocation!.latitude.toString(),
-                      userLocation!.longitude.toString(),
-                      address);
-                },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: const Color(0xFFFF8C69),
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      textStyle:
-                          const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
-        print('Address ${address}');
+        if (mounted) setState(() => txtAddr.text = address);
+        _showConfirmDialog(inorout, 0, "", address);
+        return;
       }
-    } else {
-      print('No location');
-      _getLocation();
+
+      txtAddr.text = "";
+      double radiusOld = 0.0;
+      int geo_idOld = 0;
+      String geo_nmOld = "";
+      bool insideAny = false;
+
+      // SphericalUtil.computeDistanceBetween returns distance in METERS
+      for (var i = 0; i < listGeofence.length; i++) {
+        var a = listGeofence[i];
+        var radiusRaw = double.tryParse(a['radius']?.toString() ?? '') ?? 0.0;
+        // API bisa kirim radius dalam meter (e.g. 500) atau km (e.g. 0.5) → normalisasi ke meter
+        var radiusMeters = radiusRaw > 0 && radiusRaw < 100 ? radiusRaw * 1000 : radiusRaw;
+        var distanceBetweenPoints = SphericalUtil.computeDistanceBetween(
+            LatLng(double.parse(a['lat'].toString()), double.parse(a['lon'].toString())),
+            LatLng(userLocation!.latitude, userLocation!.longitude));
+        print('geofence ${a['name']} distance=${distanceBetweenPoints}m radius=${radiusMeters}m inside=${distanceBetweenPoints <= radiusMeters}');
+        if (distanceBetweenPoints <= radiusMeters) {
+          insideAny = true;
+          if (i == 0 || radiusMeters < radiusOld) {
+            radiusOld = radiusMeters;
+            geo_idOld = int.parse(a['geo_id'].toString());
+            geo_nmOld = (a['name'] ?? '').toString();
+          }
+        }
+      }
+
+      final isStoring = dropdownvalue.toString().toLowerCase() == 'storing';
+
+      if (isStoring) {
+        // Storing: harus di LUAR geofence (distance > radius untuk semua). Ambil alamat OSM sekali.
+        if (insideAny) {
+          if (mounted) alert(globalScaffoldKey.currentContext!, 0,
+              "Absensi storing hanya boleh dilakukan di luar area geofence", "error");
+          return;
+        }
+        address = await getAddress(userLocation!.latitude.toString(),
+            userLocation!.longitude.toString());
+        if (address.isEmpty) address = "Alamat tidak ditemukan";
+        if (mounted) setState(() => txtAddr.text = address);
+        _showConfirmDialog(inorout, 0, "", address);
+        return;
+      }
+
+      // Bukan storing (izin/sakit/cuti): harus di DALAM geofence.
+      if (!insideAny) {
+        if (mounted) alert(globalScaffoldKey.currentContext!, 0,
+            "Anda di luar geofence. Silakan masuk area yang ditentukan.", "error");
+        return;
+      }
+      if (mounted) setState(() => txtAddr.text = geo_nmOld);
+      _showConfirmDialog(inorout, geo_idOld, geo_nmOld, address);
+    } finally {
+      _isUpdatingPosition = false;
+      if (EasyLoading.isShow) EasyLoading.dismiss();
     }
+  }
+
+  void _showConfirmDialog(String inorout, int geo_idOld, String geo_nmOld, String address) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Information'),
+        content: Text(
+            "checked ${inorout.toUpperCase()} absensi ${dropdownvalue.toString()}?"),
+        actions: <Widget>[
+          ElevatedButton.icon(
+            icon: Icon(Icons.close, color: Colors.white, size: 20.0),
+            label: Text("No", style: TextStyle(color: Colors.white)),
+            onPressed: () => Navigator.of(context).pop(false),
+            style: ElevatedButton.styleFrom(
+                elevation: 0.0,
+                backgroundColor: Colors.red,
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton.icon(
+            icon: Icon(Icons.save, color: Colors.white, size: 20.0),
+            label: Text("checked ${inorout.toUpperCase()}", style: TextStyle(color: Colors.white)),
+            onPressed: () async {
+              Navigator.of(context).pop(false);
+              await saveAttendance(
+                  inorout,
+                  geo_idOld,
+                  geo_nmOld,
+                  "",
+                  userLocation!.latitude.toString(),
+                  userLocation!.longitude.toString(),
+                  address.isEmpty ? txtAddr.text : address);
+            },
+            style: ElevatedButton.styleFrom(
+                elevation: 0.0,
+                backgroundColor: const Color(0xFFFF8C69),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   Timer timer = new Timer(new Duration(seconds: 5), () async {
@@ -772,11 +633,12 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: () {
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
           Navigator.pushReplacement(context,
               MaterialPageRoute(builder: (context) => ViewDashboard()));
-          return Future.value(false);
         },
         child: Scaffold(
           key: globalScaffoldKey,
@@ -822,8 +684,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
                 children: [
                   const Text(
                     "Photo Profile",
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   GestureDetector(
@@ -880,330 +741,305 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
               ),
             ),
           ),
-                    Container(
-                      margin: EdgeInsets.only(
-                          left: 20, top: 2, right: 20, bottom: 0),
-                      child: Text("Nama Karyawan : ${namaKaryawan}",
-                          textAlign: TextAlign.left,
-                          style: TextStyle(fontSize: 15)),
+          Container(
+            margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
+            child: Text("Nama Karyawan : ${namaKaryawan}",
+                textAlign: TextAlign.left, style: TextStyle(fontSize: 15)),
+          ),
+          // Container(
+          //   margin: EdgeInsets.only(
+          //       left: 20, top: 50, right: 20, bottom: 0),
+          //   child: InkWell(
+          //     onTap: () {
+          //       Share.share(
+          //           'http://apps.tuluatas.com:8080/trucking/master/update_imei.jsp?imeiid=${androidID}');
+          //     },
+          //     child: Text("IMEI ID : ${androidID}",
+          //         textAlign: TextAlign.center,
+          //         style: TextStyle(
+          //             fontSize: 18,
+          //             color: Colors.blueAccent,
+          //             decoration: TextDecoration.underline)),
+          //   ),
+          // ),
+          Container(
+            margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                DropdownButtonHideUnderline(
+                    child: ButtonTheme(
+                  alignedDropdown: true,
+                  child: DropdownButton(
+                    isExpanded: true,
+                    value: dropdownvalue,
+                    icon: const Icon(Icons.keyboard_arrow_down),
+                    items: itemsShift.map((String items) {
+                      return DropdownMenuItem(
+                        value: items,
+                        child: Text(items),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        dropdownvalue = newValue!;
+                        status_absensi = dropdownvalue;
+                      });
+                      if (dropdownvalue != null &&
+                          dropdownvalue.toUpperCase() == 'CUTI') {
+                        setState(() {
+                          akses_detail = true;
+                        });
+                      } else {
+                        setState(() {
+                          akses_detail = false;
+                        });
+                      }
+                    },
+                  ),
+                )),
+              ],
+            ),
+          ),
+          if (status_absensi == "storing") ...[
+            Container(
+              margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
+              child: Text("Location : ${txtAddr.text}",
+                  textAlign: TextAlign.left, style: TextStyle(fontSize: 15)),
+            ),
+            if (isShowAddress == true) ...[
+              Container(
+                margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
+                child: Text("Address : ${address_osm}",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 15)),
+              )
+            ],
+            Container(
+              margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
+              child: Text("Date Absen : ${tglAbsen}",
+                  textAlign: TextAlign.left, style: TextStyle(fontSize: 14)),
+            ),
+            Container(
+              margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
+              child: Text("Time IN : ${timeIN}",
+                  textAlign: TextAlign.left, style: TextStyle(fontSize: 14)),
+            ),
+            Container(
+              margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
+              child: Text("Time OUT : ${timeOUT}",
+                  textAlign: TextAlign.left, style: TextStyle(fontSize: 14)),
+            ),
+            Container(
+              margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
+              child: Text("Duration : ${duration_check_out}",
+                  textAlign: TextAlign.left, style: TextStyle(fontSize: 15)),
+            ),
+            Container(
+                margin: EdgeInsets.only(left: 20, top: 5, right: 20, bottom: 0),
+                child: Row(children: <Widget>[
+                  Expanded(
+                      child: ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.login,
+                      color: Colors.white,
+                      size: 24.0,
                     ),
-                    // Container(
-                    //   margin: EdgeInsets.only(
-                    //       left: 20, top: 50, right: 20, bottom: 0),
-                    //   child: InkWell(
-                    //     onTap: () {
-                    //       Share.share(
-                    //           'http://apps.tuluatas.com:8080/trucking/master/update_imei.jsp?imeiid=${androidID}');
-                    //     },
-                    //     child: Text("IMEI ID : ${androidID}",
-                    //         textAlign: TextAlign.center,
-                    //         style: TextStyle(
-                    //             fontSize: 18,
-                    //             color: Colors.blueAccent,
-                    //             decoration: TextDecoration.underline)),
-                    //   ),
-                    // ),
-                    Container(
-                      margin: EdgeInsets.only(
-                          left: 20, top: 2, right: 20, bottom: 0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          DropdownButtonHideUnderline(
-                              child:ButtonTheme(
-                                alignedDropdown: true,
-                                child: DropdownButton(
-                                  isExpanded: true,
-                                  value: dropdownvalue,
-                                  icon: const Icon(Icons.keyboard_arrow_down),
-                                  items: itemsShift.map((String items) {
-                                    return DropdownMenuItem(
-                                      value: items,
-                                      child: Text(items),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      dropdownvalue = newValue!;
-                                      status_absensi = dropdownvalue;
-                                    });
-                                    if(dropdownvalue!=null && dropdownvalue.toUpperCase()=='CUTI'){
-                                      setState(() {
-                                        akses_detail=true;
-                                      });
-                                    }else{
-                                      setState(() {
-                                        akses_detail=false;
-                                      });
-                                    }
-                                  },
-                                ),
-                              )
+                    label: Text(
+                      "Check IN",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () async {
+                      await updatePosition("IN");
+                      //await updatePositionTest("IN","-122.083922","37.4220936");
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: const Color(0xFF4CAF50),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 0),
+                        textStyle: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold)),
+                  )),
+                  SizedBox(
+                    width: 10,
+                  ),
+                  Expanded(
+                      child: ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.logout,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    label: Text(
+                      "Check OUT",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () async {
+                      print('CHECK OUT');
+                      await updatePosition("OUT");
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: const Color(0xFFFF8C69),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 0),
+                        textStyle: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold)),
+                  )),
+                ]))
+          ],
+          if (status_absensi == "cuti") ...[
+            Container(
+              margin: EdgeInsets.all(10.0),
+              child: DateTimePicker(
+                //type: DateTimePickerType.dateTimeSeparate,
+                dateMask: 'yyyy-MM-dd',
+                controller: txtStartDate,
+                //initialValue: _initialValue,
+                firstDate: DateTime(1950),
+                lastDate: DateTime(2100),
+                icon: Icon(Icons.event),
+                dateLabelText: 'Start Date',
+                selectableDayPredicate: (date) {
+                  return true;
+                },
+                onChanged: (val) => setState(() => start_date = val),
+                validator: (val) {
+                  setState(() => start_date = val ?? '');
+                  return null;
+                },
+                onSaved: (val) => setState(() => start_date = val ?? ''),
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.all(10.0),
+              child: DateTimePicker(
+                //type: DateTimePickerType.dateTimeSeparate,
+                dateMask: 'yyyy-MM-dd',
+                controller: txtEndDate,
+                //initialValue: _initialValue,
+                firstDate: DateTime(1950),
+                lastDate: DateTime(2100),
+                icon: Icon(Icons.event),
+                dateLabelText: 'End Date',
+                selectableDayPredicate: (date) {
+                  return true;
+                },
+                onChanged: (val) => setState(() => end_date = val),
+                validator: (val) {
+                  setState(() => end_date = val ?? '');
+                  return null;
+                },
+                onSaved: (val) => setState(() => end_date = val ?? ''),
+              ),
+            )
+          ],
+          if (status_absensi == "izin" ||
+              status_absensi == "sakit" ||
+              status_absensi == "cuti") ...[
+            Container(
+              margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
+              child: TextField(
+                controller: txtNote,
+                decoration: new InputDecoration(
+                    border: new OutlineInputBorder(
+                        borderSide: new BorderSide(color: Colors.teal)),
+                    hintText: 'Note',
+                    helperText: 'Cuti,sakit dan izin wajib ada catatan',
+                    labelText: 'Note',
+                    prefixIcon: const Icon(
+                      Icons.book,
+                      color: Colors.green,
+                    ),
+                    prefixText: ' ',
+                    //suffixText: 'USD',
+                    suffixStyle: const TextStyle(color: Colors.green)),
+              ),
+            ),
+            Container(
+                margin: EdgeInsets.only(left: 20, top: 5, right: 20, bottom: 0),
+                child: Row(children: <Widget>[
+                  Expanded(
+                      child: ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.fingerprint_rounded,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    label: Text(
+                      "Submit ${dropdownvalue.toString()}",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () async {
+                      print('Submit ${dropdownvalue.toString()}');
+                      address = await getAddress(
+                          userLocation!.latitude.toString(),
+                          userLocation!.longitude.toString());
+                      var status = dropdownvalue.toString().toUpperCase();
+                      //IJIN,CUTI,SAKIT
+                      await saveAttendance(
+                          status,
+                          0,
+                          "",
+                          "",
+                          userLocation!.latitude.toString(),
+                          userLocation!.longitude.toString(),
+                          address);
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: const Color(0xFFFF8C69),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 0),
+                        textStyle: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold)),
+                  ))
+                ]))
+          ],
+          if (akses_detail == true)
+            Container(
+              margin:
+                  const EdgeInsets.only(left: 20, top: 5, right: 20, bottom: 0),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(
+                        Icons.arrow_right_outlined,
+                        color: Colors.white,
+                        size: 24.0,
+                      ),
+                      label: const Text(
+                        "View Detail Cuti",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onPressed: () async {
+                        print('Cuti detail');
+                        EasyLoading.show();
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ViewDetailCuti(),
                           ),
-                        ],
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: const Color(0xFFFF8C69),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 0),
+                        textStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    if (status_absensi == "storing") ...[
-                      Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 2, right: 20, bottom: 0),
-                        child: Text("Location : ${txtAddr.text}",
-                            textAlign: TextAlign.left,
-                            style: TextStyle(fontSize: 15)),
-                      ),
-                      if(isShowAddress==true)...[
-                      Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 2, right: 20, bottom: 0),
-                        child: Text("Address : ${address_osm}",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 15)),
-                      )],
-                      Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 2, right: 20, bottom: 0),
-                        child: Text("Date Absen : ${tglAbsen}",
-                            textAlign: TextAlign.left,
-                            style: TextStyle(fontSize: 14)),
-                      ),
-                      Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 2, right: 20, bottom: 0),
-                        child: Text("Time IN : ${timeIN}",
-                            textAlign: TextAlign.left,
-                            style: TextStyle(fontSize: 14)),
-                      ),
-                      Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 2, right: 20, bottom: 0),
-                        child: Text("Time OUT : ${timeOUT}",
-                            textAlign: TextAlign.left,
-                            style: TextStyle(fontSize: 14)),
-                      ),
-                      Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 2, right: 20, bottom: 0),
-                        child: Text("Duration : ${duration_check_out}",
-                            textAlign: TextAlign.left,
-                            style: TextStyle(fontSize: 15)),
-                      ),
-                      Container(
-                          margin: EdgeInsets.only(
-                              left: 20, top: 5, right: 20, bottom: 0),
-                          child: Row(children: <Widget>[
-                            Expanded(
-                                child: ElevatedButton.icon(
-                              icon: Icon(
-                                Icons.login,
-                                color: Colors.white,
-                                size: 24.0,
-                              ),
-                              label: Text(
-                                "Check IN",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              onPressed: () async {
-                                await updatePosition("IN");
-                                //await updatePositionTest("IN","-122.083922","37.4220936");
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: const Color(0xFF4CAF50),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  textStyle: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
-                            )),
-                            SizedBox(
-                              width: 10,
-                            ),
-                            Expanded(
-                                child: ElevatedButton.icon(
-                              icon: Icon(
-                                Icons.logout,
-                                color: Colors.white,
-                                size: 24.0,
-                              ),
-                              label: Text(
-                                "Check OUT",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              onPressed: () async {
-                                print('CHECK OUT');
-                                await updatePosition("OUT");
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: const Color(0xFFFF8C69),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  textStyle: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
-                            )),
-                          ]))
-                    ],
-                    if (status_absensi == "cuti") ...[
-                      Container(
-                        margin: EdgeInsets.all(10.0),
-                        child: DateTimePicker(
-                          //type: DateTimePickerType.dateTimeSeparate,
-                          dateMask: 'yyyy-MM-dd',
-                          controller: txtStartDate,
-                          //initialValue: _initialValue,
-                          firstDate: DateTime(1950),
-                          lastDate: DateTime(2100),
-                          icon: Icon(Icons.event),
-                          dateLabelText: 'Start Date',
-                          selectableDayPredicate: (date) {
-                            return true;
-                          },
-                          onChanged: (val) => setState(() => start_date = val),
-                          validator: (val) {
-                            setState(() => start_date = val ?? '');
-                            return null;
-                          },
-                          onSaved: (val) =>
-                              setState(() => start_date = val ?? ''),
-                        ),
-                      ),
-                      Container(
-                        margin: EdgeInsets.all(10.0),
-                        child: DateTimePicker(
-                          //type: DateTimePickerType.dateTimeSeparate,
-                          dateMask: 'yyyy-MM-dd',
-                          controller: txtEndDate,
-                          //initialValue: _initialValue,
-                          firstDate: DateTime(1950),
-                          lastDate: DateTime(2100),
-                          icon: Icon(Icons.event),
-                          dateLabelText: 'End Date',
-                          selectableDayPredicate: (date) {
-                            return true;
-                          },
-                          onChanged: (val) => setState(() => end_date = val),
-                          validator: (val) {
-                            setState(() => end_date = val ?? '');
-                            return null;
-                          },
-                          onSaved: (val) =>
-                              setState(() => end_date = val ?? ''),
-                        ),
-                      )
-                    ],
-                    if (status_absensi == "izin" ||
-                        status_absensi == "sakit" ||
-                        status_absensi == "cuti") ...[
-                      Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 2, right: 20, bottom: 0),
-                        child: TextField(
-                          controller: txtNote,
-                          decoration: new InputDecoration(
-                              border: new OutlineInputBorder(
-                                  borderSide:
-                                      new BorderSide(color: Colors.teal)),
-                              hintText: 'Note',
-                              helperText:
-                                  'Cuti,sakit dan izin wajib ada catatan',
-                              labelText: 'Note',
-                              prefixIcon: const Icon(
-                                Icons.book,
-                                color: Colors.green,
-                              ),
-                              prefixText: ' ',
-                              //suffixText: 'USD',
-                              suffixStyle:
-                                  const TextStyle(color: Colors.green)),
-                        ),
-                      ),
-                      Container(
-                          margin: EdgeInsets.only(
-                              left: 20, top: 5, right: 20, bottom: 0),
-                          child: Row(children: <Widget>[
-                            Expanded(
-                                child: ElevatedButton.icon(
-                              icon: Icon(
-                                Icons.fingerprint_rounded,
-                                color: Colors.white,
-                                size: 24.0,
-                              ),
-                              label: Text(
-                                "Submit ${dropdownvalue.toString()}",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              onPressed: () async {
-                                print('Submit ${dropdownvalue.toString()}');
-                                address = await getAddress(
-                                    userLocation!.latitude.toString(),
-                                    userLocation!.longitude.toString());
-                                var status =
-                                    dropdownvalue.toString().toUpperCase();
-                                //IJIN,CUTI,SAKIT
-                                await saveAttendance(
-                                    status,
-                                    0,
-                                    "",
-                                    "",
-                                    userLocation!.latitude.toString(),
-                                    userLocation!.longitude.toString(),
-                                    address);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: const Color(0xFFFF8C69),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  textStyle: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
-                            ))
-                          ]))
-                    ],
-                    if (akses_detail == true)
-                      Container(
-                        margin: const EdgeInsets.only(
-                            left: 20, top: 5, right: 20, bottom: 0),
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                icon: const Icon(
-                                  Icons.arrow_right_outlined,
-                                  color: Colors.white,
-                                  size: 24.0,
-                                ),
-                                label: const Text(
-                                  "View Detail Cuti",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                onPressed: () async {
-                                  print('Cuti detail');
-                                  EasyLoading.show();
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ViewDetailCuti(),
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: const Color(0xFFFF8C69),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  textStyle: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ]));
+                  ),
+                ],
+              ),
+            ),
+        ]));
   }
 
   void getSession() async {
@@ -1222,14 +1058,14 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> { //
         : globals.akses_pages.where((x) => x == "HR");
     if (isOK != null) {
       if (isOK.length > 0) {
-        isAkses =  true;
+        isAkses = true;
       }
     }
-    if(username=="ADMIN"){
-      isAkses =  true;
+    if (username == "ADMIN") {
+      isAkses = true;
     }
 
-    akses_detail =  isAkses;
+    akses_detail = isAkses;
     print('akses_detail ${akses_detail}');
   }
 

@@ -1315,8 +1315,10 @@ class _FrmInspeksiVehicleState extends State<FrmInspeksiVehicle> {
     //   messageTextStyle: TextStyle(
     //       color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
     // );
-    return WillPopScope(
-        onWillPop: () {
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
           if (globals.page_inspeksi == 'new_driver') {
             ResetCheckBox();
             Navigator.pushReplacement(context,
@@ -1328,7 +1330,6 @@ class _FrmInspeksiVehicleState extends State<FrmInspeksiVehicle> {
             Navigator.pushReplacement(context,
                 MaterialPageRoute(builder: (context) => ViewDashboard()));
           }
-          return Future.value(false);
         },
         child: MaterialApp(
           home: Scaffold(

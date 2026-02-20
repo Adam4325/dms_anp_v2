@@ -144,11 +144,12 @@ class _FrmObpState extends State<FrmObp> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => DetailMenu()));
-        return Future.value(false);
       },
       child: Scaffold(
         appBar: AppBar(

@@ -65,7 +65,7 @@ class _FrmOpenDOMPState extends State<FrmOpenDOMP>
   bool isLoadingCompany = true;
   void setDataWidget() {
     print(widget.item);
-    if (widget.item != null) {
+    if (widget.item.isNotEmpty) {
       setState(() {
         doNumber.text = widget.item['dlododetailnumber'] ?? '';
 

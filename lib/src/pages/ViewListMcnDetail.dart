@@ -104,11 +104,12 @@ class _ViewListMcnDetailState extends State<ViewListMcnDetail> {
 
   @override
   Widget build(BuildContext context) {
-    return new WillPopScope(
-      onWillPop: () {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder: (context) => FrmServiceRequestOpr()));
-        return Future.value(false);
       },
       child: Scaffold(
         key: globalScaffoldKey,

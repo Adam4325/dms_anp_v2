@@ -94,13 +94,14 @@ class _ViewPhotoVehicleState extends State<ViewPhotoVehicle> {
     }else{
       nameTitle = view_name;
     }
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.remove("view_name");
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => ViewDashboard()));
-        return Future.value(false);
       },
       child: Scaffold(
         backgroundColor: Color(0xFFF5F5F5),

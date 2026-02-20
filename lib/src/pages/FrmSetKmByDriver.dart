@@ -449,14 +449,15 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
     //       color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
     // );
     var vehicleNopol = vhcid == null || vhcid == "" ? "[No Nopol]" : vhcid;
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.remove("vhcidfromdo");
         prefs.remove("bujnumber");
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => ViewDashboard()));
-        return Future.value(false);
       },
       child: Scaffold(
         backgroundColor: Colors.orange.shade400,

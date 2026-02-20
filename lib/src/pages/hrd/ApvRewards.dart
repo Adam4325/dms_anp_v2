@@ -96,11 +96,12 @@ class _ApvRewardsState extends State<ApvRewards> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: () async {
-      goBack(context);
-      return false;
-    },
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
+          goBack(context);
+        },
     child:  Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFFFF8C69),

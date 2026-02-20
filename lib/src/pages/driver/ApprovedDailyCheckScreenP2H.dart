@@ -422,14 +422,15 @@ class _ApprovedDailyCheckScreenP2HState extends State<ApprovedDailyCheckScreenP2
       (grouped[groupId] ??= []).add(item);
     }
 
-    return WillPopScope(
-        onWillPop: () async {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => ListDriverInspeksiV2()),
-      );
-      return false; // cegah pop default, biar pake pushReplacement
-    },
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ListDriverInspeksiV2()),
+          );
+        },
     child: Scaffold(
       appBar: AppBar(
         backgroundColor: darkOrange,

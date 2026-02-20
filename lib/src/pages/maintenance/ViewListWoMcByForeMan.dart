@@ -177,11 +177,12 @@ class _ViewListWoMcByForeManState extends State<ViewListWoMcByForeMan> {
       messageTextStyle: TextStyle(
           color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
     );
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => ViewDashboard()));
-        return false;
       },
       child: Scaffold(
         key: globalScaffoldKey,

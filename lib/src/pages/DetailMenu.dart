@@ -52,7 +52,14 @@ class _DetailMenuState extends State<DetailMenu> {
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return WillPopScope(child: Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => ViewDashboard()));
+      },
+      child: Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
           elevation: 0,
@@ -81,11 +88,7 @@ class _DetailMenuState extends State<DetailMenu> {
           //children: <Widget>[ImgHeader1(context), buildMenu(context)],
         ),
       ),
-    ), onWillPop: () {
-      Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (context) => ViewDashboard()));
-      return Future.value(false);
-    }) ;
+    ));
   }
 
   Widget ImgHeader1(BuildContext context) {

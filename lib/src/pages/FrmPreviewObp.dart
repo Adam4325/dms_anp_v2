@@ -40,11 +40,12 @@ class _FrmPreviewObpState extends State<FrmPreviewObp> {
   @override
   Widget build(BuildContext context) {
     var bpnbr = globals.bpnbr_web_view;
-    return new WillPopScope(
-      onWillPop: () {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => ViewListObp()));
-        return Future.value(false);
       },
       child: Scaffold(
         key: globalScaffoldKey,

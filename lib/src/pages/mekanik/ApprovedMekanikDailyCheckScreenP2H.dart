@@ -603,14 +603,15 @@ class _ApprovedMekanikDailyCheckScreenP2HState extends State<ApprovedMekanikDail
       grouped[groupId]?.add(item);
     }
 
-    return WillPopScope(
-        onWillPop: () async {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => ListMekanikInspeksiV2()),
-      );
-      return false;
-    },
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ListMekanikInspeksiV2()),
+          );
+        },
     child: Scaffold(
       appBar: AppBar(
         backgroundColor: darkOrange,

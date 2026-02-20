@@ -32,12 +32,13 @@ class _DetailMenuObpState extends State<DetailMenuObp> {
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return WillPopScope(
-        onWillPop: () {
-      Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (context) => ViewDashboard()));
-      return Future.value(false);
-    },
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => ViewDashboard()));
+        },
     child: Scaffold(
       backgroundColor: Colors.blueAccent,
       appBar: AppBar(

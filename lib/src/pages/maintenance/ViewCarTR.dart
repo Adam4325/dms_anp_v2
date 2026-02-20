@@ -49,8 +49,12 @@ class _ViewCarTRState extends State<ViewCarTR> {
   }
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: onWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
+        await onWillPop();
+      },
       child: Scaffold(
         appBar: AppBar(
           //backgroundColor: Color(0xFFFF1744),

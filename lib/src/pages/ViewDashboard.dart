@@ -545,7 +545,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
               image: FontAwesomeIcons.delicious,
               color: Colors.red,
               idKey: 30,
-              title: "Open DO NC"));
+              title: "Open DO MP"));
         }
       }
     }
@@ -560,7 +560,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
               image: FontAwesomeIcons.delicious,
               color: Colors.red,
               idKey: 33,
-              title: "Open DO MP"));
+              title: "Open DO NC"));
         }
       }
     }
@@ -3756,8 +3756,12 @@ class _ViewDashboardState extends State<ViewDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+        _onWillPop();
+      },
       child: Scaffold(
         backgroundColor: paleOrange, // ✅ UPDATED: Orange soft background
         key: globalScaffoldKey,

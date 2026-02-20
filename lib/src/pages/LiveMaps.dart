@@ -950,11 +950,12 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
           target: LatLng(-6.181866111111, 106.829632777778));
     }
 
-    return new WillPopScope(
-      onWillPop: () {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => ViewDashboard()));
-        return Future.value(false);
       },
       child: Scaffold(
         backgroundColor: Colors.grey.shade50,

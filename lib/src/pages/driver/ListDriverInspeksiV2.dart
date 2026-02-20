@@ -160,10 +160,11 @@ class _ListDriverInspeksiV2State extends State<ListDriverInspeksiV2> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         _goBack(context);
-        return false; // biar tidak auto pop, tapi pakai _goBack
       },
       child: Scaffold(
         appBar: AppBar(

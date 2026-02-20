@@ -642,11 +642,12 @@ class MapHistoryState extends State<MapHistory> {
     height = MediaQuery.of(context).size.height;
     width = MediaQuery.of(context).size.width;
     heightTemp = height;
-    return WillPopScope(
-        onWillPop: () {
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
           Navigator.pushReplacement(context,
               MaterialPageRoute(builder: (context) => ViewDashboard()));
-          return Future.value(false);
         },
         child: Scaffold(
           backgroundColor: Colors.white,
@@ -965,7 +966,8 @@ class MapHistoryState extends State<MapHistory> {
                                 SizedBox(
                                   width: 10,//USER3806
                                 ),
-                                Column(
+                                Expanded(
+                                  child: Column(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -1026,6 +1028,7 @@ class MapHistoryState extends State<MapHistory> {
                                         ),
                                         overflow: TextOverflow.ellipsis)],
                                   ],
+                                ),
                                 ),
                               ],
                             )],

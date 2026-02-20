@@ -1164,17 +1164,17 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
     print("=== UNIQUE INSPECTIONS ===");
     print("Total unique inspections: ${uniqueInspections.length}");
     //FrmSetKmByDriver
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
         SharedPreferences prefs = await SharedPreferences.getInstance();
         if (globals.p2hVhcDriver == "yes") {
           Navigator.pushReplacement(context,
               MaterialPageRoute(builder: (context) => FrmCreateAntrianNewDriver()));
-          return Future.value(false);
         } else {
           Navigator.pushReplacement(context,
               MaterialPageRoute(builder: (context) => ViewDashboard()));
-          return Future.value(false);
         }
       },
       child: Scaffold(

@@ -635,6 +635,7 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
           listVehicleId = (jsonDecode(response.body) as List)
               .map((dynamic e) => e as Map<String, dynamic>)
               .toList();
+          dummySearchList2 = List.from(listVehicleId);
         } else {
           _showOrangeAlert(context, "Gagal load data detail vehcile", "error");
         }
@@ -672,6 +673,7 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
   void saveRequestMoving() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
+      var user_id = prefs.getString("name");
       var driverId = txtDriverIdList.text;
       var vehicleId = txtVehicleIdList.text;
       var status = "OPEN";
@@ -681,20 +683,20 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
 
       if (is_edit_req == true && (gtnumber == null || gtnumber == "")) {
         //_tabController.animateTo(0);
-        _showOrangeAlert(context, "GT Number tidak boleh kosong", "error");
+        _showOrangeAlert(globalScaffoldKey.currentContext!, "GT Number tidak boleh kosong", "error");
       } else if (date == null || date == "") {
         //_tabController.animateTo(0);
-        _showOrangeAlert(context, "Date Request tidak boleh kosong", "error");
+        _showOrangeAlert(globalScaffoldKey.currentContext!, "Date Request tidak boleh kosong", "error");
       } else if (driverId == null || driverId == "") {
-        _showOrangeAlert(context, "Driver ID tidak boleh kosong", "error");
+        _showOrangeAlert(globalScaffoldKey.currentContext!, "Driver ID tidak boleh kosong", "error");
       } else if (vehicleId == null || vehicleId == "") {
-        _showOrangeAlert(context, "Vehicle ID tidak boleh kosong", "error");
+        _showOrangeAlert(globalScaffoldKey.currentContext!, "Vehicle ID tidak boleh kosong", "error");
       } else if (vehicleId == null || vehicleId == "") {
-        _showOrangeAlert(context, "Vehicle ID tidak boleh kosong", "error");
+        _showOrangeAlert(globalScaffoldKey.currentContext!, "Vehicle ID tidak boleh kosong", "error");
       } else if (status == null || status == "") {
-        _showOrangeAlert(context, "Status tidak boleh kosong", "error");
+        _showOrangeAlert(globalScaffoldKey.currentContext!, "Status tidak boleh kosong", "error");
       } else if (locid == null || locid == "") {
-        _showOrangeAlert(context, "Locid tidak boleh kosong", "error");
+        _showOrangeAlert(globalScaffoldKey.currentContext!, "Locid tidak boleh kosong", "error");
       } else {
         await pr!.show();
         var encoded = Uri.encodeFull("${BASE_URL}api/gt/create_or_update.jsp");
@@ -707,13 +709,16 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
           'method': method,
           'gtnumber': gtnumber,
           'drvid': driverId,
-          'vehicleid': vehicleId,
+          'vhcid': vehicleId,
           'date': date,
           'status': status,
-          'note': notes,
+          'locid': locid,
+          'notes': notes,
+          'userid': user_id,
           'company': 'AN'
         };
         print(data);
+        //return;
         final response = await http.post(
           urlEncode,
           body: data,
@@ -771,10 +776,10 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
                 ),
               );
             } else {
-              _showOrangeAlert(context, "${message}", "error");
+              _showOrangeAlert(globalScaffoldKey.currentContext!, "${message}", "error");
             }
           } else {
-            _showOrangeAlert(context, "${response.statusCode}", "error");
+            _showOrangeAlert(globalScaffoldKey.currentContext!, "${response.statusCode}", "error");
           }
         });
       }
@@ -782,7 +787,7 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
       if (pr?.isShowing() == true) {
         await pr?.hide();
       }
-      _showOrangeAlert(context, "Client, ${e}", "error");
+      _showOrangeAlert(globalScaffoldKey.currentContext!, "Client, ${e}", "error");
       print(e.toString());
     }
   }
@@ -794,13 +799,13 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
       var vehicleId = txtVehicleIdList.text;
       if (userID == null || userID == "") {
         //_tabController.animateTo(0);
-        _showOrangeAlert(context, "UserID tidak boleh kosong", "error");
+        _showOrangeAlert(globalScaffoldKey.currentContext!, "UserID tidak boleh kosong", "error");
       } else if (vhcid == null || vhcid == "") {
-        _showOrangeAlert(context, "VHCID tidak boleh kosong", "error");
+        _showOrangeAlert(globalScaffoldKey.currentContext!, "VHCID tidak boleh kosong", "error");
       } else if (status == null || status == "") {
-        _showOrangeAlert(context, "Status tidak boleh kosong", "error");
+        _showOrangeAlert(globalScaffoldKey.currentContext!, "Status tidak boleh kosong", "error");
       } else if (locid == null || locid == "") {
-        _showOrangeAlert(context, "Locid tidak boleh kosong", "error");
+        _showOrangeAlert(globalScaffoldKey.currentContext!, "Locid tidak boleh kosong", "error");
       } else {
         await pr!.show();
         var encoded = Uri.encodeFull("${BASE_URL}api/gt/approved.jsp");
@@ -873,10 +878,10 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
                 ),
               );
             } else {
-              _showOrangeAlert(context, "Gagal ${message}", "error");
+              _showOrangeAlert(globalScaffoldKey.currentContext!, "Gagal ${message}", "error");
             }
           } else {
-            _showOrangeAlert(context, "Gagal ${response.statusCode}", "error");
+            _showOrangeAlert(globalScaffoldKey.currentContext!, "Gagal ${response.statusCode}", "error");
           }
         });
       }
@@ -895,16 +900,6 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
     SharedPreferences prefs = await SharedPreferences.getInstance();
     username = prefs.getString("username") ?? '';
     userid = prefs.getString("name") ?? '';
-    // if (is_edit_req == false || is_edit_req == null) {
-    //   if (choices.listStatusRequest.length > 0) {
-    //     //listStatusRequest = [S2Choice<String>(value: 'OPEN', title: 'OPEN')];
-    //     btnSubmitText = bSave;
-    //   } else {
-    //     //listStatusRequest = [];
-    //     //listStatusRequest = choices.listStatusRequest;
-    //     btnSubmitText = bUpdate;
-    //   }
-    // }
   }
 
   Future<String> getJSONData(bool isloading) async {
@@ -1004,29 +999,34 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
   }
 
   void _searchVehicleName() {
-    List dummyListData2 = [];
-    if (txtSearchVehicle.text != "" && txtSearchVehicle.text != null) {
-      if (txtSearchVehicle.text.length >= 3) {
-        for (var i = 0; i < dummySearchList2.length; i++) {
-          var dtC = dummySearchList2[i]['title'].toLowerCase().toString();
-          if (dtC.contains(txtSearchVehicle.text.toLowerCase().toString())) {
-            print(dtC);
-            dummyListData2.add({
-              "value": dummySearchList2[i]['value'].toString(),
-              "title": dummySearchList2[i]['title']
-            });
-          }
-        }
-      }
-      if (dummyListData2.length > 0) {
-        if (mounted) {
-          setState(() {
-            listVehicleId = [];
-            listVehicleId = dummyListData2;
-          });
-        }
+    if (dummySearchList2.isEmpty) return;
+
+    final query = (txtSearchVehicle.text ?? "").trim().toLowerCase();
+    if (query.isEmpty || query.length < 3) {
+      if (mounted) {
+        setState(() {
+          listVehicleId = List.from(dummySearchList2);
+        });
       }
       return;
+    }
+
+    List dummyListData2 = [];
+    for (var i = 0; i < dummySearchList2.length; i++) {
+      final item = dummySearchList2[i];
+      final title = (item['title'] ?? '').toString().toLowerCase();
+      final nopol = (item['nopol'] ?? item['title'] ?? '').toString().toLowerCase();
+      if (title.contains(query) || nopol.contains(query)) {
+        dummyListData2.add({
+          "value": (item['value'] ?? item['unit_id'] ?? '').toString(),
+          "title": (item['title'] ?? item['nopol'] ?? '').toString()
+        });
+      }
+    }
+    if (mounted) {
+      setState(() {
+        listVehicleId = dummyListData2;
+      });
     }
   }
 
@@ -1188,7 +1188,7 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
                 _buildInfoRow("VHCID", "${item['vhcid']}", Icons.directions_car),
                 _buildInfoRow("Driver", "${item['drv_name']}", Icons.person),
                 _buildInfoRow("Status", "${item['gtstatus']}", Icons.info),
-                _buildInfoRow("Tujuan", "${item['gttujuan']}", Icons.location_on),
+                //_buildInfoRow("Tujuan", "${item['gttujuan']}", Icons.location_on),
                 _buildInfoRow("LOCID", "${item['locid']}", Icons.location_city),
                 _buildInfoRow("Notes", "${item['gtnotes']}", Icons.note),
               ],
@@ -1239,26 +1239,25 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
                                 child: new Text('No', style: TextStyle(color: Colors.grey.shade600))),
                             new ElevatedButton(
                               onPressed: () async {
-                                //_tabController.animateTo(0);
+                                final ctx = globalScaffoldKey.currentContext;
+                                if (ctx != null) Navigator.of(ctx).pop(false);
+                                await Future.delayed(Duration(milliseconds: 50));
+                                if (!mounted) return;
                                 setState(() {
                                   is_edit_req = true;
-                                  txtDate.text = item['gtdate'];
-                                  txtDriverIdList.text = item['drvid'];
-                                  txtVehicleIdList.text = item['vhcid'];
-                                  txtVehicleName.text = item['vhcid'];
-                                  txtDriverName.text = item['drv_name'];
-                                  _dateRequest = item['gtdate'];
-                                  txtNotes.text = item['gtnotes'];
-                                  txtCabangId.text = item['locid'];
-                                  txtCabangName.text = item['locid'];
-                                  gtnumber = item['gtnumber'];
+                                  txtDate.text = item['gtdate']?.toString() ?? '';
+                                  txtDriverIdList.text = item['drvid']?.toString() ?? '';
+                                  txtVehicleIdList.text = item['vhcid']?.toString() ?? '';
+                                  txtVehicleName.text = item['vhcid']?.toString() ?? '';
+                                  txtDriverName.text = item['drv_name']?.toString() ?? '';
+                                  _dateRequest = item['gtdate']?.toString() ?? '';
+                                  txtNotes.text = item['gtnotes']?.toString() ?? '';
+                                  txtCabangId.text = item['locid']?.toString() ?? '';
+                                  txtCabangName.text = item['locid']?.toString() ?? '';
+                                  gtnumber = item['gtnumber']?.toString() ?? '';
                                   btnSubmitText = bUpdate;
-                                });
-                                Navigator.of(globalScaffoldKey.currentContext!)
-                                    .pop(false);
-                                await Future.delayed(Duration(milliseconds: 50));
-                                _tabController.animateTo(0);
-                                //
+                                }); //save ss
+                                if (mounted) _tabController.animateTo(0);
                               },
                               style: ElevatedButton.styleFrom(backgroundColor: primaryOrange,
                                 shape: RoundedRectangleBorder(
@@ -1561,10 +1560,11 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
           color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
     );
 
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         _goBack(globalScaffoldKey.currentContext!);
-        return false;
       },
       child: DefaultTabController(
       length: lengTabs,

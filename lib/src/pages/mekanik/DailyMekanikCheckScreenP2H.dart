@@ -454,19 +454,18 @@ class _DailyMekanikCheckScreenP2HState
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: () async {
-          //SharedPreferences prefs = await SharedPreferences.getInstance();
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) async {
+          if (didPop) return;
           if (globals.p2hVhcMekanik == "yes") {
             Navigator.pushReplacement(context,
                 MaterialPageRoute(builder: (context) => ViewDashboard()));
-            return Future.value(false);
           } else {
             Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                     builder: (context) => ListMekanikInspeksiV2()));
-            return Future.value(false);
           }
         },
         child: Scaffold(

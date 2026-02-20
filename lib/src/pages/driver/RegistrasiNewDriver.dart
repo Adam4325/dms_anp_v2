@@ -1367,11 +1367,12 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
   //_RegisterNewDriverState(this.selectedPage);
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => ViewDashboard()));
-        return Future.value(false);
       },
       child: DefaultTabController(
         length: 5,

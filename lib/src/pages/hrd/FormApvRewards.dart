@@ -274,11 +274,12 @@ class _FormApvRewardsState extends State<FormApvRewards> {
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
-    return WillPopScope(
-        onWillPop: () async {
-      goBack(context);
-      return false;
-    },
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
+          goBack(context);
+        },
     child: Scaffold(
       appBar: AppBar(
         title: const Text('Form Approval Reward'),
