@@ -87,9 +87,10 @@ class FrmNonTeraState extends State<FrmNonTera> {
         },
         child: Scaffold(
           key: globalScaffoldKey,
-          backgroundColor: Colors.blueAccent,
+          backgroundColor: Color(0xFFFF8C69), // Soft orange
           appBar: AppBar(
-              backgroundColor: Colors.blueAccent,
+              backgroundColor: Color(0xFFFF8C69), // Soft orange
+              foregroundColor: Colors.white,
               leading: IconButton(
                 icon: Icon(Icons.arrow_back),
                 iconSize: 20.0,
@@ -98,7 +99,7 @@ class FrmNonTeraState extends State<FrmNonTera> {
                 },
               ),
               centerTitle: true,
-              title: Text('Non-Tera')),
+              title: Text('Non-Tera', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
           body: Container(
             constraints: BoxConstraints.expand(),
             color: HexColor("#f0eff4"),
@@ -259,11 +260,12 @@ class FrmNonTeraState extends State<FrmNonTera> {
                   },
                   style: ElevatedButton.styleFrom(
                       elevation: 0.0,
-                      backgroundColor: Colors.blueAccent,
+                      backgroundColor: Color(0xFFFF8C69), // Soft orange
+                      foregroundColor: Colors.white,
                       padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                       textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                 )),
                 // SizedBox(width: 10),
                 // Expanded(
@@ -279,7 +281,8 @@ class FrmNonTeraState extends State<FrmNonTera> {
                 //       },
                 //       style: ElevatedButton.styleFrom(
                 //           elevation: 0.0,
-                //           backgroundColor: Colors.orangeAccent,
+                //           backgroundColor: Color(0xFFFF8C69), // Soft orange
+                //                foregroundColor: Colors.white,
                 //           padding:
                 //           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 //           textStyle:
@@ -387,11 +390,12 @@ class FrmNonTeraState extends State<FrmNonTera> {
                             },
                             style: ElevatedButton.styleFrom(
                                 elevation: 0.0,
-                                backgroundColor: Colors.blueAccent,
+                                backgroundColor: Color(0xFFFF8C69), // Soft orange
+                      foregroundColor: Colors.white,
                                 padding: EdgeInsets.symmetric(
                                     horizontal: 5, vertical: 0),
                                 textStyle: TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold)),
+                                    fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                           ),
                           new ElevatedButton.icon(
                             icon: Icon(
@@ -406,11 +410,12 @@ class FrmNonTeraState extends State<FrmNonTera> {
                             },
                             style: ElevatedButton.styleFrom(
                                 elevation: 0.0,
-                                backgroundColor: Colors.orangeAccent,
+                                backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                foregroundColor: Colors.white,
                                 padding: EdgeInsets.symmetric(
                                     horizontal: 5, vertical: 0),
                                 textStyle: TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold)),
+                                    fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                           ),
                         ],
                       ),
@@ -419,10 +424,11 @@ class FrmNonTeraState extends State<FrmNonTera> {
                   style: ElevatedButton.styleFrom(
                       elevation: 0.0,
                       backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
                       padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                       textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                 )),
                 SizedBox(width: 10),
                 Expanded(
@@ -481,11 +487,12 @@ class FrmNonTeraState extends State<FrmNonTera> {
                   },
                   style: ElevatedButton.styleFrom(
                       elevation: 0.0,
-                      backgroundColor: Colors.blueAccent,
+                      backgroundColor: Color(0xFFFF8C69), // Soft orange
+                      foregroundColor: Colors.white,
                       padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                       textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                 )),
               ]),
             ),
@@ -616,54 +623,66 @@ class FrmNonTeraState extends State<FrmNonTera> {
   }
 
   Future getImageFromCamera(BuildContext contexs, String namaPhoto) async {
-    showDialog(
-      context: contexs,
-      builder: (contexs) => new AlertDialog(
-        title: new Text('Information'),
-        content: new Text("Get Picture"),
-        actions: <Widget>[
-          new ElevatedButton.icon(
-            icon: Icon(
-              Icons.camera_alt_outlined,
-              color: Colors.white,
-              size: 20.0,
+    if (!mounted) return;
+    
+    try {
+      await showDialog(
+        context: contexs,
+        builder: (BuildContext dialogContext) => AlertDialog(
+          title: Text('Information'),
+          content: Text("Get Picture"),
+          actions: <Widget>[
+            ElevatedButton.icon(
+              icon: Icon(
+                Icons.camera_alt_outlined,
+                color: Colors.white,
+                size: 20.0,
+              ),
+              label: Text("Camera"),
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                await getPicture(namaPhoto, 'CAMERA');
+              },
+              style: ElevatedButton.styleFrom(
+                  elevation: 0.0,
+                  backgroundColor: Color(0xFFFF8C69), // Soft orange
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                  textStyle: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
             ),
-            label: Text("Camera"),
-            onPressed: () async {
-              Navigator.of(contexs).pop(false);
-               getPicture(namaPhoto, 'CAMERA');
-            },
-            style: ElevatedButton.styleFrom(
-                elevation: 0.0,
-                backgroundColor: Colors.blueAccent,
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                textStyle:
-                    TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-          ),
-          new ElevatedButton.icon(
-            icon: Icon(
-              Icons.camera_alt_outlined,
-              color: Colors.white,
-              size: 20.0,
+            ElevatedButton.icon(
+              icon: Icon(
+                Icons.photo_library,
+                color: Colors.white,
+                size: 20.0,
+              ),
+              label: Text("Gallery"),
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                await getPicture(namaPhoto, 'GALLERY');
+              },
+              style: ElevatedButton.styleFrom(
+                  elevation: 0.0,
+                  backgroundColor: Color(0xFFFF8C69), // Soft orange
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                  textStyle: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
             ),
-            label: Text("Gallery"),
-            onPressed: () async {
-              Navigator.of(contexs).pop(false);
-               getPicture(namaPhoto, 'GALLERY');
-            },
-            style: ElevatedButton.styleFrom(
-                elevation: 0.0,
-                backgroundColor: Colors.blueAccent,
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                textStyle:
-                    TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    } catch (e) {
+      print('Error showing dialog: $e');
+    }
   }
 
-  void getPicture(String namaPhoto, opsi) async {
+  Future<void> getPicture(String namaPhoto, opsi) async {
     if (opsi == 'GALLERY') {
       final pickedFile =
           await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
@@ -1438,14 +1457,14 @@ class FrmNonTeraState extends State<FrmNonTera> {
                     if(nama_type=='STNK' || nama_type=='PAJAK')...[
                       Container(
                         margin: EdgeInsets.all(10.0),
-                        child: GestureDetector(
-                          onTap: () async {
-                            await getImageFromCamera(context, "UPLOAD");
-                          },
-                          child: Container(
-                            alignment: Alignment.center,
-                            child: _imageUPLOAD != null &&  (is_edit == false || is_view==false)
-                                ? ClipRRect(
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: _imageUPLOAD != null &&  (is_edit == false || is_view==false)
+                              ? GestureDetector(
+                            onTap: () async {
+                              await getImageFromCamera(context, "UPLOAD");
+                            },
+                            child: ClipRRect(
                               borderRadius: BorderRadius.circular(10),
                               child: Image.file(
                                 _imageUPLOAD!,
@@ -1454,11 +1473,16 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                 scale: 0.8,
                                 fit: BoxFit.cover,
                               ),
-                            )
-                                : _imageUPLOAD == null &&
-                                (is_edit == true || is_view==true) &&
-                                filePathImageUPLOAD != ""
-                                ? Container(
+                            ),
+                          )
+                              : _imageUPLOAD == null &&
+                              (is_edit == true || is_view==true) &&
+                              filePathImageUPLOAD != ""
+                              ? GestureDetector(
+                            onTap: () async {
+                              await getImageFromCamera(context, "UPLOAD");
+                            },
+                            child: Container(
                               alignment: Alignment.center,
                               child: Container(
                                 width: double.infinity,
@@ -1472,22 +1496,43 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                         ),
                                         fit: BoxFit.cover)),
                               ),
-                            )
-                                : Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.grey.shade200,
-                                  borderRadius:
-                                  BorderRadius.circular(10)),
-                              width: double.infinity,
-                              height: 200,
-                              child: ElevatedButton.icon(
-                                icon: Icon(
-                                  Icons.camera,
-                                  color: Colors.white,
-                                  size: 15.0,
+                            ),
+                          )
+                              : Container(
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 2,
                                 ),
-                                label: Text(
-                                    "Photo ${nama_type} to Upload"), onPressed: () {  },
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.shade200,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ]),
+                            width: double.infinity,
+                            height: 200,
+                            child: ElevatedButton.icon(
+                              icon: Icon(
+                                Icons.camera,
+                                color: Colors.white,
+                                size: 20.0,
+                              ),
+                              label: Text("Photo ${nama_type} to Upload", style: TextStyle(fontSize: 14)),
+                              onPressed: () async {
+                                await getImageFromCamera(context, "UPLOAD");
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                minimumSize: Size(double.infinity, 200),
                               ),
                             ),
                           ),
@@ -1534,18 +1579,40 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                     )
                                   : Container(
                                       decoration: BoxDecoration(
-                                          color: Colors.grey.shade200,
-                                          borderRadius:
-                                              BorderRadius.circular(10)),
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: Colors.grey.shade300,
+                                            width: 2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.grey.shade200,
+                                              blurRadius: 4,
+                                              offset: Offset(0, 2),
+                                            ),
+                                          ]),
                                       width: double.infinity,
                                       height: 200,
                                       child: ElevatedButton.icon(
                                         icon: Icon(
                                           Icons.camera,
                                           color: Colors.white,
-                                          size: 15.0,
+                                          size: 20.0,
                                         ),
-                                        label: Text("Photo front"), onPressed: () {  },
+                                        label: Text("Photo front", style: TextStyle(fontSize: 14)),
+                                        onPressed: () async {
+                                          await getImageFromCamera(context, "FRONT");
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          minimumSize: Size(double.infinity, 200),
+                                        ),
                                       ),
                                     ),
                         ),
@@ -1591,18 +1658,40 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                     )
                                   : Container(
                                       decoration: BoxDecoration(
-                                          color: Colors.grey.shade200,
-                                          borderRadius:
-                                              BorderRadius.circular(10)),
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: Colors.grey.shade300,
+                                            width: 2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.grey.shade200,
+                                              blurRadius: 4,
+                                              offset: Offset(0, 2),
+                                            ),
+                                          ]),
                                       width: double.infinity,
                                       height: 200,
                                       child: ElevatedButton.icon(
                                         icon: Icon(
                                           Icons.camera,
                                           color: Colors.white,
-                                          size: 15.0,
+                                          size: 20.0,
                                         ),
-                                        label: Text("Photo right"), onPressed: () {  },
+                                        label: Text("Photo right", style: TextStyle(fontSize: 14)),
+                                        onPressed: () async {
+                                          await getImageFromCamera(context, "RIGHT");
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          minimumSize: Size(double.infinity, 200),
+                                        ),
                                       ),
                                     ),
                         ),
@@ -1648,18 +1737,40 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                     )
                                   : Container(
                                       decoration: BoxDecoration(
-                                          color: Colors.grey.shade200,
-                                          borderRadius:
-                                              BorderRadius.circular(10)),
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: Colors.grey.shade300,
+                                            width: 2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.grey.shade200,
+                                              blurRadius: 4,
+                                              offset: Offset(0, 2),
+                                            ),
+                                          ]),
                                       width: double.infinity,
                                       height: 200,
                                       child: ElevatedButton.icon(
                                         icon: Icon(
                                           Icons.camera,
                                           color: Colors.white,
-                                          size: 15.0,
+                                          size: 20.0,
                                         ),
-                                        label: Text("Photo left"), onPressed: () {  },
+                                        label: Text("Photo left", style: TextStyle(fontSize: 14)),
+                                        onPressed: () async {
+                                          await getImageFromCamera(context, "LEFT");
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          minimumSize: Size(double.infinity, 200),
+                                        ),
                                       ),
                                     ),
                         ),
@@ -1705,18 +1816,40 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                     )
                                   : Container(
                                       decoration: BoxDecoration(
-                                          color: Colors.grey.shade200,
-                                          borderRadius:
-                                              BorderRadius.circular(10)),
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: Colors.grey.shade300,
+                                            width: 2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.grey.shade200,
+                                              blurRadius: 4,
+                                              offset: Offset(0, 2),
+                                            ),
+                                          ]),
                                       width: double.infinity,
                                       height: 200,
                                       child: ElevatedButton.icon(
                                         icon: Icon(
                                           Icons.camera,
                                           color: Colors.white,
-                                          size: 15.0,
+                                          size: 20.0,
                                         ),
-                                        label: Text("Photo rear"), onPressed: () {  },
+                                        label: Text("Photo rear", style: TextStyle(fontSize: 14)),
+                                        onPressed: () async {
+                                          await getImageFromCamera(context, "REAR");
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          minimumSize: Size(double.infinity, 200),
+                                        ),
                                       ),
                                     ),
                         ),
@@ -1763,18 +1896,40 @@ class FrmNonTeraState extends State<FrmNonTera> {
                           )
                               : Container(
                             decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius:
-                                BorderRadius.circular(10)),
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.shade200,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ]),
                             width: double.infinity,
                             height: 200,
                             child: ElevatedButton.icon(
                               icon: Icon(
                                 Icons.camera,
                                 color: Colors.white,
-                                size: 15.0,
+                                size: 20.0,
                               ),
-                              label: Text("Photo bagian depan mobil beserta supir"), onPressed: () {  },
+                              label: Text("Photo bagian depan mobil beserta supir", style: TextStyle(fontSize: 14)),
+                              onPressed: () async {
+                                await getImageFromCamera(context, "FRONT-COMPLETE");
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                minimumSize: Size(double.infinity, 200),
+                              ),
                             ),
                           ),
                         ),
@@ -1821,18 +1976,40 @@ class FrmNonTeraState extends State<FrmNonTera> {
                           )
                               : Container(
                             decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius:
-                                BorderRadius.circular(10)),
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.shade200,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ]),
                             width: double.infinity,
                             height: 200,
                             child: ElevatedButton.icon(
                               icon: Icon(
                                 Icons.camera,
                                 color: Colors.white,
-                                size: 15.0,
+                                size: 20.0,
                               ),
-                              label: Text("Photo cek fisik"), onPressed: () {  },
+                              label: Text("Photo cek fisik", style: TextStyle(fontSize: 14)),
+                              onPressed: () async {
+                                await getImageFromCamera(context, "CEKFISIK");
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                minimumSize: Size(double.infinity, 200),
+                              ),
                             ),
                           ),
                         ),
@@ -1879,18 +2056,40 @@ class FrmNonTeraState extends State<FrmNonTera> {
                           )
                               : Container(
                             decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius:
-                                BorderRadius.circular(10)),
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.shade200,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ]),
                             width: double.infinity,
                             height: 200,
                             child: ElevatedButton.icon(
                               icon: Icon(
                                 Icons.camera,
                                 color: Colors.white,
-                                size: 15.0,
+                                size: 20.0,
                               ),
-                              label: Text("Photo BA Internal cek fisik"), onPressed: () {  },
+                              label: Text("Photo BA Internal cek fisik", style: TextStyle(fontSize: 14)),
+                              onPressed: () async {
+                                await getImageFromCamera(context, "BAINT");
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                minimumSize: Size(double.infinity, 200),
+                              ),
                             ),
                           ),
                         ),
@@ -1937,18 +2136,40 @@ class FrmNonTeraState extends State<FrmNonTera> {
                           )
                               : Container(
                             decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius:
-                                BorderRadius.circular(10)),
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.shade200,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ]),
                             width: double.infinity,
                             height: 200,
                             child: ElevatedButton.icon(
                               icon: Icon(
                                 Icons.camera,
                                 color: Colors.white,
-                                size: 15.0,
+                                size: 20.0,
                               ),
-                              label: Text("Photo BA External"), onPressed: () {  },
+                              label: Text("Photo BA External", style: TextStyle(fontSize: 14)),
+                              onPressed: () async {
+                                await getImageFromCamera(context, "BAEXT");
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                minimumSize: Size(double.infinity, 200),
+                              ),
                             ),
                           ),
                         ),
@@ -1957,16 +2178,15 @@ class FrmNonTeraState extends State<FrmNonTera> {
                     if(nama_type=='KIR')...[
                     Container(
                       margin: EdgeInsets.all(10.0),
-                      child: GestureDetector(
-                        onTap: () async {
-                          //_showPicker(context, "DRIVER");
-                          print('KIR !!!');
-                          await getImageFromCamera(context, "SURAT2");
-                        },
-                        child: Container(
-                          alignment: Alignment.center,
-                          child: _imageSURAT != null && (is_edit == false || is_view==false)
-                              ? ClipRRect(
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: _imageSURAT != null && (is_edit == false || is_view==false)
+                            ? GestureDetector(
+                          onTap: () async {
+                            print('KIR !!!');
+                            await getImageFromCamera(context, "SURAT2");
+                          },
+                          child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: Image.file(
                               _imageSURAT!,
@@ -1975,11 +2195,17 @@ class FrmNonTeraState extends State<FrmNonTera> {
                               scale: 0.8,
                               fit: BoxFit.cover,
                             ),
-                          )
-                              : _imageSURAT == null &&
-                              (is_edit == true || is_view==true) &&
-                              filePathImageSURAT2 != ""
-                              ? Container(
+                          ),
+                        )
+                            : _imageSURAT == null &&
+                            (is_edit == true || is_view==true) &&
+                            filePathImageSURAT2 != ""
+                            ? GestureDetector(
+                          onTap: () async {
+                            print('KIR !!!');
+                            await getImageFromCamera(context, "SURAT2");
+                          },
+                          child: Container(
                             alignment: Alignment.center,
                             child: Container(
                               width: double.infinity,
@@ -1993,24 +2219,47 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                       ),
                                       fit: BoxFit.cover)),
                             ),
-                          )
+                          ),
+                        )
                               : Container(
                             decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius:
-                                BorderRadius.circular(10)),
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.shade200,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ]),
                             width: double.infinity,
                             height: 200,
                             child: ElevatedButton.icon(
                               icon: Icon(
                                 Icons.camera,
                                 color: Colors.white,
-                                size: 15.0,
+                                size: 20.0,
                               ),
-                              label: Text("Photo Kartu kir beserta Surat / Kertas kir"), onPressed: () {  },
+                              label: Text("Photo Kartu kir beserta Surat / Kertas kir", style: TextStyle(fontSize: 14)),
+                              onPressed: () async {
+                                print('KIR !!!');
+                                await getImageFromCamera(context, "SURAT2");
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                minimumSize: Size(double.infinity, 200),
+                              ),
                             ),
                           ),
-                        ),
                       ),
                     )],//SURAT2
                     Container(
@@ -2107,7 +2356,8 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                         },
                                         style: ElevatedButton.styleFrom(
                                             elevation: 0.0,
-                                            backgroundColor: Colors.blueAccent,
+                                            backgroundColor: Color(0xFFFF8C69), // Soft orange
+                      foregroundColor: Colors.white,
                                             padding: EdgeInsets.symmetric(
                                                 horizontal: 5, vertical: 0),
                                             textStyle: TextStyle(
@@ -2127,7 +2377,8 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                         },
                                         style: ElevatedButton.styleFrom(
                                             elevation: 0.0,
-                                            backgroundColor: Colors.orangeAccent,
+                                            backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                foregroundColor: Colors.white,
                                             padding: EdgeInsets.symmetric(
                                                 horizontal: 5, vertical: 0),
                                             textStyle: TextStyle(
@@ -2166,7 +2417,8 @@ class FrmNonTeraState extends State<FrmNonTera> {
                               },
                               style: ElevatedButton.styleFrom(
                                   elevation: 0.0,
-                                  backgroundColor: Colors.orangeAccent,
+                                  backgroundColor: Color(0xFFFF8C69), // Soft orange
+                                foregroundColor: Colors.white,
                                   padding: EdgeInsets.symmetric(
                                       horizontal: 5, vertical: 0),
                                   textStyle: TextStyle(

@@ -14,6 +14,7 @@ import 'package:flutter_cupertino_datetime_picker/flutter_cupertino_datetime_pic
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:progress_dialog_null_safe/progress_dialog_null_safe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:awesome_select/awesome_select.dart';
@@ -22,6 +23,176 @@ import 'package:uuid/uuid.dart';
 import '../../flusbar.dart';
 import '../../../../choices.dart' as choices;
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
+
+
+/// Screen untuk scan QR Code / Barcode menggunakan mobile_scanner
+class _QRScannerScreen extends StatefulWidget {
+  @override
+  _QRScannerScreenState createState() => _QRScannerScreenState();
+}
+
+class _QRScannerScreenState extends State<_QRScannerScreen> {
+  final MobileScannerController controller = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    facing: CameraFacing.back,
+  );
+  bool _isScanning = true;
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: Text('Scan QR Code / Barcode', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.black87,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: Stack(
+        children: [
+          MobileScanner(
+            controller: controller,
+            onDetect: (capture) {
+              if (!_isScanning) return;
+
+              final List<Barcode> barcodes = capture.barcodes;
+              if (barcodes.isNotEmpty) {
+                final String code = barcodes.first.rawValue ?? '';
+                if (code.isNotEmpty) {
+                  _isScanning = false;
+                  controller.stop();
+                  Navigator.pop(context, code);
+                }
+              }
+            },
+          ),
+          // Overlay dengan frame untuk scan
+          CustomPaint(
+            painter: _ScannerOverlayPainter(),
+            child: Container(),
+          ),
+          // Instruction text
+          Positioned(
+            bottom: 100,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Arahkan kamera ke QR Code / Barcode',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Custom painter untuk overlay frame scanner
+class _ScannerOverlayPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final overlayPaint = Paint()
+      ..color = Colors.black54
+      ..style = PaintingStyle.fill;
+
+    final borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    // Frame tengah untuk scan area
+    final scanAreaSize = size.width * 0.7;
+    final scanAreaLeft = (size.width - scanAreaSize) / 2;
+    final scanAreaTop = (size.height - scanAreaSize) / 2 - 50;
+    final scanArea = Rect.fromLTWH(
+      scanAreaLeft,
+      scanAreaTop,
+      scanAreaSize,
+      scanAreaSize,
+    );
+
+    // Draw overlay (darken area di luar frame)
+    final overlayPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..addRect(scanArea)
+      ..fillType = PathFillType.evenOdd;
+
+    canvas.drawPath(overlayPath, overlayPaint);
+
+    // Draw frame border dengan corner indicators
+    final cornerLength = 30.0;
+    final cornerWidth = 4.0;
+
+    // Top-left corner
+    canvas.drawLine(
+      Offset(scanAreaLeft, scanAreaTop),
+      Offset(scanAreaLeft + cornerLength, scanAreaTop),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+    canvas.drawLine(
+      Offset(scanAreaLeft, scanAreaTop),
+      Offset(scanAreaLeft, scanAreaTop + cornerLength),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+
+    // Top-right corner
+    canvas.drawLine(
+      Offset(scanAreaLeft + scanAreaSize, scanAreaTop),
+      Offset(scanAreaLeft + scanAreaSize - cornerLength, scanAreaTop),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+    canvas.drawLine(
+      Offset(scanAreaLeft + scanAreaSize, scanAreaTop),
+      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + cornerLength),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+
+    // Bottom-left corner
+    canvas.drawLine(
+      Offset(scanAreaLeft, scanAreaTop + scanAreaSize),
+      Offset(scanAreaLeft + cornerLength, scanAreaTop + scanAreaSize),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+    canvas.drawLine(
+      Offset(scanAreaLeft, scanAreaTop + scanAreaSize),
+      Offset(scanAreaLeft, scanAreaTop + scanAreaSize - cornerLength),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+
+    // Bottom-right corner
+    canvas.drawLine(
+      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize),
+      Offset(scanAreaLeft + scanAreaSize - cornerLength, scanAreaTop + scanAreaSize),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+    canvas.drawLine(
+      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize),
+      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize - cornerLength),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
 
 var is_edit_req = false;
 var srnumber = "";
@@ -4185,7 +4356,66 @@ class _FrmServiceTireState extends State<FrmServiceTire>
     }
   }
 
+  // Future scanQRCodeOOO() async {
+  //   String cameraScanResult = await scanner.scan();
+  //   setState(() {
+  //     scanResult = cameraScanResult;
+  //
+  //     ///print("scanResult : $scanResult");
+  //     if (scanResult != null) {
+  //       var itemID = scanResult;
+  //       var urlBase = "";
+  //       if (METHOD_DETAIL == "PURCHASE-ORDER") {
+  //         urlBase =
+  //         "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-purchase-order-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
+  //       } else {
+  //         urlBase =
+  //         "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
+  //       }
+  //       var url = urlBase;
+  //       getItemBarcode(url, itemID);
+  //     }
+  //   });
+  // }
+
   Future scanQRCode() async {
+    if (!mounted) return;
+
+    // Buka scanner screen
+    final String? scanResult = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _QRScannerScreen(),
+      ),
+    );
+
+    if (scanResult == null || scanResult.isEmpty) {
+      if (mounted) {
+        alert(globalScaffoldKey.currentContext!, 0, "Scan WO Number gagal!", "error");
+      }
+      return;
+    }
+
+    setState(() {
+      var itemID = scanResult;
+      if (itemID != null && itemID != '') {
+        var urlBase = "";
+        if (METHOD_DETAIL == "PURCHASE-ORDER") {
+          urlBase =
+          "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-purchase-order-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
+        } else {
+          urlBase =
+          "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
+        }
+        var url = urlBase;
+        getItemBarcode(url, itemID);
+      } else {
+        alert(globalScaffoldKey.currentContext!, 3, "WO Number tidak di temukan!", "Info");
+      }
+    });
+  }
+
+  Future scanQRCodeOLD() async {
     // TODO: Migrate to mobile_scanner - qrscan package removed
     alert(globalScaffoldKey.currentContext!, 2,
         "Fitur scan QR perlu migrasi ke mobile_scanner", "warning");
@@ -4198,8 +4428,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
     Uri myUri = Uri.parse(encoded);
     print(encoded);
     http.Response response = await http.get(myUri);
-    print("Data katalog");
-    //print(response.body.toString());
+    print("Data katalog ${url}");
+    print(response.body.toString());
     setState(() {
       if (response.statusCode == 200) {
         List result = json.decode(response.body);
@@ -5078,74 +5308,6 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   ),
                 ),
               ),
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.start,
-              //   children: [
-              //     Padding(
-              //       padding: const EdgeInsets.only(
-              //           left: 16.0), // Add padding to the left
-              //       child: ElevatedButton(
-              //         onPressed: () async {
-              //           SharedPreferences prefs =
-              //           await SharedPreferences.getInstance();
-              //           Timer(Duration(seconds: 1), () async {
-              //             // 5s over, navigate to a new page
-              //             var tireType =
-              //             prefs.getString("tire_vhttype").toString();
-              //             //prefs.setString("tire_total_km",(txtKM.text == null ? "0":txtKM.text)).toString();
-              //             //print(" tireType ${tireType}");
-              //             //tireType = 'LT';//DEV
-              //             //prefs.setString("tire_vhttype",tireType).toString();//DEV
-              //             //prefs.setString("tire_vhcid","B 9293 YU/B 9293 YU").toString();//DEV
-              //             var total_km = await GetTotalKM(true,prefs.getString("tire_vhcid").toString());
-              //             prefs.setString("tire_total_km",total_km).toString();
-              //             if (tireType == "TRAIL") {
-              //               Navigator.pushReplacement(
-              //                   context,
-              //                   MaterialPageRoute(
-              //                       builder: (context) => TireTriller()));
-              //             }
-              //             if (tireType == "TR") {
-              //               Navigator.pushReplacement(
-              //                   context,
-              //                   MaterialPageRoute(
-              //                       builder: (context) => TireTronton()));
-              //             }
-              //             if (tireType == "LT") {
-              //               Navigator.pushReplacement(
-              //                   context,
-              //                   MaterialPageRoute(
-              //                       builder: (context) => TireLT()));
-              //             }
-              //           });
-              //         },
-              //         child: Text('Add Tire Inspection'),
-              //       ),
-              //     ),
-              //   ],
-              // ),
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.start,
-              //   children: [
-              //     Padding(
-              //       padding: const EdgeInsets.only(
-              //           left: 16.0), // Add padding to the left
-              //       child: ElevatedButton(
-              //         onPressed: () async {
-              //           SharedPreferences prefs =
-              //           await SharedPreferences.getInstance();
-              //           //prefs.setString("tire_vhcid","B 9293 YU/B 9293 YU").toString();//DEV DIALOG
-              //           var vhcids = prefs.getString("tire_vhcid").toString();
-              //           var total_km = await GetTotalKM(true,vhcids);
-              //
-              //           print('TOTAL KM ${total_km}');
-              //           _showInputDialogUpdateKM(total_km,vhcids);
-              //         },
-              //         child: Text('Update KM'),
-              //       ),
-              //     ),
-              //   ],
-              // ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [

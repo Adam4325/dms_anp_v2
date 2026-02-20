@@ -10,7 +10,7 @@ import 'package:progress_dialog_null_safe/progress_dialog_null_safe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-// import 'package:qrscan/qrscan.dart' as scanner; // removed - migrate to mobile_scanner
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:awesome_select/awesome_select.dart';
 import '../../../choices.dart' as choices;
@@ -354,10 +354,11 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       style: ElevatedButton.styleFrom(
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
                           padding:
                               EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                              fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   ],
                 ),
@@ -522,10 +523,11 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       style: ElevatedButton.styleFrom(
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
                           padding:
                               EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                              fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   ],
                 ),
@@ -545,16 +547,45 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
-      alert(scafoldGlobal.currentContext!!, 0, "Client, Gagal Menyimpan Data",
+      alert(scafoldGlobal.currentContext!!, 0, "Client, Gagal Menyimpan Data",//
           "error");
       print(e.toString());
     }
   }
 
   Future scanQRCode() async {
-    // TODO: Migrate to mobile_scanner - qrscan package removed
-    alert(scafoldGlobal.currentContext!!, 2,
-        "Fitur scan QR perlu migrasi ke mobile_scanner", "warning");
+    if (!mounted) return;
+    
+    // Buka scanner screen
+    final String? scanResult = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _QRScannerScreen(),
+      ),
+    );
+    
+    if (scanResult == null || scanResult.isEmpty) {
+      if (mounted) {
+        alert(scafoldGlobal.currentContext!!, 0, "Scan Item ID gagal!", "error");
+      }
+      return;
+    }
+    
+    setState(() {
+      this.scanResult = scanResult;
+      txtItemID.text = scanResult;
+    });
+    
+    // Jika scan berhasil, ambil data item
+    if (scanResult.isNotEmpty) {
+      var url = "${BASE_URL}api/inventory/list_item_barcode_mobile.jsp"
+          "?method=list-items-v1"
+          "&warehouseid=${selWareHouseID}"
+          "&search=$scanResult"
+          "&is_barcode=1";
+      
+      getItemBarcode(url, scanResult);
+    }
   }
 
   void getItemBarcode(String url, String itemid) async {
@@ -661,7 +692,8 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         child:Scaffold(
           backgroundColor: Color(0xFFEAE6E6),
           appBar: AppBar(
-              backgroundColor: Colors.blueAccent,
+              backgroundColor: Color(0xFFFF8C69), // Soft orange
+              foregroundColor: Colors.white,
               leading: IconButton(
                 icon: Icon(Icons.arrow_back),
                 iconSize: 20.0,
@@ -669,11 +701,8 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                   _goBack(context);
                 },
               ),
-              //backgroundColor: Colors.transparent,
-              //elevation: 0.0,
               centerTitle: true,
-              title:
-              Text('Form WH. Opname', style: TextStyle(color: Colors.white))),
+              title: Text('Form WH. Opname', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
           body: Container(
             key: scafoldGlobal,
             constraints: BoxConstraints.expand(),
@@ -764,13 +793,14 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                   onPressed: () {
                     Navigator.of(context).pop(false);
                   },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.blueAccent,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      textStyle:
-                          TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                          textStyle:
+                              TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
                 new ElevatedButton.icon(
                   icon: Icon(
@@ -806,8 +836,9 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         style: ElevatedButton.styleFrom(
             elevation: 0.0,
             backgroundColor: Colors.blueAccent,
+            foregroundColor: Colors.white,
             padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-            textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+            textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
       );
     } else {
       return new Container();
@@ -988,8 +1019,9 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
       style: ElevatedButton.styleFrom(
           elevation: 0.0,
           backgroundColor: Colors.orangeAccent,
+          foregroundColor: Colors.white,
           padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
     ));
   }
 
@@ -1243,11 +1275,12 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                                     style: ElevatedButton.styleFrom(
                                         elevation: 0.0,
                                         backgroundColor: Colors.blueAccent,
+                                        foregroundColor: Colors.white,
                                         padding: EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 0),
                                         textStyle: TextStyle(
                                             fontSize: 10,
-                                            fontWeight: FontWeight.bold)),
+                                            fontWeight: FontWeight.bold, color: Colors.white)),
                                   ),
                                   new ElevatedButton.icon(
                                     icon: Icon(
@@ -1279,11 +1312,12 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                                     style: ElevatedButton.styleFrom(
                                         elevation: 0.0,
                                         backgroundColor: Colors.blue,
+                                        foregroundColor: Colors.white,
                                         padding: EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 0),
                                         textStyle: TextStyle(
                                             fontSize: 10,
-                                            fontWeight: FontWeight.bold)),
+                                            fontWeight: FontWeight.bold, color: Colors.white)),
                                   ),
                                 ],
                               ),
@@ -1704,6 +1738,175 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                 .nearlyBlack) //CircleAvatar(backgroundColor: AppTheme.white),
         );
   }
+}
+
+/// Screen untuk scan QR Code / Barcode menggunakan mobile_scanner
+class _QRScannerScreen extends StatefulWidget {
+  @override
+  _QRScannerScreenState createState() => _QRScannerScreenState();
+}
+
+class _QRScannerScreenState extends State<_QRScannerScreen> {
+  final MobileScannerController controller = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    facing: CameraFacing.back,
+  );
+  bool _isScanning = true;
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: Text('Scan QR Code / Barcode', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.black87,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      body: Stack(
+        children: [
+          MobileScanner(
+            controller: controller,
+            onDetect: (capture) {
+              if (!_isScanning) return;
+              
+              final List<Barcode> barcodes = capture.barcodes;
+              if (barcodes.isNotEmpty) {
+                final String code = barcodes.first.rawValue ?? '';
+                if (code.isNotEmpty) {
+                  _isScanning = false;
+                  controller.stop();
+                  Navigator.pop(context, code);
+                }
+              }
+            },
+          ),
+          // Overlay dengan frame untuk scan
+          CustomPaint(
+            painter: _ScannerOverlayPainter(),
+            child: Container(),
+          ),
+          // Instruction text
+          Positioned(
+            bottom: 100,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Arahkan kamera ke QR Code / Barcode',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Custom painter untuk overlay frame scanner
+class _ScannerOverlayPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final overlayPaint = Paint()
+      ..color = Colors.black54
+      ..style = PaintingStyle.fill;
+
+    final borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    // Frame tengah untuk scan area
+    final scanAreaSize = size.width * 0.7;
+    final scanAreaLeft = (size.width - scanAreaSize) / 2;
+    final scanAreaTop = (size.height - scanAreaSize) / 2 - 50;
+    final scanArea = Rect.fromLTWH(
+      scanAreaLeft,
+      scanAreaTop,
+      scanAreaSize,
+      scanAreaSize,
+    );
+
+    // Draw overlay (darken area di luar frame)
+    final overlayPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..addRect(scanArea)
+      ..fillType = PathFillType.evenOdd;
+    
+    canvas.drawPath(overlayPath, overlayPaint);
+
+    // Draw frame border dengan corner indicators
+    final cornerLength = 30.0;
+    final cornerWidth = 4.0;
+    
+    // Top-left corner
+    canvas.drawLine(
+      Offset(scanAreaLeft, scanAreaTop),
+      Offset(scanAreaLeft + cornerLength, scanAreaTop),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+    canvas.drawLine(
+      Offset(scanAreaLeft, scanAreaTop),
+      Offset(scanAreaLeft, scanAreaTop + cornerLength),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+    
+    // Top-right corner
+    canvas.drawLine(
+      Offset(scanAreaLeft + scanAreaSize, scanAreaTop),
+      Offset(scanAreaLeft + scanAreaSize - cornerLength, scanAreaTop),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+    canvas.drawLine(
+      Offset(scanAreaLeft + scanAreaSize, scanAreaTop),
+      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + cornerLength),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+    
+    // Bottom-left corner
+    canvas.drawLine(
+      Offset(scanAreaLeft, scanAreaTop + scanAreaSize),
+      Offset(scanAreaLeft + cornerLength, scanAreaTop + scanAreaSize),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+    canvas.drawLine(
+      Offset(scanAreaLeft, scanAreaTop + scanAreaSize),
+      Offset(scanAreaLeft, scanAreaTop + scanAreaSize - cornerLength),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+    
+    // Bottom-right corner
+    canvas.drawLine(
+      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize),
+      Offset(scanAreaLeft + scanAreaSize - cornerLength, scanAreaTop + scanAreaSize),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+    canvas.drawLine(
+      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize),
+      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize - cornerLength),
+      borderPaint..strokeWidth = cornerWidth,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 class ItemInventoryModel {
