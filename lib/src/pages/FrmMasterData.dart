@@ -194,7 +194,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   // --- Customer Tab ---
   static const String _customerListApi = 'api/master/refference_api.jsp';
   static const String _customerSaveApi =
-      'api/master/api/master/save_new_customer_api2.jsp';
+      'api/master/save_new_customer_api2.jsp';
 
   Future<void> getListCustomer() async {
     try {
@@ -262,6 +262,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
           'userid': userid,
         },
       );
+      print(url);
       final response = await http.get(url, headers: {"Accept": "application/json"});
       if (!mounted) return;
       if (EasyLoading.isShow) EasyLoading.dismiss();
@@ -304,7 +305,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
 
   // --- Origin Tab ---
   static const String _refApi = 'api/master/refference_api.jsp';
-  static const String _originSaveApi = 'api/master/save_origin_api.jsp';
+  static const String _originSaveApi = 'api/master/save_new_origin_api.jsp';
 
   Future<void> getListOriginAlias() async {
     try {
@@ -421,6 +422,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
           'userid': userid,
         },
       );
+      print(url);
       final response = await http.get(url, headers: {"Accept": "application/json"});
       if (!mounted) return;
       if (EasyLoading.isShow) EasyLoading.dismiss();
@@ -465,7 +467,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   }
 
   // --- Destination Tab ---
-  static const String _destinationSaveApi = 'api/master/save_destination_api.jsp';
+  static const String _destinationSaveApi = 'api/master/save_new_destination.jsp';
 
   Future<void> getListDestination() async {
     try {
@@ -592,7 +594,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   }
 
   // --- Item Type Tab ---
-  static const String _itemTypeSaveApi = 'api/master/save_item_type_api.jsp';
+  static const String _itemTypeSaveApi = 'api/master/save_new_item_api.jsp';
 
   Future<void> getListItemType() async {
     try {
@@ -721,10 +723,10 @@ class _FrmMasterDataState extends State<FrmMasterData>
   }
 
   // --- Client Tab ---
-  static const String _clientSaveApi = 'api/master/save_client_api.jsp';
+  static const String _clientSaveApi = 'api/master/save_new_client_api.jsp';
 
   // --- Zone Tab ---
-  static const String _zoneSaveApi = 'api/master/save_zone_api.jsp';
+  static const String _zoneSaveApi = 'api/master/save_new_zone_api.jsp';
 
   Future<void> getListZoneOptions() async {
     try {
@@ -1212,12 +1214,32 @@ class _FrmMasterDataState extends State<FrmMasterData>
                   children: [
                     Text('Form Origin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     SizedBox(height: 12),
-                    TextField(
-                      controller: txtCtyId,
-                      decoration: InputDecoration(
-                        labelText: 'ID Origin',
-                        border: OutlineInputBorder(),
-                      ),
+                    // TextField(
+                    //   readOnly: true,
+                    //   controller: txtCtyId,
+                    //   decoration: InputDecoration(
+                    //     labelText: 'ID Origin *',
+                    //     border: OutlineInputBorder(),
+                    //   ),
+                    // ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: txtCtyId,
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              labelText: 'ID Origin',
+                              border: OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Colors.grey.shade100,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text('* generate', style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic)),
+                      ],
                     ),
                     SizedBox(height: 8),
                     TextField(

@@ -109,22 +109,46 @@ class _FrmApprovalReqDriverState extends State<FrmApprovalReqDriver> {
             : int.tryParse((body['status_code'] ?? '').toString()) ?? 0;
         if (statusCode == 200) {
           final String rdnbr = (body['rdnbr'] ?? '').toString();
-          alert(globalScaffoldKey.currentContext!, 1, 'Add request driver sukses: ' + rdnbr, 'success');
-          Navigator.pop(context, body);
+          if (!mounted) return;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text('Sukses'),
+                content: Text('Add request driver sukses: $rdnbr'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.pop(context, body);
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          });
         } else {
           final String msg = (body['message'] ?? 'Gagal').toString();
-          alert(globalScaffoldKey.currentContext!, 2, msg, 'warning');
+          if (mounted) WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) alert(globalScaffoldKey.currentContext!, 2, msg, 'warning');
+          });
         }
       } else {
-        alert(globalScaffoldKey.currentContext!, 2, 'Server error: ' + response.statusCode.toString(),
-            'warning');
+        if (mounted) WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) alert(globalScaffoldKey.currentContext!, 2, 'Server error: ' + response.statusCode.toString(), 'warning');
+        });
       }
     } catch (e) {
-      if (e is IOException) {
-        alert(globalScaffoldKey.currentContext!, 2, 'Please check your internet connection.', 'warning');
-      } else {
-        alert(globalScaffoldKey.currentContext!, 2, 'Something went wrong.', 'warning');
-      }
+      if (mounted) WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (e is IOException) {
+          alert(globalScaffoldKey.currentContext!, 2, 'Please check your internet connection.', 'warning');
+        } else {
+          alert(globalScaffoldKey.currentContext!, 2, 'Something went wrong.', 'warning');
+        }
+      });
     } finally {
       if (mounted) {
         setState(() {

@@ -369,7 +369,7 @@ class _FormStoringState extends State<FormStoring> {
   var truslat = "0.0";
   var trusLon = "0.0";
   var error = "";
-  late Future<Position> _future;
+  late Future<Position?> _future;
   String txtAddr = "";
 
   Future<String> getAddress(String lat, String lon) async {
@@ -449,6 +449,10 @@ class _FormStoringState extends State<FormStoring> {
   }
 
   Future<bool> updatePosition(String inorout) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var locid = prefs.get("locid")!;
+    print("locid");
+    print(locid);
     var isOutGeo = true; // default dianggap di luar
     print("userLocation: $userLocation");
 
@@ -472,8 +476,17 @@ class _FormStoringState extends State<FormStoring> {
         if (radius > 0) {
           if (distance <= radius) {
             print("✅ Dalam geofence ${a['name']} (${a['geo_id']})");
-            isOutGeo = false; // masih di dalam salah satu geofence
-            break; // langsung keluar loop
+            if(locid.toString()=="BYH-ANP" || locid.toString()=="BYH-ANP MIX"){
+              isOutGeo = true; // masih di dalam salah satu geofence
+              txtLat.text = latUser.toString();
+              txtLon.text = lonUser.toString();
+              print("isOutGeo ${txtLat.text .toString()} ${txtLon.text}");
+              print(isOutGeo);
+              break; // langsung keluar loop
+            }else{
+              isOutGeo = false;
+              break;
+            }
           }
         }
       }
@@ -488,8 +501,10 @@ class _FormStoringState extends State<FormStoring> {
     return isOutGeo;
   }
 
-  Future<Position> _getLocation() async {
-    var currentLocation = null;
+  /// Mendapatkan posisi GPS: Geolocator.getCurrentPosition + TrustLocation (mock check).
+  /// Mengisi txtLat, txtLon dan userLocation agar Submit bisa pakai koordinat yang valid (bukan 0.0).
+  Future<Position?> _getLocation() async {
+    Position? currentLocation;
     try {
       currentLocation = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.best);
@@ -500,49 +515,48 @@ class _FormStoringState extends State<FormStoring> {
         isMock = false;
       }
       TrustLocation.start(5);
-
-      /// the stream getter where others can listen to.
       TrustLocation.onChange.listen((values) {
-            print(
-                'TrustLocation ${values.latitude} ${values.longitude} ${values.isMockLocation}');
-            truslat = values.latitude!;
-            trusLon = values.longitude!;
-          });
+        print(
+            'TrustLocation ${values.latitude} ${values.longitude} ${values.isMockLocation}');
+        truslat = values.latitude!;
+        trusLon = values.longitude!;
+      });
+
       if (isMock == true) {
+        // Mock: pakai nilai dari stream (bisa masih 0.0 sampai stream emit); Submit tetap diblok validasi Fake GPS
         txtLat.text = truslat;
         txtLon.text = trusLon;
       } else {
-        if (currentLocation != null && userLocation != null) {
-          print(userLocation!.longitude);
-          print(userLocation!.latitude);
-          txtLat.text = userLocation!.latitude.toString();
-          txtLon.text = userLocation!.longitude.toString();
+        // Bukan mock: isi langsung dari currentLocation agar lat/lon tidak tetap 0.0
+        if (currentLocation != null) {
+          userLocation = currentLocation;
+          txtLat.text = currentLocation.latitude.toString();
+          txtLon.text = currentLocation.longitude.toString();
+          if (mounted) setState(() {});
         }
       }
 
-      /// stop repeating by timer
       TrustLocation.stop();
-      //pos.
     } on PlatformException catch (e) {
-      if (e.code == 'PERMISSION_DENIED') {
-        error = 'Permission denied';
-      } else if (e.code == "PERMISSION_DENIED_NEVER_ASK") {
+      if (e.code == 'PERMISSION_DENIED' || e.code == 'PERMISSION_DENIED_NEVER_ASK') {
         error = 'Permission denied';
       }
       currentLocation = null;
+    } catch (e) {
+      error = 'Error: $e';
+      currentLocation = null;
     }
-    print(error);
     return currentLocation;
   }
 
   @override
   void initState() {
     super.initState();
-    //getListSR();
     getListGeofenceArea(true);
     _future = _getLocation();
     _getLocation().then((position) {
-      userLocation = position;
+      if (position != null) userLocation = position;
+      if (mounted) setState(() {});
     });
     setState(() {
       txtSR.text = "STORING";
@@ -582,10 +596,15 @@ class _FormStoringState extends State<FormStoring> {
       messageTextStyle: TextStyle(
           color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
     );
+    const Color softOrange = Color(0xFFFF8C69);
+    const Color softOrangeDark = Color(0xFFE07B39);
+    const TextStyle btnTextWhite = TextStyle(color: Colors.white, fontWeight: FontWeight.w600);
+
     return new Scaffold(
-      backgroundColor: Colors.grey,
+      backgroundColor: HexColor("#f0eff4"),
       appBar: AppBar(
-          backgroundColor: Colors.blueAccent,
+          backgroundColor: softOrange,
+          foregroundColor: Colors.white,
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             iconSize: 20.0,
@@ -593,10 +612,8 @@ class _FormStoringState extends State<FormStoring> {
               _goBack(context);
             },
           ),
-          //backgroundColor: Colors.transparent,
-          //elevation: 0.0,
           centerTitle: true,
-          title: Text('Submit Form Storing')),
+          title: Text('Submit Form Storing', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
       body: Container(
         key: globalScaffoldKey,
         constraints: BoxConstraints.expand(),
@@ -651,215 +668,164 @@ class _FormStoringState extends State<FormStoring> {
   }
 
   Widget _getContent(BuildContext context) {
+    const Color softOrange = Color(0xFFFF8C69);
+    const Color softOrangeDark = Color(0xFFE07B39);
+    const TextStyle btnTextWhite = TextStyle(color: Colors.white, fontWeight: FontWeight.w600);
+    const TextStyle labelStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.w500);
+
     return Container(
-      padding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 0.0),
+      padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 24.0),
       child: ListView(
         children: <Widget>[
-          Container(
-            child: Card(
-              elevation: 0.0,
-              shadowColor: Color(0x802196F3),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15.0)),
-              clipBehavior: Clip.antiAlias,
+          Card(
+            elevation: 2.0,
+            shadowColor: Colors.black26,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+            clipBehavior: Clip.antiAlias,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  ListTile(
-                      title: Text("VHCID", style: TextStyle(fontSize: 12))),
-                  Container(
-                    margin:
-                        EdgeInsets.only(left: 20, top: 0, right: 20, bottom: 0),
-                    child: TextField(
-                      readOnly: true,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtVHCID,
-                      onTap: () {
-                        var isOK = globals.akses_pages == null
-                            ? globals.akses_pages
-                            : globals.akses_pages.where((x) => x == "OP");
-                        if (isOK != null) {
-                          if (isOK.length > 0) {
-                            globals.pages_name = "view-service";
-                            Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        ViewListVehicleNew()));
-                          }
+                  SizedBox(height: 8),
+                  Text("VHCID", style: labelStyle),
+                  SizedBox(height: 4),
+                  TextField(
+                    readOnly: true,
+                    cursorColor: Colors.black,
+                    style: TextStyle(color: Colors.grey.shade800),
+                    controller: txtVHCID,
+                    onTap: () {
+                      var isOK = globals.akses_pages == null
+                          ? globals.akses_pages
+                          : globals.akses_pages.where((x) => x == "OP");
+                      if (isOK != null) {
+                        if (isOK.length > 0) {
+                          globals.pages_name = "view-service";
+                          Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => ViewListVehicleNew()));
                         }
-                      },
-                      decoration: new InputDecoration(
-                        hintText: globals.pages_name == "view-service"
-                            ? "klick for view list vehicle"
-                            : "",
-                        fillColor: Colors.black12,
-                        filled: true,
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                        contentPadding: EdgeInsets.only(
-                            left: 5, bottom: 5, top: 5, right: 5),
-                      ),
+                      }
+                    },
+                    decoration: InputDecoration(
+                      hintText: globals.pages_name == "view-service"
+                          ? "Klik untuk pilih kendaraan"
+                          : null,
+                      fillColor: Colors.grey.shade100,
+                      filled: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                   ),
-                  ListTile(
-                      title: Text("DRIVER", style: TextStyle(fontSize: 12))),
-                  Container(
-                    margin:
-                        EdgeInsets.only(left: 20, top: 0, right: 20, bottom: 0),
-                    child: TextField(
-                      readOnly: true,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtDRIVER,
-                      decoration: new InputDecoration(
-                        fillColor: Colors.black12,
-                        filled: true,
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                        contentPadding: EdgeInsets.only(
-                            left: 5, bottom: 5, top: 5, right: 5),
-                      ),
+                  SizedBox(height: 12),
+                  Text("DRIVER", style: labelStyle),
+                  SizedBox(height: 4),
+                  TextField(
+                    readOnly: true,
+                    cursorColor: Colors.black,
+                    style: TextStyle(color: Colors.grey.shade800),
+                    controller: txtDRIVER,
+                    decoration: InputDecoration(
+                      fillColor: Colors.grey.shade100,
+                      filled: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                   ),
-                  ListTile(
-                      title:
-                          Text("SERVICE TYPE", style: TextStyle(fontSize: 12))),
-                  Container(
-                    margin:
-                        EdgeInsets.only(left: 20, top: 0, right: 20, bottom: 0),
-                    child: TextField(
-                      readOnly: true,
-                      cursorColor: Colors.black,
-                      //style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtSR,
-                      decoration: new InputDecoration(
-                        fillColor: Colors.black12,
-                        filled: true,
-                        border: OutlineInputBorder(),
-                        //labelText: 'Hello input here',
-                        isDense: true,
-                        contentPadding: EdgeInsets.only(
-                            left: 5, bottom: 5, top: 5, right: 5),
-                      ),
+                  SizedBox(height: 12),
+                  Text("SERVICE TYPE", style: labelStyle),
+                  SizedBox(height: 4),
+                  TextField(
+                    readOnly: true,
+                    cursorColor: Colors.black,
+                    controller: txtSR,
+                    decoration: InputDecoration(
+                      fillColor: Colors.grey.shade100,
+                      filled: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                   ),
                   if (isShowLonLat == true) ...[
-                    ListTile(
-                        title:
-                            Text("LONGITUDE", style: TextStyle(fontSize: 12))),
-                    Container(
-                      margin: EdgeInsets.only(
-                          left: 20, top: 0, right: 20, bottom: 0),
-                      child: TextField(
-                        readOnly: true,
-                        cursorColor: Colors.black,
-                        //style: TextStyle(color: Colors.grey.shade800),
-                        controller: txtLon,
-                        decoration: new InputDecoration(
-                          fillColor: Colors.black12,
-                          filled: true,
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                          contentPadding: EdgeInsets.only(
-                              left: 5, bottom: 5, top: 5, right: 5),
-                        ),
+                    SizedBox(height: 12),
+                    Text("LONGITUDE", style: labelStyle),
+                    SizedBox(height: 4),
+                    TextField(
+                      readOnly: true,
+                      controller: txtLon,
+                      decoration: InputDecoration(
+                        fillColor: Colors.grey.shade100,
+                        filled: true,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       ),
                     ),
-                    ListTile(
-                        title:
-                            Text("LATITUDE", style: TextStyle(fontSize: 12))),
-                    Container(
-                      margin: EdgeInsets.only(
-                          left: 20, top: 0, right: 20, bottom: 0),
-                      child: TextField(
-                        readOnly: true,
-                        cursorColor: Colors.black,
-                        //style: TextStyle(color: Colors.grey.shade800),
-                        controller: txtLat,
-                        decoration: new InputDecoration(
-                          fillColor: Colors.black12,
-                          filled: true,
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                          contentPadding: EdgeInsets.only(
-                              left: 5, bottom: 5, top: 5, right: 5),
-                        ),
+                    SizedBox(height: 12),
+                    Text("LATITUDE", style: labelStyle),
+                    SizedBox(height: 4),
+                    TextField(
+                      readOnly: true,
+                      controller: txtLat,
+                      decoration: InputDecoration(
+                        fillColor: Colors.grey.shade100,
+                        filled: true,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       ),
-                    )
+                    ),
                   ],
-                  ListTile(title: Text("KM", style: TextStyle(fontSize: 12))),
-                  Container(
-                    margin:
-                        EdgeInsets.only(left: 20, top: 0, right: 20, bottom: 0),
-                    child: TextField(
-                      cursorColor: Colors.black,
-                      //style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtKM,
-                      keyboardType: TextInputType.number,
-                      decoration: new InputDecoration(
-                        //fillColor: Colors.black12, filled: true,
-                        border: OutlineInputBorder(),
-                        //labelText: 'Hello input here',
-                        isDense: true,
-                        contentPadding: EdgeInsets.only(
-                            left: 5, bottom: 5, top: 5, right: 5),
-                      ),
+                  SizedBox(height: 12),
+                  Text("KM", style: labelStyle),
+                  SizedBox(height: 4),
+                  TextField(
+                    cursorColor: Colors.black,
+                    controller: txtKM,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                   ),
-                  ListTile(
-                      title: Text("NO. TELP", style: TextStyle(fontSize: 12))),
-                  Container(
-                    margin:
-                        EdgeInsets.only(left: 20, top: 0, right: 20, bottom: 0),
-                    child: TextField(
-                      cursorColor: Colors.black,
-                      //style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtNoTelp,
-                      keyboardType: TextInputType.number,
-                      decoration: new InputDecoration(
-                        //fillColor: Colors.black12, filled: true,
-                        border: OutlineInputBorder(),
-                        //labelText: 'Hello input here',
-                        isDense: true,
-                        contentPadding: EdgeInsets.only(
-                            left: 5, bottom: 5, top: 5, right: 5),
-                      ),
+                  SizedBox(height: 12),
+                  Text("NO. TELP", style: labelStyle),
+                  SizedBox(height: 4),
+                  TextField(
+                    cursorColor: Colors.black,
+                    controller: txtNoTelp,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                   ),
-                  ListTile(
-                      title: Text("NOTES", style: TextStyle(fontSize: 12))),
-                  Container(
-                    margin:
-                        EdgeInsets.only(left: 20, top: 0, right: 20, bottom: 0),
-                    child: TextField(
-                      cursorColor: Colors.black,
-                      //style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtNOTES,
-                      //keyboardType: TextInputType.number,
-                      decoration: new InputDecoration(
-                        //fillColor: Colors.black12, filled: true,
-                        border: OutlineInputBorder(),
-                        //labelText: 'Hello input here',
-                        isDense: true,
-                        contentPadding: EdgeInsets.only(
-                            left: 5, bottom: 5, top: 5, right: 5),
-                      ),
+                  SizedBox(height: 12),
+                  Text("NOTES", style: labelStyle),
+                  SizedBox(height: 4),
+                  TextField(
+                    cursorColor: Colors.black,
+                    controller: txtNOTES,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                   ),
-                  Container(
-                      margin: EdgeInsets.only(
-                          left: 20, top: 5, right: 20, bottom: 5),
-                      child: Row(children: <Widget>[
-                        Expanded(
-                            child: ElevatedButton.icon(
-                          icon: Icon(
-                            Icons.save,
-                            color: Colors.white,
-                            size: 15.0,
-                          ),
-                          label: Text("Submit"),
-                          onPressed: () async {
+                  SizedBox(height: 20),
+                  Row(children: <Widget>[
+                    Expanded(
+                        child: ElevatedButton.icon(
+                      icon: Icon(Icons.save, color: Colors.white, size: 18),
+                      label: Text("Submit", style: btnTextWhite),
+                      onPressed: () async {
                             _future = _getLocation();
                             var isOutGeo = await updatePosition("IN");
                             if (isOutGeo) {
@@ -869,32 +835,22 @@ class _FormStoringState extends State<FormStoring> {
                                   title: new Text('Information'),
                                   content: new Text("Storing kendaraan ?"),
                                   actions: <Widget>[
-                                    new ElevatedButton.icon(
-                                      icon: Icon(
-                                        Icons.close,
-                                        color: Colors.white,
-                                        size: 20.0,
-                                      ),
-                                      label: Text("No"),
+                                    ElevatedButton.icon(
+                                      icon: Icon(Icons.close, color: Colors.white, size: 18),
+                                      label: Text("Tidak", style: btnTextWhite),
                                       onPressed: () {
                                         Navigator.of(context).pop(false);
                                       },
                                       style: ElevatedButton.styleFrom(
-                                          elevation: 0.0,
-                                          backgroundColor: Colors.blue,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 0),
-                                          textStyle: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                    new ElevatedButton.icon(
-                                      icon: Icon(
-                                        Icons.save,
-                                        color: Colors.white,
-                                        size: 20.0,
+                                        elevation: 0.0,
+                                        backgroundColor: Colors.grey.shade600,
+                                        foregroundColor: Colors.white,
+                                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                       ),
-                                      label: Text("Submit"),
+                                    ),
+                                    ElevatedButton.icon(
+                                      icon: Icon(Icons.save, color: Colors.white, size: 18),
+                                      label: Text("Submit", style: btnTextWhite),
                                       onPressed: () async {
                                         print(GlobalData.servicetype);
                                         print(txtKM.value.text);
@@ -946,7 +902,7 @@ class _FormStoringState extends State<FormStoring> {
                                               0,
                                               "No Telpon tidak bolrh kosong",
                                               "error");
-                                        } else if (isMock == true) {
+                                        } else if (isMock == false) {
                                           alert(
                                               globalScaffoldKey.currentContext!,
                                               0,
@@ -967,13 +923,11 @@ class _FormStoringState extends State<FormStoring> {
                                         }
                                       },
                                       style: ElevatedButton.styleFrom(
-                                          elevation: 0.0,
-                                          backgroundColor: Colors.blue,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 0),
-                                          textStyle: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold)),
+                                        elevation: 0.0,
+                                        backgroundColor: softOrangeDark,
+                                        foregroundColor: Colors.white,
+                                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -987,37 +941,30 @@ class _FormStoringState extends State<FormStoring> {
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                              elevation: 0.0,
-                              backgroundColor: Colors.blue,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 0),
-                              textStyle: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold)),
+                            elevation: 0.0,
+                            backgroundColor: softOrangeDark, //
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          ),
                         )),
-                        if (isShowLonLat == true) ...[
-                          SizedBox(width: 10),
-                          Expanded(
-                              child: ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.map,
-                              color: Colors.white,
-                              size: 15.0,
-                            ),
-                            label: Text("Refresh Location"),
-                            onPressed: () {
-                              print('refresh location');
-                              _future = _getLocation();
-                            },
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0.0,
-                                backgroundColor: Colors.blue,
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 0),
-                                textStyle: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.bold)),
-                          ))
-                        ]
-                      ]))
+                    if (isShowLonLat == true) ...[
+                      SizedBox(width: 12),
+                      Expanded(
+                          child: ElevatedButton.icon(
+                        icon: Icon(Icons.map, color: Colors.white, size: 18),
+                        label: Text("Refresh Location", style: btnTextWhite),
+                        onPressed: () {
+                          _future = _getLocation();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: softOrangeDark,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                      ))
+                    ]
+                  ]),
                 ],
               ),
             ),

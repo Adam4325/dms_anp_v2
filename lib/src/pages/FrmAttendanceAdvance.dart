@@ -548,11 +548,11 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
 
       if (isStoring) {
         // Storing: harus di LUAR geofence (distance > radius untuk semua). Ambil alamat OSM sekali.
-        if (insideAny) {
-          if (mounted) alert(globalScaffoldKey.currentContext!, 0,
-              "Absensi storing hanya boleh dilakukan di luar area geofence", "error");
-          return;
-        }
+        // if (insideAny) {
+        //   if (mounted) alert(globalScaffoldKey.currentContext!, 0,
+        //       "Absensi storing hanya boleh dilakukan di luar area geofence", "error");
+        //   return;
+        // }
         address = await getAddress(userLocation!.latitude.toString(),
             userLocation!.longitude.toString());
         if (address.isEmpty) address = "Alamat tidak ditemukan";

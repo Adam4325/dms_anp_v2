@@ -201,6 +201,8 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
   void LoadMapsfromListDo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var dataLast = prefs.getStringList("dataLast");
+    print("widget.is_driver");
+    print(widget.is_driver);
     print(dataLast);
 
     if (widget.is_driver == "false") {
@@ -227,6 +229,24 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
         //alert(globalScaffoldKey.currentContext!, 0, "Data tidak lengkap", "error");
       }
     } else {
+      // Untuk driver, pastikan vendor_id sudah di-set sebelum GetLastPosition
+      if (vendor_id.isEmpty) {
+        // Coba ambil dari dataLast jika ada
+        if (dataLast != null && dataLast.length >= 13) {
+          String vendorType = safeGetListElement(dataLast, 12);
+          setState(() {
+            vendor_id = vendorType == "easygo" ? "easygo" : "izzy";
+          });
+          print('vendor_id di-set dari dataLast untuk driver: $vendor_id');
+        } else {
+          // Default ke easygo untuk driver
+          setState(() {
+            vendor_id = "easygo";
+          });
+          print('vendor_id default ke easygo untuk driver');
+        }
+      }
+      print('Getlastpos (driver mode, vendor_id: $vendor_id)');
       GetLastPosition();
       prefs.setStringList("dataLast", []);
     }
@@ -569,6 +589,7 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
         if (listVehicle.length > 0 && listVehicle != []) {
           dataVehicle = listVehicle;
           dataVehicleTemp = listVehicle;
+          print(dataVehicle);
         }
       } else {
         alert(globalScaffoldKey.currentContext!, 2, "Error Fetching data",
@@ -592,15 +613,36 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
     String vhcid;
 
     if (new_vhcid == "" || new_vhcid == null) {
-      vhcid = prefs.getString("vhcidOPR")!;
+      vhcid = prefs.getString("vhcidOPR") ?? "";
     } else {
       vhcid = new_vhcid;
     }
 
     if (widget.is_driver == 'true') {
-      vhcid = prefs.getString("vhcid")!;
+      vhcid = prefs.getString("vhcid") ?? "";
     }
+    
+    if (vhcid.isEmpty) {
+      print("Error: vhcid kosong, tidak bisa ambil last position");
+      return;
+    }
+    
     vhcid = vhcid.split("/")[0];
+    
+    // Pastikan vendor_id sudah di-set, jika belum coba deteksi dari dataLast
+    if (vendor_id.isEmpty) {
+      var dataLast = prefs.getStringList("dataLast");
+      if (dataLast != null && dataLast.length >= 13) {
+        String vendorType = safeGetListElement(dataLast, 12);
+        vendor_id = vendorType == "easygo" ? "easygo" : "izzy";
+        print("vendor_id di-set dari dataLast: $vendor_id");
+      } else {
+        // Default ke easygo jika tidak ada dataLast
+        vendor_id = "easygo";
+        print("vendor_id default ke easygo");
+      }
+    }
+    
     Uri myUri;
     Map<String, String>? headers;
     String token = GlobalData.token_vts;
@@ -613,6 +655,7 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
         "Content-Type": "application/json"
       };
     } else {
+      print('VTS API');
       myUri = Uri.parse("https://vtsapi.easygo-gps.co.id/api/Report/lastposition");
       headers = <String, String>{
         "accept": "application/json",
@@ -642,119 +685,175 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
         headers: headers!,
         body: vendor_id == "izzy" ? "" : jsonEncode(requestBody),
       );
-
+      
+      print('=== GetLastPosition Debug ===');
+      print('vendor_id: $vendor_id');
+      print('vhcid: $vhcid');
+      print('response.statusCode: ${response.statusCode}');
+      print('response.body: ${response.body}');
+      
       if (response.statusCode == 200) {
-        final Map jsonResponse = json.decode(response.body);
-
-        if (jsonResponse.containsKey('Data') &&
-            jsonResponse['Data'] != null &&
-            jsonResponse['Data'].length > 0) {
-          Map item = jsonResponse['Data'][0];
-
-          nopol = item.containsKey("nopol") && item["nopol"] != null
-              ? item["nopol"]
-              : "";
-          gps_time = item.containsKey("gps_time") && item["gps_time"] != null
-              ? item["gps_time"]
-              : "";
-          gps_sn = vendor_id == "izzy"
-              ? (item.containsKey("nopol") && item["nopol"] != null
-                  ? item["nopol"]
-                  : "")
-              : (item.containsKey("gps_sn") && item["gps_sn"] != null
-                  ? item["gps_sn"]
-                  : "");
-          addr = item.containsKey("addr") && item["addr"] != null
-              ? item["addr"]
-              : "";
-          direction = item.containsKey("direction") && item["direction"] != null
-              ? item["direction"].toString()
-              : "";
-          driver_nm = item.containsKey("driver_nm") && item["driver_nm"] != null
-              ? item["driver_nm"]
-              : "";
-          no_do = item.containsKey("currentDO") && item["currentDO"] != null
-              ? item["currentDO"]
-              : "";
-          ket_status_do = "";
-
-          if (item.containsKey("currentStatusVehicle") &&
-              item["currentStatusVehicle"] != null) {
-            if (item["currentStatusVehicle"].containsKey("ket") &&
-                item["currentStatusVehicle"]["ket"] != null) {
-              ket_status_do = item["currentStatusVehicle"]["ket"];
-            }
-          }
-
-          acc = item.containsKey("acc") && item["acc"] != null
-              ? item["acc"].toDouble()
-              : 0.0;
-          speed = item.containsKey("speed") && item["speed"] != null
-              ? item["speed"].toDouble()
-              : 0.0;
-          lat = item.containsKey("lat") && item["lat"] != null
-              ? item["lat"].toDouble()
-              : 0.0;
-          lon = item.containsKey("lon") && item["lon"] != null
-              ? item["lon"].toDouble()
-              : 0.0;
-
-          double totalKmYtd = 0.0;
-          String startDateYtd = "";
-          if (item.containsKey("totalkm_ytd") && item["totalkm_ytd"] != null) {
-            if (item["totalkm_ytd"].containsKey("total_km") &&
-                item["totalkm_ytd"]["total_km"] != null) {
-              totalKmYtd = item["totalkm_ytd"]["total_km"].toDouble();
-            }
-            if (item["totalkm_ytd"].containsKey("start_date_counting") &&
-                item["totalkm_ytd"]["start_date_counting"] != null) {
-              startDateYtd = item["totalkm_ytd"]["start_date_counting"];
-            }
-          }
-
-          double totalKmMtd = 0.0;
-          String startDateMtd = "";
-          if (item.containsKey("totalkm_mtd") && item["totalkm_mtd"] != null) {
-            if (item["totalkm_mtd"].containsKey("total_km") &&
-                item["totalkm_mtd"]["total_km"] != null) {
-              totalKmMtd = item["totalkm_mtd"]["total_km"].toDouble();
-            }
-            if (item["totalkm_mtd"].containsKey("start_date_counting") &&
-                item["totalkm_mtd"]["start_date_counting"] != null) {
-              startDateMtd = item["totalkm_mtd"]["start_date_counting"];
-            }
-          }
-          updatePinOnMap(
-            lat,
-            lon,
-            direction,
-            gps_sn,
-            addr,
-            nopol,
-            gps_time,
-            acc.toString(),
-            speed.toString(),
-            no_do,
-            ket_status_do,
-          );
-
-
-          print("Nopol: $nopol");
-          print("GPS Time: $gps_time");
-          print("GPS SN: $gps_sn");
-          print("Alamat: $addr");
-          print("Arah: $direction");
-          print("Driver: $driver_nm");
-          print("DO No: $no_do");
-          print("Status DO: $ket_status_do");
-          print("ACC: $acc");
-          print("Speed: $speed");
-          print("Lat: $lat");
-          print("Lon: $lon");
-          print("KM YTD: $totalKmYtd, Start YTD: $startDateYtd");
-          print("KM MTD: $totalKmMtd, Start MTD: $startDateMtd");
+        final dynamic decodedBody = json.decode(response.body);
+        print('decodedBody type: ${decodedBody.runtimeType}');
+        
+        // Handle both Map and dynamic response
+        Map<String, dynamic> jsonResponse;
+        if (decodedBody is Map) {
+          jsonResponse = Map<String, dynamic>.from(decodedBody);
         } else {
-          print("Data kosong / tidak ditemukan.");
+          print("Error: Response bukan Map");
+          return;
+        }
+        
+        // Cek ResponseCode untuk memastikan sukses
+        int responseCode = jsonResponse['ResponseCode'] ?? 0;
+        String responseMessage = jsonResponse['ResponseMessage'] ?? '';
+        print('ResponseCode: $responseCode, ResponseMessage: $responseMessage');
+        
+        // Cek apakah Data ada dan merupakan List
+        if (jsonResponse.containsKey('Data') && jsonResponse['Data'] != null) {
+          final dataValue = jsonResponse['Data'];
+          print('Data type: ${dataValue.runtimeType}');
+          
+          List<dynamic> dataList;
+          if (dataValue is List) {
+            dataList = dataValue;
+          } else {
+            print("Error: Data bukan List, type: ${dataValue.runtimeType}");
+            print("Data kosong / tidak ditemukan.");
+            return;
+          }
+          
+          if (dataList.isNotEmpty) {
+            print('Data length: ${dataList.length}');
+            Map<String, dynamic> item = Map<String, dynamic>.from(dataList[0]);
+            print("item vts");
+            print(item);
+            
+            // Mapping field: jika nopol tidak ada, coba vehicle_id atau field lain
+            nopol = item.containsKey("nopol") && item["nopol"] != null
+                ? item["nopol"].toString()
+                : (item.containsKey("vehicle_id") && item["vehicle_id"] != null
+                    ? item["vehicle_id"].toString()
+                    : "");
+            
+            gps_time = item.containsKey("gps_time") && item["gps_time"] != null
+                ? item["gps_time"].toString()
+                : "";
+            
+            gps_sn = vendor_id == "izzy"
+                ? (item.containsKey("nopol") && item["nopol"] != null
+                    ? item["nopol"].toString()
+                    : (item.containsKey("vehicle_id") && item["vehicle_id"] != null
+                        ? item["vehicle_id"].toString()
+                        : ""))
+                : (item.containsKey("gps_sn") && item["gps_sn"] != null
+                    ? item["gps_sn"].toString()
+                    : (item.containsKey("vehicle_id") && item["vehicle_id"] != null
+                        ? item["vehicle_id"].toString()
+                        : ""));
+            
+            addr = item.containsKey("addr") && item["addr"] != null
+                ? item["addr"].toString()
+                : "";
+            direction = item.containsKey("direction") && item["direction"] != null
+                ? item["direction"].toString()
+                : "";
+            driver_nm = item.containsKey("driver_nm") && item["driver_nm"] != null
+                ? item["driver_nm"].toString()
+                : "";
+            no_do = item.containsKey("currentDO") && item["currentDO"] != null
+                ? item["currentDO"].toString()
+                : "";
+            ket_status_do = "";
+
+            if (item.containsKey("currentStatusVehicle") &&
+                item["currentStatusVehicle"] != null) {
+              if (item["currentStatusVehicle"].containsKey("ket") &&
+                  item["currentStatusVehicle"]["ket"] != null) {
+                ket_status_do = item["currentStatusVehicle"]["ket"].toString();//
+              }
+            }
+
+            acc = item.containsKey("acc") && item["acc"] != null
+                ? (item["acc"] is num ? item["acc"].toDouble() : double.tryParse(item["acc"].toString()) ?? 0.0)
+                : 0.0;
+            speed = item.containsKey("speed") && item["speed"] != null
+                ? (item["speed"] is num ? item["speed"].toDouble() : double.tryParse(item["speed"].toString()) ?? 0.0)
+                : 0.0;
+            lat = item.containsKey("lat") && item["lat"] != null
+                ? (item["lat"] is num ? item["lat"].toDouble() : double.tryParse(item["lat"].toString()) ?? 0.0)
+                : 0.0;
+            lon = item.containsKey("lon") && item["lon"] != null
+                ? (item["lon"] is num ? item["lon"].toDouble() : double.tryParse(item["lon"].toString()) ?? 0.0)
+                : 0.0;
+
+            double totalKmYtd = 0.0;
+            String startDateYtd = "";
+            if (item.containsKey("totalkm_ytd") && item["totalkm_ytd"] != null) {
+              if (item["totalkm_ytd"].containsKey("total_km") &&
+                  item["totalkm_ytd"]["total_km"] != null) {
+                totalKmYtd = item["totalkm_ytd"]["total_km"] is num 
+                    ? item["totalkm_ytd"]["total_km"].toDouble()
+                    : double.tryParse(item["totalkm_ytd"]["total_km"].toString()) ?? 0.0;
+              }
+              if (item["totalkm_ytd"].containsKey("start_date_counting") &&
+                  item["totalkm_ytd"]["start_date_counting"] != null) {
+                startDateYtd = item["totalkm_ytd"]["start_date_counting"].toString();
+              }
+            }
+
+            double totalKmMtd = 0.0;
+            String startDateMtd = "";
+            if (item.containsKey("totalkm_mtd") && item["totalkm_mtd"] != null) {
+              if (item["totalkm_mtd"].containsKey("total_km") &&
+                  item["totalkm_mtd"]["total_km"] != null) {
+                totalKmMtd = item["totalkm_mtd"]["total_km"] is num
+                    ? item["totalkm_mtd"]["total_km"].toDouble()
+                    : double.tryParse(item["totalkm_mtd"]["total_km"].toString()) ?? 0.0;
+              }
+              if (item["totalkm_mtd"].containsKey("start_date_counting") &&
+                  item["totalkm_mtd"]["start_date_counting"] != null) {
+                startDateMtd = item["totalkm_mtd"]["start_date_counting"].toString();
+              }
+            }
+            
+            updatePinOnMap(
+              lat,
+              lon,
+              direction,
+              gps_sn,
+              addr,
+              nopol,
+              gps_time,
+              acc.toString(),
+              speed.toString(),
+              no_do,
+              ket_status_do,
+            );
+
+            print("Nopol: $nopol");
+            print("GPS Time: $gps_time");
+            print("GPS SN: $gps_sn");
+            print("Alamat: $addr");
+            print("Arah: $direction");
+            print("Driver: $driver_nm");
+            print("DO No: $no_do");
+            print("Status DO: $ket_status_do");
+            print("ACC: $acc");
+            print("Speed: $speed");
+            print("Lat: $lat");
+            print("Lon: $lon");
+            print("KM YTD: $totalKmYtd, Start YTD: $startDateYtd");
+            print("KM MTD: $totalKmMtd, Start MTD: $startDateMtd");
+          } else {
+            print("Data list kosong (length: ${dataList.length})");
+          }
+        } else {
+          print("Data kosong / tidak ditemukan. ResponseCode: $responseCode");
+          if (responseCode != 1) {
+            print("ResponseCode bukan 1, kemungkinan error: $responseMessage");
+          }
         }
       } else {
         print("Gagal memuat data. Kode: ${response.statusCode}");

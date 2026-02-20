@@ -63,7 +63,8 @@ dependencies:
   flutter_staggered_grid_view: ^0.7.0
   # qrscan: ^0.3.1 # Not compatible with AGP 8+, using mobile_scanner instead
   mobile_scanner: ^5.2.3
-  # OCR (google_mlkit_text_recognition) dihapus - jalankan flutter pub get bila perlu
+  google_mlkit_text_recognition: ^0.15.0
+  image: ^4.0.17
   cached_network_image: ^3.0.0 #^2.0.0
   flutter_cupertino_datetime_picker: ^3.0.0
   qr_flutter: ^4.0.0

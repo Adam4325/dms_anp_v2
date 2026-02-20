@@ -42,6 +42,7 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
@@ -60,4 +61,9 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging'              // Firebase Messaging
     implementation 'com.google.firebase:firebase-analytics'             // Firebase Analytics
     implementation 'androidx.multidex:multidex:2.0.1'                   // Multidex support
+}
+
+// Tekan peringatan dari dependency (google_mlkit_commons, trust_location, dll.)
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ["-Xlint:-unchecked", "-Xlint:-deprecation"]
 }
