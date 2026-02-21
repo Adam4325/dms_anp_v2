@@ -20,6 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:awesome_select/awesome_select.dart';
 import '../../../choices.dart' as choices;
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:dms_anp/src/Helper/scanner_helper.dart';
 
 import 'ListInventoryDetail.dart';
 
@@ -115,174 +116,7 @@ class _BottomSheetContentListWo extends StatelessWidget {
   }
 }
 
-/// Screen untuk scan QR Code / Barcode menggunakan mobile_scanner
-class _QRScannerScreen extends StatefulWidget {
-  @override
-  _QRScannerScreenState createState() => _QRScannerScreenState();
-}
-
-class _QRScannerScreenState extends State<_QRScannerScreen> {
-  final MobileScannerController controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.noDuplicates,
-    facing: CameraFacing.back,
-  );
-  bool _isScanning = true;
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: Text('Scan QR Code / Barcode', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.black87,
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
-      body: Stack(
-        children: [
-          MobileScanner(
-            controller: controller,
-            onDetect: (capture) {
-              if (!_isScanning) return;
-              
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty) {
-                final String code = barcodes.first.rawValue ?? '';
-                if (code.isNotEmpty) {
-                  _isScanning = false;
-                  controller.stop();
-                  Navigator.pop(context, code);
-                }
-              }
-            },
-          ),
-          // Overlay dengan frame untuk scan
-          CustomPaint(
-            painter: _ScannerOverlayPainter(),
-            child: Container(),
-          ),
-          // Instruction text
-          Positioned(
-            bottom: 100,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Arahkan kamera ke QR Code / Barcode',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Custom painter untuk overlay frame scanner
-class _ScannerOverlayPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final overlayPaint = Paint()
-      ..color = Colors.black54
-      ..style = PaintingStyle.fill;
-
-    final borderPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    // Frame tengah untuk scan area
-    final scanAreaSize = size.width * 0.7;
-    final scanAreaLeft = (size.width - scanAreaSize) / 2;
-    final scanAreaTop = (size.height - scanAreaSize) / 2 - 50;
-    final scanArea = Rect.fromLTWH(
-      scanAreaLeft,
-      scanAreaTop,
-      scanAreaSize,
-      scanAreaSize,
-    );
-
-    // Draw overlay (darken area di luar frame)
-    final overlayPath = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..addRect(scanArea)
-      ..fillType = PathFillType.evenOdd;
-    
-    canvas.drawPath(overlayPath, overlayPaint);
-
-    // Draw frame border dengan corner indicators
-    final cornerLength = 30.0;
-    final cornerWidth = 4.0;
-    
-    // Top-left corner
-    canvas.drawLine(
-      Offset(scanAreaLeft, scanAreaTop),
-      Offset(scanAreaLeft + cornerLength, scanAreaTop),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    canvas.drawLine(
-      Offset(scanAreaLeft, scanAreaTop),
-      Offset(scanAreaLeft, scanAreaTop + cornerLength),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    
-    // Top-right corner
-    canvas.drawLine(
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop),
-      Offset(scanAreaLeft + scanAreaSize - cornerLength, scanAreaTop),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    canvas.drawLine(
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop),
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + cornerLength),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    
-    // Bottom-left corner
-    canvas.drawLine(
-      Offset(scanAreaLeft, scanAreaTop + scanAreaSize),
-      Offset(scanAreaLeft + cornerLength, scanAreaTop + scanAreaSize),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    canvas.drawLine(
-      Offset(scanAreaLeft, scanAreaTop + scanAreaSize),
-      Offset(scanAreaLeft, scanAreaTop + scanAreaSize - cornerLength),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    
-    // Bottom-right corner
-    canvas.drawLine(
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize),
-      Offset(scanAreaLeft + scanAreaSize - cornerLength, scanAreaTop + scanAreaSize),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    canvas.drawLine(
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize),
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize - cornerLength),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
+ 
 
 class ListInventoryTransNew extends StatefulWidget {
   final String tabName;
@@ -1178,13 +1012,7 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
   Future scanQRCodeWO() async {
     if (!mounted) return;
     
-    // Buka scanner screen
-    final String? scanResult = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => _QRScannerScreen(),
-      ),
-    );
+    final String? scanResult = await openQrScanner(context);
     
     if (scanResult == null || scanResult.isEmpty) {
       if (mounted) {
@@ -2369,7 +2197,7 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                     color: Colors.white,
                     size: 15.0,
                   ),
-                  label: Text("Add"),
+                  label: Text("Add",style: TextStyle(color: Colors.white)),
                   onPressed: () {
                     globals.inv_trx_number = value['inv_trx_number'];
                     globals.from_ware_house = value['from_ware_house'];
@@ -2403,6 +2231,7 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                             value['inv_trx_type'].toString() != ''
                         ? value['inv_trx_type'].toString()
                         : null;
+                    print(isIsm);
                     Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -2430,7 +2259,7 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                     color: Colors.white,
                     size: 15.0,
                   ),
-                  label: Text("View Detail"),
+                  label: Text("View Detail",style: TextStyle(color: Colors.white)),
                   onPressed: () async {
                     print(value['inv_trx_number']);
                     globals.inv_trx_number = value['inv_trx_number'];
@@ -2489,7 +2318,7 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                     color: Colors.white,
                     size: 15.0,
                   ),
-                  label: Text("Cancel"),
+                  label: Text("Cancel",style: TextStyle(color: Colors.white)),
                   onPressed: () {
                     // globals.inv_trx_number = value['inv_trx_number'];
                     // globals.from_ware_house = value['from_ware_house'];
@@ -2581,10 +2410,10 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                     child: ElevatedButton.icon(
                   icon: Icon(
                     Icons.save_outlined,
-                    color: Colors.black45,
+                    color: Colors.white,
                     size: 15.0,
                   ),
-                  label: Text("Approve"),
+                  label: Text("Approve",style: TextStyle(color: Colors.white)),
                   onPressed: () async {
                     // print(value['inv_trx_number']);
                     // globals.inv_trx_number = value['inv_trx_number'];

@@ -977,7 +977,8 @@ class _ViewListWoMcByForeManState extends State<ViewListWoMcByForeMan> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => ListInventoryMaint(
-                                widget_wodnumber: value['wodwonbr'],
+                                widget_wo_number: value['wodwonbr'],
+                                widget_number: '',
                                 widget_inv_trx_type: "-",
                                 widget_from_ware_house: value['locid'],
                                 widget_formen: "true")));

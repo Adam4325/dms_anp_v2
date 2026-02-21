@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:dms_anp/src/pages/marketing/ListOpenDO.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -52,6 +53,7 @@ import 'package:http/http.dart' as http;
 // qrscan deprecated - using mobile_scanner; scan stubbed until integrated
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:unique_identifier/unique_identifier.dart';
+import '../../helpers/GpsSecurityChecker.dart';
 
 import '../flusbar.dart';
 import 'FrmAttendanceDriver.dart';
@@ -99,6 +101,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
   SharedPreferences? sharedPreferences;
   String spLoginName = '';
   String loginname = '';
+  String login_type = '';
   String ismixer = '';
   String vhcid = '';
   String vhckm = '';
@@ -201,6 +204,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       print(globals.akses_pages);
       username = sharedPreferences!.getString("username") ?? '';
       loginname = sharedPreferences!.getString("loginname") ?? '';
+      login_type = sharedPreferences!.getString("login_type") ?? '';
 
       ismixer = sharedPreferences!.getString("ismixer") ?? 'false';
 
@@ -1383,8 +1387,11 @@ class _ViewDashboardState extends State<ViewDashboard> {
         children: [
           _buildMenuGrid(),
           SizedBox(height: 16),
-          if (loginname == 'DRIVER' && data_list_do.isNotEmpty) ...[
+          if (login_type!="MIXER" && loginname == 'DRIVER' && data_list_do.isNotEmpty) ...[
             _buildScheduleCard(),
+            SizedBox(height: 16),
+          ] else if (login_type=="MIXER" && loginname == 'DRIVER' && data_list_do.isNotEmpty) ...[
+            _buildScheduleCardMixer(),
             SizedBox(height: 16),
           ],
           _buildInfoCards(),
@@ -1771,7 +1778,75 @@ class _ViewDashboardState extends State<ViewDashboard> {
                 itemCount: data_list_do.length,
                 itemBuilder: (context, index) {
                   final item = data_list_do[index];
-                  return _buildScheduleItem(item);
+                  return _buildScheduleItem(item); //HISTORY
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleCardMixer() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.schedule, color: Colors.green, size: 20),
+              ),
+              SizedBox(width: 12),
+              Text(
+                'Jadwal Hari Ini',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+              Spacer(),
+              IconButton(
+                icon: Icon(
+                  extended ? Icons.expand_less : Icons.expand_more,
+                  color: Colors.grey.shade600,
+                ),
+                onPressed: () {
+                  setState(() {
+                    extended = !extended;
+                  });
+                },
+              ),
+            ],
+          ),
+          if (extended) ...[
+            SizedBox(height: 16),
+            Container(
+              height: 300,
+              child: ListView.builder(
+                itemCount: data_list_do.length,
+                itemBuilder: (context, index) {
+                  final item = data_list_do[index];
+                  return _buildScheduleItemMixer(item); //HISTORY
                 },
               ),
             ),
@@ -1862,6 +1937,107 @@ class _ViewDashboardState extends State<ViewDashboard> {
                   child: Text(
                     'History',
                     style: TextStyle(fontSize: 11),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleItemMixer(dynamic item) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: primaryOrange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: primaryOrange.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primaryOrange,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  item['do_number'] ?? '',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Spacer(),
+              Text(
+                item['tgl_do'] ?? '',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Text(
+            'From: ${item['origin'] ?? ''}',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+          ),
+          Text(
+            'To: ${item['destination'] ?? ''}',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+          ),
+          SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => _handleScheduleActionMixer(item),
+                  style: ElevatedButton.styleFrom(backgroundColor: primaryOrange,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  child: Text(
+                    item['status_do_mixer'].toString() == "INLOADING"
+                        ? "OUTLOADING"
+                        : item['status_do_mixer'].toString() == "OUTLOADING"
+                            ? "OUTPOOL"
+                            : item['status_do_mixer'].toString() == "OUTPOOL"
+                                ? "INCUSTOMER"
+                                : item['status_do_mixer'].toString() ==
+                                        "INCUSTOMER"
+                                    ? "OUTUNLOADING"
+                                    : item['status_do_mixer'].toString() ==
+                                            "OUTUNLOADING"
+                                        ? "Close DO"
+                                        : "Close DO",
+                    style: TextStyle(fontSize: 11,color: Colors.white),
+                  ),
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => _viewHistory(item),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  child: Text(
+                    'History',
+                    style: TextStyle(fontSize: 11,color: Colors.white),
                   ),
                 ),
               ),
@@ -2675,6 +2851,81 @@ class _ViewDashboardState extends State<ViewDashboard> {
             alert(context, 0, "Access Denied", "error");
           }
         });
+      }
+    }
+  }
+
+  void _handleScheduleActionMixer(dynamic item) async {
+    EasyLoading.show();
+    try {
+      if (item['status_do_mixer'].toString() == "OUTUNLOADING") {
+        GetVhcidDo();
+        Timer(Duration(seconds: 1), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => FrmSetKmByDriver()),
+          );
+        });
+        return;
+      }
+
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: Text('Konfirmasi'),
+          content: Text('Yakin update status DO mixer ini?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Tidak'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text('Ya'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) {
+        return;
+      }
+
+      var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
+      var latitude = gpsResult["latitude"] ?? 0;
+      var longitude = gpsResult["longitude"] ?? 0;
+
+      var baseURL = GlobalData.baseUrl +
+          "api/do_mixer/update_status_do_mixer.jsp?method=update-status-do-mixer&bujnbr=${item['bujnbr']}"
+              "&status_do_mixer=${item['status_do_mixer']}&latitude=${latitude}&longitude=${longitude}&bujdestination=${item['bujdestination']}&userid=${loginname}";
+
+      var encoded = Uri.encodeFull(baseURL);
+      Uri myUri = Uri.parse(encoded);
+      var response =
+          await http.get(myUri, headers: {"Accept": "application/json"});
+
+      if (response.statusCode == 200) {
+        var result = json.decode(response.body);
+        var status = result["status"]?.toString() ?? "";
+        var message = result["message"]?.toString() ?? "";
+
+        if (status.toLowerCase() == "success") {
+          alert(globalScaffoldKey.currentContext!, 0, message, "success");
+          GetListDo();
+        } else {
+          alert(globalScaffoldKey.currentContext!, 0,
+              message.isNotEmpty ? message : "Gagal update status DO", "error");
+        }
+      } else {
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Gagal menghubungi server (${response.statusCode})", "error");
+      }
+    } catch (e) {
+      alert(globalScaffoldKey.currentContext!, 0, "Terjadi kesalahan: $e", "error");
+    } finally {
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
       }
     }
   }
@@ -3506,20 +3757,6 @@ class _ViewDashboardState extends State<ViewDashboard> {
         });
       }
     } else if (anpService.idKey == 32) {
-      // var isOK = globals.akses_pages == null
-      //     ? globals.akses_pages
-      //     : globals.akses_pages
-      //         .where((x) => (x == "HRD" || username == "ADMIN"));
-      // if (isOK != null && (isOK.length > 0 || username == "ADMIN")) {
-      //   Navigator.pushReplacement(
-      //     context,
-      //     MaterialPageRoute(builder: (context) => FrmMasterData()),
-      //   );
-      // } else {
-      //   alert(globalScaffoldKey.currentContext!, 0,
-      //       "Akses ditolak. Hanya HTRD dan ADMIN yang dapat mengakses.", "error");
-      // }
-
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages.where((x) => x == "MK");
@@ -3735,9 +3972,10 @@ class _ViewDashboardState extends State<ViewDashboard> {
       sharedPreferences = await SharedPreferences.getInstance();
       String drvid = sharedPreferences!.getString("drvid") ?? '';
       String vhcid = sharedPreferences!.getString("vhcid") ?? '';
-      var vDo = sharedPreferences!.getString("vhcidfromdo") ?? '';
-      var urlData =
-          "${GlobalData.baseUrlProd}api/do/list_do_driver.jsp?method=lookup-list-do-driver-v1&vhcid=${vhcid}&drvid=${drvid}";
+      String _loginType = sharedPreferences!.getString("login_type") ?? '';
+      var urlData =_loginType=="MIXER"?
+          "${GlobalData.baseUrlProd}api/do_mixer/list_do_driver_mixer.jsp?method=lookup-list-do-driver-v1&vhcid=${vhcid}&drvid=${drvid}"
+      :"${GlobalData.baseUrlProd}api/do/list_do_driver.jsp?method=lookup-list-do-driver-v1&vhcid=${vhcid}&drvid=${drvid}";
       Uri myUri = Uri.parse(urlData);
       print(myUri.toString());
       var response =

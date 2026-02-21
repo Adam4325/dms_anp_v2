@@ -33,6 +33,8 @@ class _FrmObpState extends State<FrmObp> {
     {'value': 'MENGANGSUR', 'title': 'MENGANGSUR'},
     {'value': 'PHK', 'title': 'PHK'},
   ];
+  final Color primaryOrange = Color(0xFFFF8A50);
+  final Color lightCream = Color(0xFFFFFCF8);
 
   List<String> list_cost =
       []; //<String>['Aby', 'Aish', 'Ayan', 'Ben', 'Bob', 'Charlie', 'Cook', 'Carline'];
@@ -153,27 +155,33 @@ class _FrmObpState extends State<FrmObp> {
       },
       child: Scaffold(
         appBar: AppBar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: primaryOrange,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
+              icon: Icon(Icons.arrow_back, color: Colors.white),
               iconSize: 20.0,
               onPressed: () {
                 _goBack(context);
               },
             ),
             centerTitle: true,
-            title: const Text('Open Bukti Pelanggaran')),
+            title: Text('Open Bukti Pelanggaran', style: TextStyle(color: Colors.white))),
         body: Container(
             padding: const EdgeInsets.all(2),
-            child: Stepper(
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: Theme.of(context).colorScheme.copyWith(primary: primaryOrange),
+              ),
+              child: Stepper(
               controlsBuilder: (BuildContext context, ControlsDetails details) {
                 return Row(
                   children: <Widget>[
                     TextButton(
                       onPressed: details.onStepContinue,
                       style: TextButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: primaryOrange,
                         foregroundColor: Colors.white,
+                        minimumSize: Size(88, 40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: Text(currentStep != 2 ? 'Next' : 'Submit'),
                     ),
@@ -181,15 +189,17 @@ class _FrmObpState extends State<FrmObp> {
                     TextButton(
                       onPressed: details.onStepCancel,
                       style: TextButton.styleFrom(
-                        backgroundColor: Colors.orangeAccent,
+                        backgroundColor: primaryOrange,
                         foregroundColor: Colors.white,
+                        minimumSize: Size(88, 40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: const Text('Cancel'),
                     ),
                   ],
                 );
               },
-              type: StepperType.horizontal,
+              type: StepperType.vertical,
               currentStep: currentStep,
               onStepCancel: () => {
                 if (currentStep == 0)
@@ -239,6 +249,7 @@ class _FrmObpState extends State<FrmObp> {
                 print('currentStep ${currentStep}');
               }),
               steps: getSteps(),
+            ),
             )),
       ),
     );
@@ -1035,7 +1046,7 @@ class _FrmObpState extends State<FrmObp> {
                   value: (index, item) => item['value'],
                   title: (index, item) => item['title']),
               //choiceGrouped: true,
-              modalType: S2ModalType.popupDialog,
+              modalType: S2ModalType.bottomSheet,
               modalFilter: true,
               modalFilterAuto: true,
             ),
@@ -1055,7 +1066,8 @@ class _FrmObpState extends State<FrmObp> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(70, 30),
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: primaryOrange,
+                        foregroundColor: Colors.white,
                         // shape: new RoundedRectangleBorder(
                         //   borderRadius: new BorderRadius.circular(30.0),
                         // ),
@@ -1084,7 +1096,8 @@ class _FrmObpState extends State<FrmObp> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(70, 30),
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: primaryOrange,
+                        foregroundColor: Colors.white,
                         // shape: new RoundedRectangleBorder(
                         //   borderRadius: new BorderRadius.circular(30.0),
                         // ),
@@ -1109,7 +1122,7 @@ class _FrmObpState extends State<FrmObp> {
                   value: (index, item) => item['id'],
                   title: (index, item) => item['text']),
               //choiceGrouped: true,
-              modalType: S2ModalType.popupDialog,
+              modalType: S2ModalType.bottomSheet,
               modalFilter: true,
               modalFilterAuto: true,
             ),
@@ -1124,7 +1137,7 @@ class _FrmObpState extends State<FrmObp> {
                   value: (index, item) => item['value'],
                   title: (index, item) => item['title']),
               //choiceGrouped: true,
-              modalType: S2ModalType.popupDialog,
+              modalType: S2ModalType.bottomSheet,
               modalFilter: true,
               modalFilterAuto: true,
             ),
@@ -1139,7 +1152,7 @@ class _FrmObpState extends State<FrmObp> {
                   value: (index, item) => item['value'],
                   title: (index, item) => item['title']),
               //choiceGrouped: true,
-              modalType: S2ModalType.popupDialog,
+              modalType: S2ModalType.bottomSheet,
               modalFilter: true,
               modalFilterAuto: true,
             ),
@@ -1165,7 +1178,7 @@ class _FrmObpState extends State<FrmObp> {
                   value: (index, item) => item['id'],
                   title: (index, item) => item['text']),
               //choiceGrouped: true,
-              modalType: S2ModalType.popupDialog,
+                modalType: S2ModalType.bottomSheet,
               modalFilter: true,
               modalFilterAuto: true,
             ),
@@ -1185,7 +1198,8 @@ class _FrmObpState extends State<FrmObp> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(70, 30),
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: primaryOrange,
+                        foregroundColor: Colors.white,
                         // shape: new RoundedRectangleBorder(
                         //   borderRadius: new BorderRadius.circular(30.0),
                         // ),
@@ -1252,7 +1266,8 @@ class _FrmObpState extends State<FrmObp> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(70, 30),
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: primaryOrange,
+                        foregroundColor: Colors.white,
                         // shape: new RoundedRectangleBorder(
                         //   borderRadius: new BorderRadius.circular(30.0),
                         // ),
@@ -1300,7 +1315,8 @@ class _FrmObpState extends State<FrmObp> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(70, 30),
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: primaryOrange,
+                        foregroundColor: Colors.white,
                       ),
                       child: Text("+ Add"),
                       onPressed: () {
@@ -1333,7 +1349,8 @@ class _FrmObpState extends State<FrmObp> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(70, 30),
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: primaryOrange,
+                        foregroundColor: Colors.white,
                       ),
                       child: Text("Detail"),
                       onPressed: () {
@@ -1356,7 +1373,7 @@ class _FrmObpState extends State<FrmObp> {
                   list_cost = [];
                 },
                 style: TextButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: primaryOrange,
                     foregroundColor: Colors.white),
                 child: Text('Reset'),
               ),

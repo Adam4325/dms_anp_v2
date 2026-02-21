@@ -41,9 +41,10 @@ class _ViewListStoringState extends State<ViewListStoring> {
         key: globalScaffoldKey,
         backgroundColor: Colors.white,
         appBar: AppBar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: Colors.deepOrangeAccent,
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
+              color: Colors.white,
               iconSize: 20.0,
               onPressed: () {
                 _goBack(context);
@@ -52,7 +53,7 @@ class _ViewListStoringState extends State<ViewListStoring> {
             //backgroundColor: Colors.transparent,
             //elevation: 0.0,
             centerTitle: true,
-            title: Text('List Storing')),
+            title: Text('List Storing',style: TextStyle(color: Colors.white))),
         body: new Container(
           key: globalScaffoldKey2,
           margin: const EdgeInsets.only(top: 5.0),
@@ -242,7 +243,7 @@ class _ViewListStoringState extends State<ViewListStoring> {
                     color: Colors.white,
                     size: 24.0,
                   ),
-                  label: Text("View Maps"),
+                  label: Text("View Maps",style: TextStyle(color:Colors.white)),
                   onPressed: () async {
                     print(value['latlon']);
                     var arrData = value['latlon'].toString().split(",");
@@ -306,7 +307,7 @@ class _ViewListStoringState extends State<ViewListStoring> {
                     color: Colors.white,
                     size: 24.0,
                   ),
-                  label: Text("Proses"),
+                  label: Text("Proses",style: TextStyle(color:Colors.white)),
                   onPressed: () async {
                     print(value['latlon']);
                     var reqnbr = value['reqnbr'].toString();
@@ -357,7 +358,7 @@ class _ViewListStoringState extends State<ViewListStoring> {
                     color: Colors.white,
                     size: 24.0,
                   ),
-                  label: Text("Cancel"),
+                  label: Text("Cancel",style: TextStyle(color:Colors.white)),
                   onPressed: () async {
                     print(value['latlon']);
                     var reqnbr = value['reqnbr'].toString();

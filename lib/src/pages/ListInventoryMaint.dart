@@ -15,13 +15,15 @@ import 'package:dms_anp/src/widgets/simple_paginator.dart';
 
 
 class ListInventoryMaint extends StatefulWidget {
-  final String widget_wodnumber;
+  final String widget_wo_number;
+  final String widget_number;
   final String widget_inv_trx_type;
   final String widget_from_ware_house;
   final String widget_formen;
   const ListInventoryMaint(
       {Key? key,
-        required this.widget_wodnumber,
+        required this.widget_wo_number,
+        required this.widget_number,
         required this.widget_inv_trx_type,
         required this.widget_from_ware_house,
         required this.widget_formen})
@@ -173,7 +175,7 @@ class _ListInventoryMaintState extends State<ListInventoryMaint> {
   }
 
   Future<DriverDataModel> sendDriverDataRequest(int page) async {
-    var number = widget.widget_wodnumber;
+    var number = widget.widget_wo_number;
     var type = widget.widget_inv_trx_type;
     var from = widget.widget_from_ware_house;
     try {
@@ -210,6 +212,7 @@ class _ListInventoryMaintState extends State<ListInventoryMaint> {
           ? ""
           : value['partname'];
       list.add({
+        "wonumber": value['wonumber'],
         "ititemid": ititemid,
         "partname": partname,
         "idqty": value['idqty'],
@@ -273,6 +276,8 @@ class _ListInventoryMaintState extends State<ListInventoryMaint> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text("Wo.Number: ${value['wonumber']}",
+                        style: TextStyle(color: Colors.black87)),
                     Text("INV.Number: ${value['itdinvtrannbr']}",
                         style: TextStyle(color: Colors.black87)),
                     Text("Partname: ${value['partname']}",
@@ -325,12 +330,14 @@ class _ListInventoryMaintState extends State<ListInventoryMaint> {
                       globals.inv_itdlinenbr = value['itdlinenbr'];
                       globals.inv_method = "edit";
                       //widget.widget_wodnumber
+                      print(value);
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                             builder: (context) => FrmInventoryMaint(
-                                  widget_wodnumber: widget.widget_wodnumber,
+                                  wo_number: value['wonumber']!,
                                   widget_formen: widget.widget_formen,
+                                  itdinvtrannbr: value['itdinvtrannbr']!
                                 )),
                       );
                     },

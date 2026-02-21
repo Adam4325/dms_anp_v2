@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:dms_anp/src/pages/inventory/ListInventoryDetail.dart';
-import 'package:dms_anp/src/pages/inventory/ListInventoryTrans.dart';
 import 'package:dms_anp/src/pages/inventory/ListInventoryTransNew.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
@@ -11,12 +10,12 @@ import 'package:progress_dialog_null_safe/progress_dialog_null_safe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-// import 'package:qrscan/qrscan.dart' as scanner; // TODO: Migrate to mobile_scanner
-import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:dms_anp/src/Helper/scanner_helper.dart';
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:awesome_select/awesome_select.dart';
 
 import '../../flusbar.dart';
+
 
 class FrmInventory extends StatefulWidget {
   final String invTrxStatusBarang;
@@ -94,8 +93,38 @@ class _FrmInventoryState extends State<FrmInventory> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
+    return Scaffold(
+      key: globalScaffoldKey,
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: primaryOrange,
+        elevation: 3.0,
+        shadowColor: shadowColor,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            _goBack(context);
+          },
+        ),
+        centerTitle: true,
+        title: Text(
+          'Form Input Inventory',
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+      ),
+      body: Container(
+        constraints: BoxConstraints.expand(),
+        color: HexColor("#f0eff4"),
+        child: Stack(
+          children: <Widget>[
+            ImgHeader1(context),
+            ImgHeader2(context),
+            BuildHeader(context),
+            _getContent(context),
+          ],
+        ),
+      ),
+    );
   }
 
   void reseTeks() {
@@ -514,12 +543,38 @@ class _FrmInventoryState extends State<FrmInventory> {
   }
 
   Future scanQRCode() async {
-    // TODO: Migrate to mobile_scanner API
-    final ctx = globalScaffoldKey.currentContext;
-    if (ctx != null) {
-      alert(ctx, 2, "Fitur scan QR perlu migrasi ke mobile_scanner", "warning");
+    if (!mounted) return;
+
+    final String? scanResult = await openQrScanner(context);
+
+    if (scanResult == null || scanResult.isEmpty) {
+      if (mounted) {
+        final ctx = globalScaffoldKey.currentContext ?? context;
+        alert(ctx, 0, "Scan Item ID gagal!", "error");
+      }
+      return;
+    }
+
+    setState(() {
+      this.scanResult = scanResult;
+      txtItemID.text = scanResult;
+    });
+
+    // Jika scan berhasil, ambil data item
+    if (scanResult.isNotEmpty) {
+      var itemID = scanResult;
+      if (itemID != null && itemID != '') {
+        var url =
+            "${BASE_URL}api/inventory/list_item_barcode_mobile.jsp?method=list-items-v1&trx_type=${type_transaction}&warehouseid=${globals.from_ware_house}&towarehouseid=${globals.inv_towarehouse}&vendor=${globals.inv_vendorid}&search=$itemID&is_barcode=1";
+        print(url);
+        getItemBarcode(url, itemID);
+      } else {
+        final ctx = globalScaffoldKey.currentContext ?? context;
+        alert(ctx, 0, "Item ID kosong", "error");
+      }
     }
   }
+
 
   Future scanQRCodeDev() async {
     //TEST
@@ -603,28 +658,28 @@ class _FrmInventoryState extends State<FrmInventory> {
     // }else{
     //
     // }
-    txtInvNumber.text = globals.inv_trx_number!;
-    txtItemID.text = globals.inv_ititemid!;
-    txtPartName.text = globals.inv_partname!;
+    txtInvNumber.text = globals.inv_trx_number ?? '';
+    txtItemID.text = globals.inv_ititemid ?? '';
+    txtPartName.text = globals.inv_partname ?? '';
     if (globals.inv_method == "edit") {
-      txtQuantity.text = globals.inv_idqty!;
+      txtQuantity.text = globals.inv_idqty ?? '0';
     } else {
       txtQuantity.text = "0";
     }
 
-    selUomID = globals.inv_uomid!;
-    txtUnitCost.text = globals.inv_itdunitcost!;
-    txtExtendedCost.text = globals.inv_idtextcost!;
+    selUomID = globals.inv_uomid ?? '';
+    txtUnitCost.text = globals.inv_itdunitcost ?? '0';
+    txtExtendedCost.text = globals.inv_idtextcost ?? '0';
     //globals.inv_itdinvtrannbr;
-    txtType.text = globals.inv_idtype!;
-    txtTypeAccess.text = globals.inv_idaccess!;
-    txtMerk.text = globals.inv_merk!;
-    txtSnTyre.text = globals.inv_sntyre!;
-    txtGenuineNo.text = globals.inv_genuine_no!;
-    txtVHTID.text = globals.inv_vhtid!;
+    txtType.text = globals.inv_idtype ?? '';
+    txtTypeAccess.text = globals.inv_idaccess ?? '';
+    txtMerk.text = globals.inv_merk ?? '';
+    txtSnTyre.text = globals.inv_sntyre ?? '';
+    txtGenuineNo.text = globals.inv_genuine_no ?? '';
+    txtVHTID.text = globals.inv_vhtid ?? '';
     getListUomId();
     print('widget.invTrxStatusBarang');
-    print(widget.invTrxStatusBarang);
+    print(widget.invTrxStatusBarang);//
     print('widget');
     if (EasyLoading.isShow) {
       EasyLoading.dismiss();
@@ -933,7 +988,7 @@ class _FrmInventoryState extends State<FrmInventory> {
             color: Colors.white,
             size: 15.0,
           ),
-          label: Text("Add"),
+          label: Text("Add",style: TextStyle(color: Colors.white)),
           onPressed: () async {
             setState(() {
               globals.inv_method = "";
@@ -1323,81 +1378,73 @@ class _FrmInventoryState extends State<FrmInventory> {
                               content:
                                   new Text("View Opname/ Item By Scan Code"),
                               actions: <Widget>[
-                                new ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.search,
-                                    color: Colors.white,
-                                    size: 24.0,
-                                  ),
-                                  label: Text("View Opname"),
-                                  onPressed: () async {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .pop();
-                                    getListDataItem(
-                                        globals.inv_trx_type!,
-                                        globals.inv_wonumber!,
-                                        globals.inv_trx_number!,
-                                        globals.from_ware_house!);
-                                    await Future.delayed(
-                                        Duration(milliseconds: 1));
-                                    if (dataListItemSearch.length > 0) {
-                                      print(
-                                          'dataListItemSearch ${dataListItemSearch.length}');
-                                      //Timer(Duration(seconds: 1), () {
-                                      print('Show dialog');
-                                      showDialog(
-                                          context:
-                                              globalScaffoldKey.currentContext!,
-                                          //barrierDismissible: false,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title: Text('List Detail Item'),
-                                              content:
-                                                  listDataSearchItem(context),
-                                            );
-                                          });
-                                      //});
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 2.0,
-                                      backgroundColor:
-                                          accentOrange, // ✅ Accent orange for View Opname
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.search,
+                                          color: Colors.white,
+                                          size: 24.0,
+                                        ),
+                                        label: Text("View Opname",style: TextStyle(color:Colors.white)),
+                                        onPressed: () async {
+                                          Navigator.of(context, rootNavigator: true).pop();
+                                          getListDataItem(
+                                              globals.inv_trx_type!,
+                                              globals.inv_wonumber!,
+                                              globals.inv_trx_number!,
+                                              globals.from_ware_house!);
+                                          await Future.delayed(Duration(milliseconds: 1));
+                                          if (dataListItemSearch.length > 0) {
+                                            print('dataListItemSearch ${dataListItemSearch.length}');
+                                            print('Show dialog');
+                                            showDialog(
+                                                context: globalScaffoldKey.currentContext!,
+                                                builder: (BuildContext context) {
+                                                  return AlertDialog(
+                                                    title: Text('List Detail Item'),
+                                                    content: listDataSearchItem(context),
+                                                  );
+                                                });
+                                          }
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            elevation: 2.0,
+                                            backgroundColor: accentOrange,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                            textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
                                       ),
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 6),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600)),
-                                ),
-                                new SizedBox(width: 5),
-                                new ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.qr_code_scanner,
-                                    color: Colors.white,
-                                    size: 24.0,
-                                  ),
-                                  label: Text("Scan Code"),
-                                  onPressed: () async {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .pop();
-                                    scanQRCode();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 2.0,
-                                      backgroundColor:
-                                          primaryOrange, // ✅ Orange for Scan Code
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.qr_code_scanner,
+                                          color: Colors.white,
+                                          size: 24.0,
+                                        ),
+                                        label: Text("Scan Barcode",style: TextStyle(color:Colors.white)),
+                                        onPressed: () async {
+                                          Navigator.of(context, rootNavigator: true).pop();//
+                                          scanQRCode();
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            elevation: 2.0,
+                                            backgroundColor: primaryOrange,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                            textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
                                       ),
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 6),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600)),
-                                ),
+                                    ),
+                                  ],
+                                )
                               ],
                             ),
                           );

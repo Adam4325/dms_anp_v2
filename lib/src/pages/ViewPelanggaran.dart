@@ -22,17 +22,19 @@ final globalScaffoldKey = GlobalKey<ScaffoldState>();
 class _ViewListPelanggaranState extends State<ViewListPelanggaran> {
   final formatCurrency = new NumberFormat.simpleCurrency(locale: 'id_ID');
   late SharedPreferences prefs;
-  late List data;
+  List data = [];
   String status_code = "";
   String message = "";
-  late int month;
-  late int year;
+  int month = DateTime.now().month;
+  int year = DateTime.now().year;
   final monthNow = new DateTime.now().month;
   final yearNow = new DateTime.now().year;
   int yearLast = 0;
   String? selectedValues;
   String? _chosenValue;
   ProgressDialog? pr;
+  final Color primaryOrange = const Color(0xFFFF8A50);
+  final Color lightCream = const Color(0xFFFFFCF8);
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +48,7 @@ class _ViewListPelanggaranState extends State<ViewListPelanggaran> {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: Colors.deepOrange,
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               iconSize: 20.0,
@@ -97,11 +99,10 @@ class _ViewListPelanggaranState extends State<ViewListPelanggaran> {
       String drvid = prefs.getString("drvid")!;
       String drvids = "3188-10.2017.23.01.94";
       //4865.12.2019.10.03.65
-      if (month == null) {
+      if (month <= 0) {
         month = monthNow;
       }
-
-      if (year == null) {
+      if (year <= 0) {
         year = yearNow;
       }
       Uri myUri = Uri.parse(
@@ -155,19 +156,18 @@ class _ViewListPelanggaranState extends State<ViewListPelanggaran> {
   Widget _buildFormSearch(BuildContext context) {
     return new Container(
         margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
-        height: 170.0,
         decoration: new BoxDecoration(
-            border: Border.all(color: Colors.blueAccent),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [const Color(0xfffdfcfc), const Color(0xfffdfcfc)],
-            ),
+            border: Border.all(color: primaryOrange),
+            color: lightCream,
             borderRadius: new BorderRadius.all(new Radius.circular(15.0))),
-        child: new Column(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+              top: 10.0, left: 10.0, right: 10.0, bottom: 10.0),
+          child: new Column(
+            mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             new Container(
-              padding: EdgeInsets.only(left: 10.0, right: 10.0, top: 10.0),
+              padding: EdgeInsets.only(left: 0.0, right: 0.0, top: 0.0),
               child: new Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
@@ -261,13 +261,12 @@ class _ViewListPelanggaranState extends State<ViewListPelanggaran> {
                   ButtonBar(
                     children: <Widget>[
                       FloatingActionButton.extended(
-                        backgroundColor:
-                        Colors.blueAccent, //const Color(Colors.blue),
+                        backgroundColor: primaryOrange,
                         foregroundColor: Colors.white,
                         onPressed: () async {
                           try{
 
-                            if(month==null || month==0){
+                            if(month==0){
                               alert(globalScaffoldKey.currentContext!,0,'Bulan belum dipilih','error');
                             }else{
                               getDataPelanggaran();
@@ -284,7 +283,7 @@ class _ViewListPelanggaranState extends State<ViewListPelanggaran> {
                   ),
                 ]))
           ],
-        ));
+        )));
   }
 
   Widget _buildPelanggaran(dynamic item, int index) {
@@ -292,11 +291,11 @@ class _ViewListPelanggaranState extends State<ViewListPelanggaran> {
         margin: const EdgeInsets.only(bottom: 20.0),
         height: 100.0,
         decoration: new BoxDecoration(
-            border: Border.all(color: Colors.blueAccent),
+            border: Border.all(color: primaryOrange),
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [const Color(0xfffdfcfc), const Color(0xfffdfcfc)],
+              colors: [lightCream, lightCream],
             ),
             borderRadius: new BorderRadius.all(new Radius.circular(15.0))),
         child: new Column(
@@ -307,7 +306,7 @@ class _ViewListPelanggaranState extends State<ViewListPelanggaran> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.blueAccent, Colors.blue],
+                    colors: [primaryOrange, const Color(0xFFFFB085)],
                   ),
                   borderRadius: new BorderRadius.only(
                       topLeft: new Radius.circular(15.0),

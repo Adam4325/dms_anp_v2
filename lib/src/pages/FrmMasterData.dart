@@ -225,8 +225,10 @@ class _FrmMasterDataState extends State<FrmMasterData>
       }
     } catch (e) {
       if (mounted) {
-        alert(globalScaffoldKey.currentContext!, 0,
-            "Gagal load data customer: $e", "error");
+        final ctx = globalScaffoldKey.currentContext;
+        if (ctx != null) {
+          alert(ctx, 0, "Gagal load data customer: $e", "error");
+        }
       }
       setState(() => _listCustomer = []);
     } finally {

@@ -12,16 +12,20 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 //import 'package:qrscan/qrscan.dart' as scanner;
 import 'package:mobile_scanner/mobile_scanner.dart' as scanner;
+import 'package:dms_anp/src/Helper/scanner_helper.dart';
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:awesome_select/awesome_select.dart';
 
 import '../flusbar.dart';
 
+
+
 class FrmInventoryMaint extends StatefulWidget {
-  final String widget_wodnumber;
+  final String wo_number;
   final String widget_formen;
+  final String itdinvtrannbr;
   const FrmInventoryMaint(
-      {Key? key, required this.widget_wodnumber, required this.widget_formen})
+      {Key? key, required this.wo_number,required this.widget_formen, required this.itdinvtrannbr})
       : super(key: key);
 
   @override
@@ -80,7 +84,6 @@ class _FrmInventoryMaintState extends State<FrmInventoryMaint> {
     if (s == null) return false;
     return double.tryParse(s) != null;
   }
-
 
   void reseTeks() {
     setState(() {
@@ -255,7 +258,8 @@ class _FrmInventoryMaintState extends State<FrmInventoryMaint> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => ListInventoryMaint(
-                                    widget_wodnumber: widget.widget_wodnumber,
+                                    widget_wo_number: widget.wo_number,
+                                    widget_number: widget.itdinvtrannbr,
                                     widget_inv_trx_type: "-",
                                     widget_from_ware_house: '',
                                     widget_formen: '')));
@@ -451,7 +455,41 @@ class _FrmInventoryMaintState extends State<FrmInventoryMaint> {
     }
   }
 
-  Future<void> scanQRCode(String code) async {
+  Future scanQRCode() async {
+    if (!mounted) return;
+
+    final String? scanResult = await openQrScanner(context);
+
+    if (scanResult == null || scanResult.isEmpty) {
+      if (mounted) {
+        alert(scafoldGlobal.currentContext!!, 0, "Scan Item ID gagal!", "error");
+      }
+      return;
+    }
+
+    setState(() {
+      this.scanResult = scanResult;
+      txtItemID.text = scanResult;
+    });
+
+    // Jika scan berhasil, ambil data item
+    if (scanResult.isNotEmpty) {
+      var itemID = scanResult;
+      var url = "${BASE_URL}api/inventory/list_item_barcode_mobile.jsp"
+          "?method=list-items-v1"
+          "&trx_type=$type_transaction"
+          "&warehouseid=${globals.from_ware_house}"
+          "&towarehouseid=${globals.inv_towarehouse}"
+          "&vendor=${globals.inv_vendorid}"
+          "&search=$itemID"
+          "&is_barcode=1";
+
+      print(url);
+      getItemBarcode(url, itemID);
+    }
+  }
+
+  Future<void> scanQRCodeOLD(String code) async {
     setState(() {
       scanResult = code;
     });
@@ -477,28 +515,6 @@ class _FrmInventoryMaintState extends State<FrmInventoryMaint> {
     }
   }
 
-  // Future scanQRCode() async {
-  //   String cameraScanResult = await scanner;
-  //   setState(() {
-  //     scanResult = cameraScanResult;
-  //     print("scanResult : $scanResult");
-  //     if (scanResult != null) {
-  //       var itemID = scanResult;
-  //       if (itemID != null && itemID != '') {
-  //         var url =
-  //             "${BASE_URL}api/inventory/list_item_barcode_mobile.jsp?method=list-items-v1&trx_type=${type_transaction}&warehouseid=${globals.from_ware_house}&towarehouseid=${globals.inv_towarehouse}&vendor=${globals.inv_vendorid}&search=$itemID&is_barcode=1";
-  //         print(url);
-  //         getItemBarcode(url, itemID);
-  //       } else {
-  //         alert(globalScaffoldKey.currentContext!, 0, "Item ID kosong", "error");
-  //       }
-  //
-  //       // var url =
-  //       //     "http://apps.tuluatas.com:8085/cemindo/api/inventory/list_item_barcode_mobile.jsp?method=list-items-v1&warehouseid=GU-05 KRG&search=8886008101053&is_barcode=1";
-  //       // getItemBarcode(url, '8886008101053'); FOR DEVELOPMENT
-  //     }
-  //   });
-  // }
 
   Future scanQRCodeDev() async {
     //TEST
@@ -577,7 +593,7 @@ class _FrmInventoryMaintState extends State<FrmInventoryMaint> {
     // }else{
     //
     // }
-    txtInvNumber.text = widget.widget_wodnumber;
+    txtInvNumber.text = widget.itdinvtrannbr;
     txtItemID.text = globals.inv_ititemid!;
     txtPartName.text = globals.inv_partname!;
     txtQuantity.text = "1"; //globals.inv_idqty;
@@ -594,7 +610,7 @@ class _FrmInventoryMaintState extends State<FrmInventoryMaint> {
     txtRealQtyBekas.text = "0";
     getListUomId();
     print("widget.widget_wodnumber");
-    print(widget.widget_wodnumber);
+    print(widget.itdinvtrannbr);
     if (EasyLoading.isShow) {
       EasyLoading.dismiss();
     }
@@ -608,12 +624,13 @@ class _FrmInventoryMaintState extends State<FrmInventoryMaint> {
 
   _goBack(BuildContext context) {
     if (widget.widget_formen != null && widget.widget_formen == "true") {
-      print(widget.widget_wodnumber);
+      print(widget.itdinvtrannbr);
       Navigator.pushReplacement(
           context,
           MaterialPageRoute(
               builder: (context) => ListInventoryMaint(
-                    widget_wodnumber: widget.widget_wodnumber,
+                widget_wo_number: widget.wo_number,
+                    widget_number: widget.itdinvtrannbr,
                     widget_inv_trx_type: "-",
                     widget_from_ware_house: '',
                     widget_formen: widget.widget_formen,
@@ -629,7 +646,8 @@ class _FrmInventoryMaintState extends State<FrmInventoryMaint> {
           context,
           MaterialPageRoute(
               builder: (context) => ListInventoryMaint(
-                  widget_wodnumber: widget.widget_wodnumber,
+                  widget_wo_number: widget.wo_number,
+                  widget_number: widget.itdinvtrannbr,
                   widget_inv_trx_type: "-",
                   widget_from_ware_house: '',
                   widget_formen: '')));
@@ -1314,37 +1332,51 @@ class _FrmInventoryMaintState extends State<FrmInventoryMaint> {
                   buildTextField(
                     labelText: 'Item ID',
                     controller: txtItemID,
-                    readOnly: true, onTap: (String p1) {  }, onChanged: (String p1) {  },
+                    readOnly: true,
+                    onTap: (String p1) {},
+                    onChanged: (String p1) {},
                   ),
                   buildTextField(
                     labelText: 'Part Name',
                     controller: txtPartName,
-                    readOnly: true, onTap: (String p1) {  }, onChanged: (String p1) {  },
+                    readOnly: true,
+                    onTap: (String p1) {},
+                    onChanged: (String p1) {},
                   ),
                   buildTextField(
                     labelText: 'Merk',
                     controller: txtMerk,
-                    readOnly: true, onTap: (String p1) {  }, onChanged: (String p1) {  },
+                    readOnly: true,
+                    onTap: (String p1) {},
+                    onChanged: (String p1) {},
                   ),
                   buildTextField(
                     labelText: 'Type',
                     controller: txtType,
-                    readOnly: true, onTap: (String p1) {  }, onChanged: (String p1) {  },
+                    readOnly: true,
+                    onTap: (String p1) {},
+                    onChanged: (String p1) {},
                   ),
                   buildTextField(
                     labelText: 'Genuine No',
                     controller: txtGenuineNo,
-                    readOnly: true, onTap: (String p1) {  }, onChanged: (String p1) {  },
+                    readOnly: true,
+                    onTap: (String p1) {},
+                    onChanged: (String p1) {},
                   ),
                   buildTextField(
                     labelText: 'VHTID',
                     controller: txtVHTID,
-                    readOnly: true, onTap: (String p1) {  }, onChanged: (String p1) {  },
+                    readOnly: true,
+                    onTap: (String p1) {},
+                    onChanged: (String p1) {},
                   ),
                   buildTextField(
                     labelText: 'Type Access',
                     controller: txtTypeAccess,
-                    readOnly: true, onTap: (String p1) {  }, onChanged: (String p1) {  },
+                    readOnly: true,
+                    onTap: (String p1) {},
+                    onChanged: (String p1) {},
                   ),
                   // Container(
                   //   margin: EdgeInsets.only(
@@ -1354,18 +1386,24 @@ class _FrmInventoryMaintState extends State<FrmInventoryMaint> {
                   buildTextField(
                     labelText: 'UOMID',
                     controller: txtUomID,
-                    readOnly: true, onTap: (String p1) {  }, onChanged: (String p1) {  },
+                    readOnly: true,
+                    onTap: (String p1) {},
+                    onChanged: (String p1) {},
                   ),
                   buildTextField(
                     labelText: 'SN Tyre (No Stampl Ban)',
                     controller: txtSnTyre,
-                    readOnly: true, onTap: (String p1) {  }, onChanged: (String p1) {  },
+                    readOnly: true,
+                    onTap: (String p1) {},
+                    onChanged: (String p1) {},
                   ),
                   buildTextField(
                     labelText: 'Quantity',
                     controller: txtQuantity,
                     keyboardType: TextInputType.number,
-                    readOnly: true, onTap: (String p1) {  }, onChanged: (String p1) {  },
+                    readOnly: true,
+                    onTap: (String p1) {},
+                    onChanged: (String p1) {},
                   ),
                   Container(
                     margin: EdgeInsets.all(12.0),
@@ -1433,7 +1471,9 @@ class _FrmInventoryMaintState extends State<FrmInventoryMaint> {
                     labelText: 'Quantity Barang Bekas',
                     controller: txtRealQtyBekas,
                     keyboardType: TextInputType.number,
-                    readOnly: false, onTap: (String p1) {  }, onChanged: (String p1) {  },
+                    readOnly: false,
+                    onTap: (String p1) {},
+                    onChanged: (String p1) {},
                   ),
                   SizedBox(height: 50),
                   Container(
@@ -1520,19 +1560,18 @@ class ItemInventoryModel {
   String item_id2;
 
   ItemInventoryModel(
-      {
-        required this.item_id,
-        required this.quantity,
-        required this.cost,
-        required this.uom_id,
-        required this.merk,
-        required this.type,
-        required this.accessories,
-        required this.part_name,
-        required this.genuine_no,
-        required this.ware_house,
-        required this.itemdesc,
-        required this.item_id2});
+      {required this.item_id,
+      required this.quantity,
+      required this.cost,
+      required this.uom_id,
+      required this.merk,
+      required this.type,
+      required this.accessories,
+      required this.part_name,
+      required this.genuine_no,
+      required this.ware_house,
+      required this.itemdesc,
+      required this.item_id2});
   factory ItemInventoryModel.fromJson(Map<dynamic, dynamic> parsedJson) {
     return ItemInventoryModel(
       item_id: parsedJson['item_id'] as String,

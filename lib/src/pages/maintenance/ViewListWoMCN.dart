@@ -59,7 +59,7 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
       Uri myUri = Uri.parse(encoded);
       print(myUri);
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
       setState(() {
         print(json.decode(response.body));
         var responseData = json.decode(response.body);
@@ -112,7 +112,7 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
       Uri myUri = Uri.parse(encoded);
       print(myUri);
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
       setState(() {
         print(json.decode(response.body));
         var responseData = json.decode(response.body);
@@ -165,7 +165,7 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
     Uri myUri = Uri.parse(url);
     print(myUri.toString());
     var response =
-    await http.get(myUri, headers: {"Accept": "application/json"});
+        await http.get(myUri, headers: {"Accept": "application/json"});
 
     setState(() {
       // Get the JSON data
@@ -201,7 +201,7 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
     Uri myUri = Uri.parse(url);
     print(myUri.toString());
     var response =
-    await http.get(myUri, headers: {"Accept": "application/json"});
+        await http.get(myUri, headers: {"Accept": "application/json"});
 
     setState(() {
       // Get the JSON data
@@ -217,12 +217,14 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
             context: context,
             builder: (context) => AlertDialog(
               backgroundColor: Theme.of(context).colorScheme.onPrimary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               title: Row(
                 children: [
                   Icon(Icons.info_outline, color: Colors.orange.shade600),
                   SizedBox(width: 8),
-                  Text('Information', style: TextStyle(color: Colors.orange.shade800)),
+                  Text('Information',
+                      style: TextStyle(color: Colors.orange.shade800)),
                 ],
               ),
               content: Text("Start Worked Order " + wonumber + "?"),
@@ -241,9 +243,12 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                       elevation: 2.0,
                       backgroundColor: Colors.grey.shade600,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      textStyle:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 ),
                 ElevatedButton.icon(
                   icon: Icon(
@@ -254,7 +259,7 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                   label: Text("Yes"),
                   onPressed: () async {
                     SharedPreferences prefs =
-                    await SharedPreferences.getInstance();
+                        await SharedPreferences.getInstance();
 
                     String _loginname = prefs.getString("loginname") ?? "";
                     String _mechanicid = prefs.getString("mechanicid") ?? "";
@@ -275,8 +280,10 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                     } else {
                       var saved = await startWO(
                           _wodwonbr, _loginname, _userid, _mechanicid);
-                      prefs.setString("wodwonbr", value["wodwonbr"]?.toString() ?? "");
-                      prefs.setString("wodwonbr_vhcid", value["vhcid"]?.toString() ?? "");
+                      prefs.setString(
+                          "wodwonbr", value["wodwonbr"]?.toString() ?? "");
+                      prefs.setString(
+                          "wodwonbr_vhcid", value["vhcid"]?.toString() ?? "");
                       print('saved');
                       if (saved == true) {
                         Navigator.pushReplacement(
@@ -290,9 +297,12 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                       elevation: 2.0,
                       backgroundColor: Colors.orange.shade600,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      textStyle:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
@@ -337,8 +347,8 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => ViewDashboard()));
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => ViewDashboard()));
         }
       },
       child: Scaffold(
@@ -368,9 +378,7 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
               constraints: BoxConstraints.expand(),
               color: Theme.of(builderContext).colorScheme.onPrimary,
               child: Stack(
-                children: <Widget>[
-                  _buildListView(builderContext)
-                ],
+                children: <Widget>[_buildListView(builderContext)],
               ),
             );
           },
@@ -418,12 +426,12 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         setState(() {
           listGeofence = [];
           listGeofence = (jsonDecode(response.body) as List)
-          //.map((dynamic e) => e as Map<String, dynamic>)
+              //.map((dynamic e) => e as Map<String, dynamic>)
               .toList();
         });
       } else {
@@ -457,7 +465,8 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
           var a = listGeofence[i];
           var radius = double.parse(a['radius'].toString() ?? "0");
           var distanceBetweenPoints = SphericalUtil.computeDistanceBetween(
-              LatLng(double.parse(a['lat']?.toString() ?? "0"), double.parse(a['lon']?.toString() ?? "0")),
+              LatLng(double.parse(a['lat']?.toString() ?? "0"),
+                  double.parse(a['lon']?.toString() ?? "0")),
               LatLng(userLocation!.latitude, userLocation!.longitude));
           //print('distanceBetweenPoints ${distanceBetweenPoints} meter ${distanceBetweenPoints / 1000} KM');
           //if (distanceBetweenPoints >= radius) {
@@ -597,7 +606,10 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   Text("WOD WONUMBER : ${item['wodwonbr'].toString() ?? '-'}",
-                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
@@ -614,32 +626,39 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                             maxLines: 1,
                             softWrap: false,
                             style:
-                            TextStyle(color: Colors.black87, fontSize: 13)),
-                        Text("WOD REQ NUMBER : ${item['wodsvcrreqnbr']?.toString() ?? '-'}",
+                                TextStyle(color: Colors.black87, fontSize: 13)),
+                        Text(
+                            "WOD REQ NUMBER : ${item['wodsvcrreqnbr']?.toString() ?? '-'}",
                             style:
-                            TextStyle(color: Colors.black87, fontSize: 13)),
-                        Text("WORKED BY : ${item['wodworkeddby']?.toString() ?? '-'}",
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                            softWrap: false,
-                            style:
-                            TextStyle(color: Colors.black87, fontSize: 13)),
-                        Text("WOD START TIME : ${item['wodstartdatetime']?.toString() ?? '-'}",
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: TextStyle(color: Colors.orange.shade700, fontSize: 12)),
-                        Text("WOD END TIME : ${item['wodenddatetime']?.toString() ?? '-'}",
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: TextStyle(color: Colors.orange.shade700, fontSize: 12)),
-                        Text("WOD NOTES : ${item['wodnotes']?.toString() ?? '-'}",
+                                TextStyle(color: Colors.black87, fontSize: 13)),
+                        Text(
+                            "WORKED BY : ${item['wodworkeddby']?.toString() ?? '-'}",
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             softWrap: false,
                             style:
-                            TextStyle(color: Colors.black87, fontSize: 12)),
+                                TextStyle(color: Colors.black87, fontSize: 13)),
+                        Text(
+                            "WOD START TIME : ${item['wodstartdatetime']?.toString() ?? '-'}",
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                                color: Colors.orange.shade700, fontSize: 12)),
+                        Text(
+                            "WOD END TIME : ${item['wodenddatetime']?.toString() ?? '-'}",
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                                color: Colors.orange.shade700, fontSize: 12)),
+                        Text(
+                            "WOD NOTES : ${item['wodnotes']?.toString() ?? '-'}",
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            softWrap: false,
+                            style:
+                                TextStyle(color: Colors.black87, fontSize: 12)),
                       ]),
                 ],
               ),
@@ -652,117 +671,133 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                 children: <Widget>[
                   Expanded(
                       child: ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.details,
-                          color: Colors.white,
-                          size: 15.0,
-                        ),
-                        label: Text("Start WO"),
-                        onPressed: () async {
-                          //START
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              title: Row(
-                                children: [
-                                  Icon(Icons.info_outline, color: Colors.orange.shade600),
-                                  SizedBox(width: 8),
-                                  Text('Information', style: TextStyle(color: Colors.orange.shade800)),
-                                ],
+                    icon: Icon(
+                      Icons.details,
+                      color: Colors.white,
+                      size: 15.0,
+                    ),
+                    label: Text("Start WO"),
+                    onPressed: () async {
+                      //START
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.onPrimary,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                          title: Row(
+                            children: [
+                              Icon(Icons.info_outline,
+                                  color: Colors.orange.shade600),
+                              SizedBox(width: 8),
+                              Text('Information',
+                                  style:
+                                      TextStyle(color: Colors.orange.shade800)),
+                            ],
+                          ),
+                          content: Text("Start Worked Order?"),
+                          actions: <Widget>[
+                            ElevatedButton.icon(
+                              icon: Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 18.0,
                               ),
-                              content: Text("Start Worked Order?"),
-                              actions: <Widget>[
-                                ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                    size: 18.0,
-                                  ),
-                                  label: Text("No"),
-                                  onPressed: () {
-                                    Navigator.of(context).pop(false);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 2.0,
-                                      backgroundColor: Colors.grey.shade600,
-                                      foregroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                      textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                                ),
-                                ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                    size: 18.0,
-                                  ),
-                                  label: Text("Yes"),
-                                  onPressed: () async {
-                                    SharedPreferences prefs =
+                              label: Text("No"),
+                              onPressed: () {
+                                Navigator.of(context).pop(false);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                  elevation: 2.0,
+                                  backgroundColor: Colors.grey.shade600,
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                  textStyle: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600)),
+                            ),
+                            ElevatedButton.icon(
+                              icon: Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 18.0,
+                              ),
+                              label: Text("Yes"),
+                              onPressed: () async {
+                                SharedPreferences prefs =
                                     await SharedPreferences.getInstance();
 
-                                    String _loginname =
-                                        prefs.getString("loginname") ?? "";
-                                    String _mechanicid =
-                                        prefs.getString("mechanicid") ?? "";
-                                    String _wodwonbr = item['wodwonbr']?.toString() ?? "";
-                                    String _userid = prefs.getString("name") ?? "";
-                                    if (_wodwonbr.isEmpty) {
-                                      alert(globalScaffoldKey.currentContext!, 0,
-                                          "WOD Number tidak boleh kosong", "error");
-                                    } else if (_mechanicid.isEmpty) {
-                                      alert(
-                                          globalScaffoldKey.currentContext!,
-                                          0,
-                                          "Mechanic ID tidak boleh kosong",
-                                          "error");
-                                    } else if (_loginname.isEmpty) {
-                                      alert(globalScaffoldKey.currentContext!, 0,
-                                          "LOGIN Name tidak boleh kosong", "error");
-                                    } else if (_userid.isEmpty) {
-                                      alert(globalScaffoldKey.currentContext!, 0,
-                                          "User ID tidak boleh kosong", "error");
-                                    } else {
-                                      var saved = await startWO(_wodwonbr,
-                                          _loginname, _userid, _mechanicid);
-                                      prefs.setString("wodwonbr", item["wodwonbr"]?.toString() ?? "");
-                                      prefs.setString(
-                                          "wodwonbr_vhcid", item["vhcid"]?.toString() ?? "");
-                                      print('saved');
-                                      if (saved == true) {
-                                        Navigator.pushReplacement(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ViewListWoDetailMCN()));
-                                      }
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 2.0,
-                                      backgroundColor: Colors.orange.shade600,
-                                      foregroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                      textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                                ),
-                              ],
+                                String _loginname =
+                                    prefs.getString("loginname") ?? "";
+                                String _mechanicid =
+                                    prefs.getString("mechanicid") ?? "";
+                                String _wodwonbr =
+                                    item['wodwonbr']?.toString() ?? "";
+                                String _userid = prefs.getString("name") ?? "";
+                                if (_wodwonbr.isEmpty) {
+                                  alert(globalScaffoldKey.currentContext!, 0,
+                                      "WOD Number tidak boleh kosong", "error");
+                                } else if (_mechanicid.isEmpty) {
+                                  alert(
+                                      globalScaffoldKey.currentContext!,
+                                      0,
+                                      "Mechanic ID tidak boleh kosong",
+                                      "error");
+                                } else if (_loginname.isEmpty) {
+                                  alert(globalScaffoldKey.currentContext!, 0,
+                                      "LOGIN Name tidak boleh kosong", "error");
+                                } else if (_userid.isEmpty) {
+                                  alert(globalScaffoldKey.currentContext!, 0,
+                                      "User ID tidak boleh kosong", "error");
+                                } else {
+                                  var saved = await startWO(_wodwonbr,
+                                      _loginname, _userid, _mechanicid);
+                                  prefs.setString("wodwonbr",
+                                      item["wodwonbr"]?.toString() ?? "");
+                                  prefs.setString("wodwonbr_vhcid",
+                                      item["vhcid"]?.toString() ?? "");
+                                  print('saved');
+                                  if (saved == true) {
+                                    Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                ViewListWoDetailMCN()));
+                                  }
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                  elevation: 2.0,
+                                  backgroundColor: Colors.orange.shade600,
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                  textStyle: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600)),
                             ),
-                          );
-                          //END
-                        },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 2.0,
-                            backgroundColor: Colors.orange.shade600,
-                            foregroundColor: Colors.white,
-                            padding:
+                          ],
+                        ),
+                      );
+                      //END
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 2.0,
+                        backgroundColor: Colors.orange.shade600,
+                        foregroundColor: Colors.white,
+                        padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            textStyle: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600)),
-                      )),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        textStyle: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600)),
+                  )),
                 ],
               ),
             )
@@ -778,42 +813,61 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
   TextEditingController txtWorkedByIdStop = TextEditingController();
   TextEditingController txtWorkedByStop = TextEditingController();
   TextEditingController txtNotesStop = TextEditingController();
-  final List<String> options = ['WAITTING PART', 'ISTIRAHAT', 'PINDAH TUGAS', 'FINISH'];
-  String selectedStopValue="WAITTING PART";
+  final List<String> options = [
+    'WAITTING PART',
+    'ISTIRAHAT',
+    'PINDAH TUGAS',
+    'FINISH'
+  ];
+  String selectedStopValue = "WAITTING PART";
 
-  Future CreateStartStop(bool isload, String notes, String event_name,
-      String wonumber, String srnumber,String id_detail,String tblname) async {
+  Future CreateStartStop(
+      bool isload,
+      String notes,
+      String event_name,
+      String wonumber,
+      String srnumber,
+      String id_detail,
+      String tblname) async {
     try {
       //notes="TEST";
       EasyLoading.show();
-      var a =await updatePosition("IM");
+      var a = await updatePosition("IM");
       SharedPreferences prefs = await SharedPreferences.getInstance();
       var userid = prefs.getString("username") ?? "";
       var mechanic_id = prefs.getString("mechanicid") ?? "";
-      var urlBase ="";
+      var urlBase = "";
       String lat = userLocation?.latitude?.toString() ?? "";
       String lon = userLocation?.longitude?.toString() ?? "";
       print(geo_id_area);
       print(geofence_name);
       //print("id_detail ${id_detail} , tblname ${tblname}");
-      if(int.tryParse(id_detail) != null && int.parse(id_detail) <=0 && tblname=='HEADER'){
-        urlBase="${GlobalData.baseUrl}api/maintenance/sr/create_or_update_mcn.jsp?method=create-start-stop-v2&wonumber=${wonumber}&srnumber=${srnumber}&event_name=${event_name}&mechanic_id=${mechanic_id}&notes=${notes}&mcid=${mechanicID}&userid=${userid.toUpperCase()}&lat=${lat}&lon=${lon}&geo_nm=${geofence_name}&geo_id=${geo_id_area}";
-      }else if(int.tryParse(id_detail) != null && int.parse(id_detail)> 0 && tblname=='DETAIL'){
-        urlBase="${GlobalData.baseUrl}api/maintenance/sr/create_or_update_mcn.jsp?method=create-start-stop-detail-v2&id_detail=${id_detail}&tblname=${tblname}&wonumber=${wonumber}&srnumber=${srnumber}&event_name=${event_name}&mechanic_id=${mechanic_id}&notes=${notes}&mcid=${mechanicID}&userid=${userid.toUpperCase()}&lat=${lat}&lon=${lon}&geo_nm=${geofence_name}&geo_id=${geo_id_area}";
-      }else if(int.tryParse(id_detail) != null && int.parse(id_detail)<= 0 && tblname=='DETAIL'){
-        urlBase="${GlobalData.baseUrl}api/maintenance/sr/create_or_update_mcn.jsp?method=ccreate-start-stop-detail-mc-tambahan-v2&id_detail=${id_detail}&tblname=${tblname}&wonumber=${wonumber}&srnumber=${srnumber}&event_name=${event_name}&mechanic_id=${mechanic_id}&notes=${notes}&mcid=${mechanicID}&userid=${userid.toUpperCase()}&lat=${lat}&lon=${lon}&geo_nm=${geofence_name}&geo_id=${geo_id_area}";
+      if (int.tryParse(id_detail) != null &&
+          int.parse(id_detail) <= 0 &&
+          tblname == 'HEADER') {
+        urlBase =
+            "${GlobalData.baseUrl}api/maintenance/sr/create_or_update_mcn.jsp?method=create-start-stop-v2&wonumber=${wonumber}&srnumber=${srnumber}&event_name=${event_name}&mechanic_id=${mechanic_id}&notes=${notes}&mcid=${mechanicID}&userid=${userid.toUpperCase()}&lat=${lat}&lon=${lon}&geo_nm=${geofence_name}&geo_id=${geo_id_area}";
+      } else if (int.tryParse(id_detail) != null &&
+          int.parse(id_detail) > 0 &&
+          tblname == 'DETAIL') {
+        urlBase =
+            "${GlobalData.baseUrl}api/maintenance/sr/create_or_update_mcn.jsp?method=create-start-stop-detail-v2&id_detail=${id_detail}&tblname=${tblname}&wonumber=${wonumber}&srnumber=${srnumber}&event_name=${event_name}&mechanic_id=${mechanic_id}&notes=${notes}&mcid=${mechanicID}&userid=${userid.toUpperCase()}&lat=${lat}&lon=${lon}&geo_nm=${geofence_name}&geo_id=${geo_id_area}";
+      } else if (int.tryParse(id_detail) != null &&
+          int.parse(id_detail) <= 0 &&
+          tblname == 'DETAIL') {
+        urlBase =
+            "${GlobalData.baseUrl}api/maintenance/sr/create_or_update_mcn.jsp?method=ccreate-start-stop-detail-mc-tambahan-v2&id_detail=${id_detail}&tblname=${tblname}&wonumber=${wonumber}&srnumber=${srnumber}&event_name=${event_name}&mechanic_id=${mechanic_id}&notes=${notes}&mcid=${mechanicID}&userid=${userid.toUpperCase()}&lat=${lat}&lon=${lon}&geo_nm=${geofence_name}&geo_id=${geo_id_area}";
       }
-      var urlData =urlBase;
+      var urlData = urlBase;
 
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         var responseData = json.decode(response.body);
         if (responseData["status_code"] == 200) {
-
           if (event_name == 'start') {
             setState(() {
               txtWorkedByIdStart.text = '';
@@ -838,12 +892,14 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
             context: globalScaffoldKey.currentContext!,
             builder: (context) => AlertDialog(
               backgroundColor: Theme.of(context).colorScheme.onPrimary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               title: Row(
                 children: [
                   Icon(Icons.check_circle, color: Colors.green.shade600),
                   SizedBox(width: 8),
-                  Text('Success', style: TextStyle(color: Colors.green.shade800)),
+                  Text('Success',
+                      style: TextStyle(color: Colors.green.shade800)),
                 ],
               ),
               content: Text(responseData["message"]?.toString() ?? ""),
@@ -853,7 +909,8 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                     Navigator.of(context).pop(true);
                     getJSONData();
                   },
-                  child: Text('Ok', style: TextStyle(color: Colors.orange.shade700)),
+                  child: Text('Ok',
+                      style: TextStyle(color: Colors.orange.shade700)),
                 ),
               ],
             ),
@@ -868,12 +925,14 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
             context: globalScaffoldKey.currentContext!,
             builder: (context) => AlertDialog(
               backgroundColor: Theme.of(context).colorScheme.onPrimary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               title: Row(
                 children: [
                   Icon(Icons.warning, color: Colors.orange.shade600),
                   SizedBox(width: 8),
-                  Text('Alert', style: TextStyle(color: Colors.orange.shade800)),
+                  Text('Alert',
+                      style: TextStyle(color: Colors.orange.shade800)),
                 ],
               ),
               content: Text(responseData["message"]?.toString() ?? ""),
@@ -882,7 +941,8 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                   onPressed: () async {
                     Navigator.of(context).pop(true);
                   },
-                  child: Text('Ok', style: TextStyle(color: Colors.orange.shade700)),
+                  child: Text('Ok',
+                      style: TextStyle(color: Colors.orange.shade700)),
                 ),
               ],
             ),
@@ -914,7 +974,7 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
     Uri myUri = Uri.parse(encoded);
     print(encoded);
     var response =
-    await http.get(myUri, headers: {"Accept": "application/json"});
+        await http.get(myUri, headers: {"Accept": "application/json"});
 
     setState(() {
       var data = json.decode(response.body);
@@ -928,10 +988,18 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
   }
 
   Widget _buildDListDetail(dynamic item, int index) {
-    var parsedDate = item["start_date"] != "null" && item["start_date"] != null ? DateTime.parse(item["start_date"]) : null;
-    var parsedDateEnd = item["stop_date"] != "null" && item["stop_date"] != null ? DateTime.parse(item["stop_date"]) : null;
-    String _startDate = parsedDate != null ? DateFormat('dd/MM/yyyy HH:mm:ss').format(parsedDate) : "";
-    String _endDate = parsedDateEnd != null ? DateFormat('dd/MM/yyyy HH:mm:ss').format(parsedDateEnd) : "";
+    var parsedDate = item["start_date"] != "null" && item["start_date"] != null
+        ? DateTime.parse(item["start_date"])
+        : null;
+    var parsedDateEnd = item["stop_date"] != "null" && item["stop_date"] != null
+        ? DateTime.parse(item["stop_date"])
+        : null;
+    String _startDate = parsedDate != null
+        ? DateFormat('dd/MM/yyyy HH:mm:ss').format(parsedDate)
+        : "";
+    String _endDate = parsedDateEnd != null
+        ? DateFormat('dd/MM/yyyy HH:mm:ss').format(parsedDateEnd)
+        : "";
     print(_startDate);
     return Card(
       elevation: 4.0,
@@ -956,14 +1024,19 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                 subtitle: Padding(
                   padding: EdgeInsets.only(top: 8),
                   child: Wrap(children: <Widget>[
-                    _buildDetailRow("Mechanic Name", item['mcnname']?.toString() ?? '-'),
+                    _buildDetailRow(
+                        "Mechanic Name", item['mcnname']?.toString() ?? '-'),
                     _buildDetailRow("Vhcid", item['vhcid']?.toString() ?? '-'),
-                    _buildDetailRow("Notes", item['wolnotes']?.toString() ?? '-'),
+                    _buildDetailRow(
+                        "Notes", item['wolnotes']?.toString() ?? '-'),
                     _buildDetailRow("Start Date", _startDate),
                     _buildDetailRow("Stop Date", _endDate),
-                    _buildDetailRow("Dur Tgl", item['dur_tgl']?.toString() ?? '-'),
-                    _buildDetailRow("Dur. Time", item['dur_time']?.toString() ?? '-'),
-                    _buildDetailRow("Vhtype", item['vhttype']?.toString() ?? '-'),
+                    _buildDetailRow(
+                        "Dur Tgl", item['dur_tgl']?.toString() ?? '-'),
+                    _buildDetailRow(
+                        "Dur. Time", item['dur_time']?.toString() ?? '-'),
+                    _buildDetailRow(
+                        "Vhtype", item['vhttype']?.toString() ?? '-'),
                   ]),
                 ),
               ),
@@ -1008,7 +1081,7 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         setState(() {
           listDetail = (jsonDecode(response.body) as List)
@@ -1023,12 +1096,14 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
               builder: (BuildContext context) {
                 return AlertDialog(
                   backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   title: Row(
                     children: [
                       Icon(Icons.list_alt, color: Colors.orange.shade600),
                       SizedBox(width: 8),
-                      Text('List Detail', style: TextStyle(color: Colors.orange.shade800)),
+                      Text('List Detail',
+                          style: TextStyle(color: Colors.orange.shade800)),
                     ],
                   ),
                   content: setupAlertDialoadContainerDetail(context),
@@ -1063,9 +1138,8 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
       child: Column(
         children: [
           Container(
-              height: MediaQuery.of(context)
-                  .size
-                  .height * 0.6, // Change as per your requirement
+              height: MediaQuery.of(context).size.height *
+                  0.6, // Change as per your requirement
               width: MediaQuery.of(context).size.width,
               child: ListView.builder(
                   scrollDirection: Axis.vertical,
@@ -1098,18 +1172,18 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
         children: <Widget>[
           Container(
             padding:
-            EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 8),
+                EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 8),
             child: RepaintBoundary(
-              //key: globalScaffoldKey3,
+                //key: globalScaffoldKey3,
                 child: QrImageView(
-                  data: value['wodwonbr']?.toString() ?? "",
-                  size: 0.4 * MediaQuery.of(context).size.height - 100,
-                  foregroundColor: Colors.orange.shade800,
-                )),
+              data: value['wodwonbr']?.toString() ?? "",
+              size: 0.4 * MediaQuery.of(context).size.height - 100,
+              foregroundColor: Colors.orange.shade800,
+            )),
           ),
           Container(
             padding:
-            EdgeInsets.only(left: 0.0, right: 0.0, top: 0.0, bottom: 10),
+                EdgeInsets.only(left: 0.0, right: 0.0, top: 0.0, bottom: 10),
             //child: Text("${value['wodwonbr']}")
             width: MediaQuery.of(context).size.width,
             decoration: BoxDecoration(
@@ -1118,14 +1192,15 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
             child: Container(
               child: ListTile(
                 contentPadding:
-                EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: BoxDecoration(
                       border: Border(
                           right: BorderSide(
                               width: 1.0, color: Colors.orange.shade200))),
-                  child: Icon(Icons.build, color: Colors.orange.shade600, size: 28),
+                  child: Icon(Icons.build,
+                      color: Colors.orange.shade600, size: 28),
                 ),
                 title: Text(
                   "WOD WONUMBER: ${value['wodwonbr']?.toString() ?? '-'}",
@@ -1139,12 +1214,21 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                   child: Wrap(children: <Widget>[
                     _buildInfoRow("NOPOL", value['vhcid']?.toString() ?? '-'),
                     _buildInfoRow("LOCID", value['locid']?.toString() ?? '-'),
-                    _buildInfoRow("WOD REQ NUMBER", value['wodsvcrreqnbr']?.toString() ?? '-'),
-                    _buildInfoRow("WORKED BY", value['wodworkeddby']?.toString() ?? '-'),
-                    _buildInfoRow("WOD START TIME", value['wodstartdatetime']?.toString() ?? '-'),
-                    _buildInfoRow("WOD END TIME", value['wodenddatetime']?.toString() ?? '-'),
-                    _buildInfoRow("WOD NOTES", value['wodnotes']?.toString() ?? '-'),
-                    _buildInfoRow("IS DETAIL", value['tblname']?.toString()=='DETAIL'?'YES (${value["id_detail"]?.toString() ?? ""})':'-'),
+                    _buildInfoRow("WOD REQ NUMBER",
+                        value['wodsvcrreqnbr']?.toString() ?? '-'),
+                    _buildInfoRow(
+                        "WORKED BY", value['wodworkeddby']?.toString() ?? '-'),
+                    _buildInfoRow("WOD START TIME",
+                        value['wodstartdatetime']?.toString() ?? '-'),
+                    _buildInfoRow("WOD END TIME",
+                        value['wodenddatetime']?.toString() ?? '-'),
+                    _buildInfoRow(
+                        "WOD NOTES", value['wodnotes']?.toString() ?? '-'),
+                    _buildInfoRow(
+                        "IS DETAIL",
+                        value['tblname']?.toString() == 'DETAIL'
+                            ? 'YES (${value["id_detail"]?.toString() ?? ""})'
+                            : '-'),
                   ]),
                 ),
               ),
@@ -1155,409 +1239,512 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
               child: Row(children: <Widget>[
                 Expanded(
                     child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.timer,
-                        color: Colors.white,
-                        size: 20.0,
-                      ),
-                      label: Text("Start JOB"),
-                      onPressed: () async {
-                        //mechanicID = null;
-                        //await getListMechanicID(value['wodwonbr']);
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return StatefulBuilder(
-                              builder:
-                                  (BuildContext context, StateSetter setState) {
-                                return AlertDialog(
-                                  backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  title: Row(
-                                    children: [
-                                      Icon(Icons.play_arrow, color: Colors.green.shade600),
-                                      SizedBox(width: 8),
-                                      Text("Start JOB?", style: TextStyle(color: Colors.green.shade800)),
-                                    ],
-                                  ),
-                                  content: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: <Widget>[
-
-                                        Container(
-                                          margin: EdgeInsets.all(10.0),
-                                          child: TextField(
-                                            cursorColor: Colors.orange.shade600,
-                                            style:
-                                            TextStyle(color: Colors.grey.shade800),
-                                            controller: txtNotesStart,
-                                            keyboardType: TextInputType.text,
-                                            decoration: InputDecoration(
-                                              fillColor: Colors.white,
-                                              filled: true,
-                                              isDense: true,
-                                              labelText: "Notes",
-                                              labelStyle: TextStyle(color: Colors.orange.shade600),
-                                              contentPadding: EdgeInsets.all(12.0),
-                                              border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(8),
-                                                borderSide: BorderSide(color: Colors.orange.shade300),
-                                              ),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(8),
-                                                borderSide: BorderSide(color: Colors.orange.shade600, width: 2),
-                                              ),
-                                            ),
+                  icon: Icon(
+                    Icons.timer,
+                    color: Colors.white,
+                    size: 20.0,
+                  ),
+                  label: Text("Start JOB"),
+                  onPressed: () async {
+                    //mechanicID = null;
+                    //await getListMechanicID(value['wodwonbr']);
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return StatefulBuilder(
+                          builder:
+                              (BuildContext context, StateSetter setState) {
+                            return AlertDialog(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.onPrimary,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16)),
+                              title: Row(
+                                children: [
+                                  Icon(Icons.play_arrow,
+                                      color: Colors.green.shade600),
+                                  SizedBox(width: 8),
+                                  Text("Start JOB?",
+                                      style: TextStyle(
+                                          color: Colors.green.shade800)),
+                                ],
+                              ),
+                              content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Container(
+                                      margin: EdgeInsets.all(10.0),
+                                      child: TextField(
+                                        cursorColor: Colors.orange.shade600,
+                                        style: TextStyle(
+                                            color: Colors.grey.shade800),
+                                        controller: txtNotesStart,
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                          fillColor: Colors.white,
+                                          filled: true,
+                                          isDense: true,
+                                          labelText: "Notes",
+                                          labelStyle: TextStyle(
+                                              color: Colors.orange.shade600),
+                                          contentPadding: EdgeInsets.all(12.0),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            borderSide: BorderSide(
+                                                color: Colors.orange.shade300),
                                           ),
-                                        ),
-                                      ]),
-                                  actions: <Widget>[
-                                    // usually buttons at the bottom of the dialog
-                                    TextButton(
-                                      child: Text("Close", style: TextStyle(color: Colors.grey.shade600)),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () async {
-                                        Navigator.of(
-                                            globalScaffoldKey.currentContext!)
-                                            .pop(false);
-                                        showDialog(
-                                          context: globalScaffoldKey.currentContext!,
-                                          builder: (context) => AlertDialog(
-                                            backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                            title: Row(
-                                              children: [
-                                                Icon(Icons.help_outline, color: Colors.orange.shade600),
-                                                SizedBox(width: 8),
-                                                Text('Question: Start JOB?', style: TextStyle(color: Colors.orange.shade800)),
-                                              ],
-                                            ),
-
-                                            actions: <Widget>[
-                                              TextButton(
-                                                  onPressed: () async {
-                                                    Navigator.of(globalScaffoldKey
-                                                        .currentContext!)
-                                                        .pop(false);
-                                                  },
-                                                  child: Text('No', style: TextStyle(color: Colors.grey.shade600))),
-                                              ElevatedButton(
-                                                onPressed: () async {
-                                                  print(
-                                                      ' mechanicID ${mechanicID}');
-                                                  Navigator.of(globalScaffoldKey
-                                                      .currentContext!)
-                                                      .pop(false);
-                                                  print(txtNotesStart.text);
-                                                  print(txtWorkedByStart.text);
-                                                  print(txtWorkedByIdStart.text);
-                                                  if (mechanicID == null ||
-                                                      mechanicID.toString().isEmpty) {
-                                                    alert(
-                                                        globalScaffoldKey
-                                                            .currentContext!,
-                                                        2,
-                                                        "Mechanic tidak boleh kosong",
-                                                        "error");
-                                                  } else if (txtNotesStart.text.isEmpty) {
-                                                    alert(
-                                                        globalScaffoldKey
-                                                            .currentContext!,
-                                                        2,
-                                                        "Notes tidak boleh kosong",
-                                                        "error");
-                                                  } else if (value['wodwonbr'] == null ||
-                                                      value['wodwonbr']
-                                                          .toString().isEmpty) {
-                                                    alert(
-                                                        globalScaffoldKey
-                                                            .currentContext!,
-                                                        2,
-                                                        "WO Number tidak boleh kosong",
-                                                        "error");
-                                                  } else if (value[
-                                                  'wodsvcrreqnbr'] ==
-                                                      null ||
-                                                      value['wodsvcrreqnbr']
-                                                          .toString().isEmpty) {
-                                                    alert(
-                                                        globalScaffoldKey
-                                                            .currentContext!,
-                                                        2,
-                                                        "SR Number tidak boleh kosong",
-                                                        "error");
-                                                  } else {
-                                                    print('create start jobs');
-                                                    await CreateStartStop(
-                                                        true,
-                                                        txtNotesStart.text,
-                                                        'start',
-                                                        value['wodwonbr']?.toString() ?? "",
-                                                        value['wodsvcrreqnbr']?.toString() ?? "",
-                                                        value['id_detail']?.toString() ?? "",
-                                                        value['tblname']?.toString() ?? ""
-                                                    );
-                                                  }
-                                                },
-                                                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade600,
-                                                  foregroundColor: Colors.white,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(8),
-                                                  ),
-                                                ),
-                                                child: Text('Submit'),
-                                              ),
-                                            ],
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            borderSide: BorderSide(
+                                                color: Colors.orange.shade600,
+                                                width: 2),
                                           ),
-                                        );
-                                      },
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade600,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
                                         ),
                                       ),
-                                      child: Text('Ok'),
                                     ),
-                                  ],
-                                );
-                              },
+                                  ]),
+                              actions: <Widget>[
+                                // usually buttons at the bottom of the dialog
+                                TextButton(
+                                  child: Text("Close",
+                                      style: TextStyle(
+                                          color: Colors.grey.shade600)),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    Navigator.of(
+                                            globalScaffoldKey.currentContext!)
+                                        .pop(false);
+                                    showDialog(
+                                      context:
+                                          globalScaffoldKey.currentContext!,
+                                      builder: (context) => AlertDialog(
+                                        backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimary,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(16)),
+                                        title: Row(
+                                          children: [
+                                            Icon(Icons.help_outline,
+                                                color: Colors.orange.shade600),
+                                            SizedBox(width: 8),
+                                            Text('Question: Start JOB?',
+                                                style: TextStyle(
+                                                    color: Colors
+                                                        .orange.shade800)),
+                                          ],
+                                        ),
+                                        actions: <Widget>[
+                                          TextButton(
+                                              onPressed: () async {
+                                                Navigator.of(globalScaffoldKey
+                                                        .currentContext!)
+                                                    .pop(false);
+                                              },
+                                              child: Text('No',
+                                                  style: TextStyle(
+                                                      color: Colors
+                                                          .grey.shade600))),
+                                          ElevatedButton(
+                                            onPressed: () async {
+                                              print(
+                                                  ' mechanicID ${mechanicID}');
+                                              Navigator.of(globalScaffoldKey
+                                                      .currentContext!)
+                                                  .pop(false);
+                                              print(txtNotesStart.text);
+                                              print(txtWorkedByStart.text);
+                                              print(txtWorkedByIdStart.text);
+                                              if (mechanicID == null ||
+                                                  mechanicID
+                                                      .toString()
+                                                      .isEmpty) {
+                                                alert(
+                                                    globalScaffoldKey
+                                                        .currentContext!,
+                                                    2,
+                                                    "Mechanic tidak boleh kosong",
+                                                    "error");
+                                              } else if (txtNotesStart
+                                                  .text.isEmpty) {
+                                                alert(
+                                                    globalScaffoldKey
+                                                        .currentContext!,
+                                                    2,
+                                                    "Notes tidak boleh kosong",
+                                                    "error");
+                                              } else if (value['wodwonbr'] ==
+                                                      null ||
+                                                  value['wodwonbr']
+                                                      .toString()
+                                                      .isEmpty) {
+                                                alert(
+                                                    globalScaffoldKey
+                                                        .currentContext!,
+                                                    2,
+                                                    "WO Number tidak boleh kosong",
+                                                    "error");
+                                              } else if (value[
+                                                          'wodsvcrreqnbr'] ==
+                                                      null ||
+                                                  value['wodsvcrreqnbr']
+                                                      .toString()
+                                                      .isEmpty) {
+                                                alert(
+                                                    globalScaffoldKey
+                                                        .currentContext!,
+                                                    2,
+                                                    "SR Number tidak boleh kosong",
+                                                    "error");
+                                              } else {
+                                                print('create start jobs');
+                                                await CreateStartStop(
+                                                    true,
+                                                    txtNotesStart.text,
+                                                    'start',
+                                                    value[
+                                                                'wodwonbr']
+                                                            ?.toString() ??
+                                                        "",
+                                                    value[
+                                                                'wodsvcrreqnbr']
+                                                            ?.toString() ??
+                                                        "",
+                                                    value['id_detail']
+                                                            ?.toString() ??
+                                                        "",
+                                                    value['tblname']
+                                                            ?.toString() ??
+                                                        "");
+                                              }
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  Colors.orange.shade600,
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                            ),
+                                            child: Text('Submit'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange.shade600,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: Text('Ok'),
+                                ),
+                              ],
                             );
                           },
                         );
                       },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 3.0,
-                          backgroundColor: (value['isnormal'] == 1 ? Colors.grey.shade600 :
-                          value['isnormal'] == 2 ? Colors.orange.shade600 :
-                          Colors.green.shade600),
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          textStyle:
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 3.0,
+                      backgroundColor: (value['isnormal'] == 1
+                          ? Colors.grey.shade600
+                          : value['isnormal'] == 2
+                              ? Colors.orange.shade600
+                              : Colors.green.shade600),
+                      foregroundColor: Colors.white,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      textStyle:
                           TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    )),
+                )),
                 SizedBox(
                   width: 12,
                 ),
                 Expanded(
                     child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.stop,
-                        color: Colors.white,
-                        size: 20.0,
-                      ),
-                      label: Text("Stop JOB"),
-                      onPressed: () async {
-                        print('Stop JOB');
-                        //await getListMechanicID(value['wodwonbr']);
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return StatefulBuilder(
-                              builder:
-                                  (BuildContext context, StateSetter setState) {
-                                return AlertDialog(
-                                  backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  title: Row(
-                                    children: [
-                                      Icon(Icons.stop, color: Colors.red.shade600),
-                                      SizedBox(width: 8),
-                                      Text("Stop JOB?", style: TextStyle(color: Colors.red.shade800)),
-                                    ],
-                                  ),
-                                  content: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: <Widget>[
-
-                                        Container(
-                                          margin: EdgeInsets.all(10.0),
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: Colors.orange.shade300),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                          child: DropdownButton<String>(
-                                            value: selectedStopValue,
-                                            hint: Text('Select'),
-                                            isExpanded: true,
-                                            underline: SizedBox(),
-                                            dropdownColor: Theme.of(context).colorScheme.onPrimary,
-                                            items:options.isNotEmpty ? options.map((String value) {
-                                              return DropdownMenuItem<String>(
-                                                value: value,
-                                                child: Text(value, style: TextStyle(color: Colors.black87)),
-                                              );
-                                            }).toList():null,
-                                            onChanged: (String? newValue) {
-                                              setState(() {
-                                                selectedStopValue = newValue ?? "WAITTING PART";
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                      ]),
-                                  actions: <Widget>[
-                                    // usually buttons at the bottom of the dialog
-                                    TextButton(
-                                      child: Text("Close", style: TextStyle(color: Colors.grey.shade600)),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () async {
-                                        Navigator.of(
-                                            globalScaffoldKey.currentContext!)
-                                            .pop(false);
-                                        showDialog(
-                                          context: globalScaffoldKey.currentContext!,
-                                          builder: (context) => AlertDialog(
-                                            backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                            title: Row(
-                                              children: [
-                                                Icon(Icons.help_outline, color: Colors.orange.shade600),
-                                                SizedBox(width: 8),
-                                                Text('Question: Stop JOB?', style: TextStyle(color: Colors.orange.shade800)),
-                                              ],
-                                            ),
-
-                                            actions: <Widget>[
-                                              TextButton(
-                                                  onPressed: () async {
-                                                    Navigator.of(globalScaffoldKey
-                                                        .currentContext!)
-                                                        .pop(false);
-                                                  },
-                                                  child: Text('No', style: TextStyle(color: Colors.grey.shade600))),
-                                              ElevatedButton(
-                                                onPressed: () async {
-                                                  Navigator.of(globalScaffoldKey
-                                                      .currentContext!)
-                                                      .pop(false);
-                                                  print(txtNotesStop.text);
-                                                  print(txtWorkedByStop.text);
-                                                  print(txtWorkedByIdStop.text);
-                                                  if (mechanicID == null ||
-                                                      mechanicID.toString().isEmpty) {
-                                                    alert(
-                                                        globalScaffoldKey
-                                                            .currentContext!,
-                                                        2,
-                                                        "Mechanic tidak boleh kosong",
-                                                        "error");
-                                                  } else if (selectedStopValue.isEmpty || selectedStopValue == 'SELECT') {
-                                                    alert(
-                                                        globalScaffoldKey
-                                                            .currentContext!,
-                                                        2,
-                                                        "Notes tidak boleh kosong",
-                                                        "error");
-                                                  } else if (value['wodwonbr'] == null ||
-                                                      value['wodwonbr']
-                                                          .toString().isEmpty) {
-                                                    alert(
-                                                        globalScaffoldKey
-                                                            .currentContext!,
-                                                        2,
-                                                        "WO Number tidak boleh kosong",
-                                                        "error");
-                                                  } else if (value[
-                                                  'wodsvcrreqnbr'] ==
-                                                      null ||
-                                                      value['wodsvcrreqnbr']
-                                                          .toString().isEmpty) {
-                                                    alert(
-                                                        globalScaffoldKey
-                                                            .currentContext!,
-                                                        2,
-                                                        "SR Number tidak boleh kosong",
-                                                        "error");
-                                                  } else {
-                                                    await CreateStartStop(
-                                                        true,
-                                                        selectedStopValue,
-                                                        'stop',
-                                                        value['wodwonbr']?.toString() ?? "",
-                                                        value['wodsvcrreqnbr']?.toString() ?? "",
-                                                        value['id_detail']?.toString() ?? "",
-                                                        value['tblname']?.toString() ?? ""
-                                                    );
-                                                  }
-                                                },
-                                                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade600,
-                                                  foregroundColor: Colors.white,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(8),
-                                                  ),
-                                                ),
-                                                child: Text('Submit'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade600,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
+                  icon: Icon(
+                    Icons.stop,
+                    color: Colors.white,
+                    size: 20.0,
+                  ),
+                  label: Text("Stop JOB"),
+                  onPressed: () async {
+                    print('Stop JOB');
+                    //await getListMechanicID(value['wodwonbr']);
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return StatefulBuilder(
+                          builder:
+                              (BuildContext context, StateSetter setState) {
+                            return AlertDialog(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.onPrimary,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16)),
+                              title: Row(
+                                children: [
+                                  Icon(Icons.stop, color: Colors.red.shade600),
+                                  SizedBox(width: 8),
+                                  Text("Stop JOB?",
+                                      style: TextStyle(
+                                          color: Colors.red.shade800)),
+                                ],
+                              ),
+                              content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Container(
+                                      margin: EdgeInsets.all(10.0),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: Colors.orange.shade300),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: Text('Ok'),
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 4),
+                                      child: DropdownButton<String>(
+                                        value: selectedStopValue,
+                                        hint: Text('Select'),
+                                        isExpanded: true,
+                                        underline: SizedBox(),
+                                        dropdownColor: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimary,
+                                        items: options.isNotEmpty
+                                            ? options.map((String value) {
+                                                return DropdownMenuItem<String>(
+                                                  value: value,
+                                                  child: Text(value,
+                                                      style: TextStyle(
+                                                          color:
+                                                              Colors.black87)),
+                                                );
+                                              }).toList()
+                                            : null,
+                                        onChanged: (String? newValue) {
+                                          setState(() {
+                                            selectedStopValue =
+                                                newValue ?? "WAITTING PART";
+                                          });
+                                        },
+                                      ),
                                     ),
-                                  ],
-                                );
-                              },
+                                  ]),
+                              actions: <Widget>[
+                                // usually buttons at the bottom of the dialog
+                                TextButton(
+                                  child: Text("Close",
+                                      style: TextStyle(
+                                          color: Colors.grey.shade600)),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    Navigator.of(
+                                            globalScaffoldKey.currentContext!)
+                                        .pop(false);
+                                    showDialog(
+                                      context:
+                                          globalScaffoldKey.currentContext!,
+                                      builder: (context) => AlertDialog(
+                                        backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimary,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(16)),
+                                        title: Row(
+                                          children: [
+                                            Icon(Icons.help_outline,
+                                                color: Colors.orange.shade600),
+                                            SizedBox(width: 8),
+                                            Text('Question: Stop JOB?',
+                                                style: TextStyle(
+                                                    color: Colors
+                                                        .orange.shade800)),
+                                          ],
+                                        ),
+                                        actions: <Widget>[
+                                          TextButton(
+                                              onPressed: () async {
+                                                Navigator.of(globalScaffoldKey
+                                                        .currentContext!)
+                                                    .pop(false);
+                                              },
+                                              child: Text('No',
+                                                  style: TextStyle(
+                                                      color: Colors
+                                                          .grey.shade600))),
+                                          ElevatedButton(
+                                            onPressed: () async {
+                                              Navigator.of(globalScaffoldKey
+                                                      .currentContext!)
+                                                  .pop(false);
+                                              print(txtNotesStop.text);
+                                              print(txtWorkedByStop.text);
+                                              print(txtWorkedByIdStop.text);
+                                              if (mechanicID == null ||
+                                                  mechanicID
+                                                      .toString()
+                                                      .isEmpty) {
+                                                alert(
+                                                    globalScaffoldKey
+                                                        .currentContext!,
+                                                    2,
+                                                    "Mechanic tidak boleh kosong",
+                                                    "error");
+                                              } else if (selectedStopValue
+                                                      .isEmpty ||
+                                                  selectedStopValue ==
+                                                      'SELECT') {
+                                                alert(
+                                                    globalScaffoldKey
+                                                        .currentContext!,
+                                                    2,
+                                                    "Notes tidak boleh kosong",
+                                                    "error");
+                                              } else if (value['wodwonbr'] ==
+                                                      null ||
+                                                  value['wodwonbr']
+                                                      .toString()
+                                                      .isEmpty) {
+                                                alert(
+                                                    globalScaffoldKey
+                                                        .currentContext!,
+                                                    2,
+                                                    "WO Number tidak boleh kosong",
+                                                    "error");
+                                              } else if (value[
+                                                          'wodsvcrreqnbr'] ==
+                                                      null ||
+                                                  value['wodsvcrreqnbr']
+                                                      .toString()
+                                                      .isEmpty) {
+                                                alert(
+                                                    globalScaffoldKey
+                                                        .currentContext!,
+                                                    2,
+                                                    "SR Number tidak boleh kosong",
+                                                    "error");
+                                              } else {
+                                                await CreateStartStop(
+                                                    true,
+                                                    selectedStopValue,
+                                                    'stop',
+                                                    value[
+                                                                'wodwonbr']
+                                                            ?.toString() ??
+                                                        "",
+                                                    value[
+                                                                'wodsvcrreqnbr']
+                                                            ?.toString() ??
+                                                        "",
+                                                    value['id_detail']
+                                                            ?.toString() ??
+                                                        "",
+                                                    value['tblname']
+                                                            ?.toString() ??
+                                                        "");
+                                              }
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  Colors.orange.shade600,
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                            ),
+                                            child: Text('Submit'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange.shade600,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: Text('Ok'),
+                                ),
+                              ],
                             );
                           },
                         );
                       },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 3.0,
-                          backgroundColor: (value['isnormal'] == 1 ? Colors.orange.shade600 :
-                          value['isnormal'] == 0 ? Colors.orange.shade600 :
-                          Colors.grey.shade600),
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          textStyle:
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 3.0,
+                      backgroundColor: (value['isnormal'] == 1
+                          ? Colors.orange.shade600
+                          : value['isnormal'] == 0
+                              ? Colors.orange.shade600
+                              : Colors.grey.shade600),
+                      foregroundColor: Colors.white,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      textStyle:
                           TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    )),
+                )),
               ])),
           Container(
               margin: EdgeInsets.only(left: 16, top: 8, right: 16, bottom: 8),
               child: Row(children: <Widget>[
                 Expanded(
                     child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.list,
-                        color: Colors.white,
-                        size: 20.0,
-                      ),
-                      label: Text("List Detail Inventory"),
-                      onPressed: () async {
-                        Navigator.pushReplacement(context,
-                            MaterialPageRoute(builder: (context) => ListInventoryMaint(
-                                widget_wodnumber: value['wodwonbr'],
-                                widget_inv_trx_type:"-",
-                                widget_from_ware_house:value['locid'], widget_formen: '',
-                            )));
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 3.0,
-                          backgroundColor: primaryOrange,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          textStyle:
+                  icon: Icon(
+                    Icons.list,
+                    color: Colors.white,
+                    size: 20.0,
+                  ),
+                  label: Text("List Detail Inventory"),
+                  onPressed: () async {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ListInventoryMaint(
+                                  widget_wo_number: value['wodwonbr'],
+                                  widget_number: '',
+                                  widget_inv_trx_type: "-",
+                                  widget_from_ware_house: value['locid'],
+                                  widget_formen: '',
+                                )));
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 3.0,
+                      backgroundColor: primaryOrange,
+                      foregroundColor: Colors.white,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      textStyle:
                           TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    ))
+                ))
               ])),
           Container(
               margin: EdgeInsets.only(left: 16, top: 8, right: 16, bottom: 16),
@@ -1565,112 +1752,129 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
                 if (value['sr_typeid']?.toString() == 'STORING') ...[
                   Expanded(
                       child: ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.pin_drop,
-                          color: Colors.white,
-                          size: 20.0,
-                        ),
-                        label: Text("View Maps"),
-                        onPressed: () async {
-                          print('View Maps');
-                          print(value['latlon']);
-                          var arrData = value['latlon']?.toString().split(",") ?? [];
-                          if (arrData.length > 0) {
-                            print(arrData[1]);
-                            print(arrData[2]);
-                            showDialog(
-                              context: globalScaffoldKey.currentContext!,
-                              builder: (context) => AlertDialog(
-                                backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                title: Row(
-                                  children: [
-                                    Icon(Icons.location_on, color: Colors.orange.shade600),
-                                    SizedBox(width: 8),
-                                    Text('Information', style: TextStyle(color: Colors.orange.shade800)),
-                                  ],
-                                ),
-                                content: Text("Location Maps"),
-                                actions: <Widget>[
-                                  TextButton(
-                                      onPressed: () async {
-                                        Navigator.of(globalScaffoldKey.currentContext!)
-                                            .pop(false);
-                                        SharedPreferences prefs =
+                    icon: Icon(
+                      Icons.pin_drop,
+                      color: Colors.white,
+                      size: 20.0,
+                    ),
+                    label: Text("View Maps"),
+                    onPressed: () async {
+                      print('View Maps');
+                      print(value['latlon']);
+                      var arrData =
+                          value['latlon']?.toString().split(",") ?? [];
+                      if (arrData.length > 0) {
+                        print(arrData[1]);
+                        print(arrData[2]);
+                        showDialog(
+                          context: globalScaffoldKey.currentContext!,
+                          builder: (context) => AlertDialog(
+                            backgroundColor:
+                                Theme.of(context).colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                            title: Row(
+                              children: [
+                                Icon(Icons.location_on,
+                                    color: Colors.orange.shade600),
+                                SizedBox(width: 8),
+                                Text('Information',
+                                    style: TextStyle(
+                                        color: Colors.orange.shade800)),
+                              ],
+                            ),
+                            content: Text("Location Maps"),
+                            actions: <Widget>[
+                              TextButton(
+                                  onPressed: () async {
+                                    Navigator.of(
+                                            globalScaffoldKey.currentContext!)
+                                        .pop(false);
+                                    SharedPreferences prefs =
                                         await SharedPreferences.getInstance();
-                                        setState(() {
-                                          prefs.setString("view_lat", arrData[1]);
-                                          prefs.setString("view_lon", arrData[2]);
-                                        });
-                                        Navigator.pushReplacement(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) => ViewMaps()));
-                                      },
-                                      child: Text('Tetap disini', style: TextStyle(color: Colors.grey.shade600))),
-                                  ElevatedButton(
-                                    onPressed: () async {
-                                      //_tabController.animateTo(0);
-                                      Navigator.of(globalScaffoldKey.currentContext!)
-                                          .pop(false);
-                                      Share.share('https://www.google.com/maps?q=${arrData[1]},${arrData[2]}&amp;t=m&amp;hl=en');
-                                    },
-                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade600,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    child: Text('Share link'),
+                                    setState(() {
+                                      prefs.setString("view_lat", arrData[1]);
+                                      prefs.setString("view_lon", arrData[2]);
+                                    });
+                                    Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => ViewMaps()));
+                                  },
+                                  child: Text('Tetap disini',
+                                      style: TextStyle(
+                                          color: Colors.grey.shade600))),
+                              ElevatedButton(
+                                onPressed: () async {
+                                  //_tabController.animateTo(0);
+                                  Navigator.of(
+                                          globalScaffoldKey.currentContext!)
+                                      .pop(false);
+                                  Share.share(
+                                      'https://www.google.com/maps?q=${arrData[1]},${arrData[2]}&amp;t=m&amp;hl=en');
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange.shade600,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                ],
+                                ),
+                                child: Text('Share link'),
                               ),
-                            );
-                          } else {
-                            alert(
-                                globalScaffoldKey.currentContext!,
-                                0,
-                                "Data latitude/ longitude tidak di temukan",
-                                "error");
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 3.0,
-                            backgroundColor: Colors.blue.shade600,
-                            foregroundColor: Colors.white,
-                            padding:
+                            ],
+                          ),
+                        );
+                      } else {
+                        alert(
+                            globalScaffoldKey.currentContext!,
+                            0,
+                            "Data latitude/ longitude tidak di temukan",
+                            "error");
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 3.0,
+                        backgroundColor: Colors.blue.shade600,
+                        foregroundColor: Colors.white,
+                        padding:
                             EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            textStyle: TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w600)),
-                      ))
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        textStyle: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600)),
+                  ))
                 ],
-                if (value['sr_typeid']?.toString() == 'STORING') ...[SizedBox(width: 12)],
+                if (value['sr_typeid']?.toString() == 'STORING') ...[
+                  SizedBox(width: 12)
+                ],
                 Expanded(
                     child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.menu,
-                        color: Colors.white,
-                        size: 20.0,
-                      ),
-                      label: Text("Detail"),
-                      onPressed: () async {
-                        print('Detail');
-                        SharedPreferences prefs =
+                  icon: Icon(
+                    Icons.menu,
+                    color: Colors.white,
+                    size: 20.0,
+                  ),
+                  label: Text("Detail"),
+                  onPressed: () async {
+                    print('Detail');
+                    SharedPreferences prefs =
                         await SharedPreferences.getInstance();
-                        var mcnid = prefs.getString("mechanicid") ?? "";
-                        await getListDetail(
-                            true, '', mcnid, value['wodwonbr']?.toString() ?? "", context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 3.0,
-                          backgroundColor: Colors.green.shade600,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          textStyle:
+                    var mcnid = prefs.getString("mechanicid") ?? "";
+                    await getListDetail(true, '', mcnid,
+                        value['wodwonbr']?.toString() ?? "", context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 3.0,
+                      backgroundColor: Colors.green.shade600,
+                      foregroundColor: Colors.white,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      textStyle:
                           TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    )),
+                )),
               ]))
         ],
       ),
@@ -1686,7 +1890,10 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
           SizedBox(
             width: 120,
             child: Text("$label:",
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 12, fontWeight: FontWeight.w500)),
+                style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500)),
           ),
           Expanded(
             child: Text(value,

@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:dms_anp/src/Helper/scanner_helper.dart';
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:awesome_select/awesome_select.dart';
 import '../../../choices.dart' as choices;
@@ -25,6 +26,29 @@ class FrmWareHouseOpName extends StatefulWidget {
 final globalScaffoldKey = GlobalKey<ScaffoldState>();
 
 class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
+  static const Color primaryOrange = Color(0xFFFF8A50);
+  static const Color lightOrange = Color(0xFFFFB085);
+  InputDecoration softDecoration({String? label, required bool readOnly}) {
+    return InputDecoration(
+      labelText: label,
+      isDense: true,
+      filled: true,
+      fillColor: readOnly ? Colors.black12 : Colors.white,
+      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade400),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: primaryOrange, width: 1.5),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+    );
+  }
   String BASE_URL =
       GlobalData.baseUrl; //"http://apps.tuluatas.com:8085/cemindo";
   FocusNode myFocusNode = FocusNode();
@@ -339,6 +363,9 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                 builder: (context) => new AlertDialog(
                   title: new Text('Information'),
                   content: new Text("$message"),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                  ),
                   actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
@@ -353,7 +380,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       },
                       style: ElevatedButton.styleFrom(
                           elevation: 0.0,
-                          backgroundColor: Colors.blue,
+                          backgroundColor: primaryOrange,
                           foregroundColor: Colors.white,
                           padding:
                               EdgeInsets.symmetric(horizontal: 5, vertical: 0),
@@ -508,6 +535,9 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                 builder: (context) => new AlertDialog(
                   title: new Text('Information'),
                   content: new Text("$message"),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                  ),
                   actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
@@ -522,7 +552,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       },
                       style: ElevatedButton.styleFrom(
                           elevation: 0.0,
-                          backgroundColor: Colors.blue,
+                          backgroundColor: primaryOrange,
                           foregroundColor: Colors.white,
                           padding:
                               EdgeInsets.symmetric(horizontal: 5, vertical: 0),
@@ -556,13 +586,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
   Future scanQRCode() async {
     if (!mounted) return;
     
-    // Buka scanner screen
-    final String? scanResult = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => _QRScannerScreen(),
-      ),
-    );
+    final String? scanResult = await openQrScanner(context);
     
     if (scanResult == null || scanResult.isEmpty) {
       if (mounted) {
@@ -605,21 +629,22 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
               .map((dynamic e) => e as Map<String, dynamic>)
               .toList();
           if (lstItemID.length > 0) {
-            print(lstItemID[0]['item_id']);
+            print(lstItemID[0]['item_id']);//
             setState(() {
-              txtTypeAccessories.text = lstItemID[0]['idaccess'];
-              txtItemID.text = lstItemID[0]['item_id'];
-              txtMerk.text = lstItemID[0]['merk'];
-              txtPartName.text = lstItemID[0]['part_name'];
-              txtItemSize.text = lstItemID[0]['item_size'];
-              txtTypePO.text = lstItemID[0]['typepo'];
-              txtType.text = lstItemID[0]['idtype'];
-              txtCurrencyTypeID.text = lstItemID[0]['curyid'];
-              selCuryID = lstItemID[0]['curyid'];
-              txtQuantityOnHands.text = lstItemID[0]['qty_on_hand'];
+              final row = lstItemID[0];
+              txtTypeAccessories.text = (row['idaccess'] ?? '').toString();
+              txtItemID.text = (row['item_id'] ?? '').toString();
+              txtMerk.text = (row['merk'] ?? '').toString();
+              txtPartName.text = (row['part_name'] ?? '').toString();
+              txtItemSize.text = (row['item_size'] ?? '').toString();
+              txtTypePO.text = (row['typepo'] ?? '').toString();
+              txtType.text = (row['idtype'] ?? '').toString();
+              txtCurrencyTypeID.text = (row['curyid'] ?? '').toString();
+              selCuryID = (row['curyid'] ?? '').toString();
+              txtQuantityOnHands.text = (row['qty_on_hand'] ?? '0').toString();
               txtQuantityOnActual.text = '0';
-              txtVHTID.text = lstItemID[0]['vhtid'];
-              txtGenuinoNumber.text = lstItemID[0]['genuine_no'];
+              txtVHTID.text = (row['vhtid'] ?? '').toString();
+              txtGenuinoNumber.text = (row['genuine_no'] ?? '').toString();
               witwarehouseid = selWareHouseID;
             });
           }
@@ -795,7 +820,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                   },
                       style: ElevatedButton.styleFrom(
                           elevation: 0.0,
-                          backgroundColor: Colors.blueAccent,
+                          backgroundColor: Colors.grey.shade600,
                           foregroundColor: Colors.white,
                           padding:
                               EdgeInsets.symmetric(horizontal: 10, vertical: 0),
@@ -823,7 +848,8 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                   },
                   style: ElevatedButton.styleFrom(
                       elevation: 0.0,
-                      backgroundColor: Colors.blue,
+                      backgroundColor: primaryOrange,
+                      foregroundColor: Colors.white,
                       padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                       textStyle:
@@ -835,7 +861,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         },
         style: ElevatedButton.styleFrom(
             elevation: 0.0,
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: primaryOrange,
             foregroundColor: Colors.white,
             padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
             textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
@@ -861,7 +887,8 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
           },
           style: ElevatedButton.styleFrom(
               elevation: 0.0,
-              backgroundColor: Colors.blueAccent,
+              backgroundColor: primaryOrange,
+              foregroundColor: Colors.white,
               padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
               textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)));
     } else {
@@ -880,24 +907,21 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
               builder: (context) => new AlertDialog(
                 title: new Text('Information'),
                 content: new Text("Input Stock Opname?"),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                ),
                 actions: <Widget>[
                   new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 20.0,
-                    ),
+                    icon: Icon(Icons.close, color: Colors.white, size: 20.0),
                     label: Text("No"),
                     onPressed: () {
                       Navigator.of(context).pop(false);
                     },
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
-                        backgroundColor: Colors.blueAccent,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.bold)),
+                        backgroundColor: Colors.grey.shade600,
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                   new ElevatedButton.icon(
                     icon: Icon(
@@ -917,7 +941,8 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                     },
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
-                        backgroundColor: Colors.blue,
+                        backgroundColor: primaryOrange,
+                        foregroundColor: Colors.white,
                         padding:
                             EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                         textStyle: TextStyle(
@@ -929,7 +954,8 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
           },
           style: ElevatedButton.styleFrom(
               elevation: 0.0,
-              backgroundColor: Colors.blueAccent,
+              backgroundColor: primaryOrange,
+              foregroundColor: Colors.white,
               padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
               textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)));
     }
@@ -952,7 +978,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         },
         style: ElevatedButton.styleFrom(
             elevation: 0.0,
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: primaryOrange,
             padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
             textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)));
   }
@@ -1018,7 +1044,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
       },
       style: ElevatedButton.styleFrom(
           elevation: 0.0,
-          backgroundColor: Colors.orangeAccent,
+          backgroundColor: primaryOrange,
           foregroundColor: Colors.white,
           padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
@@ -1243,27 +1269,24 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                           }
                         }
                       },
-                      decoration: new InputDecoration(
+                      decoration: softDecoration(
+                        label: 'Item ID',
+                        readOnly: globals.wh_method == "edit",
+                      ).copyWith(
                         suffixIcon: IconButton(
-                          icon: new Image.asset(
-                            "assets/img/qrcode.png",
-                            width: 32.0,
-                            height: 32.0,
-                          ),
+                          icon: Image.asset("assets/img/qrcode.png", width: 32.0, height: 32.0),
                           onPressed: () {
                             showDialog(
                               context: context,
-                              builder: (context) => new AlertDialog(
-                                title: new Text('Information'),
-                                content:
-                                    new Text("Filter by name or Scan item ID?"),
+                              builder: (context) => AlertDialog(
+                                title: Text('Information'),
+                                content: Text("Filter by name or Scan item ID?"),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                                ),
                                 actions: <Widget>[
-                                  new ElevatedButton.icon(
-                                    icon: Icon(
-                                      Icons.qr_code_scanner,
-                                      color: Colors.white,
-                                      size: 20.0,
-                                    ),
+                                  ElevatedButton.icon(
+                                    icon: Icon(Icons.qr_code_scanner, color: Colors.white, size: 20.0),
                                     label: Text("Scan QRCode"),
                                     onPressed: () {
                                       Navigator.of(context).pop(false);
@@ -1273,64 +1296,50 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                                       scanQRCode();
                                     },
                                     style: ElevatedButton.styleFrom(
-                                        elevation: 0.0,
-                                        backgroundColor: Colors.blueAccent,
-                                        foregroundColor: Colors.white,
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 0),
-                                        textStyle: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold, color: Colors.white)),
-                                  ),
-                                  new ElevatedButton.icon(
-                                    icon: Icon(
-                                      Icons.search,
-                                      color: Colors.white,
-                                      size: 20.0,
+                                      elevation: 0.0,
+                                      backgroundColor: primaryOrange,
+                                      foregroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                                      textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
                                     ),
+                                  ),
+                                  ElevatedButton.icon(
+                                    icon: Icon(Icons.search, color: Colors.white, size: 20.0),
                                     label: Text("Search By Name"),
                                     onPressed: () async {
                                       Navigator.of(context).pop(false);
-                                      SharedPreferences prefs =
-                                          await SharedPreferences.getInstance();
+                                      SharedPreferences prefs = await SharedPreferences.getInstance();
                                       var username = prefs.getString("name") ?? "";
                                       print('Search By Name');
                                       setState(() {
                                         isScan = false;
                                       });
                                       showDialog(
-                                          context: context,
-                                          builder: (context) {
-                                            return AlertDialog(
-                                              title: Text('Search Item'),
-                                              content:
-                                                  setupAlertDialoadContainer(
-                                                      context),
-                                            );
-                                          });
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            title: Text('Search Item'),
+                                            content: setupAlertDialoadContainer(context),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                                            ),
+                                          );
+                                        },
+                                      );
                                     },
                                     style: ElevatedButton.styleFrom(
-                                        elevation: 0.0,
-                                        backgroundColor: Colors.blue,
-                                        foregroundColor: Colors.white,
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 0),
-                                        textStyle: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold, color: Colors.white)),
+                                      elevation: 0.0,
+                                      backgroundColor: primaryOrange,
+                                      foregroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                                      textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                                    ),
                                   ),
                                 ],
                               ),
                             );
                           },
                         ),
-                        fillColor: globals.wh_method != "edit"
-                            ? Colors.white
-                            : Colors.black12,
-                        filled: true,
-                        labelText: 'Item ID',
-                        isDense: true,
-                        contentPadding: EdgeInsets.all(2.0),
                       ),
                     ),
                   ),
@@ -1343,15 +1352,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       style: TextStyle(color: Colors.grey.shade800),
                       controller: txtPartName,
                       keyboardType: TextInputType.text,
-                      decoration: new InputDecoration(
-                        fillColor: globals.wh_method != "edit"
-                            ? Colors.white
-                            : Colors.black12,
-                        filled: true,
-                        labelText: 'Part Name',
-                        isDense: true,
-                        contentPadding: EdgeInsets.all(2.0),
-                      ),
+                      decoration: softDecoration(label: 'Part Name', readOnly: globals.wh_method == "edit"),
                     ),
                   ),
                   Container(
@@ -1363,15 +1364,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       style: TextStyle(color: Colors.grey.shade800),
                       controller: txtType,
                       keyboardType: TextInputType.text,
-                      decoration: new InputDecoration(
-                        fillColor: globals.wh_method != "edit"
-                            ? Colors.white
-                            : Colors.black12,
-                        filled: true,
-                        labelText: 'Type',
-                        isDense: true,
-                        contentPadding: EdgeInsets.all(2.0),
-                      ),
+                      decoration: softDecoration(label: 'Type', readOnly: globals.wh_method == "edit"),
                     ),
                   ),
                   Container(
@@ -1383,15 +1376,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       style: TextStyle(color: Colors.grey.shade800),
                       controller: txtVHTID,
                       keyboardType: TextInputType.text,
-                      decoration: new InputDecoration(
-                        fillColor: globals.wh_method != "edit"
-                            ? Colors.white
-                            : Colors.black12,
-                        filled: true,
-                        labelText: 'VHTID',
-                        isDense: true,
-                        contentPadding: EdgeInsets.all(2.0),
-                      ),
+                      decoration: softDecoration(label: 'VHTID', readOnly: globals.wh_method == "edit"),
                     ),
                   ),
                   Container(
@@ -1403,15 +1388,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       style: TextStyle(color: Colors.grey.shade800),
                       controller: txtGenuinoNumber,
                       keyboardType: TextInputType.text,
-                      decoration: new InputDecoration(
-                        fillColor: globals.wh_method != "edit"
-                            ? Colors.white
-                            : Colors.black12,
-                        filled: true,
-                        labelText: 'Genuine No',
-                        isDense: true,
-                        contentPadding: EdgeInsets.all(2.0),
-                      ),
+                      decoration: softDecoration(label: 'Genuine No', readOnly: globals.wh_method == "edit"),
                     ),
                   ),
                   Container(
@@ -1423,15 +1400,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       style: TextStyle(color: Colors.grey.shade800),
                       controller: txtTypeAccessories,
                       keyboardType: TextInputType.text,
-                      decoration: new InputDecoration(
-                        fillColor: globals.wh_method != "edit"
-                            ? Colors.white
-                            : Colors.black12,
-                        filled: true,
-                        labelText: 'Type Accessories',
-                        isDense: true,
-                        contentPadding: EdgeInsets.all(2.0),
-                      ),
+                      decoration: softDecoration(label: 'Type Accessories', readOnly: globals.wh_method == "edit"),
                     ),
                   ),
                   Container(
@@ -1443,15 +1412,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       style: TextStyle(color: Colors.grey.shade800),
                       controller: txtMerk,
                       keyboardType: TextInputType.text,
-                      decoration: new InputDecoration(
-                        fillColor: globals.wh_method != "edit"
-                            ? Colors.white
-                            : Colors.black12,
-                        filled: true,
-                        labelText: 'Merk',
-                        isDense: true,
-                        contentPadding: EdgeInsets.all(2.0),
-                      ),
+                      decoration: softDecoration(label: 'Merk', readOnly: globals.wh_method == "edit"),
                     ),
                   ),
                   Container(
@@ -1463,15 +1424,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       style: TextStyle(color: Colors.grey.shade800),
                       controller: txtItemSize,
                       keyboardType: TextInputType.number,
-                      decoration: new InputDecoration(
-                        fillColor: globals.wh_method != "edit"
-                            ? Colors.white
-                            : Colors.black12,
-                        filled: true,
-                        labelText: 'Item Size',
-                        isDense: true,
-                        contentPadding: EdgeInsets.all(2.0),
-                      ),
+                      decoration: softDecoration(label: 'Item Size', readOnly: globals.wh_method == "edit"),
                     ),
                   ),
                   Container(
@@ -1484,13 +1437,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       controller: txtQuantityOnHands,
                       keyboardType: TextInputType.number,
                       //focusNode: myFocusNode,
-                      decoration: new InputDecoration(
-                        fillColor: Colors.black12,
-                        filled: true,
-                        labelText: 'Quantity OnHands',
-                        isDense: true,
-                        contentPadding: EdgeInsets.all(2.0),
-                      ),
+                      decoration: softDecoration(label: 'Quantity OnHands', readOnly: true),
                     ),
                   ),
                   Container(
@@ -1503,15 +1450,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       controller: txtQuantityOnActual,
                       keyboardType: TextInputType.number,
                       focusNode: myFocusNode,
-                      decoration: new InputDecoration(
-                        fillColor: globals.wh_method != "edit"
-                            ? Colors.white
-                            : Colors.black12,
-                        filled: true,
-                        labelText: 'Quantity Actual',
-                        isDense: true,
-                        contentPadding: EdgeInsets.all(2.0),
-                      ),
+                      decoration: softDecoration(label: 'Quantity Actual', readOnly: globals.wh_method == "edit"),
                     ),
                   ),
                   Container(
@@ -1545,7 +1484,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                                 ),
                               ),
                             ),
-                          ),
+                          ),//OK
                           SizedBox(width: 5),
                           new Flexible(
                               child: new TextField(
@@ -1554,15 +1493,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                             style: TextStyle(color: Colors.grey.shade800),
                             controller: txtTypePO,
                             keyboardType: TextInputType.text,
-                            decoration: new InputDecoration(
-                              fillColor: globals.wh_method != "edit"
-                                  ? Colors.white
-                                  : Colors.black12,
-                              filled: true,
-                              labelText: 'Type Po',
-                              isDense: true,
-                              contentPadding: EdgeInsets.all(2.0),
-                            ),
+                            decoration: softDecoration(label: 'Type Po', readOnly: true),
                           )),
                         ]),
                   ),
@@ -1608,14 +1539,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                             style: TextStyle(color: Colors.grey.shade800),
                             controller: txtCurrencyTypeID,
                             keyboardType: TextInputType.text,
-                            decoration: new InputDecoration(
-                              fillColor: globals.wh_method != "edit"
-                                  ? Colors.white
-                                  : Colors.black12,
-                              filled: true,
-                              isDense: true,
-                              contentPadding: EdgeInsets.all(2.0),
-                            ),
+                            decoration: softDecoration(readOnly: true, label: 'Curr.'),
                           )),
                         ]),
                   ),
@@ -1740,174 +1664,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
   }
 }
 
-/// Screen untuk scan QR Code / Barcode menggunakan mobile_scanner
-class _QRScannerScreen extends StatefulWidget {
-  @override
-  _QRScannerScreenState createState() => _QRScannerScreenState();
-}
 
-class _QRScannerScreenState extends State<_QRScannerScreen> {
-  final MobileScannerController controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.noDuplicates,
-    facing: CameraFacing.back,
-  );
-  bool _isScanning = true;
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: Text('Scan QR Code / Barcode', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.black87,
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
-      body: Stack(
-        children: [
-          MobileScanner(
-            controller: controller,
-            onDetect: (capture) {
-              if (!_isScanning) return;
-              
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty) {
-                final String code = barcodes.first.rawValue ?? '';
-                if (code.isNotEmpty) {
-                  _isScanning = false;
-                  controller.stop();
-                  Navigator.pop(context, code);
-                }
-              }
-            },
-          ),
-          // Overlay dengan frame untuk scan
-          CustomPaint(
-            painter: _ScannerOverlayPainter(),
-            child: Container(),
-          ),
-          // Instruction text
-          Positioned(
-            bottom: 100,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Arahkan kamera ke QR Code / Barcode',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Custom painter untuk overlay frame scanner
-class _ScannerOverlayPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final overlayPaint = Paint()
-      ..color = Colors.black54
-      ..style = PaintingStyle.fill;
-
-    final borderPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    // Frame tengah untuk scan area
-    final scanAreaSize = size.width * 0.7;
-    final scanAreaLeft = (size.width - scanAreaSize) / 2;
-    final scanAreaTop = (size.height - scanAreaSize) / 2 - 50;
-    final scanArea = Rect.fromLTWH(
-      scanAreaLeft,
-      scanAreaTop,
-      scanAreaSize,
-      scanAreaSize,
-    );
-
-    // Draw overlay (darken area di luar frame)
-    final overlayPath = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..addRect(scanArea)
-      ..fillType = PathFillType.evenOdd;
-    
-    canvas.drawPath(overlayPath, overlayPaint);
-
-    // Draw frame border dengan corner indicators
-    final cornerLength = 30.0;
-    final cornerWidth = 4.0;
-    
-    // Top-left corner
-    canvas.drawLine(
-      Offset(scanAreaLeft, scanAreaTop),
-      Offset(scanAreaLeft + cornerLength, scanAreaTop),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    canvas.drawLine(
-      Offset(scanAreaLeft, scanAreaTop),
-      Offset(scanAreaLeft, scanAreaTop + cornerLength),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    
-    // Top-right corner
-    canvas.drawLine(
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop),
-      Offset(scanAreaLeft + scanAreaSize - cornerLength, scanAreaTop),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    canvas.drawLine(
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop),
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + cornerLength),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    
-    // Bottom-left corner
-    canvas.drawLine(
-      Offset(scanAreaLeft, scanAreaTop + scanAreaSize),
-      Offset(scanAreaLeft + cornerLength, scanAreaTop + scanAreaSize),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    canvas.drawLine(
-      Offset(scanAreaLeft, scanAreaTop + scanAreaSize),
-      Offset(scanAreaLeft, scanAreaTop + scanAreaSize - cornerLength),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    
-    // Bottom-right corner
-    canvas.drawLine(
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize),
-      Offset(scanAreaLeft + scanAreaSize - cornerLength, scanAreaTop + scanAreaSize),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-    canvas.drawLine(
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize),
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize - cornerLength),
-      borderPaint..strokeWidth = cornerWidth,
-    );
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
 
 class ItemInventoryModel {
   String item_id;

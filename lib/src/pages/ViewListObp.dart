@@ -17,7 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ViewListObp extends StatefulWidget {
+class ViewListObp extends StatefulWidget {//
   @override
   _ViewListObpState createState() => _ViewListObpState();
 }
@@ -27,10 +27,12 @@ class _ViewListObpState extends State<ViewListObp> {
   GlobalKey globalScaffoldKey2 = GlobalKey<ScaffoldState>();
   TextEditingController editingController = new TextEditingController();
   late WebViewController _controllerWeb;
-  late List data;
-  late List duplicateItems;
+  List data = [];
+  List duplicateItems = [];
   String status_code = "";
   String message = "";
+  final Color primaryOrange = const Color(0xFFFF8A50);
+  final Color lightCream = const Color(0xFFFFFCF8);
 
   final Uri _url = Uri.parse('https://flutter.dev');
 
@@ -193,9 +195,9 @@ class _ViewListObpState extends State<ViewListObp> {
         key: globalScaffoldKey,
         backgroundColor: Colors.white,
         appBar: AppBar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: primaryOrange,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back),
+              icon: Icon(Icons.arrow_back, color: Colors.white),
               iconSize: 20.0,
               onPressed: () {
                 _goBack(context);
@@ -204,7 +206,7 @@ class _ViewListObpState extends State<ViewListObp> {
             //backgroundColor: Colors.transparent,
             //elevation: 0.0,
             centerTitle: true,
-            title: Text('List OBP')),
+            title: Text('List OBP',style:TextStyle( color: Colors.white))),
         body: Container(
           child: Column(
             children: <Widget>[
@@ -221,7 +223,8 @@ class _ViewListObpState extends State<ViewListObp> {
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             minimumSize: Size(70, 30),
-                            backgroundColor: Colors.blueAccent,
+                            backgroundColor: primaryOrange,
+                            foregroundColor: Colors.white,
                             // shape: new RoundedRectangleBorder(
                             //   borderRadius: new BorderRadius.circular(30.0),
                             // ),
@@ -234,12 +237,17 @@ class _ViewListObpState extends State<ViewListObp> {
                         ),
                       ),
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(0.0)))),
+                          borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                          borderSide: BorderSide(color: Colors.grey.shade400)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                        borderSide: BorderSide(color: primaryOrange, width: 1.5),
+                      )),
                 ),
               ),
               Expanded(
                 child: new Stack(
-                   children: <Widget>[_buildListView(globalScaffoldKey2.currentContext!)],
+                   children: <Widget>[_buildListView(context)],//
                 ),
               ),
             ],
@@ -267,11 +275,16 @@ class _ViewListObpState extends State<ViewListObp> {
     return Card(
       elevation: 8.0,
       margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+      color: lightCream,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: primaryOrange),
+      ),
       child: Column(
         children: <Widget>[
           Container(
             width: MediaQuery.of(context).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
+            decoration: BoxDecoration(color: lightCream),
             child: Container(
               child: ListTile(
                 contentPadding:
@@ -368,11 +381,12 @@ class _ViewListObpState extends State<ViewListObp> {
                       },
                       style: ElevatedButton.styleFrom(
                           elevation: 0.0,
-                          backgroundColor: Colors.blueAccent,
+                          backgroundColor: primaryOrange,
+                          foregroundColor: Colors.white,
                           padding: EdgeInsets.symmetric(
                               horizontal: 5, vertical: 10),
                           textStyle: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                              fontSize: 12, fontWeight: FontWeight.bold)),
                     )),
               ],
             ),
@@ -413,11 +427,12 @@ class _ViewListObpState extends State<ViewListObp> {
             },
             style: ElevatedButton.styleFrom(
                 elevation: 0.0,
-                backgroundColor: Colors.redAccent,
+                backgroundColor: primaryOrange,
+                foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(
                     horizontal: 5, vertical: 10),
                 textStyle: TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold)),
+                    fontSize: 12, fontWeight: FontWeight.bold)),
           ));
     }
 
