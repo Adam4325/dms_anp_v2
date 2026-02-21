@@ -147,7 +147,7 @@ class _ViewAntrianMixerState extends State<ViewAntrianMixer> {
     vhcid_last = (prefs.getString("method")=="new"? prefs.getString("vhcid_last_antrian"):vhcid)!;
     print('vhcid_last ${vhcid_last}');
     if (vhcid_last != "" && vhcid_last != null) {
-      print(drvid);
+      print(drvid);//
       Uri myUri = Uri.parse(
           "${GlobalData.baseUrl}api/do_mixer/list_do_antrian_mixer.jsp?method=antrianv1&driverid=" +
               drvid.toString() +

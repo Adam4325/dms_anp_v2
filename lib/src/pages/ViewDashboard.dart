@@ -3003,11 +3003,12 @@ class _ViewDashboardState extends State<ViewDashboard> {
   }
 
   void _viewHistoryMixer(dynamic item) async {
-    print(item['do_number']);
-    print(item['tgl_do']);
-    print(item['time_do']);
-    print(item['nopol']);
-    print(item['vehicle_id']);
+    // print(item['do_number']);
+    // print(item['tgl_do']);
+    // print(item['time_do']);
+    // print(item['nopol']);
+    // print(item['vehicle_id']);
+    print(item);
     var tgl_do = item['tgl_do'] + " " + item['time_do'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString("do_maps", item['do_number']);

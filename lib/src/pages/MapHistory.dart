@@ -990,7 +990,7 @@ class MapHistoryState extends State<MapHistory> {
                                     SizedBox(
                                       height: 15,
                                     ),
-                                    if(data_list_do!=null)...[
+                                    if (data_list_do != null && data_list_do.isNotEmpty) ...[
                                     Text("LOADING \nStart: ${data_list_do[0]["startloading"]}\nFinish: ${data_list_do[0]["finishloading"]}",
                                         style: Theme.of(context)
                                             .textTheme

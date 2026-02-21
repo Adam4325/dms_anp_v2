@@ -707,7 +707,9 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                           right: 15,
                           top: 20,
                         ),
-                        child: Column(
+                        child: SingleChildScrollView(
+                          physics: ClampingScrollPhysics(),
+                          child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if(isShowContainsSlidePanel)...[
@@ -967,43 +969,347 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                     SizedBox(
                                       height: 15,
                                     ),
-                                    if(data_list_do!=null)...[
-                                    Text("LOADING \nStart: ${data_list_do[0]["startloading"]}\nFinish: ${data_list_do[0]["finishloading"]}",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                            fontSize: 12,
-                                            fontFamily: "Poppins Regular",
-                                            color: ColorConstants.kTextColor,
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("In Loading",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                        SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "INLOADING"
+                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            Icon(Icons.access_time, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "INLOADING"
+                                                  ? "${data_list_do[0]["time_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                          ],
                                         ),
-                                        overflow: TextOverflow.ellipsis),
-                                    SizedBox(
-                                      height: 15,
+                                        SizedBox(height: 4),
+                                        Text("Kendaraan masuk area plant, mulai muat",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                      ],
                                     ),
-                                    Text("DESTINATION \nStart: ${data_list_do[0]["startdestination"]}\nFinish: ${data_list_do[0]["finishdestination"]}",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                            fontSize: 12,
-                                            fontFamily: "Poppins Regular",
-                                            color: ColorConstants.kTextColor,
+                                    SizedBox(height: 15),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("Out Loading",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                        SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "OUTLOADING"
+                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            Icon(Icons.access_time, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "OUTLOADING"
+                                                  ? "${data_list_do[0]["time_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                          ],
                                         ),
-                                        overflow: TextOverflow.ellipsis),
-                                    SizedBox(
-                                      height: 15,
+                                        SizedBox(height: 4),
+                                        Text("Muat selesai, kendaraan keluar area loading",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                      ],
                                     ),
-                                    Text("BRANCH \nFinish: ${data_list_do[0]["finishbranch"]}",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                            fontSize: 12,
-                                            fontFamily: "Poppins Regular",
-                                            color: ColorConstants.kTextColor,
+                                    SizedBox(height: 15),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("Out Pool",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                        SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "OUTPOOL"
+                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            Icon(Icons.access_time, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "OUTPOOL"
+                                                  ? "${data_list_do[0]["time_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                          ],
                                         ),
-                                        overflow: TextOverflow.ellipsis)],
+                                        SizedBox(height: 4),
+                                        Text("Kendaraan keluar pool menuju customer",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                      ],
+                                    ),
+                                    SizedBox(height: 15),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("In Customer",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                        SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "INCUSTOMER"
+                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            Icon(Icons.access_time, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "INCUSTOMER"
+                                                  ? "${data_list_do[0]["time_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text("Kendaraan tiba di lokasi customer",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                      ],
+                                    ),
+                                    SizedBox(height: 15),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("In Unloading",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                        SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "INUNLOADING"
+                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            Icon(Icons.access_time, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "INUNLOADING"
+                                                  ? "${data_list_do[0]["time_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text("Mulai bongkar muatan",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                      ],
+                                    ),
+                                    SizedBox(height: 15),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("Out Unloading",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                        SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "OUTUNLOADING"
+                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            Icon(Icons.access_time, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "OUTUNLOADING"
+                                                  ? "${data_list_do[0]["time_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text("Bongkar selesai, kendaraan keluar area unloading",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                      ],
+                                    ),
                                   ],
                                 ),
                                 ),
@@ -1060,7 +1366,7 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                   Container(
                                     width: 40,
                                     height: 35,
-                                    color: Colors.grey.shade200,
+                                    color: Colors.deepOrangeAccent,
                                     child: Center(
                                       child: IconButton(
                                         icon: Icon(
@@ -1183,7 +1489,7 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                               ),
                             )],
                           ],
-                        ),
+                        )),
                       ),
                     ),
                   )
