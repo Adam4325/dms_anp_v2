@@ -1,8 +1,8 @@
-
 import 'dart:async';
 
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/pages/FrmCreateAntrianNewDriver.dart';
+import 'package:dms_anp/src/pages/FrmSetKmByDoMixer.dart';
 import 'package:dms_anp/src/pages/FrmSetKmByDriver.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/driver/ListDriverInspeksiV2.dart';
@@ -18,7 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trust_location/trust_location.dart';
 import '../../flusbar.dart';
 import '../ViewAntrian.dart';
-import '../ViewAntrianP2H.dart';
+import '../ViewAntrianMixer.dart';
 import '../ViewService.dart';
 
 class DailyCheckScreenP2H extends StatefulWidget {
@@ -30,23 +30,17 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
   List<dynamic> inspections = [];
   Map<String, String> selectedValues =
-  {}; // key: inspeksi_id, value: 'ya'/'tidak'
+      {}; // key: inspeksi_id, value: 'ya'/'tidak'
   final TextEditingController kilometerController = TextEditingController();
   final TextEditingController notesController = TextEditingController();
-
-  // _goBack(BuildContext context) async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   Navigator.pushReplacement(
-  //       context, MaterialPageRoute(builder: (context) => ViewDashboard()));
-  // }
 
   void getSession() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       if (globals.p2hVhcDriver == "yes") {
-        kilometerController.text = prefs.getString("km_new")!;
+        kilometerController.text = (prefs.getString("km_new") ?? "");
       } else {
-        kilometerController.text = globals.p2hVhcKilometer!;
+        kilometerController.text = (globals.p2hVhcKilometer ?? "");
       }
     });
   }
@@ -62,8 +56,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
   }
 
   void fetchInspectionData() async {
-    var urlBase =
-        'https://apps.tuluatas.com/trucking/mobile/api/master_data_inspeksi.jsp?method=list-inspeksi-v2&vhcid=${globals.p2hVhcid.toString()}';
+    var urlBase = GlobalData.baseUrl +
+        'api/master_data_inspeksi.jsp?method=list-inspeksi-v2&vhcid=${globals.p2hVhcid.toString()}';
     final response = await http.get(Uri.parse(urlBase));
     print(urlBase);
     if (response.statusCode == 200) {
@@ -82,8 +76,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
     final jsonString = jsonEncode(data);
 
     final response = await http.post(
-      Uri.parse(
-          'https://apps.tuluatas.com/trucking/mobile/api/create_form_inspeksiv2_new.jsp'),
+      Uri.parse(GlobalData.baseUrl + 'api/create_form_inspeksiv2_new.jsp'),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -156,8 +149,6 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
       return false;
     }
   }
-
-
 
   void handleSubmit() async {
     // Cek apakah widget masih mounted
@@ -259,15 +250,15 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
           : kilometerController.text,
       "catatan": notesController.text,
       "drvid":
-      globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
+          globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
       "lon": lon,
       "lat": lat,
       "geoid": geo_id_area,
       "geo_name": geofence_name,
       "vhcid": globals.p2hVhcDriver == "yes"
           ? (prefs.getString("vhcidfromdo")?.isEmpty ?? true
-          ? prefs.getString("vhcid_last_antrian")
-          : prefs.getString("vhcidfromdo"))
+              ? prefs.getString("vhcid_last_antrian")
+              : prefs.getString("vhcidfromdo"))
           : globals.p2hVhcid.toString(),
       "locid": globals.p2hVhcDriver == "yes"
           ? _locid
@@ -281,7 +272,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
       if (mounted) {
         _showConfirmationDialog(
           "Inspeksi berhasil diisi di area $geofence_name. Lanjutkan ke proses Antrian?",
-              () async {
+          () async {
             // Cek mounted lagi sebelum submit
             if (!mounted) return;
 
@@ -292,13 +283,22 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
                     "Success membuat p2h", "success");
                 Timer(Duration(seconds: 1), () async {
                   SharedPreferences prefs =
-                  await SharedPreferences.getInstance();
+                      await SharedPreferences.getInstance();
                   var p2h_antrian = prefs.setString("p2h_antrian", "true");
+                  var login_type = prefs.getString("login_type");
                   if (mounted) {
-                    Navigator.pushReplacement(
-                      globalScaffoldKey.currentContext!,
-                      MaterialPageRoute(builder: (context) => ViewAntrian()),
-                    );
+                    if (login_type == "MIXER") {
+                      Navigator.pushReplacement(
+                        globalScaffoldKey.currentContext!,
+                        MaterialPageRoute(
+                            builder: (context) => ViewAntrianMixer()),
+                      );
+                    } else {
+                      Navigator.pushReplacement(
+                        globalScaffoldKey.currentContext!,
+                        MaterialPageRoute(builder: (context) => ViewAntrian()),
+                      );
+                    }
                   }
                 });
               }
@@ -424,39 +424,53 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
                     if (!mounted) return;
 
                     SharedPreferences sharedPreferences =
-                    await SharedPreferences.getInstance();
+                        await SharedPreferences.getInstance();
                     var loginName = sharedPreferences.getString("loginname");
+                    var login_type = sharedPreferences.getString("login_type");
 
                     if (loginName == 'DRIVER') {
                       if (EasyLoading.isShow) {
                         EasyLoading.dismiss();
                       }
                       String message = globals.page_inspeksi == 'service'
-                          ? "Lanjutkan ke proses service?"
-                          : "Lanjutkan ke proses antrian?";
+                          ? "Lanjutkan ke proses service ${login_type}?"
+                          : "Lanjutkan ke proses antrian ${login_type}?";
 
                       if (mounted) {
                         _showConfirmationDialog(
                           message,
-                              () {
+                          () {
                             Navigator.of(context).pop();
                             if (mounted) {
-                              Navigator.pushReplacement(
-                                globalScaffoldKey.currentContext!,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                  globals.page_inspeksi == 'service'
-                                      ? ViewService()
-                                      : ViewAntrian(),
-                                ),
-                              );
+                              if (login_type == "MIXER") {
+                                Navigator.pushReplacement(
+                                  globalScaffoldKey.currentContext!,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        globals.page_inspeksi == 'service'
+                                            ? ViewService()
+                                            : ViewAntrianMixer(),
+                                  ),
+                                );
+                              } else {
+                                Navigator.pushReplacement(
+                                  globalScaffoldKey.currentContext!,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        globals.page_inspeksi == 'service'
+                                            ? ViewService()
+                                            : ViewAntrian(),
+                                  ),
+                                );
+                              }
                             }
                           },
                         );
                       }
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -563,7 +577,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
                 ),
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -683,7 +698,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
                           ),
                         ),
                         onPressed: () => Navigator.of(context).pop(),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
@@ -700,7 +716,10 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
                       margin: EdgeInsets.only(left: 8),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Colors.orange.shade400, Colors.orange.shade600],
+                          colors: [
+                            Colors.orange.shade400,
+                            Colors.orange.shade600
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
@@ -721,7 +740,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
                           ),
                         ),
                         onPressed: onConfirm,
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
@@ -760,12 +780,12 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-      await http.get(myUri, headers: {"Accept": "application/json"});
+          await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         setState(() {
           listGeofence = [];
           listGeofence = (jsonDecode(response.body) as List)
-          //.map((dynamic e) => e as Map<String, dynamic>)
+              //.map((dynamic e) => e as Map<String, dynamic>)
               .toList();
         });
       } else {
@@ -988,10 +1008,37 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
         if (didPop) return;
         SharedPreferences prefs = await SharedPreferences.getInstance();
         if (globals.p2hVhcDriver == "yes") {
-          Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => FrmCreateAntrianNewDriver()));
+          // if (prefs.getString("login_type") == "MIXER") {
+          //   final kmMixer = prefs.getString("km_mixer") ?? "";
+          //   final vhcidMixer = prefs.getString("vhcid_mixer") ?? "";
+          //   final bujnbrMixer = prefs.getString("bujnumber_mixer") ?? "";
+          //   final doNumberMixer =
+          //       (prefs.getString("do_number_mixer") ?? prefs.getString("do_numbe_mixer")) ?? "";
+          //   final driverIdMixer = prefs.getString("driver_id_mixer") ?? "";
+          //   if (kmMixer.isNotEmpty &&
+          //       vhcidMixer.isNotEmpty &&
+          //       bujnbrMixer.isNotEmpty &&
+          //       doNumberMixer.isNotEmpty &&
+          //       driverIdMixer.isNotEmpty) {
+          //     Navigator.pushReplacement(
+          //         context,
+          //         MaterialPageRoute(
+          //             builder: (context) => FrmSetKmByDoMixer(
+          //                 vehilce: vhcidMixer,
+          //                 vhckm: kmMixer,
+          //                 bujnbr: bujnbrMixer,
+          //                 do_number: doNumberMixer,
+          //                 driver_id: driverIdMixer)));
+          //   } else {
+          //     Navigator.pushReplacement(context,
+          //         MaterialPageRoute(builder: (context) => FrmSetKmByDriver()));
+          //   }
+          // } else {
+          //   Navigator.pushReplacement(context,
+          //       MaterialPageRoute(builder: (context) => FrmSetKmByDriver()));
+          // }
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => ViewDashboard()));
         } else {
           Navigator.pushReplacement(context,
               MaterialPageRoute(builder: (context) => ViewDashboard()));
@@ -1026,253 +1073,262 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
             ),
           ),
           title: Text('Form Inspeksi ${globals.p2hVhcid.toString()}',
-              style: TextStyle(color: Colors.black)),
+              style: TextStyle(color: Colors.white)),
         ),
         body: inspections.isEmpty
             ? const Center(
-            child: Text("List data inspeksi tidak di temukan di database"))
+                child: Text("List data inspeksi tidak di temukan di database"))
             : SingleChildScrollView(
-          padding: const EdgeInsets.all(5),
-          child: Column(
-            children: [
-              Container(
-                margin: EdgeInsets.all(10),
-                alignment: Alignment.center,
-                child: Text("Daily Check Before Riding",
-                    style: TextStyle(fontSize: 20)),
-              ),
-              const SizedBox(height: 16),
+                padding: const EdgeInsets.all(5),
+                child: Column(
+                  children: [
+                    Container(
+                      margin: EdgeInsets.all(10),
+                      alignment: Alignment.center,
+                      child: Text("Daily Check Before Riding",
+                          style: TextStyle(fontSize: 20)),
+                    ),
+                    const SizedBox(height: 16),
 
-              // ✅ PERBAIKAN: Render unique inspections saja
-              ...uniqueInspections.entries.map((entry) {
-                final groupId = entry.key;
-                final inspection = entry.value;
-                final groupTitle = inspection['inspeksi_name'];
-                final subs = inspection['subs'];
+                    // ✅ PERBAIKAN: Render unique inspections saja
+                    ...uniqueInspections.entries.map((entry) {
+                      final groupId = entry.key;
+                      final inspection = entry.value;
+                      final groupTitle = inspection['inspeksi_name'];
+                      final subs = inspection['subs'];
 
-                return Container(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [
-                      BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 4,
-                          offset: Offset(0, 2))
-                    ],
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(groupTitle,
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      Row(
-                        children: [
-                          Theme(
-                            data: Theme.of(context).copyWith(
-                              unselectedWidgetColor: Colors.grey,
-                              radioTheme: RadioThemeData(
-                                fillColor: MaterialStateProperty
-                                    .resolveWith<Color>((states) {
-                                  if (selectedValues[groupId] ==
-                                      'tidak') {
-                                    return Colors.red;
-                                  }
-                                  return Colors.blue;
-                                }),
-                              ),
-                            ),
-                            child: Row(
+                      return Container(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 4,
+                                offset: Offset(0, 2))
+                          ],
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(groupTitle,
+                                style: const TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                            Row(
                               children: [
-                                Radio<String>(
-                                  value: 'ya',
-                                  groupValue: selectedValues[groupId],
-                                  onChanged: (val) {
-                                    setState(() {
-                                      selectedValues[groupId] = val!;
-                                    });
-                                  },
+                                Theme(
+                                  data: Theme.of(context).copyWith(
+                                    unselectedWidgetColor: Colors.grey,
+                                    radioTheme: RadioThemeData(
+                                      fillColor: MaterialStateProperty
+                                          .resolveWith<Color>((states) {
+                                        if (selectedValues[groupId] ==
+                                            'tidak') {
+                                          return Colors.red;
+                                        }
+                                        return Colors.blue;
+                                      }),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Radio<String>(
+                                        value: 'ya',
+                                        groupValue: selectedValues[groupId],
+                                        onChanged: (val) {
+                                          setState(() {
+                                            selectedValues[groupId] = val!;
+                                          });
+                                        },
+                                      ),
+                                      const Text("Ya"),
+                                      Radio<String>(
+                                        value: 'tidak',
+                                        groupValue: selectedValues[groupId],
+                                        onChanged: (val) {
+                                          setState(() {
+                                            selectedValues[groupId] = val!;
+                                          });
+                                        },
+                                      ),
+                                      const Text("Tidak"),
+                                    ],
+                                  ),
                                 ),
-                                const Text("Ya"),
-                                Radio<String>(
-                                  value: 'tidak',
-                                  groupValue: selectedValues[groupId],
-                                  onChanged: (val) {
-                                    setState(() {
-                                      selectedValues[groupId] = val!;
-                                    });
-                                  },
-                                ),
-                                const Text("Tidak"),
                               ],
                             ),
+                            const Divider(),
+
+                            // ✅ Show sub inspections
+                            ...subs
+                                .map((item) => Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 2),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.circle, size: 6),
+                                          const SizedBox(width: 6),
+                                          Expanded(
+                                            child: Text(
+                                                item['subs_inspeksi_name']),
+                                          ),
+                                        ],
+                                      ),
+                                    ))
+                                .toList(),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+
+                    // Kilometer input
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: kilometerController,
+                      keyboardType: TextInputType.number,
+                      readOnly: globals.p2hVhcDriver == "yes" ? true : false,
+                      decoration: InputDecoration(
+                        labelText: 'Kilometer',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Notes input
+                    TextField(
+                      controller: notesController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: 'Catatan',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+
+                    const SizedBox(height: 80),
+                  ],
+                ),
+              ),
+        backgroundColor: Colors.grey.shade100,
+        bottomNavigationBar: SafeArea(
+          minimum: EdgeInsets.only(bottom: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(10),
+                    child: Container(
+                      width: double.infinity,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.orange.shade400,
+                            Colors.orange.shade600
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withOpacity(0.4),
+                            blurRadius: 15,
+                            offset: Offset(0, 5),
                           ),
                         ],
                       ),
-                      const Divider(),
-
-                      // ✅ Show sub inspections
-                      ...subs
-                          .map((item) => Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 2),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          SharedPreferences prefs =
+                              await SharedPreferences.getInstance();
+                          print('prefs.getString("p2h_antrian")');
+                          print(prefs.getString("p2h_antrian"));
+                          handleSubmit();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.circle, size: 6),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                  item['subs_inspeksi_name']),
+                            Icon(Icons.send, color: Colors.white, size: 15),
+                            SizedBox(width: 5),
+                            Text(
+                              "Submit",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ),
-                      ))
-                          .toList(),
-                    ],
-                  ),
-                );
-              }).toList(),
-
-              // Kilometer input
-              const SizedBox(height: 16),
-              TextField(
-                controller: kilometerController,
-                keyboardType: TextInputType.number,
-                readOnly: globals.p2hVhcDriver == "yes" ? true : false,
-                decoration: InputDecoration(
-                  labelText: 'Kilometer',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Notes input
-              TextField(
-                controller: notesController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Catatan',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-
-              const SizedBox(height: 80),
-            ],
-          ),
-        ),
-        backgroundColor: Colors.grey.shade100,
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(10),
-                  child: Container(
-                    width: double.infinity,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.orange.shade400, Colors.orange.shade600],
                       ),
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.orange.withOpacity(0.4),
-                          blurRadius: 15,
-                          offset: Offset(0, 5),
-                        ),
-                      ],
                     ),
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        SharedPreferences prefs = await SharedPreferences.getInstance();
-                        print('prefs.getString("p2h_antrian")');
-                        print(prefs.getString("p2h_antrian"));
-                        handleSubmit();
-                      },
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(10),
+                    child: Container(
+                      width: double.infinity,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.grey.shade400, Colors.grey.shade400],
                         ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.send, color: Colors.white, size: 15),
-                          SizedBox(width: 5),
-                          Text(
-                            "Submit",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.4),
+                            blurRadius: 15,
+                            offset: Offset(0, 5),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child:  Container(
-                  padding: EdgeInsets.all(10),
-                  child: Container(
-                    width: double.infinity,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.grey.shade400, Colors.grey.shade400],
-                      ),
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.4),
-                          blurRadius: 15,
-                          offset: Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        handleCancel();
-                      },
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.refresh, color: Colors.white, size: 15),
-                          SizedBox(width: 5),
-                          Text(
-                            "Reset",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          handleCancel();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                        ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.refresh, color: Colors.white, size: 15),
+                            SizedBox(width: 5),
+                            Text(
+                              "Reset",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

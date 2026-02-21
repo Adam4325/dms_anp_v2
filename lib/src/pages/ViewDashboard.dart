@@ -59,7 +59,10 @@ import '../flusbar.dart';
 import 'FrmAttendanceDriver.dart';
 import 'FrmMasterData.dart';
 import 'FrmNonTera.dart';
+import 'FrmSetKmByDoMixer.dart';
 import 'LiveMaps.dart';
+import 'MapHistoryMixer.dart';
+import 'ViewListDoMixer.dart';
 import 'ViewListStoring.dart';
 import 'driver/ApprovedDriverRequest.dart';
 import 'driver/FrmApprovalReqDriver.dart';
@@ -200,7 +203,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
       sharedPreferences!.setString("lat_lon", "");
       isMenuForeman =
           sharedPreferences!.getString("isMenuForeman") == "1" ? true : false;
-      globals.akses_pages = sharedPreferences!.getStringList("akses_pages") ?? [];
+      globals.akses_pages =
+          sharedPreferences!.getStringList("akses_pages") ?? [];
       print(globals.akses_pages);
       username = sharedPreferences!.getString("username") ?? '';
       loginname = sharedPreferences!.getString("loginname") ?? '';
@@ -352,9 +356,9 @@ class _ViewDashboardState extends State<ViewDashboard> {
     if (loginname != "DRIVER") {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
-          : globals.akses_pages.where((x) =>
-      (x == "IN" || x == "TY" || username == "ADMIN"));
-      if(isOK!=null){
+          : globals.akses_pages
+              .where((x) => (x == "IN" || x == "TY" || username == "ADMIN"));
+      if (isOK != null) {
         if (isOK.length > 0) {
           _anpServiceList.add(new AnpService(
               image: Icons.donut_large,
@@ -368,8 +372,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
     if (loginname != "DRIVER") {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
-          : globals.akses_pages.where((x) =>
-      (x == "IN" || username == "ADMIN"));
+          : globals.akses_pages
+              .where((x) => (x == "IN" || username == "ADMIN"));
       if (isOK != null) {
         if (isOK.length > 0) {
           _anpServiceList.add(new AnpService(
@@ -405,15 +409,14 @@ class _ViewDashboardState extends State<ViewDashboard> {
           title: "Absen ADV"));
     }
 
-
     // if (username == "ADMIN" || isMenuForeman == true) {
     //
     // }
 
     var isOK2 = globals.akses_pages == null
         ? globals.akses_pages
-        : globals.akses_pages.where((x) =>
-    (x == "IN" || username == "ADMIN" || isMenuForeman == true));
+        : globals.akses_pages.where(
+            (x) => (x == "IN" || username == "ADMIN" || isMenuForeman == true));
     if (isOK2 != null) {
       if (isOK2.length > 0) {
         print("isMenuForeman");
@@ -426,7 +429,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
     }
 
-    if(isMenuForeman == true){
+    if (isMenuForeman == true) {
       _anpServiceList.add(new AnpService(
           image: Icons.inventory,
           color: Colors.green,
@@ -453,8 +456,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
     if (loginname != "DRIVER") {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
-          : globals.akses_pages.where((x) =>
-              (x == "IN" || username == "ADMIN"));
+          : globals.akses_pages
+              .where((x) => (x == "IN" || username == "ADMIN"));
       if (isOK != null) {
         if (isOK.length > 0) {
           _anpServiceList.add(new AnpService(
@@ -542,7 +545,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages
-          .where((x) => (x == "OP" || username == "ADMIN"));
+              .where((x) => (x == "OP" || username == "ADMIN"));
       if (isOK != null) {
         if (isOK.length > 0) {
           _anpServiceList.add(new AnpService(
@@ -557,7 +560,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages
-          .where((x) => (x == "OP" || username == "ADMIN"));
+              .where((x) => (x == "OP" || username == "ADMIN"));
       if (isOK != null) {
         if (isOK.length > 0) {
           _anpServiceList.add(new AnpService(
@@ -1080,7 +1083,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
                   _isDialogShowing = false;
                   _handleNotificationTap(notification);
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: primaryOrange,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryOrange,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                 ),
@@ -1387,10 +1391,14 @@ class _ViewDashboardState extends State<ViewDashboard> {
         children: [
           _buildMenuGrid(),
           SizedBox(height: 16),
-          if (login_type!="MIXER" && loginname == 'DRIVER' && data_list_do.isNotEmpty) ...[
+          if (login_type != "MIXER" &&
+              loginname == 'DRIVER' &&
+              data_list_do.isNotEmpty) ...[
             _buildScheduleCard(),
             SizedBox(height: 16),
-          ] else if (login_type=="MIXER" && loginname == 'DRIVER' && data_list_do.isNotEmpty) ...[
+          ] else if (login_type == "MIXER" &&
+              loginname == 'DRIVER' &&
+              data_list_do.isNotEmpty) ...[
             _buildScheduleCardMixer(),
             SizedBox(height: 16),
           ],
@@ -1910,7 +1918,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () => _handleScheduleAction(item),
-                  style: ElevatedButton.styleFrom(backgroundColor: primaryOrange,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryOrange,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1928,7 +1937,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () => _viewHistory(item),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -2001,7 +2011,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () => _handleScheduleActionMixer(item),
-                  style: ElevatedButton.styleFrom(backgroundColor: primaryOrange,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryOrange,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -2009,27 +2020,31 @@ class _ViewDashboardState extends State<ViewDashboard> {
                   ),
                   child: Text(
                     item['status_do_mixer'].toString() == "INLOADING"
-                        ? "OUTLOADING"
+                        ? "INLOADING"
                         : item['status_do_mixer'].toString() == "OUTLOADING"
-                            ? "OUTPOOL"
+                            ? "OUTLOADING"
                             : item['status_do_mixer'].toString() == "OUTPOOL"
-                                ? "INCUSTOMER"
+                                ? "OUTPOOL"
                                 : item['status_do_mixer'].toString() ==
                                         "INCUSTOMER"
-                                    ? "OUTUNLOADING"
+                                    ? "INCUSTOMER"
                                     : item['status_do_mixer'].toString() ==
-                                            "OUTUNLOADING"
-                                        ? "Close DO"
-                                        : "Close DO",
-                    style: TextStyle(fontSize: 11,color: Colors.white),
+                                            "INUNLOADING"
+                                        ? "INUNLOADING"
+                                        : item['status_do_mixer'].toString() ==
+                                                "OUTUNLOADING"
+                                            ? "OUTUNLOADING"
+                                            : "Close DO",
+                    style: TextStyle(fontSize: 11, color: Colors.white),
                   ),
                 ),
               ),
               SizedBox(width: 8),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => _viewHistory(item),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green,
+                  onPressed: () => _viewHistoryMixer(item),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -2037,7 +2052,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
                   ),
                   child: Text(
                     'History',
-                    style: TextStyle(fontSize: 11,color: Colors.white),
+                    style: TextStyle(fontSize: 11, color: Colors.white),
                   ),
                 ),
               ),
@@ -2705,7 +2720,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
             ),
             ElevatedButton(
               child: Text('Cek Reward'),
-              style: ElevatedButton.styleFrom(backgroundColor: primaryOrange, // ✅ UPDATED: Orange theme
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryOrange, // ✅ UPDATED: Orange theme
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
@@ -2758,7 +2774,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
                     (Route<dynamic> route) => false,
                   );
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                 ),
@@ -2792,7 +2809,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
     );
   }
 
-  void _showAlert(BuildContext? ctx, int type, String message, String colorInfo) {
+  void _showAlert(
+      BuildContext? ctx, int type, String message, String colorInfo) {
     if (ctx != null) alert(ctx, type, message, colorInfo);
   }
 
@@ -2856,23 +2874,54 @@ class _ViewDashboardState extends State<ViewDashboard> {
   }
 
   void _handleScheduleActionMixer(dynamic item) async {
-    EasyLoading.show();
+    //EasyLoading.show();
+    var items = item['status_do_mixer'].toString() == "INLOADING"
+        ? "INLOADING"
+        : item['status_do_mixer'].toString() == "OUTLOADING"
+            ? "OUTLOADING"
+            : item['status_do_mixer'].toString() == "OUTPOOL"
+                ? "OUTPOOL"
+                : item['status_do_mixer'].toString() == "INCUSTOMER"
+                    ? "INCUSTOMER"
+                    : item['status_do_mixer'].toString() == "INUNLOADING"
+                        ? "INUNLOADING"
+                        : item['status_do_mixer'].toString() == "OUTUNLOADING"
+                            ? "OUTUNLOADING"
+                            : "Close DO";
     try {
-      if (item['status_do_mixer'].toString() == "OUTUNLOADING") {
+      if (items.toString() == "OUTUNLOADING") {
         GetVhcidDo();
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => FrmSetKmByDriver()),
+            MaterialPageRoute(builder: (context) => ViewListDoMixer()),
+          );
+        });
+        return;
+      } else if (items.toString().toUpperCase() == "CLOSE DO") {
+        GetVhcidDo();
+        Timer(Duration(seconds: 1), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FrmSetKmByDoMixer(
+                  vehilce: item['nopol'],
+                vhckm: item['vhckm'],
+                bujnbr: item['bujnbr'],
+                do_number: item['do_number'],
+                driver_id: item['driver_id'],
+              ),
+            ),
           );
         });
         return;
       }
-
+      print(item['status_do_mixer']);
       final confirm = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: Text('Konfirmasi'),
           content: Text('Yakin update status DO mixer ini?'),
           actions: [
@@ -2911,7 +2960,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
         var message = result["message"]?.toString() ?? "";
 
         if (status.toLowerCase() == "success") {
-          alert(globalScaffoldKey.currentContext!, 0, message, "success");
+          alert(globalScaffoldKey.currentContext!, 1, message, "success");
           GetListDo();
         } else {
           alert(globalScaffoldKey.currentContext!, 0,
@@ -2922,13 +2971,15 @@ class _ViewDashboardState extends State<ViewDashboard> {
             "Gagal menghubungi server (${response.statusCode})", "error");
       }
     } catch (e) {
-      alert(globalScaffoldKey.currentContext!, 0, "Terjadi kesalahan: $e", "error");
+      alert(globalScaffoldKey.currentContext!, 0, "Terjadi kesalahan: $e",
+          "error");
     } finally {
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
     }
   }
+
   void _viewHistory(dynamic item) async {
     print(item['do_number']);
     print(item['tgl_do']);
@@ -2948,6 +2999,28 @@ class _ViewDashboardState extends State<ViewDashboard> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => MapHistory()),
+    );
+  }
+
+  void _viewHistoryMixer(dynamic item) async {
+    print(item['do_number']);
+    print(item['tgl_do']);
+    print(item['time_do']);
+    print(item['nopol']);
+    print(item['vehicle_id']);
+    var tgl_do = item['tgl_do'] + " " + item['time_do'];
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString("do_maps", item['do_number']);
+    prefs.setString("do_tgl_do", tgl_do);
+    prefs.setString("do_nopol", item['vehicle_id']);
+    prefs.setString("do_origin", item['origin']);
+    prefs.setString("do_destination", item['destination']);
+    prefs.setString("do_vehicle_id", item['vehicle_id']);
+    prefs.setString("do_driver_nm", item['driver_nm']);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => MapHistoryMixer()),
     );
   }
 
@@ -2982,10 +3055,9 @@ class _ViewDashboardState extends State<ViewDashboard> {
               builder: (context) => LiveMaps(is_driver: 'true'),
             ),
           );
-
         } else {
-          _showAlert(globalScaffoldKey.currentContext!, 0, "Terjadi kesalahan server",
-              "error");
+          _showAlert(globalScaffoldKey.currentContext!, 0,
+              "Terjadi kesalahan server", "error");
         }
       } else {
         var isOK = globals.akses_pages == null
@@ -3015,23 +3087,25 @@ class _ViewDashboardState extends State<ViewDashboard> {
               prefs.setString("is_driver", "false");
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LiveMaps(is_driver:'false')),
+                MaterialPageRoute(
+                    builder: (context) => LiveMaps(is_driver: 'false')),
               );
             } else {
               _showAlert(globalScaffoldKey.currentContext!, 0,
                   "Terjadi kesalahan server", "error");
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LiveMaps(is_driver:'true')),
+                MaterialPageRoute(
+                    builder: (context) => LiveMaps(is_driver: 'true')),
               );
             }
           } else {
-            _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-                "error");
+            _showAlert(globalScaffoldKey.currentContext!, 0,
+                "Anda tidak punya akses", "error");
           }
         } else {
-          alert(
-              globalScaffoldKey.currentContext!, 0, "Dont Have Access", "error");
+          alert(globalScaffoldKey.currentContext!, 0, "Dont Have Access",
+              "error");
         }
       }
     } else if (anpService.idKey == 2) {
@@ -3056,12 +3130,13 @@ class _ViewDashboardState extends State<ViewDashboard> {
             if (EasyLoading.isShow) {
               EasyLoading.dismiss();
             }
-            _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-                "error");
+            _showAlert(globalScaffoldKey.currentContext!, 0,
+                "Anda tidak punya akses", "error");
           }
         } else {
           Navigator.of(context).pop(false);
-          _showAlert(globalScaffoldKey.currentContext!, 0, "Access Denied", "error");
+          _showAlert(
+              globalScaffoldKey.currentContext!, 0, "Access Denied", "error");
         }
       });
     } else if (anpService.idKey == 4) {
@@ -3079,8 +3154,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
           await showDialog(
             context: ctx,
             builder: (context) => new AlertDialog(
-              shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
               title: new Text('Information'),
               content: new Text("Acces Menu For Driver"),
               actions: <Widget>[
@@ -3110,8 +3185,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
           await showDialog(
             context: ctx,
             builder: (context) => new AlertDialog(
-              shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
               title: new Text('Information'),
               content: new Text("Acces Menu For Driver"),
               actions: <Widget>[
@@ -3151,8 +3226,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
           await showDialog(
             context: ctx,
             builder: (context) => new AlertDialog(
-              shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
               title: new Text('Information'),
               content: new Text("Acces Menu For Driver"),
               actions: <Widget>[
@@ -3238,7 +3313,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
                     },
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
-                        backgroundColor: primaryOrange, // ✅ UPDATED: Orange theme
+                        backgroundColor:
+                            primaryOrange, // ✅ UPDATED: Orange theme
                         padding:
                             EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                         textStyle: TextStyle(
@@ -3248,8 +3324,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
               ),
             );
           } else {
-            _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-                "error");
+            _showAlert(globalScaffoldKey.currentContext!, 0,
+                "Anda tidak punya akses", "error");
           }
         } else {
           final ctx = globalScaffoldKey.currentContext!;
@@ -3261,15 +3337,15 @@ class _ViewDashboardState extends State<ViewDashboard> {
                     borderRadius: BorderRadius.circular(15)),
                 title: new Text('Information'),
                 content: new Text("Acces Menu For Operasional"),
-              actions: <Widget>[
-                new TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop(true);
-                  },
-                  child: new Text('Ok'),
-                ),
-              ],
-            ),
+                actions: <Widget>[
+                  new TextButton(
+                    onPressed: () async {
+                      Navigator.of(context).pop(true);
+                    },
+                    child: new Text('Ok'),
+                  ),
+                ],
+              ),
             );
           }
         }
@@ -3294,8 +3370,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
           await showDialog(
             context: ctx,
             builder: (context) => new AlertDialog(
-              shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
               title: new Text('Information'),
               content: new Text("Acces Menu For Driver"),
               actions: <Widget>[
@@ -3340,8 +3416,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
           );
         });
       } else {
-        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-            "error");
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
       }
     } else if (anpService.idKey == 24) {
       if (loginname != "DRIVER") {
@@ -3365,8 +3441,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
           }
         });
       } else {
-        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-            "error");
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
       }
     } else if (anpService.idKey == 25) {
       if (loginname != "DRIVER") {
@@ -3380,14 +3456,16 @@ class _ViewDashboardState extends State<ViewDashboard> {
           );
         });
       } else {
-        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-            "error");
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
       }
     } else if (anpService.idKey == 27) {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages.where((x) => x == "IN");
-      if ((isOK != null && isOK.length > 0) || username == "ADMIN" || isMenuForeman == true) {
+      if ((isOK != null && isOK.length > 0) ||
+          username == "ADMIN" ||
+          isMenuForeman == true) {
         if (!EasyLoading.isShow) {
           EasyLoading.show();
         }
@@ -3397,9 +3475,9 @@ class _ViewDashboardState extends State<ViewDashboard> {
             MaterialPageRoute(builder: (context) => ViewListWoMcByForeMan()),
           );
         });
-      }else{
-        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-            "error");
+      } else {
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
       }
       // if (username == "ADMIN" || isMenuForeman == true) {
       //   if (!EasyLoading.isShow) {
@@ -3429,8 +3507,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
           );
         });
       } else {
-        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-            "error");
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
       }
     } else if (anpService.idKey == 29) {
       var isOK = globals.akses_pages == null
@@ -3448,10 +3526,10 @@ class _ViewDashboardState extends State<ViewDashboard> {
           );
         });
       } else {
-        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-            "error");
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
       }
-    }else if (anpService.idKey == 30) {
+    } else if (anpService.idKey == 30) {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages.where((x) => x == "OP");
@@ -3467,8 +3545,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
           );
         });
       } else {
-        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-            "error");
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
       }
     } else if (anpService.idKey == 33) {
       var isOK = globals.akses_pages == null
@@ -3486,8 +3564,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
           );
         });
       } else {
-        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-            "error");
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
       }
     } else if (anpService.idKey == 9) {
       if (username == "ADMIN" || loginname == "DRIVER" || ismixer == "true") {
@@ -3508,13 +3586,13 @@ class _ViewDashboardState extends State<ViewDashboard> {
           );
         });
       } else {
-        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-            "error");
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
       }
     } else if (anpService.idKey == 11) {
       if (loginname == "DRIVER") {
-        alert(
-            globalScaffoldKey.currentContext!, 0, "Access Not Allowed", "error");
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
       } else {
         if (!EasyLoading.isShow) {
           EasyLoading.show();
@@ -3528,8 +3606,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
     } else if (anpService.idKey == 12) {
       if (loginname == "DRIVER") {
-        alert(
-            globalScaffoldKey.currentContext!, 0, "Access Not Allowed", "error");
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
       } else {
         var isOK = globals.akses_pages == null
             ? globals.akses_pages
@@ -3546,8 +3624,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
               );
             });
           } else {
-            _showAlert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
-                "error");
+            _showAlert(globalScaffoldKey.currentContext!, 0,
+                "Access Not Allowed", "error");
           }
         } else {
           _showAlert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
@@ -3556,8 +3634,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
     } else if (anpService.idKey == 13) {
       if (loginname == "DRIVER") {
-        alert(
-            globalScaffoldKey.currentContext!, 0, "Access Not Allowed", "error");
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
       } else {
         var isOK = globals.akses_pages == null
             ? globals.akses_pages
@@ -3573,8 +3651,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
               );
             });
           } else {
-            _showAlert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
-                "error");
+            _showAlert(globalScaffoldKey.currentContext!, 0,
+                "Access Not Allowed", "error");
           }
         } else {
           _showAlert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
@@ -3583,8 +3661,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
     } else if (anpService.idKey == 31) {
       if (loginname == "DRIVER") {
-        alert(
-            globalScaffoldKey.currentContext!, 0, "Access Not Allowed", "error");
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
       } else {
         var isOK = globals.akses_pages == null
             ? globals.akses_pages
@@ -3606,8 +3684,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
               );
             });
           } else {
-            _showAlert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
-                "error");
+            _showAlert(globalScaffoldKey.currentContext!, 0,
+                "Access Not Allowed", "error");
           }
         } else {
           _showAlert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
@@ -3616,8 +3694,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
     } else if (anpService.idKey == 14) {
       if (loginname == "DRIVER") {
-        alert(
-            globalScaffoldKey.currentContext!, 0, "Access Not Allowed", "error");
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
       } else {
         var isOK = globals.akses_pages == null
             ? globals.akses_pages
@@ -3630,12 +3708,14 @@ class _ViewDashboardState extends State<ViewDashboard> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => ListInventoryTransNew(tabName: '',)),
+                    builder: (context) => ListInventoryTransNew(
+                          tabName: '',
+                        )),
               );
             });
           } else {
-            _showAlert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
-                "error");
+            _showAlert(globalScaffoldKey.currentContext!, 0,
+                "Access Not Allowed", "error");
           }
         } else {
           _showAlert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
@@ -3662,8 +3742,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
     } else if (anpService.idKey == 16) {
       if (loginname == "DRIVER") {
-        alert(
-            globalScaffoldKey.currentContext!, 0, "Access Not Allowed", "error");
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
       } else {
         var isOK = globals.akses_pages == null
             ? globals.akses_pages
@@ -3680,8 +3760,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
     } else if (anpService.idKey == 17) {
       if (loginname == "DRIVER") {
-        alert(
-            globalScaffoldKey.currentContext!, 0, "Access Not Allowed", "error");
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
       } else {
         var isOK = globals.akses_pages == null
             ? globals.akses_pages
@@ -3699,8 +3779,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
     } else if (anpService.idKey == 18) {
       if (loginname == "DRIVER") {
-        alert(
-            globalScaffoldKey.currentContext!, 0, "Access Not Allowed", "error");
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
       } else {
         var isOK = globals.akses_pages == null
             ? globals.akses_pages
@@ -3727,13 +3807,13 @@ class _ViewDashboardState extends State<ViewDashboard> {
           );
         });
       } else {
-        _showAlert(
-            globalScaffoldKey.currentContext!, 0, "Access Not Allowed", "error");
+        _showAlert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
       }
     } else if (anpService.idKey == 20) {
       if (loginname == "DRIVER") {
-        alert(
-            globalScaffoldKey.currentContext!, 0, "Access Not Allowed", "error");
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
       } else {
         EasyLoading.show();
         Timer(Duration(seconds: 1), () {
@@ -3745,8 +3825,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
     } else if (anpService.idKey == 21) {
       if (loginname == "DRIVER") {
-        alert(
-            globalScaffoldKey.currentContext!, 0, "Access Not Allowed", "error");
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
       } else {
         EasyLoading.show();
         Timer(Duration(seconds: 1), () {
@@ -3772,10 +3852,9 @@ class _ViewDashboardState extends State<ViewDashboard> {
           );
         });
       } else {
-        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-            "error");
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
       }
-
     } else {
       final ctx = globalScaffoldKey.currentContext!;
       if (ctx != null) {
@@ -3786,18 +3865,19 @@ class _ViewDashboardState extends State<ViewDashboard> {
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
             title: new Text('Information'),
             content: new Text("ON Progress"),
-          actions: <Widget>[
-            new TextButton(
-              // ✅ UPDATED: Use TextButton instead of FlatButton
-              onPressed: () async {
-                Navigator.of(context).pop(true);
-              },
-              child: new Text('Ok'),
-            ),
-          ],
-        ),
-      );
-    }}
+            actions: <Widget>[
+              new TextButton(
+                // ✅ UPDATED: Use TextButton instead of FlatButton
+                onPressed: () async {
+                  Navigator.of(context).pop(true);
+                },
+                child: new Text('Ok'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
   }
 
   void UpdateMenuBottom() async {
@@ -3813,12 +3893,12 @@ class _ViewDashboardState extends State<ViewDashboard> {
             MaterialPageRoute(builder: (context) => ViewListStoring()),
           );
         } else {
-          _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-              "error");
+          _showAlert(globalScaffoldKey.currentContext!, 0,
+              "Anda tidak punya akses", "error");
         }
       } else {
-        _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-            "error");
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
       }
     }
     if (selectedIndexBottom == 1) {
@@ -3834,11 +3914,12 @@ class _ViewDashboardState extends State<ViewDashboard> {
           prefs.setString("is_driver", "true");
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => LiveMaps(is_driver:'true')),
+            MaterialPageRoute(
+                builder: (context) => LiveMaps(is_driver: 'true')),
           );
         } else {
-          _showAlert(globalScaffoldKey.currentContext!, 0, "Terjadi kesalahan server",
-              "error");
+          _showAlert(globalScaffoldKey.currentContext!, 0,
+              "Terjadi kesalahan server", "error");
         }
       } else {
         var isOK = globals.akses_pages == null
@@ -3860,19 +3941,20 @@ class _ViewDashboardState extends State<ViewDashboard> {
               prefs.setString("is_driver", "false");
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LiveMaps(is_driver:'false')),
+                MaterialPageRoute(
+                    builder: (context) => LiveMaps(is_driver: 'false')),
               );
             } else {
               _showAlert(globalScaffoldKey.currentContext!, 0,
                   "Terjadi kesalahan server", "error");
             }
           } else {
-            _showAlert(globalScaffoldKey.currentContext!, 0, "Anda tidak punya akses",
-                "error");
+            _showAlert(globalScaffoldKey.currentContext!, 0,
+                "Anda tidak punya akses", "error");
           }
         } else {
-          alert(
-              globalScaffoldKey.currentContext!, 0, "Dont Have Access", "error");
+          alert(globalScaffoldKey.currentContext!, 0, "Dont Have Access",
+              "error");
         }
       }
     }
@@ -3973,9 +4055,9 @@ class _ViewDashboardState extends State<ViewDashboard> {
       String drvid = sharedPreferences!.getString("drvid") ?? '';
       String vhcid = sharedPreferences!.getString("vhcid") ?? '';
       String _loginType = sharedPreferences!.getString("login_type") ?? '';
-      var urlData =_loginType=="MIXER"?
-          "${GlobalData.baseUrlProd}api/do_mixer/list_do_driver_mixer.jsp?method=lookup-list-do-driver-v1&vhcid=${vhcid}&drvid=${drvid}"
-      :"${GlobalData.baseUrlProd}api/do/list_do_driver.jsp?method=lookup-list-do-driver-v1&vhcid=${vhcid}&drvid=${drvid}";
+      var urlData = _loginType == "MIXER"
+          ? "${GlobalData.baseUrlProd}api/do_mixer/list_do_driver_mixer.jsp?method=lookup-list-do-driver-v1&vhcid=${vhcid}&drvid=${drvid}"
+          : "${GlobalData.baseUrlProd}api/do/list_do_driver.jsp?method=lookup-list-do-driver-v1&vhcid=${vhcid}&drvid=${drvid}";
       Uri myUri = Uri.parse(urlData);
       print(myUri.toString());
       var response =

@@ -228,7 +228,7 @@ class _BottomActionBarState extends State<BottomActionBar> {
                   MaterialPageRoute(builder: (context) => FrmServiceTire()));
             },
             icon: Icon(Icons.arrow_back),
-            label: Text('Back to Opname'),
+            label: Text('Back to Opname',style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.grey,
             ),
@@ -243,7 +243,7 @@ class _BottomActionBarState extends State<BottomActionBar> {
               });
             },
             icon: Icon(Icons.book),
-            label: Text('List Detail'),
+            label: Text('List Detail',style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blueAccent,
             ),
@@ -1412,7 +1412,10 @@ class _TireLTState extends State<TireLT> {
               style: TextStyle(color: Colors.black),
             ),
           ),
-          bottomNavigationBar: BottomActionBar(),
+          bottomNavigationBar: SafeArea(
+            minimum: EdgeInsets.only(bottom: 16),//
+            child: BottomActionBar(),
+          ),
           body: SafeArea(
             key: globalScaffoldKey,
             child: new Stack(
@@ -1426,7 +1429,7 @@ class _TireLTState extends State<TireLT> {
                 ),
                 // Buttons for positions
                 Positioned(
-                  top: MediaQuery.of(context).size.height * 0.1,
+                  top: (MediaQuery.of(context).size.height -2) * 0.1,
                   right: MediaQuery.of(context).size.width * 0.1,
                   child: FutureBuilder<String>(
                     future: GetSerialNo("A2"), // Call the async function

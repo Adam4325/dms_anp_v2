@@ -14,13 +14,14 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../flusbar.dart';
+import 'FrmCloseVehicleMixer.dart';
 
-class ViewListDo extends StatefulWidget {
+class ViewListDoMixer extends StatefulWidget {
   @override
-  _ViewListDoState createState() => _ViewListDoState();
+  _ViewListDoMixerState createState() => _ViewListDoMixerState();
 }
 
-class _ViewListDoState extends State<ViewListDo> {//
+class _ViewListDoMixerState extends State<ViewListDoMixer> {//
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey globalScaffoldKey2 = GlobalKey<ScaffoldState>();
   List data = [];
@@ -45,7 +46,7 @@ class _ViewListDoState extends State<ViewListDo> {//
     String locid = prefs.getString("locid")!;
     print(drvid);
     Uri myUri = Uri.parse(
-        "${GlobalData.baseUrl}api/list_do.jsp?method=list_do_driver&driverid=" +
+        "${GlobalData.baseUrl}api/do_mixer/list_do_mixer.jsp?method=list_do_driver&driverid=" +
             drvid.toString() +
             "&locid=" +
             locid.toString());
@@ -98,7 +99,7 @@ class _ViewListDoState extends State<ViewListDo> {//
               },
             ),
             centerTitle: true,//
-            title: Text('Form List DO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+            title: Text('Form List DO Mixer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
         body: new Container(
           key: globalScaffoldKey2,
           margin: const EdgeInsets.only(top: 5.0),
@@ -260,7 +261,7 @@ class _ViewListDoState extends State<ViewListDo> {//
       }
 
       var urlData =
-          "${GlobalData.baseUrl}api/do/do_diterima.jsp?method=create-do_diterima&drvid=${drvid}&no_do=${no_do}";
+          "${GlobalData.baseUrl}api/do_mixer/do_diterima_mixer.jsp?method=create-do_diterima&drvid=${drvid}&no_do=${no_do}";
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);
@@ -370,43 +371,23 @@ class _ViewListDoState extends State<ViewListDo> {//
                           onPressed: () async {
                             SharedPreferences prefs =
                                 await SharedPreferences.getInstance();
-                            var no_do = await CreateDoDiTerima(
-                                value['driverid'], value['dlodetaildonumber']);
+                            var no_do = await CreateDoDiTerima(value['driverid'], value['dlodetaildonumber']);//value['dlodetaildonumber']
                             GlobalData.frmDloDoNumber = value['dlodetaildonumber'];
-  print(value);
+                            print(value);
                             //var no_do="CG/LB7/DUM-ANP/04/25/1067013";
                             if (no_do != null && no_do != "") {
                               setState(() {
                                 prefs.setString("vhcid_new", value['vhcid']);
                                 prefs.setString("drvid_new", value['driverid']);
-                                prefs.setString(
-                                    "dloorigin", value['dloorigin']);
-                                prefs.setString(
-                                    "dlodestination", value['dlodestination']);
-                                prefs.setString("dlodetaildonumber",
-                                    value['dlodetaildonumber']);
-                                prefs.setString(
-                                    "bujnumber", value['dlodonumber']);
+                                prefs.setString("dloorigin", value['dloorigin']);
+                                prefs.setString("dlodestination", value['dlodestination']);
+                                prefs.setString("dlodetaildonumber",value['dlodetaildonumber']);
+                                prefs.setString("bujnumber", value['dlodonumber']);
                                 print(prefs.getString("bujnumber"));
                                 print(value['dlodonumber']);
                                 prefs.remove("submit_bujnumber");
 
-                                //DEV
 
-                                // prefs.setString("vhcid_new", "B 9570 YU");
-                                // prefs.setString("drvid_new", "7733-01.2024.11.06.76");
-                                // prefs.setString(
-                                //     "dloorigin", "MP114087 - PT. EUP - DUMAI");
-                                // prefs.setString(
-                                //     "dlodestination", "MP114562 - JETTY - LUBUK GAUNG");
-                                // prefs.setString("dlodetaildonumber",
-                                //     "CG/LB7/DUM-ANP/04/25/1067013");
-                                // GlobalData.frmDloDoNumber = "CG/LB7/DUM-ANP/04/25/1067013";
-                                // no_do ="CG/LB7/DUM-ANP/04/25/1067013";
-                                // prefs.setString(
-                                //     "bujnumber", "ANBU25052774");
-                                // print("Only dev");
-                                // print(value['dlodonumber']);
 
                               });
                               showDialog(
@@ -422,7 +403,7 @@ class _ViewListDoState extends State<ViewListDo> {//
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) =>
-                                            FrmCloseVehicle()));
+                                            FrmCloseVehicleMixer()));
                               });
                             }
                           },

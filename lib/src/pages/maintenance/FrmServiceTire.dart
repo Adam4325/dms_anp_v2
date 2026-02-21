@@ -15,6 +15,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:dms_anp/src/Helper/scanner_helper.dart';
 import 'package:progress_dialog_null_safe/progress_dialog_null_safe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:awesome_select/awesome_select.dart';
@@ -24,8 +25,6 @@ import '../../flusbar.dart';
 import '../../../../choices.dart' as choices;
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 
-
-/// Screen untuk scan QR Code / Barcode menggunakan mobile_scanner
 class _QRScannerScreen extends StatefulWidget {
   @override
   _QRScannerScreenState createState() => _QRScannerScreenState();
@@ -49,7 +48,8 @@ class _QRScannerScreenState extends State<_QRScannerScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Scan QR Code / Barcode', style: TextStyle(color: Colors.white)),
+        title: Text('Scan QR Code / Barcode',
+            style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.black87,
         iconTheme: IconThemeData(color: Colors.white),
       ),
@@ -180,12 +180,14 @@ class _ScannerOverlayPainter extends CustomPainter {
     // Bottom-right corner
     canvas.drawLine(
       Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize),
-      Offset(scanAreaLeft + scanAreaSize - cornerLength, scanAreaTop + scanAreaSize),
+      Offset(scanAreaLeft + scanAreaSize - cornerLength,
+          scanAreaTop + scanAreaSize),
       borderPaint..strokeWidth = cornerWidth,
     );
     canvas.drawLine(
       Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize),
-      Offset(scanAreaLeft + scanAreaSize, scanAreaTop + scanAreaSize - cornerLength),
+      Offset(scanAreaLeft + scanAreaSize,
+          scanAreaTop + scanAreaSize - cornerLength),
       borderPaint..strokeWidth = cornerWidth,
     );
   }
@@ -817,6 +819,25 @@ class _FrmServiceTireState extends State<FrmServiceTire>
   int _currentIndex = 0;
   String bSave = "Save Request";
   String bUpdate = "Update Request";
+  InputDecoration softDecoration(
+      {String? label, bool readOnly = false, Widget? suffixIcon}) {
+    return InputDecoration(
+      labelText: label,
+      isDense: true,
+      filled: true,
+      fillColor: readOnly ? Colors.black12 : Colors.white,
+      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade400),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: primaryOrange, width: 1.5),
+      ),
+      suffixIcon: suffixIcon,
+    );
+  }
 
   String fnVHCID = '';
   String fnFITTYREID = '';
@@ -4356,42 +4377,15 @@ class _FrmServiceTireState extends State<FrmServiceTire>
     }
   }
 
-  // Future scanQRCodeOOO() async {
-  //   String cameraScanResult = await scanner.scan();
-  //   setState(() {
-  //     scanResult = cameraScanResult;
-  //
-  //     ///print("scanResult : $scanResult");
-  //     if (scanResult != null) {
-  //       var itemID = scanResult;
-  //       var urlBase = "";
-  //       if (METHOD_DETAIL == "PURCHASE-ORDER") {
-  //         urlBase =
-  //         "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-purchase-order-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
-  //       } else {
-  //         urlBase =
-  //         "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
-  //       }
-  //       var url = urlBase;
-  //       getItemBarcode(url, itemID);
-  //     }
-  //   });
-  // }
-
   Future scanQRCode() async {
     if (!mounted) return;
 
-    // Buka scanner screen
-    final String? scanResult = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => _QRScannerScreen(),
-      ),
-    );
+    final String? scanResult = await openQrScanner(context);
 
     if (scanResult == null || scanResult.isEmpty) {
       if (mounted) {
-        alert(globalScaffoldKey.currentContext!, 0, "Scan WO Number gagal!", "error");
+        alert(globalScaffoldKey.currentContext!, 0, "Scan WO Number gagal!",
+            "error");
       }
       return;
     }
@@ -4402,15 +4396,16 @@ class _FrmServiceTireState extends State<FrmServiceTire>
         var urlBase = "";
         if (METHOD_DETAIL == "PURCHASE-ORDER") {
           urlBase =
-          "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-purchase-order-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
+              "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-purchase-order-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
         } else {
           urlBase =
-          "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
+              "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
         }
         var url = urlBase;
         getItemBarcode(url, itemID);
       } else {
-        alert(globalScaffoldKey.currentContext!, 3, "WO Number tidak di temukan!", "Info");
+        alert(globalScaffoldKey.currentContext!, 3,
+            "WO Number tidak di temukan!", "Info");
       }
     });
   }
@@ -4466,14 +4461,6 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               child: ListTile(
                 contentPadding:
                     EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                // leading: Container(
-                //   padding: EdgeInsets.only(right: 12.0),
-                //   decoration: new BoxDecoration(
-                //       border: new Border(
-                //           right: new BorderSide(
-                //               width: 1.0, color: Colors.black45))),
-                //   child: Icon(Icons.settings_applications, color: Colors.black),
-                // ),
                 title: Text(
                   "SR Number : ${item['srnumber']}",
                   style: TextStyle(
@@ -4487,12 +4474,6 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                     color: Colors.transparent,
                     height: 0,
                   ),
-                  // Text("Original SR Number : ${item['orisrnumber']}",
-                  //     style: TextStyle(color: Colors.black)),
-                  // Divider(
-                  //   color: Colors.transparent,
-                  //   height: 0,
-                  // ),
                   Text("VHCID : ${item['vhcid']}",
                       style: TextStyle(color: Colors.black)),
                   Divider(
@@ -4762,7 +4743,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               decoration: new InputDecoration(
                   suffixIcon: IconButton(
                     icon: new Image.asset(
-                      "assets/img/search.png",
+                      "assets/img/search.png",//,style: TextStyle(color:Colors.white)
                       width: 32.0,
                       height: 32.0,
                     ),
@@ -5283,11 +5264,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         }
                       },
                     ),
-                    fillColor: HexColor("FFF6F1BF"),
-                    filled: true,
+                    labelText: "Search",
+                    hintText: "Search nopol/locid",
+                    prefixIcon: Icon(Icons.search),
                     isDense: true,
-                    labelText: "Search VHCID by list Sr",
-                    contentPadding: EdgeInsets.all(5.0),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
                   ),
                 ),
               ),
@@ -5300,11 +5282,10 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   controller: txtOpnameWONUMBER, //as srnumber kebalik
                   keyboardType: TextInputType.text,
                   decoration: new InputDecoration(
-                    fillColor: HexColor("FFF6F1BF"),
-                    filled: true,
                     isDense: true,
                     labelText: "SR Number",
-                    contentPadding: EdgeInsets.all(5.0),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
                   ),
                 ),
               ),
@@ -5439,7 +5420,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   decoration: new InputDecoration(
                     suffixIcon: IconButton(
                       icon: new Image.asset(
-                        "assets/img/search.png",
+                        "assets/img/qrcode.png",
                         width: 32.0,
                         height: 32.0,
                       ),
@@ -5461,7 +5442,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                   color: Colors.white,
                                   size: 24.0,
                                 ),
-                                label: Text("Searh Partname"),
+                                label: Text("Searh Partname",style: TextStyle(color:Colors.white)),
                                 onPressed: () async {
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
@@ -5501,7 +5482,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                   color: Colors.white,
                                   size: 24.0,
                                 ),
-                                label: Text("Scan Code"),
+                                label: Text("Scan Code",style: TextStyle(color:Colors.white)),
                                 onPressed: () async {
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
@@ -5526,8 +5507,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         );
                       },
                     ),
-                    fillColor: Colors.black12,
-                    filled: true,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
                     labelText: 'Item ID',
                     isDense: true,
                     contentPadding: EdgeInsets.all(2.0),
@@ -5544,8 +5525,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   controller: txtPartName,
                   keyboardType: TextInputType.text,
                   decoration: new InputDecoration(
-                    fillColor: Colors.black12,
-                    filled: true,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
                     labelText: 'Part Name',
                     isDense: true,
                     contentPadding: EdgeInsets.all(2.0),
@@ -5562,8 +5543,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   controller: txtItemSize,
                   keyboardType: TextInputType.text,
                   decoration: new InputDecoration(
-                    fillColor: Colors.black12,
-                    filled: true,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
                     labelText: 'Item Size',
                     isDense: true,
                     contentPadding: EdgeInsets.all(2.0),
@@ -5580,8 +5561,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   controller: txtTypeID,
                   keyboardType: TextInputType.text,
                   decoration: new InputDecoration(
-                    fillColor: Colors.black12,
-                    filled: true,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
                     labelText: 'Type ID',
                     isDense: true,
                     contentPadding: EdgeInsets.all(2.0),
@@ -5598,8 +5579,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   controller: txtTypeAccess,
                   keyboardType: TextInputType.text,
                   decoration: new InputDecoration(
-                    fillColor: Colors.black12,
-                    filled: true,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
                     labelText: 'IDACCESS',
                     isDense: true,
                     contentPadding: EdgeInsets.all(2.0),
@@ -5616,8 +5597,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   controller: txtGenuineNoOpname,
                   keyboardType: TextInputType.text,
                   decoration: new InputDecoration(
-                    fillColor: Colors.black12,
-                    filled: true,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
                     labelText: 'GENUINENO',
                     isDense: true,
                     contentPadding: EdgeInsets.all(2.0),
@@ -5634,8 +5615,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   controller: txtOpnameMerk,
                   keyboardType: TextInputType.text,
                   decoration: new InputDecoration(
-                    fillColor: Colors.black12,
-                    filled: true,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
                     labelText: 'Merk',
                     isDense: true,
                     contentPadding: EdgeInsets.all(2.0),
@@ -5652,8 +5633,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   controller: txtOpnameQty,
                   keyboardType: TextInputType.number,
                   decoration: new InputDecoration(
-                    //fillColor: Colors.black12,
-                    filled: true,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
                     labelText: 'QTY',
                     isDense: true,
                     contentPadding: EdgeInsets.all(2.0),
@@ -5712,8 +5693,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   controller: txtEstimasi,
                   keyboardType: TextInputType.datetime,
                   decoration: new InputDecoration(
-                    //fillColor: Colors.black12,
-                    filled: true,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
                     labelText: 'Estimasi',
                     isDense: true,
                     contentPadding: EdgeInsets.all(2.0),
@@ -5731,7 +5712,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Create"), //CREATE OPNAME
+                    label: Text("Create",style: TextStyle(color:Colors.white)), //CREATE OPNAME
                     onPressed: () async {
                       print(fnWONUMBER);
                       print("METHOD_DETAIL ${METHOD_DETAIL}");
@@ -5926,7 +5907,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text(btnNameCreatePR),
+                    label: Text(btnNameCreatePR,style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       //Navigator.of(context, rootNavigator: false).pop();
                       print('Create PR Number');
@@ -5971,7 +5952,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                   color: Colors.white,
                                   size: 24.0,
                                 ),
-                                label: Text("Submit"),
+                                label: Text("Submit",style: TextStyle(color:Colors.white)),
                                 onPressed: () async {
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
@@ -6004,7 +5985,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                         textStyle: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold,color:  Colors.white)),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white)),
                   )),
                   SizedBox(width: 5),
                   Expanded(
@@ -6014,7 +5997,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("List Detail"),
+                    label: Text("List Detail",style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       print("METHOD ${METHOD_DETAIL}");
                       print("Button List Detail Opname");
@@ -6235,7 +6218,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                         textStyle: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold,color:  Colors.white)),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white)),
                   )),
                   //SizedBox(width: 5),
                 ]),
@@ -6250,7 +6235,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Clear"),
+                    label: Text("Clear",style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       await DatabaseHelper.instance.deleteItemLogsAll();
                       setState(() {
@@ -6288,7 +6273,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                         textStyle: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold,color:  Colors.white)),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white)),
                   )),
                 ]),
               ),
@@ -6639,7 +6626,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                               fillColor: MaterialStateColor.resolveWith(
                                   (states) => Colors.green),
                             ),
-                            Text('Baik',overflow: TextOverflow.ellipsis, maxLines: 1),
+                            Text('Baik',
+                                overflow: TextOverflow.ellipsis, maxLines: 1),
                           ],
                         ),
                       ),
@@ -6655,8 +6643,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                             ),
                             Expanded(
                               child: Text('Tdk Baik',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1),
+                                  overflow: TextOverflow.ellipsis, maxLines: 1),
                             ),
                           ],
                         ),
@@ -6673,8 +6660,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                             ),
                             Expanded(
                               child: Text('Tdk Ada',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1),
+                                  overflow: TextOverflow.ellipsis, maxLines: 1),
                             ),
                           ],
                         ),
@@ -8141,18 +8127,32 @@ class _FrmServiceTireState extends State<FrmServiceTire>
             bottom: TabBar(
               controller: _tabController,
               isScrollable: true,
+              padding: EdgeInsets.all(5),
               indicator: BoxDecoration(
                   borderRadius: BorderRadius.circular(5), // Creates border
                   color: Colors.black38),
               tabs: [
                 //Tab(icon: Icon(Icons.car_repair), child: Text('List Tire')),
-                Tab(icon: Icon(Icons.list), child: Text('SERAH TERIMA')),
-                Tab(icon: Icon(Icons.list), child: Text('OPNAME')),
-                Tab(icon: Icon(Icons.list), child: Text('LIST TMS')),
-                Tab(icon: Icon(Icons.list), child: Text('FINISH TMS')),
+                Tab(
+                    icon: Icon(Icons.list, color: Colors.white),
+                    child: Text('SERAH TERIMA',
+                        style: TextStyle(color: Colors.white))),
+                Tab(
+                    icon: Icon(Icons.list, color: Colors.white),
+                    child:
+                        Text('OPNAME', style: TextStyle(color: Colors.white))),
+                Tab(
+                    icon: Icon(Icons.list, color: Colors.white),
+                    child: Text('LIST TMS',
+                        style: TextStyle(color: Colors.white))),
+                Tab(
+                    icon: Icon(Icons.list, color: Colors.white),
+                    child: Text('FINISH TMS',
+                        style: TextStyle(color: Colors.white))),
               ],
             ),
-            title: Text('Tire Managament'),
+            title:
+                Text('Tire Managament', style: TextStyle(color: Colors.white)),
           ),
           body: TabBarView(
             key: globalScaffoldKey,

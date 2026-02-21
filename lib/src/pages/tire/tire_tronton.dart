@@ -229,7 +229,7 @@ class _BottomActionBarState extends State<BottomActionBar> {
                   MaterialPageRoute(builder: (context) => FrmServiceTire()));
             },
             icon: Icon(Icons.arrow_back),
-            label: Text('Back to Opname'),
+            label: Text('Back to Opname',style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.grey,
             ),
@@ -244,7 +244,7 @@ class _BottomActionBarState extends State<BottomActionBar> {
               });
             },
             icon: Icon(Icons.book),
-            label: Text('List Detail'),
+            label: Text('List Detail',style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blueAccent,
             ),
@@ -1409,7 +1409,10 @@ class _TireTrontonState extends State<TireTronton> {
               style: TextStyle(color: Colors.black),
             ),
           ),
-          bottomNavigationBar: BottomActionBar(),
+          bottomNavigationBar: SafeArea(
+            minimum: EdgeInsets.only(bottom: 16), //
+            child: BottomActionBar(),
+          ),
           body: SafeArea(
             key: globalScaffoldKey,
             child: new Stack(
