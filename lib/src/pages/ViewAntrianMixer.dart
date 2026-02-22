@@ -212,13 +212,13 @@ class _ViewAntrianMixerState extends State<ViewAntrianMixer> {
 
   Future<String?> createAntrianNewDriver(String dlodate, nodo) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String km_newDriver = prefs.getString("km_new")!;
-    String page_antrian = prefs.getString("page_antrian")!;
-    drvid = prefs.getString("drvid")!;
-    locid = prefs.getString("locid")!;
-    vhcid = prefs.getString("vhcid_last_antrian")!;
-    userid = prefs.getString("name")!;
-    var bujnumber =page_antrian!=null && page_antrian!=""? page_antrian: prefs.getString("bujnumber");
+    String km_newDriver = prefs.getString("km_new") ?? "";
+    String page_antrian = prefs.getString("page_antrian") ?? "";
+    drvid = prefs.getString("drvid") ?? "";
+    locid = prefs.getString("locid") ?? "";
+    vhcid = prefs.getString("vhcid_last_antrian") ?? "";
+    userid = prefs.getString("name") ?? "";
+    var bujnumber = (prefs.getString("bujnumber") ?? "");
     print(drvid);
     if(EasyLoading.isShow==false){
       EasyLoading.show();
@@ -801,7 +801,7 @@ class _ViewAntrianMixerState extends State<ViewAntrianMixer> {
                                 alert(globalScaffoldKey.currentContext!, 0,
                                     "DO Date tidak boleh kosong", "error");
                               } else {
-                                String method = prefs.getString("method")!;
+                                String method = prefs.getString("method") ?? "";
                                 print(method);
                                 if (method == "new") {
                                   await createAntrianNewDriver(dlodate, nodo);
@@ -961,7 +961,7 @@ class _ViewAntrianMixerState extends State<ViewAntrianMixer> {
                                             await SharedPreferences
                                                 .getInstance();
                                         String km_newDo =
-                                            prefs.getString("km_new")!;
+                                            prefs.getString("km_new") ?? "";
                                         Navigator.of(globalScaffoldKey
                                                 .currentContext!)
                                             .pop(false);
@@ -989,7 +989,7 @@ class _ViewAntrianMixerState extends State<ViewAntrianMixer> {
                                               "error");
                                         } else {
                                           String method =
-                                              prefs.getString("method")!;
+                                              prefs.getString("method") ?? "";
                                           print('method ${method}');
                                           if (method == "new") {
                                              await createAntrianNewDriver(

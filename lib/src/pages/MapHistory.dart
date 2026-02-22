@@ -182,7 +182,9 @@ class MapHistoryState extends State<MapHistory> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String no_do = prefs.getString("do_maps")!;
     String drvid = prefs.getString("drvid")!;
-    String vhcid = prefs.getString("vhcid")!;
+    //String vhcid = prefs.getString("vhcid")!;
+    String vhcid = prefs.getString("vhcid") ??
+        (prefs.getString("do_vehicle_id")?.split("/")[0] ?? "");
     var do_tgl_do = prefs.getString("do_tgl_do");
     DateTime now = DateTime.now(); // Current date and time
     String currentDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
@@ -248,8 +250,10 @@ class MapHistoryState extends State<MapHistory> {
       origin = prefs.getString("do_origin")!;
       destination = prefs.getString("do_destination")!;
       driver_nm = prefs.getString("do_driver_nm")!;
+      var loginType = prefs.getString("login_type")!;
       var urlData =
-          "${GlobalData.baseUrlProd}api/do/list_do_driver.jsp?method=get-do-bynumberdo-v1&do_number=${no_do}";
+          loginType=="MIXER" ?"${GlobalData.baseUrlProd}api/do_mixer/list_do_driver_mixer.jsp?method=get-do-bynumberdo-v1&do_number=${no_do}"
+              :"${GlobalData.baseUrlProd}api/do/list_do_driver.jsp?method=get-do-bynumberdo-v1&do_number=${no_do}";
       Uri myUri = Uri.parse(urlData);
       print(myUri.toString());
       var response =
@@ -552,22 +556,6 @@ class MapHistoryState extends State<MapHistory> {
         result.points.forEach((PointLatLng point) {
           polylineCoordinates.add(LatLng(point.latitude, point.longitude));
         });
-        // var p = polylineCoordinates;
-        // double minLat = p.first.latitude;
-        // double minLong = p.first.longitude;
-        // double maxLat = p.first.latitude;
-        // double maxLong = p.first.longitude;
-        // p.forEach((point) {
-        //   if (point.latitude < minLat) minLat = point.latitude;
-        //   if (point.latitude > maxLat) maxLat = point.latitude;
-        //   if (point.longitude < minLong) minLong = point.longitude;
-        //   if (point.longitude > maxLong) maxLong = point.longitude;
-        // });
-        // mapController.moveCamera(CameraUpdate.newLatLngBounds(
-        //     LatLngBounds(
-        //         southwest: LatLng(minLat, minLong),
-        //         northeast: LatLng(maxLat, maxLong)),
-        //     11));
       }
       //else{
       //   mapController.moveCamera(CameraUpdate.newLatLngBounds(
@@ -1053,20 +1041,12 @@ class MapHistoryState extends State<MapHistory> {
                                         EasyLoading.show();
                                         Navigator.pushReplacement(
                                             context, MaterialPageRoute(builder: (context) => MapPlayBack()));
-                                        // if(isShowContainsSlidePanel){
-                                        //   setState(() {
-                                        //     isShowContainsSlidePanel = false;
-                                        //     isShowToolsPlayBack = true;
-                                        //   });
-                                        // }else{
-                                        //   setState(() {
-                                        //     isShowContainsSlidePanel = true;
-                                        //     isShowToolsPlayBack = false;
-                                        //   });
-                                        // }
-
                                       },
-                                      child: Text(isShowContainsSlidePanel?'Run Playback':'close'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.orange.shade400,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: Text(isShowContainsSlidePanel?'Run Playback':'close',style: TextStyle(color:Colors.white)),
                                     ))
                                   ]
                               ),

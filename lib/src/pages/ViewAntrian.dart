@@ -257,7 +257,7 @@ class _ViewAntrianState extends State<ViewAntrian> {
     locid = prefs.getString("locid")!;
     vhcid = prefs.getString("vhcid_last_antrian")!;
     userid = prefs.getString("name")!;
-    var bujnumber =page_antrian!=null && page_antrian!=""? page_antrian: prefs.getString("bujnumber");
+    var bujnumber = page_antrian.isNotEmpty ? page_antrian : (prefs.getString("bujnumber") ?? "");
     print(drvid);
     if(EasyLoading.isShow==false){
       EasyLoading.show();

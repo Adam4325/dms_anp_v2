@@ -176,6 +176,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
     // Cek apakah widget masih mounted sebelum validasi
     if (!mounted) return;
 
+    //txtAddr = "INGEO"; BUATT TEST
     if (txtAddr != null &&
         txtAddr.toString().isNotEmpty &&
         (txtAddr.toString().toUpperCase() == "OUTGEO" ||

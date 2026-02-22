@@ -42,9 +42,9 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
   double CAMERA_ZOOM = 16;
   Completer<GoogleMapController> _controller_his = Completer();
 
-  String orderNo = "4578178";
-  String restaurantName = "FoodiePie Restaurants";
-  String addressTxt = "B-2024, Silver Corner, Ahmedabad";
+  String orderNo = "";
+  String restaurantName = "";
+  String addressTxt = "";
   late GoogleMapController mapController;
 
   double _originLatitude = 23.0284, _originLongitude = 72.5068;
@@ -224,7 +224,7 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
       vehicled_id = prefs.getString("do_vehicle_id")!;
       origin = prefs.getString("do_origin")!;
       destination = prefs.getString("do_destination")!;
-      driver_nm = prefs.getString("do_driver_nm")!;
+      driver_nm = prefs.getString("do_driver_nm")!;//
       var urlData =
           "${GlobalData.baseUrlProd}api/do_mixer/list_do_driver_mixer.jsp?method=lookup-list-do-driver-v1&drvid=${drvid}";
       Uri myUri = Uri.parse(urlData);
@@ -509,52 +509,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
         ),
       );
 
-
-      // PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      //     googleAPiKey,
-      //     PointLatLng(polylineCoordinates[0].latitude,
-      //         polylineCoordinates[0].longitude),
-      //     PointLatLng(
-      //         polylineCoordinates[polylineCoordinates.length - 1].latitude,
-      //         polylineCoordinates[polylineCoordinates.length - 1].longitude),
-      //     travelMode: TravelMode.driving,
-      //     wayPoints: [
-      //       PolylineWayPoint(
-      //         location: "Jakarta",
-      //       ),
-      //     ]);
       print('result.points ${result.points}');
       print(result);
       if (result.points.isNotEmpty) {
         result.points.forEach((PointLatLng point) {
           polylineCoordinates.add(LatLng(point.latitude, point.longitude));
         });
-        // var p = polylineCoordinates;
-        // double minLat = p.first.latitude;
-        // double minLong = p.first.longitude;
-        // double maxLat = p.first.latitude;
-        // double maxLong = p.first.longitude;
-        // p.forEach((point) {
-        //   if (point.latitude < minLat) minLat = point.latitude;
-        //   if (point.latitude > maxLat) maxLat = point.latitude;
-        //   if (point.longitude < minLong) minLong = point.longitude;
-        //   if (point.longitude > maxLong) maxLong = point.longitude;
-        // });
-        // mapController.moveCamera(CameraUpdate.newLatLngBounds(
-        //     LatLngBounds(
-        //         southwest: LatLng(minLat, minLong),
-        //         northeast: LatLng(maxLat, maxLong)),
-        //     11));
       }
-      //else{
-      //   mapController.moveCamera(CameraUpdate.newLatLngBounds(
-      //       LatLngBounds(
-      //           southwest: LatLng(polylineCoordinates[0].latitude, polylineCoordinates[0].longitude),
-      //           northeast: LatLng(polylineCoordinates[0].latitude, polylineCoordinates[0].longitude)),
-      //       100));
-      //   // print(polylineCoordinates[0].latitude);
-      //   // print(polylineCoordinates[0].longitude);
-      // }
       var p = polylineCoordinates;
       double minLat = p.first.latitude;
       double minLong = p.first.longitude;
@@ -685,7 +646,7 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Container(
-                      height: isShowContainsSlidePanel==true?((height + 150) * 0.46):((height) * 0.22),
+                      height: null,
                       margin: const EdgeInsets.only(
                         bottom: 5
                       ),
@@ -743,210 +704,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Column(
-                                  children: [
-                                    SizedBox(
-                                      height: 15,
-                                    ),
-                                    Container(
-                                      height: 8,
-                                      width: 8,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kGreenTextColor,
-                                        borderRadius:
-                                            BorderRadius.circular(8 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      height: 3,
-                                      width: 3,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kDividerColor,
-                                        borderRadius:
-                                            BorderRadius.circular(3 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      height: 3,
-                                      width: 3,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kDividerColor,
-                                        borderRadius:
-                                            BorderRadius.circular(3 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      height: 3,
-                                      width: 3,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kDividerColor,
-                                        borderRadius:
-                                            BorderRadius.circular(3 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      height: 3,
-                                      width: 3,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kDividerColor,
-                                        borderRadius:
-                                            BorderRadius.circular(3 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      height: 3,
-                                      width: 3,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kDividerColor,
-                                        borderRadius:
-                                            BorderRadius.circular(3 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      height: 3,
-                                      width: 3,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kDividerColor,
-                                        borderRadius:
-                                            BorderRadius.circular(3 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      margin: EdgeInsets.only(bottom:15.0),
-                                      height: 8,
-                                      width: 8,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kGreenTextColor,
-                                        borderRadius:
-                                            BorderRadius.circular(8 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      height: 3,
-                                      width: 3,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kDividerColor,
-                                        borderRadius:
-                                        BorderRadius.circular(3 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      height: 3,
-                                      width: 3,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kDividerColor,
-                                        borderRadius:
-                                        BorderRadius.circular(3 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      height: 3,
-                                      width: 3,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kDividerColor,
-                                        borderRadius:
-                                        BorderRadius.circular(3 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      height: 3,
-                                      width: 3,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kDividerColor,
-                                        borderRadius:
-                                        BorderRadius.circular(3 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 1,
-                                    ),
-                                    Container(
-                                      margin: EdgeInsets.only(bottom:15.0),
-                                      height: 8,
-                                      width: 8,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kGreenTextColor,
-                                        borderRadius:
-                                        BorderRadius.circular(8 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      height: 3,
-                                      width: 3,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kDividerColor,
-                                        borderRadius:
-                                        BorderRadius.circular(3 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      height: 3,
-                                      width: 3,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kDividerColor,
-                                        borderRadius:
-                                        BorderRadius.circular(3 / 2),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Container(
-                                      margin: EdgeInsets.only(bottom:15.0),
-                                      height: 8,
-                                      width: 8,
-                                      decoration: BoxDecoration(
-                                        color: ColorConstants.kGreenTextColor,
-                                        borderRadius:
-                                        BorderRadius.circular(8 / 2),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(
-                                  width: 10,//USER3806
-                                ),
                                 Expanded(
-                                  child: Column(
+                                  child: Column(//
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -966,10 +725,84 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                           color: ColorConstants.kTextColor,
                                         ),
                                         overflow: TextOverflow.ellipsis),
-                                    SizedBox(
-                                      height: 15,
-                                    ),
-                                    Column(
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "INLOADING" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      SizedBox(height: 15),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "CLOSE" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      SizedBox(height: 15),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "CLOSE" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("Close",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                        SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "CLOSE"
+                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            Icon(Icons.access_time, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "CLOSE"
+                                                  ? "${data_list_do[0]["time_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text("Status selesai",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                      ],
+                                      ),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "INLOADING" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text("In Loading",
@@ -1024,9 +857,19 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                                 ),
                                             overflow: TextOverflow.ellipsis),
                                       ],
-                                    ),
-                                    SizedBox(height: 15),
-                                    Column(
+                                      ),//
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "OUTLOADING" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      SizedBox(height: 15),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "OUTLOADING" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text("Out Loading",
@@ -1081,9 +924,19 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                                 ),
                                             overflow: TextOverflow.ellipsis),
                                       ],
-                                    ),
-                                    SizedBox(height: 15),
-                                    Column(
+                                      ),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "OUTPOOL" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      SizedBox(height: 15),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "OUTPOOL" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text("Out Pool",
@@ -1138,9 +991,19 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                                 ),
                                             overflow: TextOverflow.ellipsis),
                                       ],
-                                    ),
-                                    SizedBox(height: 15),
-                                    Column(
+                                      ),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "INCUSTOMER" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      SizedBox(height: 15),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "INCUSTOMER" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text("In Customer",
@@ -1195,9 +1058,19 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                                 ),
                                             overflow: TextOverflow.ellipsis),
                                       ],
-                                    ),
-                                    SizedBox(height: 15),
-                                    Column(
+                                      ),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "INUNLOADING" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      SizedBox(height: 15),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "INUNLOADING" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text("In Unloading",
@@ -1252,9 +1125,19 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                                 ),
                                             overflow: TextOverflow.ellipsis),
                                       ],
-                                    ),
-                                    SizedBox(height: 15),
-                                    Column(
+                                      ),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "OUTUNLOADING" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      SizedBox(height: 15),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "OUTUNLOADING" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text("Out Unloading",
@@ -1309,7 +1192,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                                 ),
                                             overflow: TextOverflow.ellipsis),
                                       ],
-                                    ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                                 ),
@@ -1336,20 +1220,12 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                         EasyLoading.show();
                                         Navigator.pushReplacement(
                                             context, MaterialPageRoute(builder: (context) => MapPlayBack()));
-                                        // if(isShowContainsSlidePanel){
-                                        //   setState(() {
-                                        //     isShowContainsSlidePanel = false;
-                                        //     isShowToolsPlayBack = true;
-                                        //   });
-                                        // }else{
-                                        //   setState(() {
-                                        //     isShowContainsSlidePanel = true;
-                                        //     isShowToolsPlayBack = false;
-                                        //   });
-                                        // }
-
                                       },
-                                      child: Text(isShowContainsSlidePanel?'Run Playback':'close'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.orange.shade400,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: Text(isShowContainsSlidePanel?'Run Playback':'close',style: TextStyle(color:Colors.white)),
                                     ))
                                   ]
                               ),

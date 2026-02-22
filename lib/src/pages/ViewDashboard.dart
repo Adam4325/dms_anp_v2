@@ -2942,13 +2942,13 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
 
       var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
-      var latitude = gpsResult["latitude"] ?? 0;
-      var longitude = gpsResult["longitude"] ?? 0;
+      var latitude = -6.453855;//gpsResult["latitude"] ?? 0;
+      var longitude = 106.8677426;//gpsResult["longitude"] ?? 0;
 
       var baseURL = GlobalData.baseUrl +
           "api/do_mixer/update_status_do_mixer.jsp?method=update-status-do-mixer&bujnbr=${item['bujnbr']}"
               "&status_do_mixer=${item['status_do_mixer']}&latitude=${latitude}&longitude=${longitude}&bujdestination=${item['bujdestination']}&userid=${loginname}";
-
+      print(baseURL);
       var encoded = Uri.encodeFull(baseURL);
       Uri myUri = Uri.parse(encoded);
       var response =
@@ -2960,8 +2960,22 @@ class _ViewDashboardState extends State<ViewDashboard> {
         var message = result["message"]?.toString() ?? "";
 
         if (status.toLowerCase() == "success") {
-          alert(globalScaffoldKey.currentContext!, 1, message, "success");
-          GetListDo();
+          showDialog(
+            context: globalScaffoldKey.currentContext!,
+            builder: (ctx) => AlertDialog(
+              title: Text("Success"),
+              content: Text(message.isNotEmpty ? message : "Update status DO berhasil"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    GetListDo();
+                  },
+                  child: Text("OK"),
+                ),
+              ],
+            ),
+          );
         } else {
           alert(globalScaffoldKey.currentContext!, 0,
               message.isNotEmpty ? message : "Gagal update status DO", "error");
@@ -3838,10 +3852,9 @@ class _ViewDashboardState extends State<ViewDashboard> {
         });
       }
     } else if (anpService.idKey == 32) {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages.where((x) => x == "MK");
-      if ((isOK != null && isOK.length > 0) || username == "ADMIN") {
+      final hasAksesMk = globals.akses_pages != null &&
+          globals.akses_pages.where((x) => x == "MK").isNotEmpty;
+      if (hasAksesMk || username == "ADMIN") {
         if (!EasyLoading.isShow) {
           EasyLoading.show();
         }

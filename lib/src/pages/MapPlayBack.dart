@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dms_anp/src/model/PinInformation.dart';
 import 'package:dms_anp/src/pages/MapHistory.dart';
+import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -101,24 +102,31 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
 
   void getShareDateSession() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
-      vhcgps = prefs.getString("pb_")!;
-      is_driver = prefs.getString("is_driver")!;
-      String no_do = prefs.getString("do_maps")!;
-      String drvid = prefs.getString("drvid")!;
-      String vhcid = prefs.getString("vhcid")!;
-      var do_tgl_do = prefs.getString("do_tgl_do")!;
+      vhcgps = prefs.getString("pb_") ?? "";
+      is_driver = prefs.getString("is_driver") ?? "";
+      // String no_do = prefs.getString("do_maps") ?? "";
+      // String drvid = prefs.getString("drvid") ?? "";
+      // String vhcid = prefs.getString("vhcid") ?? "";
+      // var do_tgl_do = prefs.getString("do_tgl_do") ?? "";
     });
   }
 
   _goBack(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      vhcid = "";
-      vhcgps = "";
-    });
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => MapHistory()));
+    if(prefs.getString("login_type")=="MIXER"){
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => ViewDashboard()));
+    }else{
+      setState(() {
+        vhcid = "";
+        vhcgps = "";
+      });
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => MapHistory()));
+    }
+
   }
 
   late Map<String, dynamic> data_list_history;
@@ -128,13 +136,18 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
     await Future.delayed(Duration(seconds: 2));
     await GetHistoryPlayBack();
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (data_list_history != null) {
-      if (data_list_history['Data'] != null) {
-        var item = data_list_history['Data'][0];
-        do_number = prefs.getString("do_maps")!;
+    do_number = prefs.getString("do_maps") ?? "";
+    try {
+      final data = data_list_history;
+      print("data easygo");
+      print(data);
+      if (data != null &&
+          data['Data'] != null &&
+          (data['Data'] as List).isNotEmpty) {
+        final item = data['Data'][0];
         updatePinOnMap(
-            double.parse(item['lat']),
-            double.parse(item['lon']),
+            double.parse(item['lat'].toString()),
+            double.parse(item['lon'].toString()),
             item['direction'],
             item['gps_sn'],
             item['address'],
@@ -146,23 +159,37 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
             item['statusKendaraan'],
             item['report_nm'],
             item['odometer']);
-        _addInitialPolyline(item['gps_sn'], double.parse(item['lat']),
-            double.parse(item['lon']));
+        _addInitialPolyline(
+            item['gps_sn'], double.parse(item['lat'].toString()), double.parse(item['lon'].toString()));
+      } else {
+        final ctx = globalScaffoldKey.currentContext;
+        if (ctx != null) {
+          alert(ctx, 0,
+              (data['ResponseMessage']?.toString() ?? "Data playback kosong"),
+              "error");
+        }
+      }
+    } catch (e) {
+      final ctx = globalScaffoldKey.currentContext;
+      if (ctx != null) {
+        alert(ctx, 0, "Gagal memulai playback: $e", "error");
       }
     }
   }
 
   Future<String> GetHistoryPlayBack() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String no_do = prefs.getString("do_maps")!;
-    String drvid = prefs.getString("drvid")!;
-    String vhcid = prefs.getString("vhcid")!;
-    var do_tgl_do = prefs.getString("do_tgl_do");
+    String no_do = prefs.getString("do_maps") ?? "";
+    String drvid = prefs.getString("drvid") ?? "";
+    String vhcid = prefs.getString("do_vehicle_id") ??
+        (prefs.getString("vhcid")?.split("/")[0] ?? "");
+    vhcid = vhcid.split("/")[0];
+    var do_tgl_do = prefs.getString("do_tgl_do")??"";
     DateTime now = DateTime.now();
     String currentDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
 
     try {
-      if (vhcid != null && vhcid != "") {
+      if (vhcid != "") {
         if (!EasyLoading.isShow) {
           EasyLoading.show();
         }
@@ -174,7 +201,7 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
             'POST',
             Uri.parse(
                 'https://vtsapi.easygo-gps.co.id/api/ANDALANNUSAPRATAMA/historydata'));
-        request.body = json.encode({
+        var params = {
           "start_time": do_tgl_do,
           "stop_time": currentDate,
           "lst_vehicle_id": [],
@@ -182,7 +209,10 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
           "page": null,
           "limit": null,
           "encrypted": 0
-        });
+        };
+        print("params");
+        print(params);
+        request.body = json.encode(params);
         request.headers.addAll(headers);
         http.StreamedResponse response = await request.send();
 
@@ -392,8 +422,10 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
       }
     } else {
       if (pages == "another") {
-        alert(globalScaffoldKey.currentContext!, 0,
-            "data last update tidak ditemukan", "error");
+        final ctx = globalScaffoldKey.currentContext;
+        if (ctx != null) {
+          alert(ctx, 0, "data last update tidak ditemukan", "error");
+        }
       }
     }
   }
@@ -510,14 +542,15 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
         isPrevPlayBack = true;
       }
     });
-    var item = data_list_history['Data'][0];
-
-    if (item != null) {
+    if (data_list_history != null &&
+        data_list_history['Data'] != null &&
+        (data_list_history['Data'] as List).isNotEmpty) {
+      final item = data_list_history['Data'][0];
       _removePolyline(item['gps_sn']);
       removeMarkerOld(item['gps_sn']);
       updatePinOnMap(
-          double.parse(item['lat']),
-          double.parse(item['lon']),
+          double.parse(item['lat'].toString()),
+          double.parse(item['lon'].toString()),
           item['direction'],
           item['gps_sn'],
           item['address'],
@@ -529,9 +562,19 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
           item['statusKendaraan'],
           item['report_nm'],
           item['odometer']);
-      _addInitialPolyline(
-          item['gps_sn'], double.parse(item['lat']), double.parse(item['lon']));
+      _addInitialPolyline(item['gps_sn'], double.parse(item['lat'].toString()),
+          double.parse(item['lon'].toString()));
       index_his = 1;
+    } else {
+      final ctx = globalScaffoldKey.currentContext;
+      if (ctx != null) {
+        alert(
+            ctx,
+            0,
+            (data_list_history?['ResponseMessage']?.toString() ??
+                "Data playback kosong"),
+            "error");
+      }
     }
   }
 
@@ -606,16 +649,22 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
           isPrevPlayBack = true;
         }
       });
-      var item = data_list_history['Data'][0];
-      _removePolyline(item['gps_sn']);
-      removeMarkerOld(item['gps_sn']);
-      _addInitialPolyline(
-          item['gps_sn'], double.parse(item['lat']), double.parse(item['lon']));
-      setState(() {
-        index_his = 1;
-      });
+      if (data_list_history != null &&
+          data_list_history['Data'] != null &&
+          (data_list_history['Data'] as List).isNotEmpty) {
+        final item = data_list_history['Data'][0];
+        _removePolyline(item['gps_sn']);
+        removeMarkerOld(item['gps_sn']);
+        _addInitialPolyline(item['gps_sn'],
+            double.parse(item['lat'].toString()), double.parse(item['lon'].toString()));
+        setState(() {
+          index_his = 1;
+        });
+      }
     }
-    if (data_list_history.length > 0) {
+    if (data_list_history != null &&
+        data_list_history['Data'] != null &&
+        (data_list_history['Data'] as List).isNotEmpty) {
       for (var i = index_his;
       index_his < data_list_history['Data'].length;
       i++) {
@@ -712,10 +761,21 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (bool didPop, dynamic result) {
+      onPopInvokedWithResult: (bool didPop, dynamic result) async{
         if (didPop) return;
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => MapHistory()));
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        if(prefs.getString("login_type")=="MIXER"){
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => ViewDashboard()));
+        }else{
+          setState(() {
+            vhcid = "";
+            vhcgps = "";
+          });
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => MapHistory()));
+        }
+
       },
       child: Scaffold(
         backgroundColor: Colors.grey.shade50,
@@ -772,6 +832,13 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
                     ),
                   ),
 
+                  Positioned(
+                    top: 80,//
+                    left: 16,
+                    right: 16,
+                    child: _buildPlaybackControls(),
+                  ),
+
                   // Speed Control Panel
                   if (_isSpeedControlVisible)
                     Positioned(
@@ -781,7 +848,7 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
                       child: SlideTransition(
                         position: Tween<Offset>(
                           begin: Offset(0, -1),
-                          end: Offset(0, 0),
+                          end: Offset(0, 0),//
                         ).animate(_slideAnimation),
                         child: SafeArea(
                           child: Container(
@@ -796,7 +863,7 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
                                   offset: Offset(0, 5),
                                 ),
                               ],
-                            ),
+                            ),//
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -857,49 +924,49 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
                         ),
                       ),
                     ),
-                ],
-              ),
-            ),
-
-            // Bottom Section - Information & Controls (60% of screen)
-            Expanded(
-              flex: 6,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: Offset(0, -5),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(24),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: Offset(0, -5),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Vehicle Header
-                      _buildVehicleHeader(),
-                      SizedBox(height: 5),
-                      _buildVehicleInfo(),
-                      SizedBox(height: 5),
-                      _buildPlaybackControls(),
-
-
-                    ],
+                    child: SafeArea(
+                      top: false,
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildVehicleHeader(),
+                            SizedBox(height: 8),
+                            _buildVehicleInfo(),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
+              ],
               ),
             ),
-          ],
-        ),
+
+            //
+            SizedBox.shrink(),
+        ]),
       ),
     );
   }
@@ -999,15 +1066,6 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
       ),
       child: Column(
         children: [
-          // Text(
-          //   'Playback Controls',
-          //   style: TextStyle(
-          //     fontSize: 16,
-          //     fontWeight: FontWeight.w600,
-          //     color: Colors.grey.shade800,
-          //   ),
-          // ),
-          // SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -1126,19 +1184,19 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
     );
   }
 
-  Widget _buildVehicleInfo() {
+  Widget _buildVehicleInfo() {//
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Vehicle Information',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 13,
             fontWeight: FontWeight.bold,
             color: Colors.grey.shade800,
           ),
         ),
-        SizedBox(height: 10),
+        SizedBox(height: 6),
 
         // First Row - ACC & Speed
         Row(
@@ -1158,7 +1216,7 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
             )),
           ],
         ),
-        SizedBox(height: 10),
+        SizedBox(height: 6),
 
         // Second Row - GPS Time & Odometer
         Row(
@@ -1181,7 +1239,7 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
 
         // Event Warning (if exists)
         if (u_reportname != null && u_reportname.isNotEmpty) ...[
-          SizedBox(height: 10),
+          SizedBox(height: 6),
           _buildInfoCard(
             icon: Icons.warning_rounded,
             label: "Event",
@@ -1192,13 +1250,18 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
         ],
 
         // Address
-        SizedBox(height: 10),
+        SizedBox(height: 6),
         _buildInfoCard(
           icon: Icons.location_on_rounded,
           label: "Address",
-          value: u_address.isNotEmpty ? u_address : 'No Address',
+          value: u_address.isNotEmpty
+              ? (u_address.trim().length > 50
+                  ? u_address.trim().substring(0, 50) + '...'
+                  : u_address.trim())
+              : 'No Address',
           color: Colors.indigo,
           isFullWidth: true,
+          maxLines: 1,
         ),
       ],
     );
@@ -1210,9 +1273,10 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
     required String value,
     required Color color,
     bool isFullWidth = false,
+    int? maxLines,
   }) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
@@ -1223,27 +1287,27 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
         children: [
           Row(
             children: [
-              Icon(icon, color: color, size: 20),
+              Icon(icon, color: color, size: 18),
               SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
                   color: Colors.grey.shade600,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 4),
           Text(
             value,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Colors.grey.shade800,
             ),
-            maxLines: isFullWidth ? 3 : 2,
+            maxLines: maxLines ?? (isFullWidth ? 2 : 1),
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -1251,7 +1315,7 @@ class MapPlayBackState extends State<MapPlayBack> with TickerProviderStateMixin 
     );
   }
 }
-
+//
 class Utils {
   static String mapStyles = '''[
   {
