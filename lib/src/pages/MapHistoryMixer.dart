@@ -731,73 +731,6 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "CLOSE" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
-                                      SizedBox(height: 15),
-                                    ],
-                                    if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "CLOSE" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
-                                      Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Close",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                  fontSize: 12,
-                                                  fontFamily: "Poppins Regular",
-                                                  color: ColorConstants.kTextColor,
-                                                ),
-                                            overflow: TextOverflow.ellipsis),
-                                        SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
-                                            SizedBox(width: 6),
-                                            Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "CLOSE"
-                                                  ? "${data_list_do[0]["tgl_do"]}"
-                                                  : "",
-                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                    fontSize: 12,
-                                                    fontFamily: "Poppins Regular",
-                                                    color: ColorConstants.kTextColor,
-                                                  ),
-                                            ),
-                                            SizedBox(width: 12),
-                                            Icon(Icons.access_time, size: 14, color: Colors.redAccent),
-                                            SizedBox(width: 6),
-                                            Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "CLOSE"
-                                                  ? "${data_list_do[0]["time_do"]}"
-                                                  : "",
-                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                    fontSize: 12,
-                                                    fontFamily: "Poppins Regular",
-                                                    color: ColorConstants.kTextColor,
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text("Status selesai",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                  fontSize: 12,
-                                                  fontFamily: "Poppins Regular",
-                                                  color: ColorConstants.kTextColor,
-                                                ),
-                                            overflow: TextOverflow.ellipsis),
-                                      ],
-                                      ),
-                                    ],
-                                    if (data_list_do.isNotEmpty &&
                                         data_list_do[0]["inloading"] != null &&
                                         data_list_do[0]["inloading"].toString().isNotEmpty) ...[
                                       Column(
@@ -1170,6 +1103,73 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                         ),
                                         SizedBox(height: 4),
                                         Text("Bongkar selesai, kendaraan keluar area unloading",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                      ],
+                                      ),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "CLOSE" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      SizedBox(height: 15),
+                                    ],
+                                    if (data_list_do.isNotEmpty &&
+                                        data_list_do[0]["status_do_mixer"] == "CLOSE" &&
+                                        (data_list_do[0]["tgl_do"] != null &&
+                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                      Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("Close",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontSize: 12,
+                                                  fontFamily: "Poppins Regular",
+                                                  color: ColorConstants.kTextColor,
+                                                ),
+                                            overflow: TextOverflow.ellipsis),
+                                        SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "CLOSE"
+                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            Icon(Icons.access_time, size: 14, color: Colors.redAccent),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "CLOSE"
+                                                  ? "${data_list_do[0]["time_do"]}"
+                                                  : "",
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                    fontSize: 12,
+                                                    fontFamily: "Poppins Regular",
+                                                    color: ColorConstants.kTextColor,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text("Status selesai",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .bodySmall
