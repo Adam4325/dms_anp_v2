@@ -224,21 +224,6 @@ class _ViewAntrianMixerState extends State<ViewAntrianMixer> {
       EasyLoading.show();
     }
     try {
-      // var urlDataOld =
-      //     "${GlobalData.baseUrl}api/maintenance/create_antrian_new_driver.jsp?method=create-antrian-new-driver-v1&vhcid=" +
-      //         vhcid +
-      //         "&vhckm=" +
-      //         km_newDriver +
-      //         "&locid=" +
-      //         locid +
-      //         "&dlocustdonbr=" +
-      //         nodo +
-      //         "&dlodate=" +
-      //         dlodate +
-      //         "&drvid=" +
-      //         drvid +
-      //         "&userid=" +
-      //         userid;
 
       if (bujnumber == null || bujnumber == '') {
         //print("Bujnumber tidak boleh kosong, silahkan terima do terlebih dahulu");

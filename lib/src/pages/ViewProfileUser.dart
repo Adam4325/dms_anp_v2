@@ -12,7 +12,7 @@ import 'dart:async';
 
 class ViewProfileUser extends StatefulWidget {
   @override
-  _ViewProfileUserState createState() => _ViewProfileUserState();
+  _ViewProfileUserState createState() => _ViewProfileUserState();//
 }
 
 class _ViewProfileUserState extends State<ViewProfileUser> {
@@ -339,14 +339,14 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
         appBar: AppBar(
           backgroundColor: darkOrange,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back),
+            icon: Icon(Icons.arrow_back,color: Colors.white),
             onPressed: () => Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => ViewDashboard()),
             ),
           ),
           centerTitle: true,
-          title: Text('User Profile'),
+          title: Text('User Profile',style: TextStyle(color:Colors.white)),
         ),
         body: ListView(
           children: [
@@ -599,8 +599,8 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () => _performActionWithLoading(_changePassword),
-                icon: Icon(Icons.lock),
-                label: Text("Change Password"),
+                icon: Icon(Icons.lock,color: Colors.white),
+                label: Text("Change Password",style: TextStyle(color:Colors.white)),
                 style: ElevatedButton.styleFrom(
                     elevation: 2.0,
                     backgroundColor: primaryOrange,

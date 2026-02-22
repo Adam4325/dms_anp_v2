@@ -726,9 +726,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                         ),
                                         overflow: TextOverflow.ellipsis),
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "INLOADING" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                        data_list_do[0]["inloading"] != null &&
+                                        data_list_do[0]["inloading"].toString().isNotEmpty) ...[
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
@@ -799,9 +798,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                       ),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "INLOADING" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                        data_list_do[0]["inloading"] != null &&
+                                        data_list_do[0]["inloading"].toString().isNotEmpty) ...[
                                       Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -821,8 +819,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "INLOADING"
-                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["inloading"] != null
+                                                  ? "${data_list_do[0]["inloading"].toString().split(' ')[0]}"
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -834,8 +832,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.access_time, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "INLOADING"
-                                                  ? "${data_list_do[0]["time_do"]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["inloading"] != null
+                                                  ? "${data_list_do[0]["inloading"].toString().split(' ').length > 1 ? data_list_do[0]["inloading"].toString().split(' ')[1] : ''}"
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -860,15 +858,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                       ),//
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "OUTLOADING" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                        data_list_do[0]["outloading"] != null &&
+                                        data_list_do[0]["outloading"].toString().isNotEmpty) ...[
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "OUTLOADING" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                        data_list_do[0]["outloading"] != null &&
+                                        data_list_do[0]["outloading"].toString().isNotEmpty) ...[
                                       Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -888,8 +884,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "OUTLOADING"
-                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["outloading"] != null
+                                                  ? "${data_list_do[0]["outloading"].toString().split(' ')[0]}"
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -901,8 +897,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.access_time, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "OUTLOADING"
-                                                  ? "${data_list_do[0]["time_do"]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["outloading"] != null
+                                                  ? "${data_list_do[0]["outloading"].toString().split(' ').length > 1 ? data_list_do[0]["outloading"].toString().split(' ')[1] : ''}"
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -927,15 +923,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                       ),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "OUTPOOL" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                        data_list_do[0]["outpool"] != null &&
+                                        data_list_do[0]["outpool"].toString().isNotEmpty) ...[
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "OUTPOOL" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                        data_list_do[0]["outpool"] != null &&
+                                        data_list_do[0]["outpool"].toString().isNotEmpty) ...[
                                       Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -955,8 +949,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "OUTPOOL"
-                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["outpool"] != null
+                                                  ? "${data_list_do[0]["outpool"].toString().split(' ')[0]}"
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -968,8 +962,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.access_time, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "OUTPOOL"
-                                                  ? "${data_list_do[0]["time_do"]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["outpool"] != null
+                                                  ? "${data_list_do[0]["outpool"].toString().split(' ').length > 1 ? data_list_do[0]["outpool"].toString().split(' ')[1] : ''}"
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -994,15 +988,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                       ),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "INCUSTOMER" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                        data_list_do[0]["incustomer"] != null &&
+                                        data_list_do[0]["incustomer"].toString().isNotEmpty) ...[
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "INCUSTOMER" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                        data_list_do[0]["incustomer"] != null &&
+                                        data_list_do[0]["incustomer"].toString().isNotEmpty) ...[
                                       Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -1022,8 +1014,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "INCUSTOMER"
-                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["incustomer"] != null
+                                                  ? "${data_list_do[0]["incustomer"].toString().split(' ')[0]}"
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -1035,8 +1027,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.access_time, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "INCUSTOMER"
-                                                  ? "${data_list_do[0]["time_do"]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["incustomer"] != null
+                                                  ? "${data_list_do[0]["incustomer"].toString().split(' ').length > 1 ? data_list_do[0]["incustomer"].toString().split(' ')[1] : ''}"
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -1061,15 +1053,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                       ),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "INUNLOADING" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                        data_list_do[0]["inunloading"] != null &&
+                                        data_list_do[0]["inunloading"].toString().isNotEmpty) ...[
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "INUNLOADING" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                        data_list_do[0]["inunloading"] != null &&
+                                        data_list_do[0]["inunloading"].toString().isNotEmpty) ...[
                                       Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -1089,8 +1079,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "INUNLOADING"
-                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["inunloading"] != null
+                                                  ? "${data_list_do[0]["inunloading"].toString().split(' ')[0]}"
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -1102,8 +1092,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.access_time, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "INUNLOADING"
-                                                  ? "${data_list_do[0]["time_do"]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["inunloading"] != null
+                                                  ? "${data_list_do[0]["inunloading"].toString().split(' ').length > 1 ? data_list_do[0]["inunloading"].toString().split(' ')[1] : ''}"
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -1128,15 +1118,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                       ),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "OUTUNLOADING" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                        data_list_do[0]["outunloading"] != null &&
+                                        data_list_do[0]["outunloading"].toString().isNotEmpty) ...[
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "OUTUNLOADING" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
+                                        data_list_do[0]["outunloading"] != null &&
+                                        data_list_do[0]["outunloading"].toString().isNotEmpty) ...[
                                       Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -1156,8 +1144,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "OUTUNLOADING"
-                                                  ? "${data_list_do[0]["tgl_do"]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["outunloading"] != null
+                                                  ? "${data_list_do[0]["outunloading"].toString().split(' ')[0]}"
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -1169,8 +1157,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.access_time, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "OUTUNLOADING"
-                                                  ? "${data_list_do[0]["time_do"]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["outunloading"] != null
+                                                  ? "${data_list_do[0]["outunloading"].toString().split(' ').length > 1 ? data_list_do[0]["outunloading"].toString().split(' ')[1] : ''}"
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
