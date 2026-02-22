@@ -82,6 +82,21 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
 
   List<dynamic> data_list_do = [];
   late Map<String, dynamic> data_list_history;
+  String _fmtDate(String v) {
+    final s = v.toString();
+    final p = s.split(' ');
+    return p.isNotEmpty ? p[0] : '';
+  }
+  String _fmtTime(String v) {
+    final s = v.toString();
+    final p = s.split(' ');
+    if (p.length > 1) {
+      final t = p[1];
+      final i = t.indexOf('.');
+      return i >= 0 ? t.substring(0, i) : t;
+    }
+    return '';
+  }
 
   Future<Uint8List> getBytesFromAsset(String path, int width) async {
     ByteData data = await rootBundle.load(path);
@@ -226,14 +241,19 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
       destination = prefs.getString("do_destination")!;
       driver_nm = prefs.getString("do_driver_nm")!;//
       var urlData =
-          "${GlobalData.baseUrlProd}api/do_mixer/list_do_driver_mixer.jsp?method=lookup-list-do-driver-v1&drvid=${drvid}";
+          "${GlobalData.baseUrlProd}api/do_mixer/status_timeline_do_mixer.jsp?method=get-status&drvid=${drvid}";
       Uri myUri = Uri.parse(urlData);
       print(myUri.toString());
       var response =
       await http.get(myUri, headers: {"Accept": "application/json"});
       setState(() {
         if (response.statusCode == 200) {
-          data_list_do = json.decode(response.body);
+          final decoded = json.decode(response.body);
+          if (decoded is Map && decoded["data"] is List) {
+            data_list_do = List.from(decoded["data"] as List);
+          } else {
+            data_list_do = [];
+          }
         }
         print("data_list_do");
         print(data_list_do);
@@ -726,13 +746,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                         ),
                                         overflow: TextOverflow.ellipsis),
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["inloading"] != null &&
-                                        data_list_do[0]["inloading"].toString().isNotEmpty) ...[
+                                        data_list_do[0]["INLOADING"] != null &&
+                                        data_list_do[0]["INLOADING"].toString().isNotEmpty) ...[
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["inloading"] != null &&
-                                        data_list_do[0]["inloading"].toString().isNotEmpty) ...[
+                                        data_list_do[0]["INLOADING"] != null &&
+                                        data_list_do[0]["INLOADING"].toString().isNotEmpty) ...[
                                       Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -752,8 +772,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["inloading"] != null
-                                                  ? "${data_list_do[0]["inloading"].toString().split(' ')[0]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["INLOADING"] != null
+                                                  ? _fmtDate(data_list_do[0]["INLOADING"].toString())
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -765,8 +785,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.access_time, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["inloading"] != null
-                                                  ? "${data_list_do[0]["inloading"].toString().split(' ').length > 1 ? data_list_do[0]["inloading"].toString().split(' ')[1] : ''}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["INLOADING"] != null
+                                                  ? _fmtTime(data_list_do[0]["INLOADING"].toString())
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -791,13 +811,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                       ),//
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["outloading"] != null &&
-                                        data_list_do[0]["outloading"].toString().isNotEmpty) ...[
+                                        data_list_do[0]["OUTLOADING"] != null &&
+                                        data_list_do[0]["OUTLOADING"].toString().isNotEmpty) ...[
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["outloading"] != null &&
-                                        data_list_do[0]["outloading"].toString().isNotEmpty) ...[
+                                        data_list_do[0]["OUTLOADING"] != null &&
+                                        data_list_do[0]["OUTLOADING"].toString().isNotEmpty) ...[
                                       Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -817,8 +837,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["outloading"] != null
-                                                  ? "${data_list_do[0]["outloading"].toString().split(' ')[0]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["OUTLOADING"] != null
+                                                  ? _fmtDate(data_list_do[0]["OUTLOADING"].toString())
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -830,8 +850,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.access_time, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["outloading"] != null
-                                                  ? "${data_list_do[0]["outloading"].toString().split(' ').length > 1 ? data_list_do[0]["outloading"].toString().split(' ')[1] : ''}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["OUTLOADING"] != null
+                                                  ? _fmtTime(data_list_do[0]["OUTLOADING"].toString())
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -856,13 +876,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                       ),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["outpool"] != null &&
-                                        data_list_do[0]["outpool"].toString().isNotEmpty) ...[
+                                        data_list_do[0]["OUTPOOL"] != null &&
+                                        data_list_do[0]["OUTPOOL"].toString().isNotEmpty) ...[
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["outpool"] != null &&
-                                        data_list_do[0]["outpool"].toString().isNotEmpty) ...[
+                                        data_list_do[0]["OUTPOOL"] != null &&
+                                        data_list_do[0]["OUTPOOL"].toString().isNotEmpty) ...[
                                       Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -882,8 +902,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["outpool"] != null
-                                                  ? "${data_list_do[0]["outpool"].toString().split(' ')[0]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["OUTPOOL"] != null
+                                                  ? _fmtDate(data_list_do[0]["OUTPOOL"].toString())
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -895,8 +915,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.access_time, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["outpool"] != null
-                                                  ? "${data_list_do[0]["outpool"].toString().split(' ').length > 1 ? data_list_do[0]["outpool"].toString().split(' ')[1] : ''}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["OUTPOOL"] != null
+                                                  ? _fmtTime(data_list_do[0]["OUTPOOL"].toString())
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -921,13 +941,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                       ),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["incustomer"] != null &&
-                                        data_list_do[0]["incustomer"].toString().isNotEmpty) ...[
+                                        data_list_do[0]["INCUSTOMER"] != null &&
+                                        data_list_do[0]["INCUSTOMER"].toString().isNotEmpty) ...[
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["incustomer"] != null &&
-                                        data_list_do[0]["incustomer"].toString().isNotEmpty) ...[
+                                        data_list_do[0]["INCUSTOMER"] != null &&
+                                        data_list_do[0]["INCUSTOMER"].toString().isNotEmpty) ...[
                                       Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -947,8 +967,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["incustomer"] != null
-                                                  ? "${data_list_do[0]["incustomer"].toString().split(' ')[0]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["INCUSTOMER"] != null
+                                                  ? _fmtDate(data_list_do[0]["INCUSTOMER"].toString())
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -960,8 +980,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.access_time, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["incustomer"] != null
-                                                  ? "${data_list_do[0]["incustomer"].toString().split(' ').length > 1 ? data_list_do[0]["incustomer"].toString().split(' ')[1] : ''}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["INCUSTOMER"] != null
+                                                  ? _fmtTime(data_list_do[0]["INCUSTOMER"].toString())
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -986,13 +1006,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                       ),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["inunloading"] != null &&
-                                        data_list_do[0]["inunloading"].toString().isNotEmpty) ...[
+                                        data_list_do[0]["INUNLOADING"] != null &&
+                                        data_list_do[0]["INUNLOADING"].toString().isNotEmpty) ...[
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["inunloading"] != null &&
-                                        data_list_do[0]["inunloading"].toString().isNotEmpty) ...[
+                                        data_list_do[0]["INUNLOADING"] != null &&
+                                        data_list_do[0]["INUNLOADING"].toString().isNotEmpty) ...[
                                       Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -1012,8 +1032,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["inunloading"] != null
-                                                  ? "${data_list_do[0]["inunloading"].toString().split(' ')[0]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["INUNLOADING"] != null
+                                                  ? _fmtDate(data_list_do[0]["INUNLOADING"].toString())
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -1025,8 +1045,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.access_time, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["inunloading"] != null
-                                                  ? "${data_list_do[0]["inunloading"].toString().split(' ').length > 1 ? data_list_do[0]["inunloading"].toString().split(' ')[1] : ''}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["INUNLOADING"] != null
+                                                  ? _fmtTime(data_list_do[0]["INUNLOADING"].toString())
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -1051,13 +1071,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                       ),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["outunloading"] != null &&
-                                        data_list_do[0]["outunloading"].toString().isNotEmpty) ...[
+                                        data_list_do[0]["OUTUNLOADING"] != null &&
+                                        data_list_do[0]["OUTUNLOADING"].toString().isNotEmpty) ...[
                                       SizedBox(height: 15),
                                     ],
                                     if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["outunloading"] != null &&
-                                        data_list_do[0]["outunloading"].toString().isNotEmpty) ...[
+                                        data_list_do[0]["OUTUNLOADING"] != null &&
+                                        data_list_do[0]["OUTUNLOADING"].toString().isNotEmpty) ...[
                                       Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -1077,8 +1097,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["outunloading"] != null
-                                                  ? "${data_list_do[0]["outunloading"].toString().split(' ')[0]}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["OUTUNLOADING"] != null
+                                                  ? _fmtDate(data_list_do[0]["OUTUNLOADING"].toString())
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -1090,8 +1110,8 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                             Icon(Icons.access_time, size: 14, color: Colors.redAccent),
                                             SizedBox(width: 6),
                                             Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["outunloading"] != null
-                                                  ? "${data_list_do[0]["outunloading"].toString().split(' ').length > 1 ? data_list_do[0]["outunloading"].toString().split(' ')[1] : ''}"
+                                              data_list_do.isNotEmpty && data_list_do[0]["OUTUNLOADING"] != null
+                                                  ? _fmtTime(data_list_do[0]["OUTUNLOADING"].toString())
                                                   : "",
                                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                                     fontSize: 12,
@@ -1113,74 +1133,13 @@ class MapHistoryMixerState extends State<MapHistoryMixer> {
                                                 ),
                                             overflow: TextOverflow.ellipsis),
                                       ],
-                                      ),
+                                      ),//
                                     ],
                                     if (data_list_do.isNotEmpty &&
                                         data_list_do[0]["status_do_mixer"] == "CLOSE" &&
                                         (data_list_do[0]["tgl_do"] != null &&
                                             data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
                                       SizedBox(height: 15),
-                                    ],
-                                    if (data_list_do.isNotEmpty &&
-                                        data_list_do[0]["status_do_mixer"] == "CLOSE" &&
-                                        (data_list_do[0]["tgl_do"] != null &&
-                                            data_list_do[0]["tgl_do"].toString().isNotEmpty)) ...[
-                                      Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Close",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                  fontSize: 12,
-                                                  fontFamily: "Poppins Regular",
-                                                  color: ColorConstants.kTextColor,
-                                                ),
-                                            overflow: TextOverflow.ellipsis),
-                                        SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Icon(Icons.calendar_today, size: 14, color: Colors.redAccent),
-                                            SizedBox(width: 6),
-                                            Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "CLOSE"
-                                                  ? "${data_list_do[0]["tgl_do"]}"
-                                                  : "",
-                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                    fontSize: 12,
-                                                    fontFamily: "Poppins Regular",
-                                                    color: ColorConstants.kTextColor,
-                                                  ),
-                                            ),
-                                            SizedBox(width: 12),
-                                            Icon(Icons.access_time, size: 14, color: Colors.redAccent),
-                                            SizedBox(width: 6),
-                                            Text(
-                                              data_list_do.isNotEmpty && data_list_do[0]["status_do_mixer"] == "CLOSE"
-                                                  ? "${data_list_do[0]["time_do"]}"
-                                                  : "",
-                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                    fontSize: 12,
-                                                    fontFamily: "Poppins Regular",
-                                                    color: ColorConstants.kTextColor,
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text("Status selesai",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                  fontSize: 12,
-                                                  fontFamily: "Poppins Regular",
-                                                  color: ColorConstants.kTextColor,
-                                                ),
-                                            overflow: TextOverflow.ellipsis),
-                                      ],
-                                      ),
                                     ],
                                   ],
                                 ),

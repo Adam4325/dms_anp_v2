@@ -159,7 +159,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   }
 
   bool _hasAccess() {
-    return username == "ADMIN" || getAkses("HTRD");
+    return true;//username == "ADMIN" ||  getAkses("MK");
   }
 
   _goBack(BuildContext context) {
