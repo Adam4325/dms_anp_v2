@@ -9749,32 +9749,29 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                 title: 'Katalog',
                 selectedValue: selKatalog,
                 placeholder: 'Pilih satu',
-                onChange: (selected) async {
-                  // Navigator.of(context,
-                  //     rootNavigator: true)
-                  //     .pop();
+                onChange: (selected) {
+                  final val = selected.value;
                   setState(() {
-                    selKatalog = selected.value;
+                    selKatalog = val;
                   });
-                  if (selKatalog == null || selKatalog == '') {
-                    alert(globalScaffoldKey.currentContext!, 0,
-                        "Katalog ID Kosong", "error");
-                  } else {
-                    getListDataItem(true, txtPartName.text, 0);
-                    await Future.delayed(Duration(milliseconds: 1));
-                    if (dataListItemSearch.length > 0) {
-                      Timer(Duration(seconds: 1), () {
-                        showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text('List Detail Mechanic'),
-                                content: listDataSearchItem(context),
-                              );
-                            });
-                      });
-                    }
+                  if (val == null || val == '') {
+                    alert(globalScaffoldKey.currentContext!, 0, "Katalog ID Kosong", "error");
+                    return;
                   }
+                  getListDataItem(true, txtPartName.text, 0);
+                  Future.delayed(Duration(milliseconds: 50), () {
+                    if (dataListItemSearch.length > 0) {
+                      showDialog(
+                        context: globalScaffoldKey.currentContext!,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('List Detail Mechanic'),
+                            content: listDataSearchItem(context),
+                          );
+                        },
+                      );
+                    }
+                  });
                 },
                 // onChange: (selected) =>
                 //     setState(() => {

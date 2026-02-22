@@ -17,6 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:awesome_select/awesome_select.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
+import '../../Helper/scanner_helper.dart';
 import '../../flusbar.dart';
 // import 'package:qrscan/qrscan.dart' as scanner; // removed - migrate to mobile_scanner
 import '../../../choices.dart' as choices;
@@ -966,6 +967,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   bool _buttonActive = false;
   ProgressDialog? pr;
   var id_header = 0;
+  String scanResult = '';
   var wonumberopname = "";
   var srnumberopname = "";
   GlobalKey<FormState> _oFormKey = GlobalKey<FormState>();
@@ -1951,10 +1953,38 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   }
 
   Future scanQRCode() async {
-    // TODO: Migrate to mobile_scanner - qrscan package removed
-    alert(globalScaffoldKey.currentContext!, 2,
-        "Fitur scan QR perlu migrasi ke mobile_scanner", "warning");
+    if (!mounted) return;
+
+    final String? scanResult = await openQrScanner(context);
+
+    if (scanResult == null || scanResult.isEmpty) {
+      if (mounted) {
+        final ctx = globalScaffoldKey.currentContext ?? context;
+        alert(ctx, 0, "Scan Item ID gagal!", "error");
+      }
+      return;
+    }
+    setState(() {
+      this.scanResult = scanResult;
+      txtItemID.text = scanResult;
+    });
+
+    ///print("scanResult : $scanResult");
+    if (scanResult.isNotEmpty) {
+      var itemID = scanResult;
+      var urlBase = "";
+      if (METHOD_DETAIL == "PURCHASE-ORDER") {
+        urlBase =
+        "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-purchase-order-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
+      } else {
+        urlBase =
+        "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
+      }
+      var url = urlBase;
+      getItemBarcode(url, itemID);
+    }
   }
+
 
   void updateButtonState(String text) {
     // if text field has a value and button is inactive
@@ -6469,7 +6499,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         color: Colors.white,
         size: 15.0,
       ),
-      label: Text("Cancel"),
+      label: Text("Cancel",style: TextStyle(color:Colors.white)),
       onPressed: () async {
         listItemApprove = [];
         dummylistBanTms = [];
@@ -7400,14 +7430,6 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               child: ListTile(
                 contentPadding:
                     EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                // leading: Container(
-                //   padding: EdgeInsets.only(right: 12.0),
-                //   decoration: new BoxDecoration(
-                //       border: new Border(
-                //           right: new BorderSide(
-                //               width: 1.0, color: Colors.black45))),
-                //   child: Icon(Icons.settings_applications, color: Colors.black),
-                // ),
                 title: Text(
                   "SR Number : ${item['srnumber']}",
                   style: TextStyle(
@@ -7421,12 +7443,6 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     color: Colors.transparent,
                     height: 0,
                   ),
-                  // Text("Original SR Number : ${item['orisrnumber']}",
-                  //     style: TextStyle(color: Colors.black)),
-                  // Divider(
-                  //   color: Colors.transparent,
-                  //   height: 0,
-                  // ),
                   Text("VHCID : ${item['vhcid']}",
                       style: TextStyle(color: Colors.black)),
                   Divider(
@@ -8964,7 +8980,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           child: Column(
             children: <Widget>[
               Container(
-                margin: EdgeInsets.all(10.0),
+                margin: EdgeInsets.all(10.0),//
                 child: TextField(
                   readOnly: true,
                   cursorColor: Colors.black,
@@ -8977,6 +8993,18 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     isDense: true,
                     labelText: "SR Number",
                     contentPadding: EdgeInsets.all(5.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -8994,6 +9022,18 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     isDense: true,
                     labelText: "SR DateTime",
                     contentPadding: EdgeInsets.all(5.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -9033,6 +9073,18 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     isDense: true,
                     labelText: "Vehicle Name",
                     contentPadding: EdgeInsets.all(5.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -9064,6 +9116,18 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       isDense: true,
                       labelText: "LOCID",
                       contentPadding: EdgeInsets.all(5.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                      ),
                     ),
                   ),
                 )
@@ -9087,15 +9151,27 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     });
                   },
                   keyboardType: TextInputType.text,
-                  decoration: new InputDecoration(
-                    fillColor: is_edit_req == true
-                        ? HexColor("FFF6F1BF")
-                        : HexColor("FFFFFFFF"),
-                    filled: true,
-                    isDense: true,
-                    labelText: "Bengkel",
-                    contentPadding: EdgeInsets.all(5.0),
-                  ),
+                    decoration: new InputDecoration(
+                      fillColor: is_edit_req == true
+                          ? HexColor("FFF6F1BF")
+                          : HexColor("FFFFFFFF"),
+                      filled: true,
+                      isDense: true,
+                      labelText: "Bengkel",
+                      contentPadding: EdgeInsets.all(5.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                      ),
+                    ),
                 ),
               ),
               Container(
@@ -9118,6 +9194,18 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     isDense: true,
                     labelText: "Driver Name",
                     contentPadding: EdgeInsets.all(5.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -9146,6 +9234,18 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     isDense: true,
                     labelText: "Service Type",
                     contentPadding: EdgeInsets.all(5.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -9158,11 +9258,22 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   controller: txtKM,
                   keyboardType: TextInputType.number,
                   decoration: new InputDecoration(
-                    //fillColor: HexColor("FFF6F1BF"),
                     filled: true,
                     isDense: true,
                     labelText: "KM",
                     contentPadding: EdgeInsets.all(5.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -9179,6 +9290,18 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     isDense: true,
                     labelText: "Notes",
                     contentPadding: EdgeInsets.all(5.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -9192,7 +9315,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Cancel"),
+                    label: Text("Cancel",style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       resetTeks();
                       setState(() {
@@ -9215,14 +9338,14 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("${btnSubmitText}"),
+                    label: Text("${btnSubmitText}",style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       if (is_edit_req != null && is_edit_req == true) {
                         showDialog(
                           context: context,
                           builder: (context) => new AlertDialog(
                             title: new Text('Information'),
-                            content: new Text("${bUpdate}?"),
+                            content: new Text("${bUpdate}?",style: TextStyle(color:Colors.white)),
                             actions: <Widget>[
                               new ElevatedButton.icon(
                                 icon: Icon(
@@ -9471,7 +9594,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Detail List Ban"),
+                    label: Text("Detail List Ban",style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       var value = txtSrTypeId.text;
                       if (value != null && value != '') {
@@ -9529,46 +9652,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     _controllerWeb.reload();
   }
 
-  final _debouncer = Debouncer(delay: const Duration(seconds: 1));
 
   Widget _buildListViewCHKUNITS(BuildContext context) {
-    // if (getAkses("SA")) {
-    //
-    // } else {
-    //   return Container(
-    //       child: Center(
-    //     child: Text(
-    //       "Anda tidak punya akses",
-    //       textAlign: TextAlign.center,
-    //     ),
-    //   ));
-    // }
-    // return Container(
-    //     margin: EdgeInsets.all(10.0),
-    //     decoration: BoxDecoration(
-    //       borderRadius: BorderRadius.circular(10),
-    //       color: Colors.white,
-    //       boxShadow: [
-    //         BoxShadow(color: Colors.blue, spreadRadius: 1),
-    //       ],
-    //     ),
-    //     height: MediaQuery.of(context).size.height,
-    //     child: WebView(
-    //         onWebViewCreated: (controller) {
-    //           _controllerWeb = controller;
-    //         },
-    //         initialUrl:
-    //             'http://apps.tuluatas.com:8080/trucking/mobile/portal/form_checklist_kendaraan.jsp?method=check-kendaraan&vhcid=${txtOpnameVHCID.text}&wonumber=${txtOpnameWONUMBER.text}&userid=${username}',
-    //         gestureRecognizers: Set()
-    //           ..add(
-    //             Factory<VerticalDragGestureRecognizer>(
-    //               () => VerticalDragGestureRecognizer(),
-    //             ), // or null
-    //           ),
-    //         key: Key("webview1"),
-    //         debuggingEnabled: true,
-    //         javascriptMode: JavascriptMode.unrestricted));
-
     return Container(
       //FORM CHK
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
@@ -9584,14 +9669,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             child: Column(
               children: [
                 Container(
-                  margin: EdgeInsets.all(0.0),
+                  margin: EdgeInsets.all(5.0),
                   child: TextField(
                     cursorColor: Colors.black,
                     style: TextStyle(color: Colors.grey.shade800),
                     controller: txtVHCIDCHK,
-                    // onChanged: (val){
-                    //
-                    // },
                     onTap: () {
                       _showModalListVehicleCHK(context);
                     },
@@ -9602,11 +9684,23 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       isDense: true,
                       labelText: "Nopol",
                       contentPadding: EdgeInsets.all(5.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                      ),
                     ),
                   ),
                 ),
                 Container(
-                  margin: EdgeInsets.all(0.0),
+                  margin: EdgeInsets.all(5.0),
                   child: TextField(
                     readOnly: true,
                     cursorColor: Colors.black,
@@ -9619,11 +9713,23 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       isDense: true,
                       labelText: "Locid",
                       contentPadding: EdgeInsets.all(5.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                      ),
                     ),
                   ),
                 ),
                 Container(
-                  margin: EdgeInsets.all(0.0),
+                  margin: EdgeInsets.all(5.0),
                   child: TextField(
                     readOnly: true,
                     cursorColor: Colors.black,
@@ -9636,11 +9742,23 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       isDense: true,
                       labelText: "Jenis Type/Kendaraan",
                       contentPadding: EdgeInsets.all(5.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                      ),
                     ),
                   ),
                 ),
                 Container(
-                  margin: EdgeInsets.all(0.0),
+                  margin: EdgeInsets.all(5.0),
                   child: TextField(
                     readOnly: true,
                     cursorColor: Colors.black,
@@ -9656,11 +9774,23 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       isDense: true,
                       labelText: "WO Number",
                       contentPadding: EdgeInsets.all(5.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                      ),
                     ),
                   ),
                 ),
                 Container(
-                  margin: EdgeInsets.all(0.0),
+                  margin: EdgeInsets.all(5.0),
                   child: TextField(
                     cursorColor: Colors.black,
                     style: TextStyle(color: Colors.grey.shade800),
@@ -9672,15 +9802,26 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       isDense: true,
                       labelText: "Millage/KM",
                       contentPadding: EdgeInsets.all(5.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-          ),
+          ),//
           Container(
-              //height: 30,
-              padding: const EdgeInsets.all(18.0),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
               margin: const EdgeInsets.all(0.0),
               decoration: BoxDecoration(
                   border: Border.all(
@@ -9688,28 +9829,70 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 width: 10.0,
               )),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text('Note: Baik'),
-                  Radio(
-                    value: "0",
-                    //groupValue:
-                    fillColor: MaterialStateColor.resolveWith(
-                        (states) => Colors.green),
+                  Text('Note:', style: TextStyle(fontSize: 12)),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Radio(
+                          value: "0",
+                          fillColor: MaterialStateColor.resolveWith(//
+                              (states) => Colors.green),
+                        ),
+                        SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'Baik',
+                            style: TextStyle(fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  Text('Tidak Baik'),
-                  Radio(
-                    value: "0",
-                    //groupValue:
-                    fillColor: MaterialStateColor.resolveWith(
-                        (states) => Colors.orange),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Radio(
+                          value: "0",
+                          fillColor: MaterialStateColor.resolveWith(
+                              (states) => Colors.orange),
+                        ),
+                        SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'Tidak Baik',
+                            style: TextStyle(fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  Text('Tidak Ada'),
-                  Radio(
-                    value: "0",
-                    //groupValue:
-                    fillColor:
-                        MaterialStateColor.resolveWith((states) => Colors.red),
-                  )
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Radio(
+                          value: "0",
+                          fillColor: MaterialStateColor.resolveWith(
+                              (states) => Colors.red),
+                        ),
+                        SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'Tidak Ada',
+                            style: TextStyle(fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               )),
           SizedBox(height: 10),
@@ -9748,7 +9931,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       ),
                       Padding(
                         padding: EdgeInsets.only(
-                            top: 0, bottom: 0.0, left: 18, right: 0),
+                            top: 0, bottom: 0.0, left: 8, right: 0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: <Widget>[
@@ -10175,16 +10358,6 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         height: 32.0,
                       ),
                       onPressed: () async {
-                        // if (txtOpnameVHCID.text == null ||
-                        //     txtOpnameVHCID.text == '') {
-                        //   alert(globalScaffoldKey.currentContext!, 0,
-                        //       "Vehicle ID tidak boleh kosong", "error");
-                        // } else {
-                        //   await createOpname();
-                        //   // id_header =
-                        //   //     await getIdHeader(txtOpnameVHCID.text);
-                        // }
-                        //txtOpnameVHCID.text='';
                         if (METHOD_DETAIL == '') {
                           await getListDataSr(true, txtOpnameVHCID.text);
                         }
@@ -10210,7 +10383,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     filled: true,
                     isDense: true,
                     labelText: "Search VHCID by list Sr",
-                    contentPadding: EdgeInsets.all(5.0),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -10227,7 +10412,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     filled: true,
                     isDense: true,
                     labelText: "SR Number",
-                    contentPadding: EdgeInsets.all(5.0),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -10290,7 +10487,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   decoration: new InputDecoration(
                     suffixIcon: IconButton(
                       icon: new Image.asset(
-                        "assets/img/search.png",
+                        "assets/img/qrcode.png",
                         width: 32.0,
                         height: 32.0,
                       ),
@@ -10411,7 +10608,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     filled: true,
                     labelText: 'Item ID',
                     isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -10429,7 +10638,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     filled: true,
                     labelText: 'Part Name',
                     isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -10447,7 +10668,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     filled: true,
                     labelText: 'Item Size',
                     isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -10465,7 +10698,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     filled: true,
                     labelText: 'Type ID',
                     isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -10483,7 +10728,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     filled: true,
                     labelText: 'IDACCESS',
                     isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -10501,7 +10758,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     filled: true,
                     labelText: 'GENUINENO',
                     isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -10519,7 +10788,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     filled: true,
                     labelText: 'Merk',
                     isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -10537,7 +10818,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     filled: true,
                     labelText: 'QTY',
                     isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
@@ -10597,33 +10890,25 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     filled: true,
                     labelText: 'Estimasi',
                     isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.orange.shade400, width: 1.2),
+                    ),
                   ),
                 ),
               ),
               Container(
                 margin: EdgeInsets.only(left: 10, top: 0, right: 10, bottom: 0),
                 child: Row(children: <Widget>[
-                  // Expanded(
-                  //     child: ElevatedButton.icon(
-                  //   icon: Icon(
-                  //     Icons.cancel,
-                  //     color: Colors.white,
-                  //     size: 15.0,
-                  //   ),
-                  //   label: Text("Cancel"),
-                  //   onPressed: () async {
-                  //     print('cancel');
-                  //   },
-                  //   style: ElevatedButton.styleFrom(
-                  //       elevation: 0.0,
-                  //       backgroundColor: Colors.orangeAccent,
-                  //       padding: EdgeInsets.symmetric(
-                  //           horizontal: 5, vertical: 0),
-                  //       textStyle: TextStyle(
-                  //           fontSize: 12, fontWeight: FontWeight.bold)),
-                  // )),
-                  // SizedBox(width: 10),
                   Expanded(
                       child: ElevatedButton.icon(
                     icon: Icon(
@@ -10631,7 +10916,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Create"),
+                    label: Text("Create",style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       print(fnWONUMBER);
                       print("METHOD_DETAIL ${METHOD_DETAIL}");
@@ -10826,7 +11111,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text(btnNameCreatePR),
+                    label: Text(btnNameCreatePR,style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       //Navigator.of(context, rootNavigator: false).pop();
                       print('Create PR Number');
@@ -10914,7 +11199,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("List Detail"),
+                    label: Text("List Detail",style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       print("METHOD ${METHOD_DETAIL}");
                       print("Button List Detail Opname");
@@ -11141,7 +11426,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ]),
               ),
               Container(
-                margin: EdgeInsets.only(left: 10, top: 0, right: 10, bottom: 0),
+                margin: EdgeInsets.only(left: 10, top: 0, right: 10, bottom: 50),
                 child: Row(children: <Widget>[
                   Expanded(
                       child: ElevatedButton.icon(
@@ -11150,7 +11435,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Clear"),
+                    label: Text("Clear",style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       setState(() {
                         btnNameCreatePR = "Create PR";
@@ -11539,7 +11824,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 color: Colors.white,
                 size: 15.0,
               ),
-              label: Text("Opname Detail"),
+              label: Text("Opname Detail",style: TextStyle(color:Colors.white)),
               onPressed: () async {
                 print('OPNAME FOREMAN LIST ${item['wodwonbr']}');
                 print('show dialog');
@@ -11577,13 +11862,13 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 color: Colors.white,
                 size: 15.0,
               ),
-              label: Text("Cancel"),
+              label: Text("Cancel",style: TextStyle(color:Colors.white)),
               onPressed: () async {
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
                   builder: (context) => new AlertDialog(
                     title: new Text('Information'),
-                    content: new Text("Cancel data ${item['srnumber']}"),
+                    content: new Text("Cancel data ${item['srnumber']}",style: TextStyle(color:Colors.white)),
                     actions: <Widget>[
                       new TextButton(
                           onPressed: () {
@@ -11621,7 +11906,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 color: Colors.white,
                 size: 15.0,
               ),
-              label: Text("WO Start"),
+              label: Text("WO Start",style: TextStyle(color:Colors.white)),
               onPressed: () async {
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
@@ -12301,9 +12586,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     icon: Icon(
                       Icons.settings,
                       color: Colors.white,
-                      size: 20.0,
+                      size: 14.0,
                     ),
-                    label: Text("Add Or Update Mechanic"), //PROSESS
+                    label: Text("Add/Update Mechanic",style: TextStyle(color:Colors.white)), //PROSESS
                     onPressed: () async {
                       mechanicID = null;
                       SharedPreferences prefs =
@@ -12326,112 +12611,15 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         textStyle: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.bold)),
                   ),
-                  SizedBox(width: 43),
+                  SizedBox(width: 35),
                   new ElevatedButton.icon(
                     icon: Icon(
                       Icons.details_outlined,
                       color: Colors.white,
-                      size: 15.0,
+                      size: 14.0,
                     ),
-                    label: Text("Detail List"), //PROSESS
+                    label: Text("Detail List",style: TextStyle(color:Colors.white)), //PROSESS
                     onPressed: () async {
-                      // showDialog(
-                      //   context: globalScaffoldKey.currentContext!,
-                      //   builder: (context) => new AlertDialog(
-                      //     title: new Text('Information Proses'),
-                      //     content: new Text("Add/ view detail?"),
-                      //     actions: <Widget>[
-                      //       new ElevatedButton.icon(
-                      //         icon: Icon(
-                      //           Icons.check,
-                      //           color: Colors.white,
-                      //           size: 24.0,
-                      //         ),
-                      //         label: Text("Add Detail Proses"),
-                      //         onPressed: () async {
-                      //           //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      //           Navigator.of(globalScaffoldKey.currentContext!)
-                      //               .pop(false);
-                      //           await Future.delayed(Duration(seconds: 1));
-                      //           //(item);
-                      //           print(id_header);
-                      //           METHOD_DETAIL = 'PROSES';
-                      //           fnVHCID = item['vhcid'];
-                      //           fnSTARTKM = item['vhckm'];
-                      //           fnWONUMBER = item['wodwonbr'];
-                      //           fnSRNUMBER = item['srnumber'];
-                      //           setState(() {
-                      //             txtOpnameWONUMBER.text = fnSRNUMBER;
-                      //             txtOpnameVHCID.text = fnVHCID;
-                      //           });
-                      //           _tabController.animateTo(1);
-                      //           // await getListBanTMS(true, '');
-                      //           // showDialog(
-                      //           //     context: globalScaffoldKey.currentContext!,
-                      //           //     builder: (BuildContext context) {
-                      //           //       return AlertDialog(
-                      //           //         title: Text('List Data'),
-                      //           //         content: setupAlertDialoadContainerFinish(
-                      //           //             context),
-                      //           //       );
-                      //           //     });
-                      //         },
-                      //         style: ElevatedButton.styleFrom(
-                      //             elevation: 0.0,
-                      //             backgroundColor: Colors.green,
-                      //             padding: EdgeInsets.symmetric(
-                      //                 horizontal: 5, vertical: 0),
-                      //             textStyle: TextStyle(
-                      //                 fontSize: 14, fontWeight: FontWeight.bold)),
-                      //       ),
-                      //       new ElevatedButton.icon(
-                      //         icon: Icon(
-                      //           Icons.save,
-                      //           color: Colors.white,
-                      //           size: 24.0,
-                      //         ),
-                      //         label: Text("View"),
-                      //         onPressed: () async {
-                      //           print('show');
-                      //           //print("${dataListTyreFit}");
-                      //           METHOD_DETAIL = '';
-                      //           await getListViewProses(true, item['wodwonbr']);
-                      //           if (dataListTyreFit.length > 0) {
-                      //             Navigator.of(context).pop(false);
-                      //             await Future.delayed(Duration(milliseconds: 1));
-                      //             print("dataListTyreFit");
-                      //             //print(dataListTyreFit);
-                      //             showDialog(
-                      //                 context: context,
-                      //                 builder: (BuildContext context) {
-                      //                   return AlertDialog(
-                      //                     title: Text('List Item'),
-                      //                     content:
-                      //                         setupAlertDialoadContainerTyreFitFinish(
-                      //                             context),
-                      //                   );
-                      //                 });
-                      //           } else {
-                      //             Navigator.of(context).pop(false);
-                      //             await Future.delayed(Duration(milliseconds: 1));
-                      //             alert(
-                      //                 context,
-                      //                 2,
-                      //                 "tidak ada data yang di temukan",
-                      //                 "warning");
-                      //           }
-                      //         },
-                      //         style: ElevatedButton.styleFrom(
-                      //             elevation: 0.0,
-                      //             backgroundColor: Colors.blue,
-                      //             padding: EdgeInsets.symmetric(
-                      //                 horizontal: 5, vertical: 0),
-                      //             textStyle: TextStyle(
-                      //                 fontSize: 14, fontWeight: FontWeight.bold)),
-                      //       ),
-                      //     ],
-                      //   ),
-                      // );
                       await getListDataListMechanic(item['wodwonbr']);
                       await Future.delayed(Duration(milliseconds: 1));
                       if (dataListMechanicProses.length > 0) {
@@ -12464,9 +12652,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 icon: Icon(
                   Icons.details_outlined,
                   color: Colors.white,
-                  size: 20.0,
+                  size: 14.0,
                 ),
-                label: Text("Opname Detail"), //PROSESS
+                label: Text("Opname Detail",style: TextStyle(color:Colors.white)), //PROSESS
                 onPressed: () async {
                   print('OPNAME PROSES ${item['wodwonbr']}');
                   await getListDataItemForeman(item["wodwonbr"]);
@@ -12575,7 +12763,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     color: Colors.white,
                     size: 20.0,
                   ),
-                  label: Text("Detail List"), //AS LIST DETAIL QC
+                  label: Text("Detail List",style: TextStyle(color:Colors.white)), //AS LIST DETAIL QC
                   onPressed: () async {
                     showDialog(
                       context: globalScaffoldKey.currentContext!,
@@ -12710,7 +12898,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           color: Colors.white,
           size: 15.0,
         ),
-        label: Text("Approve"),
+        label: Text("Approve",style: TextStyle(color:Colors.white)),
         onPressed: () async {
           showDialog(
             context: globalScaffoldKey.currentContext!,
@@ -12759,7 +12947,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Finish"),
+                    label: Text("Finish",style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       Navigator.of(globalScaffoldKey.currentContext!)
                           .pop(false);
@@ -12798,7 +12986,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           color: Colors.white,
           size: 15.0,
         ),
-        label: Text("Approve"),
+        label: Text("Approve",style: TextStyle(color:Colors.white)),
         onPressed: () async {
           showDialog(
             context: globalScaffoldKey.currentContext!,
@@ -12840,14 +13028,14 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           .pop(false);
                       resetTeks();
                     },
-                    child: new Text('No')),
+                    child: new Text('No',style: TextStyle(color:Colors.white))),
                 new ElevatedButton.icon(
                     icon: Icon(
                       Icons.close,
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Finish"),
+                    label: Text("Finish",style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       Navigator.of(globalScaffoldKey.currentContext!)
                           .pop(false);
@@ -12887,7 +13075,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           color: Colors.white,
           size: 15.0,
         ),
-        label: Text("Approve"),
+        label: Text("Approve",style: TextStyle(color:Colors.white)),
         onPressed: () async {
           showDialog(
             context: globalScaffoldKey.currentContext!,
@@ -12902,7 +13090,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 children: <Widget>[
                   Container(
                     margin: EdgeInsets.all(10.0),
-                    child: Text("Close WO data ${appSrnumber}"),
+                    child: Text("Close WO data ${appSrnumber}",style: TextStyle(color:Colors.white)),
                   ),
                   Container(
                     margin: EdgeInsets.all(10.0),
@@ -12929,14 +13117,14 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           .pop(false);
                       resetTeks();
                     },
-                    child: new Text('No')),
+                    child: new Text('No',style: TextStyle(color:Colors.white))),
                 new ElevatedButton.icon(
                     icon: Icon(
                       Icons.close,
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Finish"),
+                    label: Text("Finish",style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       Navigator.of(globalScaffoldKey.currentContext!)
                           .pop(false);
@@ -13016,8 +13204,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           },
           child: Scaffold(
             appBar: AppBar(
+              backgroundColor: Colors.deepOrangeAccent,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back),
+                icon: Icon(Icons.arrow_back,color: Colors.white),
                 iconSize: 20.0,
                 onPressed: () {
                   _goBack(globalScaffoldKey.currentContext!);
@@ -13030,18 +13219,16 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     borderRadius: BorderRadius.circular(5), // Creates border
                     color: Colors.black38),
                 tabs: [
-                  Tab(icon: Icon(Icons.car_repair), child: Text('CREATE SR')),
-                  Tab(
-                      icon: Icon(Icons.car_repair),
-                      child: Text('SERAH TERIMA')),
-                  Tab(icon: Icon(Icons.list), child: Text('OPNAME')),
-                  Tab(icon: Icon(Icons.list), child: Text('FOREMAN')),
-                  Tab(icon: Icon(Icons.list), child: Text('PROSES')),
-                  Tab(icon: Icon(Icons.list), child: Text('QC')),
+                  Tab(icon: Icon(Icons.car_repair,color: Colors.white), child: Text('CREATE SR',style: TextStyle(color:Colors.white))),
+                  Tab(icon: Icon(Icons.car_repair,color: Colors.white),child: Text('SERAH TERIMA',style: TextStyle(color:Colors.white))),
+                  Tab(icon: Icon(Icons.list,color: Colors.white), child: Text('OPNAME',style: TextStyle(color:Colors.white))),
+                  Tab(icon: Icon(Icons.list,color: Colors.white), child: Text('FOREMAN',style: TextStyle(color:Colors.white))),
+                  Tab(icon: Icon(Icons.list,color: Colors.white), child: Text('PROSES',style: TextStyle(color:Colors.white))),
+                  Tab(icon: Icon(Icons.list,color: Colors.white), child: Text('QC',style: TextStyle(color:Colors.white))),
                 ],
                 //tabs:getTabBarList(),
               ),
-              title: Text('Service Request'),
+              title: Text('Service Request',style: TextStyle(color:Colors.white)),
             ),
             body: TabBarView(
               physics: const NeverScrollableScrollPhysics(),
