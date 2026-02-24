@@ -1964,10 +1964,10 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       var urlBase = "";
       if (METHOD_DETAIL == "PURCHASE-ORDER") {
         urlBase =
-        "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-purchase-order-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
+        "${BASE_URL}api/inventory/list_item_sr_katalog_new.jsp?method=list-purchase-order-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
       } else {
         urlBase =
-        "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
+        "${BASE_URL}api/inventory/list_item_sr_katalog_new.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
       }
       var url = urlBase;
       getItemBarcode(url, itemID);
@@ -10497,9 +10497,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                 icon: Icon(
                                   Icons.search,
                                   color: Colors.white,
-                                  size: 24.0,
+                                  size: 12.0,
                                 ),
-                                label: Text("Searh Partname"),
+                                label: Text("Searh Partname",style: TextStyle(color:Colors.white)),
                                 onPressed: () async {
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
@@ -10537,9 +10537,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                 icon: Icon(
                                   Icons.qr_code_scanner,
                                   color: Colors.white,
-                                  size: 24.0,
+                                  size: 12.0,
                                 ),
-                                label: Text("Scan Code"),
+                                label: Text("Scan Code",style: TextStyle(color:Colors.white)),
                                 onPressed: () async {
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
@@ -10896,7 +10896,14 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                             context: globalScaffoldKey.currentContext!,
                             builder: (context) => new AlertDialog(
                               title: new Text('Information'),
-                              content: new Text("Create new detail opname?\nJika Qty = 0 maka sekaligus Create Purchase Request."),
+                              content: () {
+                                final double qtyVal =
+                                    double.tryParse(txtOpnameQty.text) ?? 0;
+                                final String msg = qtyVal == 0
+                                    ? "Create new detail opname?\ndan Create Purchase Request?"
+                                    : "Create new detail opname?";
+                                return new Text(msg);
+                              }(),
                               actions: <Widget>[
                                 new ElevatedButton.icon(
                                   icon: Icon(
