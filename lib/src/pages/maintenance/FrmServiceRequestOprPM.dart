@@ -1243,10 +1243,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       SharedPreferences prefs = await SharedPreferences.getInstance();
       var userid = prefs.getString("username") ?? "";
       var locid = prefs.getString("locid") ?? "";
-      var notes = txtSRNumber.text;
-
+      var notes = "";//txtSRNumber.text;
+      var nomor_sr = txtOpnameWONUMBER.text;
       Uri myUri = Uri.parse(
-          "${GlobalData.baseUrl}api/inventory/permintaan_opr.jsp?method=create-pr-v1&userid=${userid}&locid=${locid}&notes=${notes}");
+          "${GlobalData.baseUrl}api/inventory/permintaan_opr.jsp?method=create-pr-v1&userid=${userid}&locid=${locid}&notes=${notes}&nomor_sr=${nomor_sr}");
+      print("permintaan_opr");//
       print(myUri.toString());
       var response =
           await http.get(myUri, headers: {"Accept": "application/json"});
@@ -2641,8 +2642,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeksFinishOpnameDetail();
-                        if (isQtyZero) {
+                        if (isQtyZero && selectedItemQuantity==0.0) {
+                          print('Create PR');
                           CreatePurchaseRequest();
+                        }else{
+                          print('NOT Create PR');
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -7750,9 +7754,12 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                             service_typeid == "PM2" ||
                             service_typeid == "PM3") {
                           txtOpnameQty.text = item['quantity'];
-                          selectedItemQuantity =
-                              double.tryParse(item['quantity'].toString()) ?? 0;
+
                         }
+                        selectedItemQuantity =
+                            double.tryParse(item['quantity'].toString()) ?? 0;
+                        print("selectedItemQuantity");
+                        print(selectedItemQuantity);//
                         txtItemID.text = item['item_id'];
                         txtPartName.text = item['part_name'];
                         txtItemSize.text = item['item_size'];
@@ -10409,7 +10416,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     fillColor: HexColor("FFF6F1BF"),
                     filled: true,
                     isDense: true,
-                    labelText: "SR Number",
+                    labelText: "SR Number Item",
                     contentPadding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -10447,13 +10454,40 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     if (dataListItemSearch.length > 0) {
                       Timer(Duration(seconds: 1), () {
                         showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text('List Detail Mechanic'),
-                                content: listDataSearchItem(context),
-                              );
-                            });
+                          context: globalScaffoldKey.currentContext!,
+                          barrierDismissible: true,
+                          builder: (BuildContext context) {
+                            final size = MediaQuery.of(context).size;
+                            return Dialog(
+                              insetPadding: EdgeInsets.zero,
+                              backgroundColor: Colors.white,
+                              child: SafeArea(
+                                child: SizedBox(
+                                  height: size.height,
+                                  width: size.width,
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        decoration: BoxDecoration(color: Colors.orange.shade100),
+                                        child: Row(
+                                          children: [
+                                            Expanded(child: Text('List Detail Item', style: TextStyle(fontWeight: FontWeight.bold))),
+                                            IconButton(
+                                              icon: Icon(Icons.close),
+                                              onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                      Expanded(child: listDataSearchItem(context)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
                       });
                     }
                   }
@@ -10846,26 +10880,6 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   ),
                 ),
               ),
-              // SmartSelect<String>.single(
-              //   title: 'Estimasi',
-              //   value: selEstimasi,
-              //   onChange: (selected) {
-              //     setState(() => selEstimasi = selected.value);
-              //   },
-              //   choiceType: S2ChoiceType.radios,
-              //   choiceItems: choices.collEstimasi,
-              //   modalType: S2ModalType.popupDialog,
-              //   modalHeader: false,
-              //   modalConfig: const S2ModalConfig(
-              //     style: S2ModalStyle(
-              //       elevation: 3,
-              //       shape: RoundedRectangleBorder(
-              //         borderRadius:
-              //         BorderRadius.all(Radius.circular(20.0)),
-              //       ),
-              //     ),
-              //   ),
-              // ),
               Container(
                 margin:
                     EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
