@@ -1034,6 +1034,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   String selEstimasi = "";
   List<Map<String, dynamic>> lstVKatalog = [];
   List<Map<String, dynamic>> lstVKatalogTemp = [];
+  double selectedItemQuantity = 0;
 
   void _showModalListVehicleCHK(BuildContext context) {
     showModalBottomSheet<void>(
@@ -1969,7 +1970,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         urlBase =
         "${BASE_URL}api/inventory/list_item_sr_katalog_new.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=$itemID&is_barcode=1&katalog=${selKatalog}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
       }
+
       var url = urlBase;
+      print(url);
       getItemBarcode(url, itemID);
     }
   }
@@ -2570,7 +2573,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         EasyLoading.show();
         print('Create New OPNAME');
         final bool isQtyZero =
-            (double.tryParse(txtOpnameQty.text) ?? 0) == 0;
+            (selectedItemQuantity == 0) ||
+            ((double.tryParse(txtOpnameQty.text) ?? 0) == 0);
         var encoded = Uri.encodeFull(
             "${BASE_URL}api/maintenance/sr/create_opname_sr_detail.jsp");
         print(encoded);
@@ -3691,15 +3695,16 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       var urlBase = "";
       if (METHOD_DETAIL == "PURCHASE-ORDER") {
         urlBase =
-            "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-purchase-order-v1&warehouseid=${globals.from_ware_house}&search=${search}&katalog=${selKatalog}&is_barcode=${is_barcode}&status_apr=${status_apr}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
+            "${BASE_URL}api/inventory/list_item_sr_katalog_new.jsp?method=list-purchase-order-v1&warehouseid=${globals.from_ware_house}&search=${search}&katalog=${selKatalog}&is_barcode=${is_barcode}&status_apr=${status_apr}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
       } else {
         urlBase =
-            "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=${search}&katalog=${selKatalog}&is_barcode=${is_barcode}&status_apr=${status_apr}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
+            "${BASE_URL}api/inventory/list_item_sr_katalog_new.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=${search}&katalog=${selKatalog}&is_barcode=${is_barcode}&status_apr=${status_apr}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
       }
       var url = urlBase;
 
       var urlData = Uri.parse(url);
       //var encoded = Uri.encodeFull(urlData);
+      print("list_item_sr_katalog_new");
       print(urlData);
       Uri myUri = urlData;
       var response =
@@ -5813,7 +5818,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         color: Colors.white,
         size: 15.0,
       ),
-      label: Text("Pilih"),
+      label: Text("Pilih",style: TextStyle(color:Colors.white)),
       onPressed: () async {
         Navigator.of(globalScaffoldKey.currentContext!).pop(false);
         fnFITTYREID = item['iditemid'];
@@ -5899,7 +5904,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   color: Colors.white,
                   size: 20.0,
                 ),
-                label: Text("Close"),
+                label: Text("Close",style: TextStyle(color:Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop(false);
                 },
@@ -5916,7 +5921,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   color: Colors.white,
                   size: 20.0,
                 ),
-                label: Text("Save"),
+                label: Text("Save",style: TextStyle(color:Colors.white)),
                 onPressed: () async {
                   Navigator.of(context).pop(false);
                   var isOK = globals.akses_pages == null
@@ -7744,6 +7749,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                             service_typeid == "PM2" ||
                             service_typeid == "PM3") {
                           txtOpnameQty.text = item['quantity'];
+                          selectedItemQuantity =
+                              double.tryParse(item['quantity'].toString()) ?? 0;
                         }
                         txtItemID.text = item['item_id'];
                         txtPartName.text = item['part_name'];
@@ -8531,10 +8538,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   }
 
   Widget listDataSrOpname(BuildContext context) {
-    return SingleChildScrollView(
-      //shrinkWrap: true,
+    return Padding(
       padding: EdgeInsets.all(2.0),
-      clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           Container(
@@ -8569,33 +8574,26 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       borderRadius: BorderRadius.all(Radius.circular(25.0)))),
             ),
           ),
-          Container(
-              height: MediaQuery.of(context)
-                  .size
-                  .height, // Change as per your requirement
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  padding: const EdgeInsets.all(2.0),
-                  itemCount:
-                      dataListSrOpname == null ? 0 : dataListSrOpname.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return _buildDListDetailOpnameSr(
-                        dataListSrOpname[index], index);
-                  }))
+          Expanded(
+            child: ListView.builder(
+                scrollDirection: Axis.vertical,
+                padding: const EdgeInsets.all(2.0),
+                itemCount:
+                    dataListSrOpname == null ? 0 : dataListSrOpname.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return _buildDListDetailOpnameSr(
+                      dataListSrOpname[index], index);
+                }),
+          ),
         ],
       ),
     );
   }
 
   Widget listDataSearchItem(BuildContext context) {
-    return SingleChildScrollView(
+    return Padding(
       padding: EdgeInsets.only(bottom: 2, top: 2, left: 2, right: 2),
-      clipBehavior: Clip.antiAlias,
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             margin: EdgeInsets.all(10.0),
@@ -8628,25 +8626,18 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       borderRadius: BorderRadius.all(Radius.circular(25.0)))),
             ),
           ),
-          Container(
-              height: MediaQuery.of(context)
-                  .size
-                  .height, // Change as per your requirement
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  padding: const EdgeInsets.only(
-                      left: 2, right: 2, top: 2, bottom: 2),
-                  itemCount: dataListItemSearch == null
-                      ? 0
-                      : dataListItemSearch.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return _buildDListDetailItem(
-                        dataListItemSearch[index], index);
-                  })),
-          SizedBox(height: 100)
+          Expanded(
+            child: ListView.builder(
+                scrollDirection: Axis.vertical,
+                padding: const EdgeInsets.only(left: 2, right: 2, top: 2, bottom: 2),
+                itemCount: dataListItemSearch == null
+                    ? 0
+                    : dataListItemSearch.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return _buildDListDetailItem(
+                      dataListItemSearch[index], index);
+                }),
+          ),
         ],
       ),
     );
@@ -10358,13 +10349,40 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           //await Future.delayed(Duration(milliseconds: 2));
                           Timer(Duration(seconds: 1), () {
                             showDialog(
-                                context: globalScaffoldKey.currentContext!,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('List Detail SR'),
-                                    content: listDataSrOpname(context),
-                                  );
-                                });
+                              context: globalScaffoldKey.currentContext!,
+                              barrierDismissible: true,
+                              builder: (BuildContext context) {
+                                final size = MediaQuery.of(context).size;
+                                return Dialog(
+                                  insetPadding: EdgeInsets.zero,
+                                  backgroundColor: Colors.white,
+                                  child: SafeArea(
+                                    child: SizedBox(
+                                      height: size.height,
+                                      width: size.width,
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                            decoration: BoxDecoration(color: Colors.orange.shade100),
+                                            child: Row(
+                                              children: [
+                                                Expanded(child: Text('List Detail SR', style: TextStyle(fontWeight: FontWeight.bold))),
+                                                IconButton(
+                                                  icon: Icon(Icons.close),
+                                                  onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          Expanded(child: listDataSrOpname(context)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
                           });
                         }
                       },
@@ -10511,15 +10529,40 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                     Timer(Duration(seconds: 1), () {
                                       print('Show dialog');
                                       showDialog(
-                                          context: globalScaffoldKey
-                                              .currentContext!,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title: Text('List Detail Item'),
-                                              content:
-                                                  listDataSearchItem(context),
-                                            );
-                                          });
+                                        context: globalScaffoldKey.currentContext!,
+                                        barrierDismissible: true,
+                                        builder: (BuildContext context) {
+                                          final size = MediaQuery.of(context).size;
+                                          return Dialog(
+                                            insetPadding: EdgeInsets.zero,
+                                            backgroundColor: Colors.white,
+                                            child: SafeArea(
+                                              child: SizedBox(
+                                                height: size.height,
+                                                width: size.width,
+                                                child: Column(//
+                                                  children: [
+                                                    Container(
+                                                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                                      decoration: BoxDecoration(color: Colors.orange.shade100),
+                                                      child: Row(
+                                                        children: [
+                                                          Expanded(child: Text('List Detail Item', style: TextStyle(fontWeight: FontWeight.bold))),
+                                                          IconButton(
+                                                            icon: Icon(Icons.close),
+                                                            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+                                                          )
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    Expanded(child: listDataSearchItem(context)),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      );
                                     });
                                   }
                                 },

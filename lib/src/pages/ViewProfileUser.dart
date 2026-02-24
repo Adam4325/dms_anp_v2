@@ -87,6 +87,7 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
       name = prefs.getString("name") ?? "";
       locid = prefs.getString("locid") ?? "";
       cpyname = prefs.getString("cpyname") ?? "";
+      status_karyawan = prefs.getString("status_karyawan") ?? "";
     });
 
     if (loginname == "DRIVER") {
