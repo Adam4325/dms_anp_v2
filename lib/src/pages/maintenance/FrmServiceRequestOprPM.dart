@@ -100,17 +100,6 @@ TextEditingController txtWorkedByStop = new TextEditingController();
 TextEditingController txtOpnameVHCID = new TextEditingController();
 TextEditingController txtOpnameWONUMBER = new TextEditingController();
 
-// class Debouncer {
-//   final Duration delay;
-//    Timer? _timer;
-//
-//   Debouncer({required this.delay});
-//
-//   run(Function action) {
-//     _timer?.cancel();
-//     _timer = Timer(delay, action);
-//   }
-// }
 
 class Debouncer {
   final Duration delay;
@@ -2577,13 +2566,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       else if (txtOpnameQty.text == null || txtOpnameQty.text == "") {
         alert(globalScaffoldKey.currentContext!, 0, "QTY tidak boleh kosong",
             "error");
-      } else if (double.parse(txtOpnameQty.text) <= 0 &&
-          selStatusItem != 'Perbaikan') {
-        alert(globalScaffoldKey.currentContext!, 0, "QTY tidak boleh 0",
-            "error");
       } else {
         EasyLoading.show();
         print('Create New OPNAME');
+        final bool isQtyZero =
+            (double.tryParse(txtOpnameQty.text) ?? 0) == 0;
         var encoded = Uri.encodeFull(
             "${BASE_URL}api/maintenance/sr/create_opname_sr_detail.jsp");
         print(encoded);
@@ -2650,6 +2637,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeksFinishOpnameDetail();
+                        if (isQtyZero) {
+                          CreatePurchaseRequest();
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                           elevation: 0.0,
@@ -10513,37 +10503,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                 onPressed: () async {
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
-                                  //getItemByPartname();
-                                  // if (selKatalog == null ||
-                                  //     selKatalog == '') {
-                                  //   alert(globalScaffoldKey.currentContext!, 0,
-                                  //       "Katalog tidak boleh kosong", "error");
-                                  // }else{
-                                  //
-                                  // }
                                   txtPartName.text = "";
-                                  // if(status_apr=="APR"){
-                                  //   getListDataItem(true, item_id_apr, 0);
-                                  //   await Future.delayed(
-                                  //       Duration(milliseconds: 1));
-                                  //   if (dataListItemSearch.length > 0) {
-                                  //     print(dataListItemSearch[0]);
-                                  //     setState(() {
-                                  //       txtItemID.text = dataListItemSearch[0]['item_id'];
-                                  //       txtPartName.text = dataListItemSearch[0]['part_name'];
-                                  //       txtItemSize.text = dataListItemSearch[0]['item_size'];
-                                  //       txtTypeID.text = dataListItemSearch[0]['type'];
-                                  //       txtTypeAccess.text = dataListItemSearch[0]['accessories'];
-                                  //       txtGenuineNoOpname.text = dataListItemSearch[0]['genuine_no'];
-                                  //       txtOpnameMerk.text = dataListItemSearch[0]['merk'];
-                                  //     });
-                                  //   }else{
-                                  //     alert(globalScaffoldKey.currentContext!, 2,
-                                  //         "Data part tidak di temukan", "warning");
-                                  //   }
-                                  // }else{
-                                  //
-                                  // }
                                   getListDataItem(true, txtPartName.text, 0);
                                   await Future.delayed(
                                       Duration(milliseconds: 1));
@@ -10936,7 +10896,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                             context: globalScaffoldKey.currentContext!,
                             builder: (context) => new AlertDialog(
                               title: new Text('Information'),
-                              content: new Text("Create new detail opname?"),
+                              content: new Text("Create new detail opname?\nJika Qty = 0 maka sekaligus Create Purchase Request."),
                               actions: <Widget>[
                                 new ElevatedButton.icon(
                                   icon: Icon(
@@ -10969,7 +10929,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                   onPressed: () async {
                                     Navigator.of(context, rootNavigator: true)
                                         .pop();
-                                    createOpnameDetail(); //TEST
+                                    createOpnameDetail();
                                   },
                                   style: ElevatedButton.styleFrom(
                                       elevation: 0.0,
@@ -11104,93 +11064,6 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                             fontSize: 14, fontWeight: FontWeight.bold)),
                   )),
                   SizedBox(width: 5),
-                  Expanded(
-                      child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.save,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: Text(btnNameCreatePR,style: TextStyle(color:Colors.white)),
-                    onPressed: () async {
-                      //Navigator.of(context, rootNavigator: false).pop();
-                      print('Create PR Number');
-                      //id_header  =20;//for dev
-                      if (id_header <= 0) return;
-                      if (METHOD_DETAIL == "OPNAME") {
-                        setState(() {
-                          METHOD_DETAIL = 'PURCHASE-ORDER';
-                        });
-                      }
-                      if (btnNameCreatePR.toUpperCase() == "CREATE PR") {
-                        showDialog(
-                          context: globalScaffoldKey.currentContext!,
-                          builder: (context) => new AlertDialog(
-                            title: new Text('Information'),
-                            content: new Text("Create purchase order"),
-                            actions: <Widget>[
-                              new ElevatedButton.icon(
-                                icon: Icon(
-                                  Icons.info,
-                                  color: Colors.white,
-                                  size: 24.0,
-                                ),
-                                label: Text("Close"),
-                                onPressed: () async {
-                                  Navigator.of(context, rootNavigator: true)
-                                      .pop();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 0.0,
-                                    backgroundColor: Colors.orange,
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 0),
-                                    textStyle: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold)),
-                              ),
-                              SizedBox(width: 10),
-                              new ElevatedButton.icon(
-                                icon: Icon(
-                                  Icons.info,
-                                  color: Colors.white,
-                                  size: 24.0,
-                                ),
-                                label: Text("Submit"),
-                                onPressed: () async {
-                                  Navigator.of(context, rootNavigator: true)
-                                      .pop();
-                                  setState(() {
-                                    isCreatePrNumber = true;
-                                  });
-                                  await CreatePurchaseRequest();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 0.0,
-                                    backgroundColor: Colors.blue,
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 0),
-                                    textStyle: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold)),
-                              )
-                            ],
-                          ),
-                        );
-                      }
-                      if (btnNameCreatePR.toUpperCase() == "SAVE PR") {
-                        print("SAVE PR");
-                        SavePurchaseOrder();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.blue,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold)),
-                  )),
                   SizedBox(width: 5),
                   Expanded(
                       child: ElevatedButton.icon(

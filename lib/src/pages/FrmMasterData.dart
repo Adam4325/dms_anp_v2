@@ -5,6 +5,7 @@ import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:dms_anp/src/flusbar.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
+import 'package:dms_anp/src/pages/FrmKoordinat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
@@ -132,6 +133,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   String _clientStatus = 'Active';
   List<Map<String, dynamic>> _listClient = [];
   int? _selectedClientIndex;
+  List<Map<String, dynamic>> _clientCompanyOptions = [];
 
   // Zone tab
   final TextEditingController txtZoneid = TextEditingController();
@@ -144,6 +146,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   String _zoneStatus = 'Active';
   List<Map<String, dynamic>> _listZone = [];
   List<Map<String, dynamic>> _listVhtypeOptions = [];
+  List<Map<String, dynamic>> _listDefaultZoneOptions = [];
   int? _selectedZoneIndex;
 
   int? _selectedCustomerIndex;
@@ -159,8 +162,12 @@ class _FrmMasterDataState extends State<FrmMasterData>
   }
 
   bool _hasAccess() {
-    return true;//username == "ADMIN" ||  getAkses("MK");
+    return true;//username == "ADMIN" ||  getAkses("MK")
   }
+
+  final Color primaryOrange = Colors.orange.shade700;
+  final Color backgroundCream = Color(0xFFFFFAF5);
+  final Color cardCream = Color(0xFFFFF8F0);
 
   _goBack(BuildContext context) {
     Navigator.pushReplacement(
@@ -192,7 +199,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   }
 
   // --- Customer Tab ---
-  static const String _customerListApi = 'api/master/refference_api.jsp';
+  static const String _customerListApi = 'api/master/refference_api.jsp';//
   static const String _customerSaveApi =
       'api/master/save_new_customer_api2.jsp';
 
@@ -260,7 +267,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
           'cpyaddress': txtCpyaddress.text,
           'cpynpwp': txtCpynpwp.text,
           'cpycontcatperson': cpycontactperson,
-          'status': _customerStatus,
+          'status': 'Active',
           'userid': userid,
         },
       );
@@ -752,6 +759,28 @@ class _FrmMasterDataState extends State<FrmMasterData>
     }
   }
 
+  Future<void> getListCompanyClient() async {
+    try {
+      final url = Uri.parse('${GlobalData.baseUrlOri}$_refApi?method=company-client');
+      final response = await http.get(url, headers: {"Accept": "application/json"});
+      if (!mounted) return;
+      if (response.statusCode == 200 && response.body.trim() != 'Data not found') {
+        try {
+          final decoded = jsonDecode(response.body) as List;
+          setState(() {
+            _clientCompanyOptions = decoded.map((e) => (e is Map ? e : {}) as Map<String, dynamic>).toList();
+          });
+        } catch (_) {
+          setState(() => _clientCompanyOptions = []);
+        }
+      } else {
+        setState(() => _clientCompanyOptions = []);
+      }
+    } catch (_) {
+      setState(() => _clientCompanyOptions = []);
+    }
+  }
+
   Future<void> getListVhtypeOptions() async {
     try {
       final url = Uri.parse('${GlobalData.baseUrlOri}$_refApi?method=vhtalias-zone');
@@ -771,6 +800,28 @@ class _FrmMasterDataState extends State<FrmMasterData>
       }
     } catch (_) {
       setState(() => _listVhtypeOptions = []);
+    }
+  }
+
+  Future<void> getListDefaultZoneOptions() async {
+    try {
+      final url = Uri.parse('${GlobalData.baseUrlOri}$_refApi?method=default-zone');
+      final response = await http.get(url, headers: {"Accept": "application/json"});
+      if (!mounted) return;
+      if (response.statusCode == 200 && response.body.trim() != 'Data not found') {
+        try {
+          final decoded = jsonDecode(response.body) as List;
+          setState(() {
+            _listDefaultZoneOptions = decoded.map((e) => (e is Map ? e : {}) as Map<String, dynamic>).toList();
+          });
+        } catch (_) {
+          setState(() => _listDefaultZoneOptions = []);
+        }
+      } else {
+        setState(() => _listDefaultZoneOptions = []);
+      }
+    } catch (_) {
+      setState(() => _listDefaultZoneOptions = []);
     }
   }
 
@@ -837,11 +888,9 @@ class _FrmMasterDataState extends State<FrmMasterData>
           'zoneid': zoneid,
           'zonename': zonename,
           'default_zone': _zoneDefaultZone ?? '',
-          'zonetype': txtZonetype.text,
           'vhtype': _zoneVhtype ?? '',
           'origin': _zoneOrigin ?? '',
-          'zonetarif': txtZonetarif.text,
-          'status': _zoneStatus,
+          'status': 'Active',
           'userid': userid,
         },
       );
@@ -880,14 +929,12 @@ class _FrmMasterDataState extends State<FrmMasterData>
   void _onZoneRowTap(Map<String, dynamic> item, int index) {
     txtZoneid.text = item['zoneid'] ?? item['ZONEID'] ?? '';
     txtZonename.text = item['zonename'] ?? item['ZONENAME'] ?? '';
-    txtZonetype.text = item['zonetype'] ?? item['ZONETYPE'] ?? '';
-    txtZonetarif.text = item['zonetarif']?.toString() ?? item['ZONETARIF']?.toString() ?? '';
     final defaultZone = item['default_zone'] ?? item['DEFAULT_ZONE'] ?? '';
     setState(() {
-      _zoneDefaultZone = defaultZone == '1171' ? 'CEMINDO' : (defaultZone == '1240' ? 'HOLCIM' : defaultZone);
+      _zoneDefaultZone = defaultZone;
       _zoneVhtype = item['vhctype']?.toString() ?? item['VHCTYPE']?.toString();
       _zoneOrigin = item['origin']?.toString() ?? item['ORIGIN']?.toString();
-      _zoneStatus = item['status'] ?? item['STATUS'] ?? 'Active';
+      _zoneStatus = 'Active';
       _selectedZoneIndex = index;
     });
   }
@@ -1002,97 +1049,95 @@ class _FrmMasterDataState extends State<FrmMasterData>
     txtLocfax2.text = item['locfax2'] ?? item['LOCFAX2'] ?? '';
     setState(() {
       _clientZone = item['loczone']?.toString() ?? item['LOCZONE']?.toString();
-      _clientStatus = item['status'] ?? item['STATUS'] ?? 'Active';
+      _clientStatus = 'Active';
       _selectedClientIndex = index;
     });
   }
 
+  Widget buildTextField({
+    String? labelText,
+    required TextEditingController controller,
+    TextInputType keyboardType = TextInputType.text,
+    bool readOnly = false,
+    Widget? suffixIcon,
+    int maxLines = 1,
+    String? helperText,
+  }) {
+    return Container(
+      margin: EdgeInsets.all(12.0),
+      child: TextField(
+        readOnly: readOnly,
+        cursorColor: Colors.orange,
+        style: TextStyle(color: Colors.black87, fontSize: 14),
+        controller: controller,
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          fillColor: readOnly ? Colors.grey.shade100 : Colors.white,
+          filled: true,
+          isDense: true,
+          labelText: labelText,
+          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+          helperText: helperText,
+          helperStyle: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+          suffixIcon: suffixIcon,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.orange, width: 1.5),
+          ),
+        ),
+      ),
+    );
+  }
   Widget _buildCustomerTab() {
     return RefreshIndicator(
       onRefresh: getListCustomer,
       child: SingleChildScrollView(
         physics: AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Card(
+              color: cardCream,//
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text('Form Customer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     SizedBox(height: 12),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: txtCpyId,
-                            readOnly: true,
-                            decoration: InputDecoration(
-                              labelText: 'Cust ID',
-                              border: OutlineInputBorder(),
-                              filled: true,
-                              fillColor: Colors.grey.shade100,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Text('* generate', style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic)),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtCpyname,
-                      decoration: InputDecoration(
-                        labelText: 'Cust Name',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtCpyaddress,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        labelText: 'Cust Address',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtCpynpwp,
-                      decoration: InputDecoration(
-                        labelText: 'Cust. NPWP',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtCpycontactperson,
-                      decoration: InputDecoration(
-                        labelText: 'Singkatan Customer',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: _customerStatus,
-                      decoration: InputDecoration(
-                        labelText: 'Status',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: ['Active'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
-                      onChanged: (v) => setState(() => _customerStatus = v ?? 'Active'),
-                    ),
+                    buildTextField(labelText: 'Cust ID', controller: txtCpyId, readOnly: true, helperText: '* generate auto'),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Cust Name', controller: txtCpyname),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Cust Address', controller: txtCpyaddress, maxLines: 2),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Cust. NPWP', controller: txtCpynpwp),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Singkatan Customer', controller: txtCpycontactperson),
+                    SizedBox(height: 5),
+                    // Status dibuang, status dikirim hardcode Active di API
                     SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         OutlinedButton(
                           onPressed: resetCustomerForm,
-                          child: Text('Reset'),
+                          child: Text('Reset'),//
                         ),
                         SizedBox(width: 8),
                         ElevatedButton(
@@ -1102,7 +1147,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                               _saveOrUpdateCustomer();
                             }
                           },
-                          child: Text('Save'),
+                          child: Text('Save',style:TextStyle(color:Colors.white)),
                         ),
                         SizedBox(width: 8),
                         ElevatedButton(
@@ -1112,7 +1157,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                               _saveOrUpdateCustomer();
                             }
                           },
-                          child: Text('Update'),
+                          child: Text('Update',style:TextStyle(color:Colors.white)),
                         ),
                       ],
                     ),
@@ -1121,69 +1166,61 @@ class _FrmMasterDataState extends State<FrmMasterData>
               ),
             ),
             SizedBox(height: 16),
-            Text('Daftar Customer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            SizedBox(height: 8),
-            _listCustomer.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text('Data kosong. Tarik untuk refresh.'),
-                    ),
-                  )
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: DataTable(
-                        columnSpacing: 16,
-                        horizontalMargin: 12,
-                        columns: [
-                          DataColumn(label: Text('CustID', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Cust Name', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Address', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Contact Person', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.w600))),
-                        ],
-                        rows: _listCustomer.asMap().entries.map((e) {
-                          final index = e.key;
-                          final item = e.value;
-                          final cpyid = item['cpyid'] ?? item['CPYID'] ?? '';
-                          final cpyname = item['cpyname'] ?? item['CPYNAME'] ?? '';
-                          final addr = item['cpyaddress'] ?? item['cpyaddress1'] ?? item['CPYADDRESS1'] ?? '';
-                          final contact = item['cpycontactperson'] ?? item['cpyaccountnbr'] ?? item['cpycontcatperson'] ?? item['CPYACCOUNTNBR'] ?? '';
-                          final st = item['status'] ?? item['cpystatus'] ?? item['CPYSTATUS'] ?? '';
-                          return DataRow(
-                            color: MaterialStateProperty.resolveWith((_) => _selectedCustomerIndex == index ? Colors.orange.withOpacity(0.25) : null),
-                            cells: [
-                              DataCell(GestureDetector(
-                                onTap: () => _onCustomerRowTap(item, index),
-                                child: Text(cpyid),
-                              )),
-                              DataCell(GestureDetector(
-                                onTap: () => _onCustomerRowTap(item, index),
-                                child: Text(cpyname),
-                              )),
-                              DataCell(GestureDetector(
-                                onTap: () => _onCustomerRowTap(item, index),
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(maxWidth: 180),
-                                  child: Text(addr, overflow: TextOverflow.ellipsis),
-                                ),
-                              )),
-                              DataCell(GestureDetector(
-                                onTap: () => _onCustomerRowTap(item, index),
-                                child: Text(contact),
-                              )),
-                              DataCell(GestureDetector(
-                                onTap: () => _onCustomerRowTap(item, index),
-                                child: Text(st),
-                              )),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
+            Card(
+              color: cardCream,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Daftar Customer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    SizedBox(height: 5),
+                    _listCustomer.isEmpty
+                        ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Text('Data kosong. Tarik untuk refresh.')))
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: DataTable(
+                                showCheckboxColumn: false,
+                                columnSpacing: 10,
+                                horizontalMargin: 8,
+                                columns: [
+                                  DataColumn(label: Text('CustID', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Cust Name', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Address', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Contact Person', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.w600))),
+                                ],
+                                rows: _listCustomer.asMap().entries.map((e) {
+                                  final index = e.key;
+                                  final item = e.value;
+                                  final cpyid = item['cpyid'] ?? item['CPYID'] ?? '';
+                                  final cpyname = item['cpyname'] ?? item['CPYNAME'] ?? '';
+                                  final addr = item['cpyaddress'] ?? item['cpyaddress1'] ?? item['CPYADDRESS1'] ?? '';
+                                  final contact = item['cpycontactperson'] ?? item['cpyaccountnbr'] ?? item['cpycontcatperson'] ?? item['CPYACCOUNTNBR'] ?? '';
+                                  final st = item['status'] ?? item['cpystatus'] ?? item['CPYSTATUS'] ?? '';
+                                  return DataRow(
+                                    onSelectChanged: (_){ _onCustomerRowTap(item, index); },
+                                    color: MaterialStateProperty.resolveWith((_) => _selectedCustomerIndex == index ? Colors.orange.withOpacity(0.25) : null),
+                                    cells: [
+                                      DataCell(Text(cpyid)),
+                                      DataCell(Text(cpyname)),
+                                      DataCell(ConstrainedBox(constraints: BoxConstraints(maxWidth: 180), child: Text(addr, overflow: TextOverflow.ellipsis))),
+                                      DataCell(Text(contact)),
+                                      DataCell(Text(st)),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -1204,13 +1241,18 @@ class _FrmMasterDataState extends State<FrmMasterData>
       },
       child: SingleChildScrollView(
         physics: AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Card(
+              color: cardCream,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -1224,34 +1266,10 @@ class _FrmMasterDataState extends State<FrmMasterData>
                     //     border: OutlineInputBorder(),
                     //   ),
                     // ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: txtCtyId,
-                            readOnly: true,
-                            decoration: InputDecoration(
-                              labelText: 'ID Origin',
-                              border: OutlineInputBorder(),
-                              filled: true,
-                              fillColor: Colors.grey.shade100,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Text('* generate', style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic)),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtCtyname,
-                      decoration: InputDecoration(
-                        labelText: 'Nama Origin',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    SizedBox(height: 8),
+                    buildTextField(labelText: 'ID Origin', controller: txtCtyId, readOnly: true, helperText: '* generate auto'),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Nama Origin', controller: txtCtyname),
+                    SizedBox(height: 5),
                     SmartSelect<String?>.single(
                       title: 'Cty Alias',
                       selectedValue: _originCtyalias,
@@ -1264,8 +1282,13 @@ class _FrmMasterDataState extends State<FrmMasterData>
                         filterAuto: true,
                         filterHint: 'Cari Cty Alias...',
                       ),
+                      tileBuilder: (context, state) => S2Tile.fromState(
+                        state,
+                        dense: true,
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      ),
                     ),
-                    SizedBox(height: 8),
+                    SizedBox(height: 5),
                     SmartSelect<String?>.single(
                       title: 'Origin Type',
                       selectedValue: _originType,
@@ -1278,52 +1301,33 @@ class _FrmMasterDataState extends State<FrmMasterData>
                         filterAuto: true,
                         filterHint: 'Cari Origin Type...',
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtOsmAddress,
-                      decoration: InputDecoration(
-                        labelText: 'OSM Address',
-                        hintText: 'Ketik address, pilih untuk isi Lat/Lon',
-                        border: OutlineInputBorder(),
-                        suffixIcon: _osmSearching ? Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))) : null,
+                      tileBuilder: (context, state) => S2Tile.fromState(
+                        state,
+                        dense: true,
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),//
                       ),
-                      onChanged: (v) {
-                        if (v.length >= 2) _searchOsmAddress(v);
-                        else setState(() => _osmAddressSuggestions = []);
+                    ),
+                    SizedBox(height: 5),
+                    ListTile(
+                      dense: true,
+                      leading: Icon(Icons.map, color: Colors.orange),
+                      title: Text('Ambil koordinat dari peta', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      onTap: () async {
+                        final initLat = double.tryParse(txtLat.text);
+                        final initLon = double.tryParse(txtLon.text);
+                        final res = await Navigator.push(context, MaterialPageRoute(builder: (_) => FrmKoordinat(initialLat: initLat, initialLon: initLon)));
+                        if (res is Map) {
+                          setState(() {
+                            txtLat.text = (res['lat'] ?? '').toString();
+                            txtLon.text = (res['lon'] ?? '').toString();
+                          });
+                        }
                       },
                     ),
-                    if (_osmAddressSuggestions.isNotEmpty)
-                      Container(
-                        margin: EdgeInsets.only(top: 4),
-                        constraints: BoxConstraints(maxHeight: 180),
-                        decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8)),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: _osmAddressSuggestions.length,
-                          itemBuilder: (context, i) {
-                            final item = _osmAddressSuggestions[i] is Map ? _osmAddressSuggestions[i] as Map<String, dynamic> : <String, dynamic>{};
-                            final name = item['display_name'] ?? item['name'] ?? '';
-                            return ListTile(
-                              dense: true,
-                              title: Text(name is String ? name : '$name', maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13)),
-                              onTap: () => _onOsmAddressSelected(item),
-                            );
-                          },
-                        ),
-                      ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtLat,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(labelText: 'Latitude', border: OutlineInputBorder()),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtLon,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(labelText: 'Longitude', border: OutlineInputBorder()),
-                    ),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Latitude', controller: txtLat, keyboardType: TextInputType.numberWithOptions(decimal: true)),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Longitude', controller: txtLon, keyboardType: TextInputType.numberWithOptions(decimal: true)),
                     SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
@@ -1337,7 +1341,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                               _saveOrUpdateOrigin();
                             }
                           },
-                          child: Text('Save'),
+                          child: Text('Save',style:TextStyle(color:Colors.white)),
                         ),
                         SizedBox(width: 8),
                         ElevatedButton(
@@ -1347,7 +1351,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                               _saveOrUpdateOrigin();
                             }
                           },
-                          child: Text('Update'),
+                          child: Text('Update',style:TextStyle(color:Colors.white)),
                         ),
                       ],
                     ),
@@ -1356,46 +1360,61 @@ class _FrmMasterDataState extends State<FrmMasterData>
               ),
             ),
             SizedBox(height: 16),
-            Text('Daftar Origin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            SizedBox(height: 8),
-            _listOrigin.isEmpty
-                ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: DataTable(
-                        columnSpacing: 16,
-                        horizontalMargin: 12,
-                        columns: [
-                          DataColumn(label: Text('ID Origin', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Nama Origin', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Cty Alias', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Lat', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Lon', style: TextStyle(fontWeight: FontWeight.w600))),
-                        ],
-                        rows: _listOrigin.asMap().entries.map((e) {
-                          final index = e.key;
-                          final item = e.value;
-                          final ctyid = item['ctyid'] ?? item['CTYID'] ?? '';
-                          final ctyname = item['ctyname'] ?? item['CTYNAME'] ?? '';
-                          final ctyalias = item['ctyalias'] ?? item['CTYALIAS'] ?? '';
-                          final lat = item['lat']?.toString() ?? item['LOCID5'] ?? '';
-                          final lon = item['lon']?.toString() ?? item['LOCID6'] ?? '';
-                          return DataRow(
-                            color: MaterialStateProperty.resolveWith((_) => _selectedOriginIndex == index ? Colors.orange.withOpacity(0.25) : null),
-                            cells: [
-                              DataCell(GestureDetector(onTap: () => _onOriginRowTap(item, index), child: Text(ctyid))),
-                              DataCell(GestureDetector(onTap: () => _onOriginRowTap(item, index), child: Text(ctyname))),
-                              DataCell(GestureDetector(onTap: () => _onOriginRowTap(item, index), child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 150), child: Text(ctyalias, overflow: TextOverflow.ellipsis)))),
-                              DataCell(GestureDetector(onTap: () => _onOriginRowTap(item, index), child: Text(lat))),
-                              DataCell(GestureDetector(onTap: () => _onOriginRowTap(item, index), child: Text(lon))),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
+            Card(
+              color: cardCream,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Daftar Origin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    SizedBox(height: 5),
+                    _listOrigin.isEmpty
+                        ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: DataTable(
+                                showCheckboxColumn: false,
+                                columnSpacing: 10,
+                                horizontalMargin: 8,
+                                columns: [
+                                  DataColumn(label: Text('ID Origin', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Nama Origin', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Cty Alias', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Lat', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Lon', style: TextStyle(fontWeight: FontWeight.w600))),
+                                ],
+                                rows: _listOrigin.asMap().entries.map((e) {
+                                  final index = e.key;
+                                  final item = e.value;
+                                  final ctyid = item['ctyid'] ?? item['CTYID'] ?? '';
+                                  final ctyname = item['ctyname'] ?? item['CTYNAME'] ?? '';
+                                  final ctyalias = item['ctyalias'] ?? item['CTYALIAS'] ?? '';
+                                  final lat = item['lat']?.toString() ?? item['LOCID5'] ?? '';
+                                  final lon = item['lon']?.toString() ?? item['LOCID6'] ?? '';
+                                  return DataRow(
+                                    onSelectChanged: (_){ _onOriginRowTap(item, index); },
+                                    color: MaterialStateProperty.resolveWith((_) => _selectedOriginIndex == index ? Colors.orange.withOpacity(0.25) : null),
+                                    cells: [
+                                      DataCell(Text(ctyid)),
+                                      DataCell(Text(ctyname)),
+                                      DataCell(ConstrainedBox(constraints: BoxConstraints(maxWidth: 150), child: Text(ctyalias, overflow: TextOverflow.ellipsis))),
+                                      DataCell(Text(lat)),
+                                      DataCell(Text(lon)),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -1407,89 +1426,53 @@ class _FrmMasterDataState extends State<FrmMasterData>
       onRefresh: getListDestination,
       child: SingleChildScrollView(
         physics: AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Card(
+              color: cardCream,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text('Form Destination', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     SizedBox(height: 12),
-                    TextField(
+                    buildTextField(
+                      labelText: 'ID Destination',
                       controller: txtDestCtyId,
-                      decoration: InputDecoration(
-                        labelText: 'ID Destination',
-                        border: OutlineInputBorder(),
-                      ),
+                      helperText: 'generate auto, diisi manual atau generate auto',
                     ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtDestCtyname,
-                      decoration: InputDecoration(
-                        labelText: 'Nama Proyek/Tujuan',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      readOnly: true,
-                      controller: txtDestType,
-                      decoration: InputDecoration(
-                        labelText: 'Destination Type',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.grey.shade100,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtDestOsmAddress,
-                      decoration: InputDecoration(
-                        labelText: 'OSM Address',
-                        hintText: 'Ketik address, pilih untuk isi Lat/Lon',
-                        border: OutlineInputBorder(),
-                        suffixIcon: _osmDestSearching ? Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))) : null,
-                      ),
-                      onChanged: (v) {
-                        if (v.length >= 2) _searchOsmAddressDest(v);
-                        else setState(() => _osmDestSuggestions = []);
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Nama Proyek/Tujuan', controller: txtDestCtyname),
+                    SizedBox(height: 5),
+                    // Destination Type dihapus sesuai permintaan
+                    SizedBox(height: 5),
+                    ListTile(
+                      dense: true,
+                      leading: Icon(Icons.map, color: Colors.orange),
+                      title: Text('Ambil koordinat dari peta', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      onTap: () async {
+                        final initLat = double.tryParse(txtDestLat.text);
+                        final initLon = double.tryParse(txtDestLon.text);
+                        final res = await Navigator.push(context, MaterialPageRoute(builder: (_) => FrmKoordinat(initialLat: initLat, initialLon: initLon)));
+                        if (res is Map) {
+                          setState(() {
+                            txtDestLat.text = (res['lat'] ?? '').toString();
+                            txtDestLon.text = (res['lon'] ?? '').toString();
+                          });
+                        }
                       },
                     ),
-                    if (_osmDestSuggestions.isNotEmpty)
-                      Container(
-                        margin: EdgeInsets.only(top: 4),
-                        constraints: BoxConstraints(maxHeight: 180),
-                        decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8)),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: _osmDestSuggestions.length,
-                          itemBuilder: (context, i) {
-                            final item = _osmDestSuggestions[i] is Map ? _osmDestSuggestions[i] as Map<String, dynamic> : <String, dynamic>{};
-                            final name = item['display_name'] ?? item['name'] ?? '';
-                            return ListTile(
-                              dense: true,
-                              title: Text(name is String ? name : '$name', maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13)),
-                              onTap: () => _onOsmDestSelected(item),
-                            );
-                          },
-                        ),
-                      ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtDestLat,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(labelText: 'Lat', border: OutlineInputBorder()),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtDestLon,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(labelText: 'Lon', border: OutlineInputBorder()),
-                    ),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Lat', controller: txtDestLat, keyboardType: TextInputType.numberWithOptions(decimal: true)),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Lon', controller: txtDestLon, keyboardType: TextInputType.numberWithOptions(decimal: true)),
                     SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
@@ -1503,7 +1486,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                               _saveOrUpdateDestination();
                             }
                           },
-                          child: Text('Save'),
+                          child: Text('Save',style:TextStyle(color:Colors.white)),
                         ),
                         SizedBox(width: 8),
                         ElevatedButton(
@@ -1513,7 +1496,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                               _saveOrUpdateDestination();
                             }
                           },
-                          child: Text('Update'),
+                          child: Text('Update',style:TextStyle(color:Colors.white)),
                         ),
                       ],
                     ),
@@ -1522,46 +1505,61 @@ class _FrmMasterDataState extends State<FrmMasterData>
               ),
             ),
             SizedBox(height: 16),
-            Text('Daftar Destination', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            SizedBox(height: 8),
-            _listDestination.isEmpty
-                ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: DataTable(
-                        columnSpacing: 16,
-                        horizontalMargin: 12,
-                        columns: [
-                          DataColumn(label: Text('ID Destination', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Nama Proyek/Tujuan', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Type', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Lat', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Lon', style: TextStyle(fontWeight: FontWeight.w600))),
-                        ],
-                        rows: _listDestination.asMap().entries.map((e) {
-                          final index = e.key;
-                          final item = e.value;
-                          final ctyid = item['ctyid'] ?? item['CTYID'] ?? '';
-                          final ctyname = item['ctyname'] ?? item['CTYNAME'] ?? '';
-                          final ctytype = item['ctytype'] ?? item['CTYTYPE'] ?? '';
-                          final lat = item['lat']?.toString() ?? item['LOCID5'] ?? '';
-                          final lon = item['lon']?.toString() ?? item['LOCID6'] ?? '';
-                          return DataRow(
-                            color: MaterialStateProperty.resolveWith((_) => _selectedDestinationIndex == index ? Colors.orange.withOpacity(0.25) : null),
-                            cells: [
-                              DataCell(GestureDetector(onTap: () => _onDestinationRowTap(item, index), child: Text(ctyid))),
-                              DataCell(GestureDetector(onTap: () => _onDestinationRowTap(item, index), child: Text(ctyname))),
-                              DataCell(GestureDetector(onTap: () => _onDestinationRowTap(item, index), child: Text(ctytype))),
-                              DataCell(GestureDetector(onTap: () => _onDestinationRowTap(item, index), child: Text(lat))),
-                              DataCell(GestureDetector(onTap: () => _onDestinationRowTap(item, index), child: Text(lon))),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
+            Card(
+              color: cardCream,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Daftar Destination', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    SizedBox(height: 5),
+                    _listDestination.isEmpty
+                        ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: DataTable(
+                                showCheckboxColumn: false,
+                                columnSpacing: 16,
+                                horizontalMargin: 12,
+                                columns: [
+                                  DataColumn(label: Text('ID Destination', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Nama Proyek/Tujuan', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Type', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Lat', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Lon', style: TextStyle(fontWeight: FontWeight.w600))),
+                                ],
+                                rows: _listDestination.asMap().entries.map((e) {
+                                  final index = e.key;
+                                  final item = e.value;
+                                  final ctyid = item['ctyid'] ?? item['CTYID'] ?? '';
+                                  final ctyname = item['ctyname'] ?? item['CTYNAME'] ?? '';
+                                  final ctytype = item['ctytype'] ?? item['CTYTYPE'] ?? '';
+                                  final lat = item['lat']?.toString() ?? item['LOCID5'] ?? '';
+                                  final lon = item['lon']?.toString() ?? item['LOCID6'] ?? '';
+                                  return DataRow(
+                                    onSelectChanged: (_){ _onDestinationRowTap(item, index); },
+                                    color: MaterialStateProperty.resolveWith((_) => _selectedDestinationIndex == index ? Colors.orange.withOpacity(0.25) : null),
+                                    cells: [
+                                      DataCell(Text(ctyid)),
+                                      DataCell(Text(ctyname)),
+                                      DataCell(Text(ctytype)),
+                                      DataCell(Text(lat)),
+                                      DataCell(Text(lon)),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -1573,41 +1571,28 @@ class _FrmMasterDataState extends State<FrmMasterData>
       onRefresh: getListItemType,
       child: SingleChildScrollView(
         physics: AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Card(
+              color: cardCream,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text('Form Item Type', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     SizedBox(height: 12),
-                    TextField(
-                      controller: txtItpid,
-                      decoration: InputDecoration(
-                        labelText: 'Item ID',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtItpdescr,
-                      decoration: InputDecoration(
-                        labelText: 'Item Name',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtItpalias,
-                      decoration: InputDecoration(
-                        labelText: 'Alias',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
+                    buildTextField(labelText: 'Item ID', controller: txtItpid),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Item Name', controller: txtItpdescr),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Alias', controller: txtItpalias),
                     SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
@@ -1621,7 +1606,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                               _saveOrUpdateItemType();
                             }
                           },
-                          child: Text('Save'),
+                          child: Text('Save',style:TextStyle(color:Colors.white)),
                         ),
                         SizedBox(width: 8),
                         ElevatedButton(
@@ -1631,7 +1616,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                               _updateItemType();
                             }
                           },
-                          child: Text('Update'),
+                          child: Text('Update',style:TextStyle(color:Colors.white)),
                         ),
                       ],
                     ),
@@ -1640,40 +1625,55 @@ class _FrmMasterDataState extends State<FrmMasterData>
               ),
             ),
             SizedBox(height: 16),
-            Text('Daftar Item Type', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            SizedBox(height: 8),
-            _listItemType.isEmpty
-                ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: DataTable(
-                        columnSpacing: 16,
-                        horizontalMargin: 12,
-                        columns: [
-                          DataColumn(label: Text('Item ID', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Item Name', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Alias', style: TextStyle(fontWeight: FontWeight.w600))),
-                        ],
-                        rows: _listItemType.asMap().entries.map((e) {
-                          final index = e.key;
-                          final item = e.value;
-                          final itpid = item['itpid'] ?? item['ITPID'] ?? '';
-                          final itpdescr = item['itpdescr'] ?? item['ITPDESCR'] ?? '';
-                          final itpalias = item['itpalias'] ?? item['ITPALIAS'] ?? '';
-                          return DataRow(
-                            color: MaterialStateProperty.resolveWith((_) => _selectedItemTypeIndex == index ? Colors.orange.withOpacity(0.25) : null),
-                            cells: [
-                              DataCell(GestureDetector(onTap: () => _onItemTypeRowTap(item, index), child: Text(itpid))),
-                              DataCell(GestureDetector(onTap: () => _onItemTypeRowTap(item, index), child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 180), child: Text(itpdescr, overflow: TextOverflow.ellipsis)))),
-                              DataCell(GestureDetector(onTap: () => _onItemTypeRowTap(item, index), child: Text(itpalias))),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
+            Card(
+              color: cardCream,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Daftar Item Type', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    SizedBox(height: 5),
+                    _listItemType.isEmpty
+                        ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: DataTable(
+                                showCheckboxColumn: false,
+                                columnSpacing: 10,
+                                horizontalMargin: 8,
+                                columns: [
+                                  DataColumn(label: Text('Item ID', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Item Name', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Alias', style: TextStyle(fontWeight: FontWeight.w600))),
+                                ],
+                                rows: _listItemType.asMap().entries.map((e) {
+                                  final index = e.key;
+                                  final item = e.value;
+                                  final itpid = item['itpid'] ?? item['ITPID'] ?? '';
+                                  final itpdescr = item['itpdescr'] ?? item['ITPDESCR'] ?? '';
+                                  final itpalias = item['itpalias'] ?? item['ITPALIAS'] ?? '';
+                                  return DataRow(
+                                    onSelectChanged: (_){ _onItemTypeRowTap(item, index); },
+                                    color: MaterialStateProperty.resolveWith((_) => _selectedItemTypeIndex == index ? Colors.orange.withOpacity(0.25) : null),
+                                    cells: [
+                                      DataCell(Text(itpid)),
+                                      DataCell(ConstrainedBox(constraints: BoxConstraints(maxWidth: 180), child: Text(itpdescr, overflow: TextOverflow.ellipsis))),
+                                      DataCell(Text(itpalias)),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -1687,44 +1687,38 @@ class _FrmMasterDataState extends State<FrmMasterData>
     return RefreshIndicator(
       onRefresh: () async {
         await getListZoneOptions();
+        await getListCompanyClient();
         await getListClient();
       },
       child: SingleChildScrollView(
         physics: AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Card(
+              color: cardCream,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text('Form Client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     SizedBox(height: 12),
-                    TextField(controller: txtLocid, decoration: InputDecoration(labelText: 'CID', border: OutlineInputBorder())),
-                    SizedBox(height: 8),
-                    SmartSelect<String?>.single(
-                      title: 'Type',
-                      selectedValue: txtLocationtype.text.isEmpty ? null : txtLocationtype.text,
-                      choiceItems: _clientLocationTypeOptions.map((e) => S2Choice<String>(value: e['value']!, title: e['title']!)).toList(),
-                      onChange: (s) => setState(() => txtLocationtype.text = s.value ?? ''),
-                      modalHeader: true,
-                      modalConfig: S2ModalConfig(
-                        type: S2ModalType.bottomSheet,
-                        useFilter: true,
-                        filterAuto: true,
-                        filterHint: 'Cari Type...',
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(controller: txtLocname, decoration: InputDecoration(labelText: 'Nama', border: OutlineInputBorder())),
-                    SizedBox(height: 8),
-                    TextField(controller: txtLocaddress1, decoration: InputDecoration(labelText: 'Address 1', border: OutlineInputBorder())),
-                    SizedBox(height: 8),
-                    TextField(controller: txtLocaddress2, decoration: InputDecoration(labelText: 'Address 2', border: OutlineInputBorder())),
-                    SizedBox(height: 8),
+                    buildTextField(labelText: 'Location ID', controller: txtLocid, readOnly: true, helperText: '* generate auto'),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Type', controller: txtLocationtype, readOnly: true, helperText: '* generate auto'),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Nama', controller: txtLocname),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Address 1', controller: txtLocaddress1),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Address 2', controller: txtLocaddress2),
+                    SizedBox(height: 5),
                     SmartSelect<String?>.single(
                       title: 'Provinsi', //SEL
                       selectedValue: txtLocprovince.text.isEmpty ? null : txtLocprovince.text,
@@ -1738,7 +1732,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                         filterHint: 'Cari Provinsi...',//LIST
                       ),
                     ),
-                    SizedBox(height: 8),
+                    SizedBox(height: 5),
                     SmartSelect<String?>.single(
                       title: 'Zone',
                       selectedValue: _clientZone,
@@ -1752,25 +1746,31 @@ class _FrmMasterDataState extends State<FrmMasterData>
                         filterHint: 'Cari Zone...',
                       ),
                     ),
-                    SizedBox(height: 8),
-                    TextField(controller: txtLoccompany, readOnly: true, decoration: InputDecoration(labelText: 'Company', border: OutlineInputBorder())),
-                    SizedBox(height: 8),
-                    TextField(controller: txtLoccontactperson, decoration: InputDecoration(labelText: 'Contact Person', border: OutlineInputBorder())),
-                    SizedBox(height: 8),
-                    TextField(controller: txtLocphone1, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: 'Phone 1', border: OutlineInputBorder())),
-                    SizedBox(height: 8),
-                    TextField(controller: txtLocphone2, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: 'Phone 2', border: OutlineInputBorder())),
-                    SizedBox(height: 8),
-                    TextField(controller: txtLocfax1, decoration: InputDecoration(labelText: 'Fax 1', border: OutlineInputBorder())),
-                    SizedBox(height: 8),
-                    TextField(controller: txtLocfax2, decoration: InputDecoration(labelText: 'Fax 2', border: OutlineInputBorder())),
-                    SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: _clientStatus,
-                      decoration: InputDecoration(labelText: 'Status', border: OutlineInputBorder()),
-                      items: ['Active', 'Not Active'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
-                      onChanged: (v) => setState(() => _clientStatus = v ?? 'Active'),
+                    SizedBox(height: 5),
+                    SmartSelect<String?>.single(
+                      title: 'Company',
+                      selectedValue: txtLoccompany.text.isEmpty ? null : txtLoccompany.text,
+                      choiceItems: _clientCompanyOptions.map((e) => S2Choice<String>(value: (e['value'] ?? e['text'] ?? '').toString(), title: (e['text'] ?? e['value'] ?? '').toString())).toList(),
+                      onChange: (s) => setState(() => txtLoccompany.text = s.value ?? ''),
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Company...',
+                      ),
                     ),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Contact Person', controller: txtLoccontactperson),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Phone 1', controller: txtLocphone1, keyboardType: TextInputType.phone),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Phone 2', controller: txtLocphone2, keyboardType: TextInputType.phone),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Fax 1', controller: txtLocfax1),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Fax 2', controller: txtLocfax2),
+                    SizedBox(height: 5),
                     SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
@@ -1782,7 +1782,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                           onPressed: () async {
                             if (await _showConfirmDialog('Konfirmasi', 'Simpan data Client?')) _saveOrUpdateClient();
                           },
-                          child: Text('Save'),
+                          child: Text('Save',style:TextStyle(color:Colors.white)),
                         ),
                         SizedBox(width: 8),
                         ElevatedButton(
@@ -1790,7 +1790,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                           onPressed: () async {
                             if (await _showConfirmDialog('Konfirmasi', 'Update data Client?')) _saveOrUpdateClient();
                           },
-                          child: Text('Update'),
+                          child: Text('Update',style:TextStyle(color:Colors.white)),
                         ),
                       ],
                     ),
@@ -1799,49 +1799,64 @@ class _FrmMasterDataState extends State<FrmMasterData>
               ),
             ),
             SizedBox(height: 16),
-            Text('Daftar Client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            SizedBox(height: 8),
-            _listClient.isEmpty
-                ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: DataTable(
-                        columnSpacing: 16,
-                        horizontalMargin: 12,
-                        columns: [
-                          DataColumn(label: Text('CID', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Nama', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Address 1', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Contact Person', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Phone 1', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.w600))),
-                        ],
-                        rows: _listClient.asMap().entries.map((e) {
-                          final index = e.key;
-                          final item = e.value;
-                          final locid = item['locid'] ?? item['LOCID'] ?? '';
-                          final locname = item['locname'] ?? item['LOCNAME'] ?? '';
-                          final addr = item['locaddress1'] ?? item['LOCADDRESS1'] ?? '';
-                          final contact = item['loccontactperson'] ?? item['LOCCONTACTPERSON'] ?? '';
-                          final phone = item['locphone1'] ?? item['LOCPHONE1'] ?? '';
-                          final st = item['status'] ?? item['STATUS'] ?? '';
-                          return DataRow(
-                            color: MaterialStateProperty.resolveWith((_) => _selectedClientIndex == index ? Colors.orange.withOpacity(0.25) : null),
-                            cells: [
-                              DataCell(GestureDetector(onTap: () => _onClientRowTap(item, index), child: Text(locid))),
-                              DataCell(GestureDetector(onTap: () => _onClientRowTap(item, index), child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 120), child: Text(locname, overflow: TextOverflow.ellipsis)))),
-                              DataCell(GestureDetector(onTap: () => _onClientRowTap(item, index), child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 150), child: Text(addr, overflow: TextOverflow.ellipsis)))),
-                              DataCell(GestureDetector(onTap: () => _onClientRowTap(item, index), child: Text(contact))),
-                              DataCell(GestureDetector(onTap: () => _onClientRowTap(item, index), child: Text(phone))),
-                              DataCell(GestureDetector(onTap: () => _onClientRowTap(item, index), child: Text(st))),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
+            Card(
+              color: cardCream,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Daftar Client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    SizedBox(height: 5),
+                    _listClient.isEmpty
+                        ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: DataTable(
+                                showCheckboxColumn: false,
+                                columnSpacing: 10,
+                                horizontalMargin: 8,
+                                columns: [
+                                  DataColumn(label: Text('CID', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Nama', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Address 1', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Contact Person', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Phone 1', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.w600))),
+                                ],
+                                rows: _listClient.asMap().entries.map((e) {
+                                  final index = e.key;
+                                  final item = e.value;
+                                  final locid = item['locid'] ?? item['LOCID'] ?? '';
+                                  final locname = item['locname'] ?? item['LOCNAME'] ?? '';
+                                  final addr = item['locaddress1'] ?? item['LOCADDRESS1'] ?? '';
+                                  final contact = item['loccontactperson'] ?? item['LOCCONTACTPERSON'] ?? '';
+                                  final phone = item['locphone1'] ?? item['LOCPHONE1'] ?? '';
+                                  final st = item['status'] ?? item['STATUS'] ?? '';
+                                  return DataRow(
+                                    onSelectChanged: (_){ _onClientRowTap(item, index); },
+                                    color: MaterialStateProperty.resolveWith((_) => _selectedClientIndex == index ? Colors.orange.withOpacity(0.25) : null),
+                                    cells: [
+                                      DataCell(Text(locid)),
+                                      DataCell(ConstrainedBox(constraints: BoxConstraints(maxWidth: 120), child: Text(locname, overflow: TextOverflow.ellipsis))),
+                                      DataCell(ConstrainedBox(constraints: BoxConstraints(maxWidth: 150), child: Text(addr, overflow: TextOverflow.ellipsis))),
+                                      DataCell(Text(contact)),
+                                      DataCell(Text(phone)),
+                                      DataCell(Text(st)),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -1849,9 +1864,6 @@ class _FrmMasterDataState extends State<FrmMasterData>
   }
 
   Widget _buildZoneTab() {
-    final zoneIdChoices = _listZoneOptions
-        .map((e) => S2Choice<String>(value: e['value']?.toString() ?? e['text']?.toString() ?? '', title: e['text']?.toString() ?? e['value']?.toString() ?? ''))
-        .toList();
     final vhtypeChoices = _listVhtypeOptions
         .map((e) => S2Choice<String>(value: e['value']?.toString() ?? e['text']?.toString() ?? '', title: e['text']?.toString() ?? e['value']?.toString() ?? ''))
         .toList();
@@ -1872,6 +1884,11 @@ class _FrmMasterDataState extends State<FrmMasterData>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Card(
+              color: Colors.deepOrangeAccent.withValues(alpha: 0.12),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -1879,60 +1896,33 @@ class _FrmMasterDataState extends State<FrmMasterData>
                   children: [
                     Text('Form Zone', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     SizedBox(height: 12),
-                    SmartSelect<String?>.single(
-                      title: 'Zone ID',
-                      selectedValue: txtZoneid.text.isEmpty ? null : txtZoneid.text,
-                      choiceItems: zoneIdChoices,
-                      onChange: (s) {
-                        txtZoneid.text = s.value ?? '';
-                        final idx = _listZone.indexWhere((z) => (z['zoneid'] ?? z['ZONEID'] ?? '').toString() == (s.value ?? ''));
-                        if (idx >= 0) _onZoneRowTap(_listZone[idx], idx);
-                        setState(() {});
-                      },
+                    buildTextField(
+                      labelText: 'Zone ID',
+                      controller: txtZoneid,
+                      helperText: 'generate auto, diisi manual atau generate auto',
+                    ),
+                    SizedBox(height: 5),
+                    buildTextField(labelText: 'Zone Name', controller: txtZonename),
+                    SizedBox(height: 5),
+                    SmartSelect<String?>.single(//
+                      title: 'Default Zone',
+                      selectedValue: _zoneDefaultZone,
+                      choiceItems: _listDefaultZoneOptions
+                          .map((e) => S2Choice<String>(
+                                value: (e['value'] ?? e['text'] ?? '').toString(),
+                                title: (e['text'] ?? e['value'] ?? '').toString(),
+                              ))
+                          .toList(),
+                      onChange: (s) => setState(() => _zoneDefaultZone = s.value),
                       modalHeader: true,
                       modalConfig: S2ModalConfig(
                         type: S2ModalType.bottomSheet,
                         useFilter: true,
                         filterAuto: true,
-                        filterHint: 'Cari Zone ID...',
+                        filterHint: 'Cari Default Zone...',
                       ),
                     ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtZonename,
-                      decoration: InputDecoration(labelText: 'Zone Name', border: OutlineInputBorder()),
-                    ),
-                    SizedBox(height: 8),
-                    DropdownButtonFormField<String?>(
-                      value: _zoneDefaultZone,
-                      decoration: InputDecoration(labelText: 'Default Zone', border: OutlineInputBorder()),
-                      items: [
-                        DropdownMenuItem(value: null, child: Text('Pilih Default Zone')),
-                        DropdownMenuItem(value: 'CEMINDO', child: Text('CEMINDO')),
-                        DropdownMenuItem(value: 'HOLCIM', child: Text('HOLCIM')),
-                      ],
-                      onChanged: (v) => setState(() => _zoneDefaultZone = v),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtZonetype,
-                      decoration: InputDecoration(labelText: 'Zone Type (optional)', border: OutlineInputBorder()),
-                    ),
-                    SizedBox(height: 8),
-                    SmartSelect<String?>.single(
-                      title: 'Vehicle Type',
-                      selectedValue: _zoneVhtype,
-                      choiceItems: vhtypeChoices,
-                      onChange: (s) => setState(() => _zoneVhtype = s.value),
-                      modalHeader: true,
-                      modalConfig: S2ModalConfig(
-                        type: S2ModalType.bottomSheet,
-                        useFilter: true,
-                        filterAuto: true,
-                        filterHint: 'Cari Vehicle Type...',
-                      ),
-                    ),
-                    SizedBox(height: 8),
+                    SizedBox(height: 5),
                     SmartSelect<String?>.single(
                       title: 'Origin',
                       selectedValue: _zoneOrigin,
@@ -1946,17 +1936,19 @@ class _FrmMasterDataState extends State<FrmMasterData>
                         filterHint: 'Cari Origin...',
                       ),
                     ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: txtZonetarif,
-                      decoration: InputDecoration(labelText: 'Zone Tarif (optional)', border: OutlineInputBorder()),
-                    ),
-                    SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: _zoneStatus,
-                      decoration: InputDecoration(labelText: 'Status', border: OutlineInputBorder()),
-                      items: ['Active', 'Not Active'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
-                      onChanged: (v) => setState(() => _zoneStatus = v ?? 'Active'),
+                    SizedBox(height: 5),
+                    SmartSelect<String?>.single(
+                      title: 'Vehicle Type',
+                      selectedValue: _zoneVhtype,
+                      choiceItems: vhtypeChoices,
+                      onChange: (s) => setState(() => _zoneVhtype = s.value),
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Vehicle Type...',
+                      ),
                     ),
                     SizedBox(height: 16),
                     Row(
@@ -1969,7 +1961,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                           onPressed: () async {
                             if (await _showConfirmDialog('Konfirmasi', 'Simpan data Zone?')) _saveOrUpdateZone();
                           },
-                          child: Text('Save'),
+                          child: Text('Save',style:TextStyle(color:Colors.white)),
                         ),
                         SizedBox(width: 8),
                         ElevatedButton(
@@ -1977,7 +1969,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                           onPressed: () async {
                             if (await _showConfirmDialog('Konfirmasi', 'Update data Zone?')) _saveOrUpdateZone();
                           },
-                          child: Text('Update'),
+                          child: Text('Update',style:TextStyle(color:Colors.white)),
                         ),
                       ],
                     ),
@@ -1986,55 +1978,61 @@ class _FrmMasterDataState extends State<FrmMasterData>
               ),
             ),
             SizedBox(height: 16),
-            Text('Daftar Zone', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            SizedBox(height: 8),
-            _listZone.isEmpty
-                ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: DataTable(
-                        columnSpacing: 16,
-                        horizontalMargin: 12,
-                        columns: [
-                          DataColumn(label: Text('Zone ID', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Zone Name', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Default Zone', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Zone Type', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('VHC Type', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Origin', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Zone Tarif', style: TextStyle(fontWeight: FontWeight.w600))),
-                          DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.w600))),
-                        ],
-                        rows: _listZone.asMap().entries.map((e) {
-                          final index = e.key;
-                          final item = e.value;
-                          final zoneid = item['zoneid'] ?? item['ZONEID'] ?? '';
-                          final zonename = item['zonename'] ?? item['ZONENAME'] ?? '';
-                          final defaultZone = item['default_zone'] ?? item['DEFAULT_ZONE'] ?? '';
-                          final zonetype = item['zonetype'] ?? item['ZONETYPE'] ?? '';
-                          final vhctype = item['vhctype'] ?? item['VHCTYPE'] ?? '';
-                          final origin = item['origin'] ?? item['ORIGIN'] ?? '';
-                          final zonetarif = item['zonetarif']?.toString() ?? item['ZONETARIF']?.toString() ?? '';
-                          final status = item['status'] ?? item['STATUS'] ?? '';
-                          return DataRow(
-                            color: MaterialStateProperty.resolveWith((_) => _selectedZoneIndex == index ? Colors.orange.withOpacity(0.25) : null),
-                            cells: [
-                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(zoneid))),
-                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 140), child: Text(zonename, overflow: TextOverflow.ellipsis)))),
-                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(defaultZone))),
-                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(zonetype))),
-                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(vhctype))),
-                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(origin))),
-                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(zonetarif))),
-                              DataCell(GestureDetector(onTap: () => _onZoneRowTap(item, index), child: Text(status))),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
+            Card(
+              color: cardCream,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Daftar Zone', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    SizedBox(height: 5),
+                    _listZone.isEmpty
+                        ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: DataTable(
+                                showCheckboxColumn: false,
+                                columnSpacing: 10,
+                                horizontalMargin: 8,
+                                columns: [
+                                  DataColumn(label: Text('Zone ID', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Zone Name', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Default Zone', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('VHC Type', style: TextStyle(fontWeight: FontWeight.w600))),
+                                  DataColumn(label: Text('Origin', style: TextStyle(fontWeight: FontWeight.w600))),
+                                ],
+                                rows: _listZone.asMap().entries.map((e) {
+                                  final index = e.key;
+                                  final item = e.value;
+                                  final zoneid = item['zoneid'] ?? item['ZONEID'] ?? '';
+                                  final zonename = item['zonename'] ?? item['ZONENAME'] ?? '';
+                                  final defaultZone = item['default_zone'] ?? item['DEFAULT_ZONE'] ?? '';
+                                  final vhctype = item['vhctype'] ?? item['VHCTYPE'] ?? '';
+                                  final origin = item['origin'] ?? item['ORIGIN'] ?? '';
+                                  return DataRow(
+                                    onSelectChanged: (_){ _onZoneRowTap(item, index); },
+                                    color: MaterialStateProperty.resolveWith((_) => _selectedZoneIndex == index ? Colors.orange.withOpacity(0.25) : null),
+                                    cells: [
+                                      DataCell(Text(zoneid)),
+                                      DataCell(ConstrainedBox(constraints: BoxConstraints(maxWidth: 140), child: Text(zonename, overflow: TextOverflow.ellipsis))),
+                                      DataCell(Text(defaultZone)),
+                                      DataCell(Text(vhctype)),
+                                      DataCell(Text(origin)),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -2083,12 +2081,14 @@ class _FrmMasterDataState extends State<FrmMasterData>
         }
         if (_tabController.index == 4) {
           getListZoneOptions();
+          getListCompanyClient();
           getListClient();
         }
         if (_tabController.index == 5) {
           getListZoneOptions();
           getListOriginAlias();
           getListVhtypeOptions();
+          getListDefaultZoneOptions();
           getListZoneMasterList();
         }
       }
@@ -2167,9 +2167,9 @@ class _FrmMasterDataState extends State<FrmMasterData>
       },
       child: Scaffold(
         key: globalScaffoldKey,
-        backgroundColor: Theme.of(context).colorScheme.onPrimary,
+        backgroundColor: backgroundCream,
         appBar: AppBar(
-          backgroundColor: Colors.orange.shade700,
+          backgroundColor: primaryOrange,
           elevation: 2,
           leading: IconButton(
             icon: Icon(Icons.arrow_back, color: Colors.white),

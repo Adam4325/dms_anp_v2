@@ -1195,7 +1195,7 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
     super.initState();
   }
 
-  // Custom TextField with orange theme
+  // Custom TextField with orange theme//
   Widget buildTextField({
     String? labelText,
     required TextEditingController controller,
@@ -1218,7 +1218,7 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
           labelText: labelText,
           labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           suffixIcon: suffixIcon,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),//
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
