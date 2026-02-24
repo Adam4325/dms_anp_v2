@@ -417,32 +417,89 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
   }
 
   List<Widget> _buildDriverProfileItems() {
-    List<Map<String, String>> items = [
-      {"title": "KryID", "subtitle": kryid},
-      {"title": "Name", "subtitle": driverName},
-      {"title": "Nickname", "subtitle": nickname},
-      {"title": "Place of Birth", "subtitle": placeOfBirth},
-      {"title": "Address", "subtitle": address},
-      {"title": "City", "subtitle": city},
-      {"title": "Province", "subtitle": provinsi},
-      {"title": "KTP Type", "subtitle": ktp},
-      {"title": "KTP Number", "subtitle": ktpNumber},
-      {"title": "SIM Type", "subtitle": sim},
-      {"title": "SIM Number", "subtitle": simNumber},
-      {"title": "Vehicle Status", "subtitle": statusVehicle},
-      {"title": "STNK Valid", "subtitle": stnkBerlaku},
-    ];
+    if(status_karyawan=="DRIVER"){
+      List<Map<String, String>> items = [
+        {"title": "DriverID", "subtitle": drvid},
+        {"title": "Name", "subtitle": driverName},
+        {"title": "Nickname", "subtitle": nickname},
+        {"title": "Place of Birth", "subtitle": placeOfBirth},
+        {"title": "Address", "subtitle": address},
+        {"title": "City", "subtitle": city},
+        {"title": "Province", "subtitle": provinsi},
+        {"title": "KTP Type", "subtitle": ktp},
+        {"title": "KTP Number", "subtitle": ktpNumber},
+        {"title": "SIM Type", "subtitle": sim},
+        {"title": "SIM Number", "subtitle": simNumber},
+        {"title": "Vehicle Status", "subtitle": statusVehicle},
+        {"title": "STNK Valid", "subtitle": stnkBerlaku},
+      ];
 
-    return items.asMap().entries.map((entry) {
-      int index = entry.key;
-      Map<String, String> item = entry.value;
-      return Column(
-        children: [
-          _buildListItem(item["title"]!, item["subtitle"]!),
-          if (index < items.length - 1) Divider(height: 1, color: Colors.grey.shade300),
-        ],
-      );
-    }).toList();
+      return items.asMap().entries.map((entry) {
+        int index = entry.key;
+        Map<String, String> item = entry.value;
+        return Column(
+          children: [
+            _buildListItem(item["title"]!, item["subtitle"]!),
+            if (index < items.length - 1) Divider(height: 1, color: Colors.grey.shade300),
+          ],
+        );
+      }).toList();
+    }else if(status_karyawan=="KARYAWAN"){
+      List<Map<String, String>> items = [
+        {"title": "KryID", "subtitle": kryid},
+        {"title": "Name", "subtitle": driverName},
+        {"title": "Nickname", "subtitle": nickname},
+        {"title": "Place of Birth", "subtitle": placeOfBirth},
+        {"title": "Address", "subtitle": address},
+        {"title": "City", "subtitle": city},
+        {"title": "Province", "subtitle": provinsi},
+        {"title": "KTP Type", "subtitle": ktp},
+        {"title": "KTP Number", "subtitle": ktpNumber},
+        {"title": "SIM Type", "subtitle": sim},
+        {"title": "SIM Number", "subtitle": simNumber},
+        {"title": "Vehicle Status", "subtitle": statusVehicle},
+        {"title": "STNK Valid", "subtitle": stnkBerlaku},
+      ];
+
+      return items.asMap().entries.map((entry) {
+        int index = entry.key;
+        Map<String, String> item = entry.value;
+        return Column(
+          children: [
+            _buildListItem(item["title"]!, item["subtitle"]!),
+            if (index < items.length - 1) Divider(height: 1, color: Colors.grey.shade300),
+          ],
+        );
+      }).toList();
+    }else{
+      List<Map<String, String>> items = [
+        {"title": "KryID", "subtitle": kryid},
+        {"title": "Name", "subtitle": driverName},
+        {"title": "Nickname", "subtitle": nickname},
+        {"title": "Place of Birth", "subtitle": placeOfBirth},
+        {"title": "Address", "subtitle": address},
+        {"title": "City", "subtitle": city},
+        {"title": "Province", "subtitle": provinsi},
+        {"title": "KTP Type", "subtitle": ktp},
+        {"title": "KTP Number", "subtitle": ktpNumber},
+        {"title": "SIM Type", "subtitle": sim},
+        {"title": "SIM Number", "subtitle": simNumber},
+        {"title": "Vehicle Status", "subtitle": statusVehicle},
+        {"title": "STNK Valid", "subtitle": stnkBerlaku},
+      ];
+
+      return items.asMap().entries.map((entry) {
+        int index = entry.key;
+        Map<String, String> item = entry.value;
+        return Column(
+          children: [
+            _buildListItem(item["title"]!, item["subtitle"]!),
+            if (index < items.length - 1) Divider(height: 1, color: Colors.grey.shade300),
+          ],
+        );
+      }).toList();
+    }
+
   }
 
   List<Widget> _buildUserProfileItems() {

@@ -2378,7 +2378,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         EasyLoading.show();
         print('Create New OPNAME');
         var encoded = Uri.encodeFull(
-            "${BASE_URL}api/maintenance/sr/create_opname_sr_detail_new.jsp");
+            "${BASE_URL}api/maintenance/sr/create_opname_sr_detail_new_v3.jsp");
         print(encoded);
         Uri urlEncode = Uri.parse(encoded);
         print('txtfitPost.text ${txtfitPost.text}');
@@ -3197,8 +3197,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       EasyLoading.show();
       var estimasi = selEstimasi.toString() + ":00";
       var urlData =
-          "${BASE_URL}api/maintenance/sr/approve_opname_sr_detail.jsp?method=approve-detail&vhcid=${vehicle_id}&id_header=${id}&estimasi=${estimasi}";
+          "${BASE_URL}api/maintenance/sr/approve_opname_sr_detail_new.jsp?method=approve-detail&vhcid=${vehicle_id}&id_header=${id}&estimasi=${estimasi}";
       var encoded = Uri.encodeFull(urlData);
+      print("approve_opname_sr_detail_new");
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
@@ -8508,30 +8509,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   }
 
   Widget listDataOpnameDetail(BuildContext context) {
-    return SingleChildScrollView(
-      //shrinkWrap: true,
+    return Padding(
       padding: EdgeInsets.all(2.0),
-      clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          Container(
-              height: MediaQuery.of(context)
-                  .size
-                  .height, // Change as per your requirement
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  padding: const EdgeInsets.only(
-                      left: 2.0, right: 2.0, top: 2.0, bottom: 250),
-                  itemCount: dataListOpnameDetail == null
-                      ? 0
-                      : dataListOpnameDetail.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return _buildDListDetailOpname(
-                        dataListOpnameDetail[index], index);
-                  }))
+          Expanded(
+            child: ListView.builder(
+                scrollDirection: Axis.vertical,
+                padding: const EdgeInsets.only(left: 2.0, right: 2.0, top: 2.0, bottom: 2.0),
+                itemCount: dataListOpnameDetail == null ? 0 : dataListOpnameDetail.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return _buildDListDetailOpname(dataListOpnameDetail[index], index);
+                }),
+          ),
         ],
       ),
     );
@@ -11142,34 +11132,47 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           //Navigator.of(context).pop(false);
                           await Future.delayed(Duration(milliseconds: 1));
                           showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                    title: Text('List Detail'),
-                                    content: listDataOpnameDetail(context),
-                                    actions: <Widget>[
-                                      if (METHOD_DETAIL !=
-                                          'PURCHASE-ORDER') ...[
-                                        Flex(
-                                          direction: Axis.horizontal,
-                                          children: [
-                                            Expanded(
-                                                child: ElevatedButton.icon(
-                                              icon: Icon(
-                                                Icons.book,
-                                                color: Colors.white,
-                                                size: 15.0,
+                            context: context,
+                            barrierDismissible: true,
+                            builder: (BuildContext context) {
+                              final size = MediaQuery.of(context).size;
+                              return Dialog(
+                                insetPadding: EdgeInsets.zero,
+                                backgroundColor: Colors.white,
+                                child: SafeArea(
+                                  child: SizedBox(
+                                    height: size.height,
+                                    width: size.width,
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                          decoration: BoxDecoration(color: Colors.orange.shade100),
+                                          child: Row(
+                                            children: [
+                                              Expanded(child: Text('List Detail', style: TextStyle(fontWeight: FontWeight.bold))),
+                                              IconButton(
+                                                icon: Icon(Icons.close),
+                                                onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
                                               ),
-                                              label: Text(
-                                                  "Approve"), //Approve Opname
-                                              onPressed: () async {
+                                            ],
+                                          ),
+                                        ),
+                                        Expanded(child: listDataOpnameDetail(context)),
+                                        Container(
+                                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                            child: SizedBox(
+                                              width: double.infinity,
+                                              child: ElevatedButton.icon(
+                                                icon: Icon(Icons.book, color: Colors.white, size: 15.0),//
+                                                label: Text("Approve",style: TextStyle(color:Colors.white)),
+                                                onPressed: () async {
                                                 //selEstimasi = "1";
                                                 //id_header=88;
                                                 //print('getAkses("FO") ${getAkses("FO")}');
                                                 if (username == "ADMIN" ||
                                                     getAkses("SA")) {
-                                                  if (txtOpnameVHCID.text ==
-                                                          null ||
+                                                  if (txtOpnameVHCID.text == null ||
                                                       txtOpnameVHCID.text ==
                                                           '') {
                                                     alert(
@@ -11313,22 +11316,21 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                                       "error");
                                                 }
                                               },
-                                              style: ElevatedButton.styleFrom(
-                                                  elevation: 0.0,
-                                                  backgroundColor: Colors.blue,
-                                                  padding: EdgeInsets.symmetric(
-                                                      horizontal: 5,
-                                                      vertical: 0),
-                                                  textStyle: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                            )),
-                                          ],
-                                        )
+                                                style: ElevatedButton.styleFrom(
+                                                    elevation: 0.0,
+                                                    backgroundColor: Colors.blue,
+                                                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                                                    textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                              ),
+                                            ),
+                                          ),
                                       ],
-                                    ]);
-                              });
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
                         } else {
                           //Navigator.of(context).pop(false);
                           await Future.delayed(Duration(milliseconds: 1));
