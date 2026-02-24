@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dms_anp/src/Helper/Provider.dart';
-import 'package:dms_anp/src/pages/marketing/ListOpenDO.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'ListOpenDOCemindo.dart';
 
 /// Kolom untuk baca Excel (by header name)
 const List<String> _excelColumns = [
@@ -337,7 +338,7 @@ class _FrmUploadDOState extends State<FrmUploadDO> {
               setState(() => _tableData = []);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => ListOpenDO()),
+                MaterialPageRoute(builder: (_) => ListOpenDOCemindo()),
               );
             } else if (status == 'PARTIAL') {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -346,7 +347,7 @@ class _FrmUploadDOState extends State<FrmUploadDO> {
               setState(() => _tableData = []);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => ListOpenDO()),
+                MaterialPageRoute(builder: (_) => ListOpenDOCemindo()),
               );
             } else {
               final errors = res['errors'];
@@ -386,7 +387,7 @@ class _FrmUploadDOState extends State<FrmUploadDO> {
         if (didPop) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => ListOpenDO()),
+          MaterialPageRoute(builder: (_) => ListOpenDOCemindo()),
         );
       },
       child: Scaffold(
@@ -408,7 +409,7 @@ class _FrmUploadDOState extends State<FrmUploadDO> {
             onPressed: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => ListOpenDO()),
+                MaterialPageRoute(builder: (_) => ListOpenDOCemindo()),
               );
             },
           ),

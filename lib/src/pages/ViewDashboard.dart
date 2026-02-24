@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
-import 'package:dms_anp/src/pages/marketing/ListOpenDO.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:dms_anp/helpers/database_helper.dart';
 import 'package:dms_anp/src/Helper/AnpService.dart';
@@ -64,13 +62,13 @@ import 'LiveMaps.dart';
 import 'MapHistoryMixer.dart';
 import 'ViewListDoMixer.dart';
 import 'ViewListStoring.dart';
-import 'driver/ApprovedDriverRequest.dart';
 import 'driver/FrmApprovalReqDriver.dart';
 import 'driver/ListDriverInspeksiV2.dart';
 import 'maintenance/FrmServiceRequestOprPM.dart';
 import 'maintenance/FrmServiceTire.dart';
 import 'maintenance/ViewListWoMcByForeMan.dart';
-import 'marketing/ListOpenDOMP.dart';
+import 'marketing/ListOpenDOCemindo.dart';
+import 'marketing/ListOpenDoNC.dart';
 import 'mekanik/ListMekanikInspeksiV2.dart';
 
 class ViewDashboard extends StatefulWidget {
@@ -552,7 +550,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
               image: FontAwesomeIcons.delicious,
               color: Colors.red,
               idKey: 30,
-              title: "Open DO MP"));
+              title: "Open DO"));
         }
       }
     }
@@ -3556,7 +3554,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-                builder: (context) => ListOpenDO()), //ApprovedDriverRequest
+                builder: (context) => ListOpenDOCemindo()), //ApprovedDriverRequest
           );
         });
       } else {
@@ -3575,7 +3573,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-                builder: (context) => ListOpenDOMP()), //ApprovedDriverRequest
+                builder: (context) => ListOpenDoNC()), //ApprovedDriverRequest
           );
         });
       } else {

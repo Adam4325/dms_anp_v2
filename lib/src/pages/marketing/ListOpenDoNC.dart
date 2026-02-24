@@ -7,16 +7,16 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'FrmOpenDO.dart';
 import 'FrmOpenDOMP.dart';
 import 'FrmUploadDO.dart';
+import 'ViewListDoNC.dart';
 
-class ListOpenDOMP extends StatefulWidget {
+class ListOpenDoNC extends StatefulWidget {
   @override
-  _ListOpenDOMPState createState() => _ListOpenDOMPState();
+  _ListOpenDoNCState createState() => _ListOpenDoNCState();
 }
 
-class _ListOpenDOMPState extends State<ListOpenDOMP> {
+class _ListOpenDoNCState extends State<ListOpenDoNC> {
   final Color primaryOrange = const Color(0xFFFF8C69); // Soft orange
   final Color lightOrange = const Color(0xFFFFF4E6); // Very light orange
   final Color accentOrange = const Color(0xFFFFB347); // Peach orange
@@ -101,6 +101,15 @@ class _ListOpenDOMPState extends State<ListOpenDOMP> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _onViewListDo() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ViewListDoNC(),
       ),
     );
   }
@@ -393,7 +402,7 @@ class _ListOpenDOMPState extends State<ListOpenDOMP> {
         backgroundColor: backgroundColor,
         appBar: AppBar(
           backgroundColor: primaryOrange,
-          title: const Text("List Open DO"),
+          title: const Text("List Open DO NC"),
           elevation: 4,
           shadowColor: shadowColor,
           leading: IconButton(
@@ -406,27 +415,69 @@ class _ListOpenDOMPState extends State<ListOpenDOMP> {
             },
           ),
         ),
-        floatingActionButton: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FloatingActionButton.extended(
-              heroTag: 'upload_do',
-              onPressed: _onUploadDO,
-              backgroundColor: primaryOrange,
-              icon: const Icon(Icons.upload_file, color: Colors.white),
-              label: const Text("Upload DO",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-            ),
-            const SizedBox(width: 8),
-            FloatingActionButton.extended(
-              heroTag: 'add_do',
-              onPressed: _onAdd,
-              backgroundColor: accentOrange,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text("Add DO",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-            ),
-          ],
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.end,
+            children: [
+              FloatingActionButton.extended(
+                heroTag: 'upload_do',
+                onPressed: _onUploadDO,
+                backgroundColor: primaryOrange,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                extendedPadding: const EdgeInsets.symmetric(horizontal: 12),
+                icon: const Icon(Icons.upload_file, color: Colors.white, size: 18),
+                label: const Text(
+                  "Upload DO",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              FloatingActionButton.extended(
+                heroTag: 'view_list_do',
+                onPressed: _onViewListDo,
+                backgroundColor: primaryOrange,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                extendedPadding: const EdgeInsets.symmetric(horizontal: 12),
+                icon: const Icon(Icons.list, color: Colors.white, size: 18),
+                label: const Text(
+                  "View List DO",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              FloatingActionButton.extended(
+                heroTag: 'add_do',
+                onPressed: _onAdd,
+                backgroundColor: accentOrange,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                extendedPadding: const EdgeInsets.symmetric(horizontal: 12),
+                icon: const Icon(Icons.add, color: Colors.white, size: 18),
+                label: const Text(
+                  "Add DO",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         body: Padding(
           padding: const EdgeInsets.all(16),
