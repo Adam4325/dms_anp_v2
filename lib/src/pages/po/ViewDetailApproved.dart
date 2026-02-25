@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class ViewDetailApproved extends StatefulWidget {
   final String ponbr;
@@ -16,6 +17,13 @@ class _ViewDetailApprovedState extends State<ViewDetailApproved> {
   bool loading = true;
   String? error;
   final TextEditingController _searchCtrl = TextEditingController();
+  final NumberFormat _idrFmt = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
+  String _rupiah(dynamic v) {
+    final s = (v ?? '').toString();
+    final n = num.tryParse(s.replaceAll(',', ''));
+    return n == null ? 'Rp $s' : _idrFmt.format(n);
+  }
 
   @override
   void initState() {
@@ -130,22 +138,23 @@ class _ViewDetailApprovedState extends State<ViewDetailApproved> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
+                                        _kv("PB Nbr", (it['PBNBR'] ?? '').toString()),
                                         _kv("Item ID", (it['ITDITEMID'] ?? '').toString()),
                                         _kv("Merk", (it['MERK'] ?? '').toString()),
                                         _kv("Type", (it['IDTYPE'] ?? '').toString()),
                                         _kv("Access", (it['IDACCESS'] ?? '').toString()),
                                         _kv("UOM", (it['UOMID'] ?? '').toString()),
                                         _kv("Qty", (it['ITDQTY'] ?? '').toString()),
-                                        _kv("Unit Cost", (it['ITDUNITCOST'] ?? '').toString()),
-                                        _kv("Ext. Cost", (it['ITDEXTCOST'] ?? '').toString()),
-                                        _kv("Ext. After Disc", (it['ITDEXTCOSTAFTERDISCOUNT'] ?? '').toString()),
-                                        _kv("Real Harga", (it['REALHARGA'] ?? '').toString()),
+                                        _kv("Unit Cost", _rupiah(it['ITDUNITCOST'])),
+                                        _kv("Ext. Cost", _rupiah(it['ITDEXTCOST'])),
+                                        _kv("Ext. After Disc", _rupiah(it['ITDEXTCOSTAFTERDISCOUNT'])),
+                                        //_kv("Real Harga", _rupiah(it['REALHARGA'])),
                                         _kv("Loc", (it['LOCID'] ?? '').toString()),
                                         _kv("Status", (it['STATUS'] ?? '').toString()),
                                         const SizedBox(height: 6),
                                         _kv("PO Line", (it['POLINENBR'] ?? '').toString()),
                                         _kv("PB Line", (it['PBLINENBR'] ?? '').toString()),
-                                        _kv("PB Nbr", (it['PBNBR'] ?? '').toString()),
+
                                       ],
                                     ),
                                   ),
