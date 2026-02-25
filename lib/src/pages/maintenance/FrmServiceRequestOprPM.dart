@@ -7632,6 +7632,43 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
 
   Widget _kv(String label, String value) {
     return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Label
+          Expanded(
+            flex: 3,
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.black),
+            ),
+          ),
+          // Titik dua
+          const SizedBox(
+            width: 10, // jarak tetap
+            child: Text(
+              ":",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.black),
+            ),
+          ),
+          // Value
+          Expanded(
+            flex: 5,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(color: Colors.black),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _kvOLD(String label, String value) {
+    return Padding(
       padding: EdgeInsets.only(top: 2, bottom: 2),
       child: Table(
         columnWidths: const {
@@ -11755,7 +11792,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       ));
     }
   }
-
+//OK
   Widget _buildDListRequestOprsStartFOREMAN(dynamic item, int index) {
     return Card(
       elevation: 8.0,
@@ -11782,45 +11819,17 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   style: TextStyle(
                       color: Colors.black, fontWeight: FontWeight.bold),
                 ),
-                subtitle: Wrap(children: <Widget>[
-                  Text(
-                      "SR DateTime : ${DateFormat("yyyy-MM-dd HH:mm:ss").parse(item['requestdate'], false)}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Original SR Number : ${item['orisrnumber']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("VHCID : ${item['vhcid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("LOCID : ${item['srlocid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("DRV. NAME: ${item['drvname']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Notes: ${item['srnotes']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    _kv("SR DateTime", (item['requestdate'] ?? '').toString()),
+                    _kv("Original SR Number", (item['orisrnumber'] ?? '').toString()),
+                    _kv("VHCID", (item['vhcid'] ?? '').toString()),
+                    _kv("LOCID", (item['srlocid'] ?? '').toString()),
+                    _kv("DRV. NAME", (item['drvname'] ?? '').toString()),
+                    _kv("Notes", (item['srnotes'] ?? '').toString()),
+                  ],
+                ),
                 // trailing: Icon(Icons.keyboard_arrow_right,
                 //     color: Colors.black, size: 30.0)
               ),
@@ -12542,7 +12551,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     }
   }
 
-  //PROSES
+  //PROSES//
   Widget _buildDListRequestOprsFinish(dynamic item, int index) {
     return Card(
       elevation: 8.0,
@@ -12569,32 +12578,15 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   style: TextStyle(
                       color: Colors.black, fontWeight: FontWeight.bold),
                 ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("WO Number : ${item['wodwonbr']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("VHCID : ${item['vhcid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("DRV. NAME: ${item['drvname']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Notes: ${item['srnotes']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    _kv("WO Number", (item['wodwonbr'] ?? '').toString()),
+                    _kv("VHCID", (item['vhcid'] ?? '').toString()),
+                    _kv("DRV. NAME", (item['drvname'] ?? '').toString()),
+                    _kv("Notes", (item['srnotes'] ?? '').toString()),
+                  ],
+                ),
                 // trailing: Icon(Icons.keyboard_arrow_right,
                 //     color: Colors.black, size: 30.0)
               ),
@@ -12713,7 +12705,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       ),
     );
   }
-
+//QC
   Widget _buildDListRequestOprQC(dynamic item, int index) {
     return Card(
       elevation: 8.0,
@@ -12740,32 +12732,15 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   style: TextStyle(
                       color: Colors.black, fontWeight: FontWeight.bold),
                 ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("WO Number : ${item['wodwonbr']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("VHCID : ${item['vhcid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("DRV. NAME: ${item['drvname']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Notes: ${item['srnotes']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    _kv("WO Number", (item['wodwonbr'] ?? '').toString()),
+                    _kv("VHCID", (item['vhcid'] ?? '').toString()),
+                    _kv("DRV. NAME", (item['drvname'] ?? '').toString()),
+                    _kv("Notes", (item['srnotes'] ?? '').toString()),
+                  ],
+                ),
                 // trailing: Icon(Icons.keyboard_arrow_right,
                 //     color: Colors.black, size: 30.0)
               ),

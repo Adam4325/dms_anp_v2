@@ -204,6 +204,8 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                 style: TextStyle(fontWeight: FontWeight.bold)),
             bottom: TabBar(
               indicatorColor: Colors.white,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
               onTap: (index) async {
                 if (index == 1) {
                   if (!EasyLoading.isShow) {
@@ -322,10 +324,10 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                           foregroundColor: Colors.white,
                                           elevation: 0,
                                           padding: EdgeInsets.symmetric(
-                                              horizontal: 14, vertical: 8),
+                                              horizontal: 12, vertical: 8),
                                           shape: RoundedRectangleBorder(
                                               borderRadius:
-                                                  BorderRadius.circular(20)),
+                                              BorderRadius.circular(6)),//
                                         ),
                                         onPressed: () {
                                           if (!EasyLoading.isShow) {
@@ -454,15 +456,14 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                           ),
                                           ElevatedButton(
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: darkOrange,
+                                              backgroundColor: Colors.deepOrange,
                                               foregroundColor: Colors.white,
                                               elevation: 0,
                                               padding: EdgeInsets.symmetric(
                                                   horizontal: 12, vertical: 8),
                                               shape: RoundedRectangleBorder(
                                                   borderRadius:
-                                                      BorderRadius.circular(
-                                                          20)),
+                                                  BorderRadius.circular(6)),//
                                             ),
                                             onPressed: () async {
                                               showDialog(
@@ -742,11 +743,14 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
                   ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: darkOrange,
+                      backgroundColor: accentOrange,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                          borderRadius:
+                          BorderRadius.circular(6)),//
                     ),
                     child: Text("PO Approve"),
                   ),
@@ -905,7 +909,7 @@ class _FrmMasterVendorState extends State<FrmMasterVendor> {
   @override
   void initState() {
     super.initState();
-    txtVendorId.text = "10000";
+    txtVendorId.text = "";
     txtNamaVendor.text = "";
     txtAlamatVendor.text = "";
     txtContactPerson.text = "";
