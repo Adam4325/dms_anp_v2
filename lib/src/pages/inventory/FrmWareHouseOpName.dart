@@ -746,48 +746,27 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
     );
   }
 
-  Future<Widget?> _buildWHID(BuildContext context) async {
-    print("globals.wh_method == ${globals.wh_method != 'edit'}");
+  Widget _buildWHID(BuildContext context) {
     if (globals.wh_method != "edit") {
-      // var valWHID = "";
-      // setState(() {
-      //   valWHID = selWareHouseID;
-      // });
-      // print("valWHID ${valWHID}");
-      return new SmartSelect<String?>.single(
+      return SmartSelect<String?>.single(
         title: 'WH ID',
         selectedValue: selWareHouseID,
         placeholder: 'Pilih satu',
         onChange: (selected) {
-          print('selected.value ${selected.value}');
           setState(() {
             selWareHouseID = selected.value!;
           });
         },
         choiceItems: S2Choice.listFrom<String, Map>(
-            source: lstWareHouseID,
-            value: (index, item) => item['whswarehouseid'],
-            title: (index, item) =>
-                item['whswarehouseid'] + " - " + item['whsdescr']),
-        //choiceGrouped: true,
+          source: lstWareHouseID,
+          value: (index, item) => item['whswarehouseid'],
+          title: (index, item) => item['whswarehouseid'] + " - " + item['whsdescr'],
+        ),
         modalFilter: true,
         modalFilterAuto: true,
       );
     }
-    // return new TextField(
-    //   readOnly: true,
-    //   cursorColor: Colors.black,
-    //   style: TextStyle(color: Colors.grey.shade800),
-    //   controller: txtIDWareHouse,
-    //   keyboardType: TextInputType.text,
-    //   decoration: new InputDecoration(
-    //     fillColor: Colors.black12,
-    //     filled: true,
-    //     labelText: 'WH ID',
-    //     isDense: true,
-    //     contentPadding: EdgeInsets.all(2.0),
-    //   ),
-    // );
+    return const SizedBox();
   }
 
   Widget _builButtonUpdate(BuildContext context) {
@@ -1077,38 +1056,16 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                   style: TextStyle(
                       color: Colors.black, fontWeight: FontWeight.bold),
                 ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("Item ID : ${item['item_id']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Accesoris : ${item['idaccess']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Part Name: ${item['part_name']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Merk: ${item['merk']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Item Size: ${item['item_size']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    _kv("Item ID", (item['item_id'] ?? '').toString()),
+                    _kv("Accesoris", (item['idaccess'] ?? '').toString()),
+                    _kv("Part Name", (item['part_name'] ?? '').toString()),
+                    _kv("Merk", (item['merk'] ?? '').toString()),
+                    _kv("Item Size", (item['item_size'] ?? '').toString()),
+                  ],
+                ),
                 // trailing: Icon(Icons.keyboard_arrow_right,
                 //     color: Colors.black, size: 30.0)
               ),
@@ -1122,6 +1079,35 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
               child: Row(children: <Widget>[buildBtnAddNewItem(context, item)]),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _kv(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(top: 2, bottom: 2),
+      child: Table(
+        columnWidths: const {
+          0: IntrinsicColumnWidth(),
+          1: FixedColumnWidth(14),
+          2: FlexColumnWidth(),
+        },
+        children: [
+          TableRow(children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(label, style: TextStyle(color: Colors.black)),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: Text(":", style: TextStyle(color: Colors.black)),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(value, style: TextStyle(color: Colors.black)),
+            ),
+          ])
         ],
       ),
     );
@@ -1238,15 +1224,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                   Container(
                     margin: EdgeInsets.only(
                         left: 10, top: 10, right: 10, bottom: 10),
-                    child: FutureBuilder<Widget?>(
-                      future: _buildWHID(context),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData && snapshot.data != null) {
-                          return snapshot.data!;
-                        }
-                        return const SizedBox();
-                      },
-                    ),
+                  child: _buildWHID(context),
                   ),
                   Container(
                     margin: EdgeInsets.only(

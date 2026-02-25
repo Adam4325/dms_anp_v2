@@ -51,10 +51,10 @@ class _LoginPageState extends State<LoginPage> {
     return Future.value(false);
   }
 
-  Future<bool> _checkBiometrics() async {
-    bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
-    return canCheckBiometrics;
-  }
+  // Future<bool> _checkBiometrics() async {
+  //   bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
+  //   return canCheckBiometrics;
+  // }
 
   String _identifier = '';
   Future<void> initUniqueIdentifierState() async {

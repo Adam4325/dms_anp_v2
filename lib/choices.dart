@@ -1,4 +1,4 @@
-import 'package:json_annotation/json_annotation.dart';
+
 import 'package:awesome_select/awesome_select.dart' show S2Choice;
 
 class VehicleModel {

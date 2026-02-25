@@ -1,6 +1,4 @@
-import 'dart:math';
 import 'package:geolocator/geolocator.dart';
-import 'package:trust_location/trust_location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class GpsSecurityChecker {
@@ -9,14 +7,7 @@ class GpsSecurityChecker {
     String reason = "";
 
     try {
-      // 1️⃣ Cek Mock Location
-      // bool isMock = await TrustLocation.isMockLocation;
-      // if (isMock) {
-      //   return {
-      //     "isFake": true,
-      //     "reason": "Mock location terdeteksi"
-      //   };
-      // }
+
 
       // 2️⃣ Cek apakah GPS aktif
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();

@@ -2903,7 +2903,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
             context,
             MaterialPageRoute(
               builder: (context) => FrmSetKmByDoMixer(
-                  vehilce: item['nopol'],
+                vehilce: item['nopol'],
                 vhckm: item['vhckm'],
                 bujnbr: item['bujnbr'],
                 do_number: item['do_number'],
@@ -2940,8 +2940,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
 
       var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
-      var latitude = -6.453855;//gpsResult["latitude"] ?? 0;
-      var longitude = 106.8677426;//gpsResult["longitude"] ?? 0;
+      var latitude = -6.453855; //gpsResult["latitude"] ?? 0;
+      var longitude = 106.8677426; //gpsResult["longitude"] ?? 0;
 
       var baseURL = GlobalData.baseUrl +
           "api/do_mixer/update_status_do_mixer.jsp?method=update-status-do-mixer&bujnbr=${item['bujnbr']}"
@@ -2962,7 +2962,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
             context: globalScaffoldKey.currentContext!,
             builder: (ctx) => AlertDialog(
               title: Text("Success"),
-              content: Text(message.isNotEmpty ? message : "Update status DO berhasil"),
+              content: Text(
+                  message.isNotEmpty ? message : "Update status DO berhasil"),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -3459,15 +3460,21 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
     } else if (anpService.idKey == 25) {
       if (loginname != "DRIVER") {
-        if (!EasyLoading.isShow) {
-          EasyLoading.show();
+
+        final hasAksesPO = globals.akses_pages != null &&
+            globals.akses_pages.where((x) => x == "PO").isNotEmpty;
+        if (hasAksesPO || username == "ADMIN") {
+        //if ((hasAksesPO && username == "ADMIN") || (hasAksesPO && username == "ADMIN")) {
+          if (!EasyLoading.isShow) {
+            EasyLoading.show();
+          }
+          Timer(Duration(seconds: 1), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => PoHeaderPage()),
+            );
+          });
         }
-        Timer(Duration(seconds: 1), () {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => PoHeaderPage()),
-          );
-        });
       } else {
         _showAlert(globalScaffoldKey.currentContext!, 0,
             "Anda tidak punya akses", "error");
@@ -3554,7 +3561,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-                builder: (context) => ListOpenDOCemindo()), //ApprovedDriverRequest
+                builder: (context) =>
+                    ListOpenDOCemindo()), //ApprovedDriverRequest
           );
         });
       } else {
