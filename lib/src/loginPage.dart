@@ -238,7 +238,7 @@ class _LoginPageState extends State<LoginPage> {
           var cpyname = result["data"][0]["cpyname"];
           var ismixer = result["data"][0]["ismixer"];
           var status_karyawan = result["data"][0]["status_karyawan"];
-          var kryid = "1184-020118.81";// result["data"][0]["kryid"];
+          var kryid = result["data"][0]["kryid"];
           var login_type = result["data"][0]["login_type"];
           await getAksesMenuForeMan(_identifier);
           if (loginname != null && loginname != "DRIVER") {

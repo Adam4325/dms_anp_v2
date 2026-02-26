@@ -1251,7 +1251,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       }
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      var userid = prefs.getString("username") ?? "";
+      var userid = prefs.getString("name") ?? "";
       var vhcid = txtOpnameVHCID.text.toString().contains("/")
           ? txtOpnameVHCID.text.toString().split("/")[0]
           : txtOpnameVHCID.text.toString();
@@ -2569,6 +2569,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   void createOpnameDetail() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
+      userid = prefs.getString("username") ?? "";
       if (txtOpnameVHCID.text == null || txtOpnameVHCID.text == "") {
         alert(globalScaffoldKey.currentContext!, 0,
             "VEHICLE ID tidak boleh kosong", "error");
@@ -2621,6 +2622,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           'company': 'AN'
         };
         print(data); //DEMO
+        //return;
         final response = await http.post(
           urlEncode,
           body: data,
@@ -3374,12 +3376,13 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     }
   }
 
-  Future DeleteOpnameDetail(bool isload, String vehicle_id, String id) async {
+  Future DeleteOpnameDetail(bool isload, String vehicle_id, String id,String itemid) async {
     try {
       EasyLoading.show();
+      var nomor_sr = txtOpnameWONUMBER.text;
       //"${BASE_URL}api/maintenance/sr/delete_opname_sr_detail.jsp?method=delete-detail&vhcid=${vehicle_id}&id=${id}&userid=${userid.toUpperCase()}";
       var urlData =
-          "${BASE_URL}api/maintenance/sr/delete_opname_sr_detail.jsp?method=delete-detail&vhcid=${vehicle_id}&id_header=${id_header}&id=${id}&userid=${userid.toUpperCase()}";
+          "${BASE_URL}api/maintenance/sr/delete_opname_sr_detail.jsp?method=delete-detail&vhcid=${vehicle_id}&id_header=${id_header}&id=${id}&userid=${userid.toUpperCase()}&itemid=${itemid}&nomor_sr=${nomor_sr}";
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);
@@ -8299,7 +8302,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     alert(globalScaffoldKey.currentContext!, 2,
                         "Id tidak boleh kosong", "warning");
                   } else {
-                    await DeleteOpnameDetail(true, item['vhcid'], item['id']);
+                    await DeleteOpnameDetail(true, item['vhcid'], item['id'],item['itemid']);
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -11265,7 +11268,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                           child: Row(
                                             children: [
                                               Expanded(
-                                                  child: Text('List Detail',
+                                                  child: Text('List Detail', //DETAIL PR
                                                       style: TextStyle(
                                                           fontWeight: FontWeight
                                                               .bold))),
