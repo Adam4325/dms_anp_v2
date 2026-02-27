@@ -249,16 +249,11 @@ class _PoDetailState extends State<PoDetail> {
                               fontWeight: FontWeight.bold,
                               color: darkOrange)),
                       SizedBox(height: 6),
-                      buildRowLabelValue("Item ID:",
-                          Text(item['itditemid'] ?? '', style: TextStyle(fontSize: 12))),
-                      buildRowLabelValue("Genuine No:",
-                          Text(item['genuineno'] ?? '', style: TextStyle(fontSize: 12))),
-                      buildRowLabelValue("Merk:",
-                          Text(item['merk'] ?? '', style: TextStyle(fontSize: 12))),
-                      buildRowLabelValue("Harga:",
-                          Text(item['harga'] ?? '', style: TextStyle(fontSize: 12))),
-                      buildRowLabelValue("Qty Pesan:",
-                          Text(item['qty_pesan'] ?? '', style: TextStyle(fontSize: 12))),
+                      _kv("Item ID", (item['itditemid'] ?? '').toString()),
+                      _kv("Genuine No", (item['genuineno'] ?? '').toString()),
+                      _kv("Merk", (item['merk'] ?? '').toString()),
+                      _kv("Harga", (item['harga'] ?? '').toString()),
+                      _kv("Qty Pesan", (item['qty_pesan'] ?? '').toString()),
                       buildRowLabelValue(
                         "Qty Terima:",
                         TextField(
@@ -281,7 +276,7 @@ class _PoDetailState extends State<PoDetail> {
           ),
           Container(
             width: double.infinity,
-            margin: EdgeInsets.all(12),
+            margin: EdgeInsets.fromLTRB(12, 12, 12, 60),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: accentOrange,
                 foregroundColor: Colors.white,
@@ -292,6 +287,29 @@ class _PoDetailState extends State<PoDetail> {
               onPressed: confirmUpdate,
               child: Text("Update", style: TextStyle(fontSize: 16)),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _kv(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          ),
+          const SizedBox(
+            width: 10,
+            child: Text(":", textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
+          ),
+          Expanded(
+            flex: 5,
+            child: Text(value, textAlign: TextAlign.right, style: TextStyle(fontSize: 12)),
           ),
         ],
       ),

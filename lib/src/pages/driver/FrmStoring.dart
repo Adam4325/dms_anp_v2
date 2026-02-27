@@ -235,6 +235,7 @@ class _FrmStoringState extends State<FrmStoring> {
     SharedPreferences prefs =
         await SharedPreferences.getInstance(); // SEMENTARA
     print('prefs.getString("vhcidfromdo")${prefs.getString("vhcidfromdo")}');
+    String imeiid = prefs.getString("androidID")!;
     vhcid = prefs.getString("vhcidfromdo") ?? "";
     //vhcid = 'B 9189 KYW';
     if (vhcid != null && vhcid != "") {
@@ -244,7 +245,7 @@ class _FrmStoringState extends State<FrmStoring> {
       locid = prefs.getString("locid") ?? "";
       String name = prefs.getString("name") ?? "";
       var urlData =
-          "${GlobalData.baseUrl}api/update_km_vehicle.jsp?method=update_vhc&vhcid=" +
+          "${GlobalData.baseUrl}api/update_km_vehicle.jsp?method=update_vhc&imeiid=${imeiid}&vhcid=" +
               vhcid +
               "&vhckm=" +
               vhckm +
@@ -327,6 +328,7 @@ class _FrmStoringState extends State<FrmStoring> {
     String km = "";
     SharedPreferences prefs =
         await SharedPreferences.getInstance(); // SEMENTARA
+    String imeiid = prefs.getString("androidID")!;
     print('prefs.getString("vhcidfromdo")${prefs.getString("vhcidfromdo")}');
     var _vhcid =
         (vhcid == null || vhcid == '') ? (prefs.getString("vhcidfromdo") ?? "") : vhcid;
@@ -338,7 +340,7 @@ class _FrmStoringState extends State<FrmStoring> {
       locid = prefs.getString("locid") ?? "";
       String name = prefs.getString("name") ?? "";
       var urlData =
-          "${GlobalData.baseUrl}api/update_km_vehicle.jsp?method=update_vhc-standby&vhcid=" +
+          "${GlobalData.baseUrl}api/update_km_vehicle.jsp?method=update_vhc-standby&imeiid=${imeiid}&vhcid=" +
               _vhcid +
               "&vhckm=" +
               vhckm +

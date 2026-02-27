@@ -51,7 +51,7 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
         context, MaterialPageRoute(builder: (context) => ViewDashboard()));
   }
 
-  Future<void> fetchPoData(String search) async {
+  Future<void> fetchPoData(String search) async {//OUTSTANDING
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var username = prefs.getString('name');
     setState(() {
@@ -274,77 +274,49 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: <Widget>[
-                                            Text(
-                                                "Vendor: ${po['vendorid'] ?? ''}",
-                                                style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.black87)),
-                                            SizedBox(height: 2),
-                                            Text(
-                                                "Warehouse: ${po['towarehouse'] ?? ''}",
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    color:
-                                                        Colors.grey.shade600)),
-                                            Text(po['podate'] ?? '',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.black87)),
-                                            SizedBox(height: 2),
-                                            Text(
-                                                "Status: ${po['postatus'] ?? ''}",
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.black87)),
-                                            SizedBox(height: 2),
-                                            Text("Type: ${po['typepo'] ?? ''}",
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.black87)),
-                                            SizedBox(height: 2),
-                                            Text("Loc: ${po['locid'] ?? ''}",
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.black87)),
-                                            SizedBox(height: 2),
-                                            Text(//
-                                                po['ponotes'] ??
-                                                    po['notes'] ??
-                                                    '',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.black87)),
-                                            SizedBox(height: 2),
+                                            _kv("CpyName", (po['cpyname'] ?? '').toString()),
+                                            _kv("PoNBR", (po['ponbr'] ?? '').toString()),
+                                            _kv("Warehouse", (po['towarehouse'] ?? '').toString()),
+                                            _kv("Po Date", (po['podate'] ?? '').toString()),
+                                            // _kv("Status", (po['postatus'] ?? '').toString()),
+                                            // _kv("Type", (po['typepo'] ?? '').toString()),
+                                            _kv("Loc", (po['locid'] ?? '').toString()),
+                                            _kv("Notes", (po['notes'] ?? '').toString()),
+                                            SizedBox(height: 8),
+                                            Row(
+                                              children: [
+                                                ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: accentOrange,
+                                                    foregroundColor: Colors.white,
+                                                    elevation: 0,
+                                                    padding: EdgeInsets.symmetric(
+                                                        horizontal: 12, vertical: 8),
+                                                    shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(6)),
+                                                  ),
+                                                  onPressed: () {
+                                                    if (!EasyLoading.isShow) {
+                                                      EasyLoading.show();
+                                                    }
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            PoDetail(ponbr: po['ponbr']),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: Text("Detail",
+                                                      style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight: FontWeight.w500)),
+                                                ),
+                                              ],
+                                            ),
                                           ],
                                         ),
-                                      ),
-                                      trailing: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: accentOrange,
-                                          foregroundColor: Colors.white,
-                                          elevation: 0,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 12, vertical: 8),
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(6)),//
-                                        ),
-                                        onPressed: () {
-                                          if (!EasyLoading.isShow) {
-                                            EasyLoading.show();
-                                          }
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  PoDetail(ponbr: po['ponbr']),
-                                            ),
-                                          );
-                                        },
-                                        child: Text("Detail",
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w500)),
                                       ),
                                     ),
                                   );

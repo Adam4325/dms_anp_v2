@@ -171,12 +171,14 @@ class _FormStoringState extends State<FormStoring> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       var drVID = prefs.getString("drvid")!;
       String vhCID = prefs.getString("vhcid")!;
+      String imeiid = prefs.getString("androidID")!;
       String name_event = prefs.getString("name_event")!;
       var dataParam = {
         "method": "update-or-insert-log",
         "drvid": drVID.toString(),
         "vhcid": vhCID.toString(),
         "name_event": name_event,
+        "imeiid": imeiid,
         "is_used": "0"
       };
       var urlData = "${GlobalData.baseUrl}api/log_receive_do.jsp";
@@ -202,6 +204,7 @@ class _FormStoringState extends State<FormStoring> {
     String name_event = prefs.getString("name_event")!;
     String driver_id = prefs.getString("drvid")!;
     String bujnumber = prefs.getString("bujnumber")!;
+    String imeiid = prefs.getString("androidID")!;
     if (pr?.isShowing() == false) {
       await pr?.show();
     }
@@ -213,7 +216,7 @@ class _FormStoringState extends State<FormStoring> {
               loginname +
               "&name_event=" +
               name_event +
-              "&drvid=${driver_id}&bujnumber=${bujnumber}";
+              "&drvid=${driver_id}&bujnumber=${bujnumber}&imeiid=${imeiid}";
       var encoded = Uri.encodeFull(urlData);
       Uri myUri = Uri.parse(encoded);
       print(encoded);
@@ -287,6 +290,8 @@ class _FormStoringState extends State<FormStoring> {
       String typereq) async {
     EasyLoading.show();
     try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String imeiid = prefs.getString("androidID")!;
       var notes = txtNOTES.text;
       var lon = txtLon.text;
       var lat = txtLat.text;
@@ -295,7 +300,7 @@ class _FormStoringState extends State<FormStoring> {
       var urlData =
           "${GlobalData.baseUrl}api/maintenance/req_service_driver.jsp?method=set-service-v2" +
               "&vhcid=${vhcid}&locid=${locid}&drvid=${drvid}&vhckm=${vhckm}&vhckm=${vhckm}"
-                  "&typereq=STORING&userid=${userid}&dlodate=&notes=${notes}&notelpon=${notelpon}&lat=${lat}&lon=${lon}&address=${address}";
+                  "&typereq=STORING&userid=${userid}&dlodate=&notes=${notes}&notelpon=${notelpon}&lat=${lat}&lon=${lon}&address=${address}&imeiid${imeiid}";
 
       var encoded = Uri.encodeFull(urlData);
       Uri myUri = Uri.parse(encoded);
@@ -397,56 +402,6 @@ class _FormStoringState extends State<FormStoring> {
     return address;
   }
 
-  Future<bool> updatePositionOld(String inorout) async {
-    var isOutGeo = false;
-    var address = "";
-    print("userLocation");
-    print(userLocation);
-    print(listGeofence);
-    if (userLocation != null) {
-      //userLocation.latitude = -6.453748413956308;
-      //userLocation.longitude = 106.8842482566833;
-      if (listGeofence.length > 0) {
-        txtAddr = "";
-        var radiusOld = 0.0;
-        var geo_idOld = -1;
-        var geo_nmOld = "";
-        var isValid = false;
-        var lat_osm = "";
-        var lon_osm = "";
-
-        for (var i = 0; i < listGeofence.length; i++) {
-          var a = listGeofence[i];
-          var radius = double.parse(a['radius']);
-          var distanceBetweenPoints = SphericalUtil.computeDistanceBetween(
-              LatLng(double.parse(a['lat']), double.parse(a['lon'])),
-              LatLng(-6.453748413956308, 106.8842482566833));
-          //LatLng(userLocation.latitude, userLocation.longitude));
-          // print(
-          //     'distanceBetweenPoints ${distanceBetweenPoints} meter ${distanceBetweenPoints / 1000} KM');
-          geo_idOld = -1;
-          print('radius ${radius}');
-          if (distanceBetweenPoints <= radius) {
-            radiusOld = radius;
-            geo_idOld = int.parse(a['geo_id']);
-            geo_nmOld = a['name'];
-          }
-        }
-        print("geo_nmOld ${geo_nmOld} ${geo_idOld}");
-        //geo_nmOld="";
-        if (geo_idOld == -1) {
-          isOutGeo = true;
-        } else {
-          isOutGeo = false;
-        }
-      }
-    } else {
-      print('No location');
-      isOutGeo = false;
-      _getLocation();
-    }
-    return isOutGeo;
-  }
 
   Future<bool> updatePosition(String inorout) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
