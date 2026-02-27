@@ -78,7 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
     print('🔍 DEBUG: MyHomePage initState called');
 
     // Delay sedikit untuk memastikan context siap
-    Future.delayed(Duration(milliseconds: 100), () {
+    Future.delayed(Duration(milliseconds: 100), () {//
       _requestPermissions();
     });
   }

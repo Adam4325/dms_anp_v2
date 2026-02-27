@@ -307,7 +307,7 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                                     fontSize: 12,
                                                     color: Colors.black87)),
                                             SizedBox(height: 2),
-                                            Text(
+                                            Text(//
                                                 po['ponotes'] ??
                                                     po['notes'] ??
                                                     '',
@@ -402,174 +402,131 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: <Widget>[
-                                            Text(po['cpyname'] ?? '',
-                                                style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.black87)),
-                                            SizedBox(height: 2),
-                                            Text(
-                                                "Warehouse: ${po['towarehouse'] ?? ''}",
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    color:
-                                                        Colors.grey.shade600)),
-                                            Text(po['podate'] ?? '',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.black87)),
-                                            SizedBox(height: 2),
-                                            Text(po['notes'] ?? '',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.black87)),
-                                            SizedBox(height: 2),
+                                            _kv("Warehouse", (po['towarehouse'] ?? '').toString()),
+                                            _kv("Po Date", (po['podate'] ?? '').toString()),
+                                            _kv("Vendor ID", (po['vendorid'] ?? '').toString()),
+                                            _kv("Po Notes", (po['ponotes'] ?? '').toString()),
+                                            _kv("Notes", (po['notes'] ?? '').toString()),
+                                            SizedBox(height: 8),
+                                            Row(
+                                              children: [
+                                                ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: accentOrange,
+                                                    foregroundColor: Colors.white,
+                                                    elevation: 0,
+                                                    padding: EdgeInsets.symmetric(
+                                                        horizontal: 12, vertical: 8),
+                                                    shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(6)),
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) => ViewDetailApproved(ponbr: po['ponbr'].toString()),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: Text("Detail",
+                                                      style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w500)),
+                                                ),
+                                                SizedBox(width: 8),
+                                                ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.deepOrange,
+                                                    foregroundColor: Colors.white,
+                                                    elevation: 0,
+                                                    padding: EdgeInsets.symmetric(
+                                                        horizontal: 12, vertical: 8),
+                                                    shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(6)),
+                                                  ),
+                                                  onPressed: () async {
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (ctx) => AlertDialog(
+                                                        title: Text('Konfirmasi'),
+                                                        content: Text(
+                                                            'Approve PO ${po['ponbr']}?'),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(ctx),
+                                                            child: Text('Batal'),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () async {
+                                                              Navigator.pop(ctx);
+                                                              if (!EasyLoading.isShow) {
+                                                                EasyLoading.show();
+                                                              }
+                                                              try {
+                                                                final uri = Uri.parse(
+                                                                    GlobalData.baseUrl +
+                                                                        'api/po/approved_po.jsp?method=approve-po&ponbr=${po['ponbr']}');
+                                                                final res = await http
+                                                                    .get(uri)
+                                                                    .timeout(Duration(seconds: 30));
+                                                                if (res.statusCode == 200) {
+                                                                  final body = json.decode(res.body);
+                                                                  final code = body is Map ? body['status_code'] : null;
+                                                                  final msg = body is Map ? (body['message']?.toString() ?? '') : '';
+                                                                  if (code == '200' || code == 200) {
+                                                                    alert(
+                                                                        globalScaffoldKey.currentContext!,
+                                                                        1,
+                                                                        msg.isNotEmpty ? msg : 'PO berhasil di-approve',
+                                                                        'success');
+                                                                    await fetchPoApprovedData(searchApprovedQuery);
+                                                                    await fetchPoData(searchQuery);
+                                                                  } else {
+                                                                    alert(
+                                                                        globalScaffoldKey.currentContext!,
+                                                                        0,
+                                                                        msg.isNotEmpty ? msg : 'Gagal approve PO',
+                                                                        'error');
+                                                                  }
+                                                                } else {
+                                                                  alert(
+                                                                      globalScaffoldKey.currentContext!,
+                                                                      0,
+                                                                      'Server error: ${res.statusCode}',
+                                                                      'error');
+                                                                }
+                                                              } catch (e) {
+                                                                alert(
+                                                                    globalScaffoldKey.currentContext!,
+                                                                    2,
+                                                                    'Please check your internet connection.',
+                                                                    'warning');
+                                                              } finally {
+                                                                if (EasyLoading.isShow) {
+                                                                  EasyLoading.dismiss();
+                                                                }
+                                                              }
+                                                            },
+                                                            child: Text('Approve'),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: Text("Approved",
+                                                      style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.w500)),
+                                                ),
+                                              ],
+                                            ),
                                           ],
                                         ),
-                                      ),
-                                      trailing: Wrap(
-                                        spacing: 8,
-                                        children: [
-                                          ElevatedButton(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: accentOrange,
-                                              foregroundColor: Colors.white,
-                                              elevation: 0,
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 12, vertical: 8),
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(6)),//
-                                            ),
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => ViewDetailApproved(ponbr: po['ponbr'].toString()),
-                                                ),
-                                              );
-                                            },
-                                            child: Text("Detail",
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.w500)),
-                                          ),
-                                          ElevatedButton(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.deepOrange,
-                                              foregroundColor: Colors.white,
-                                              elevation: 0,
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 12, vertical: 8),
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                  BorderRadius.circular(6)),//
-                                            ),
-                                            onPressed: () async {
-                                              showDialog(
-                                                context: context,
-                                                builder: (ctx) => AlertDialog(
-                                                  title: Text('Konfirmasi'),
-                                                  content: Text(
-                                                      'Approve PO ${po['ponbr']}?'),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(ctx),
-                                                      child: Text('Batal'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () async {
-                                                        Navigator.pop(ctx);
-                                                        if (!EasyLoading
-                                                            .isShow) {
-                                                          EasyLoading.show();
-                                                        }
-                                                        try {
-                                                          final uri = Uri.parse(
-                                                              GlobalData
-                                                                      .baseUrl +
-                                                                  'api/po/approved_po.jsp?method=approve-po&ponbr=${po['ponbr']}');
-                                                          final res = await http
-                                                              .get(uri)
-                                                              .timeout(Duration(
-                                                                  seconds: 30));
-                                                          if (res.statusCode ==
-                                                              200) {
-                                                            final body =
-                                                                json.decode(
-                                                                    res.body);
-                                                            final code = body
-                                                                    is Map
-                                                                ? body[
-                                                                    'status_code']
-                                                                : null;
-                                                            final msg = body
-                                                                    is Map
-                                                                ? (body['message']
-                                                                        ?.toString() ??
-                                                                    '')
-                                                                : '';
-                                                            if (code == '200' ||
-                                                                code == 200) {
-                                                              alert(
-                                                                  globalScaffoldKey
-                                                                      .currentContext!,
-                                                                  1,
-                                                                  msg.isNotEmpty
-                                                                      ? msg
-                                                                      : 'PO berhasil di-approve',
-                                                                  'success');
-                                                              await fetchPoApprovedData(
-                                                                  searchApprovedQuery);
-                                                              await fetchPoData(
-                                                                  searchQuery);
-                                                            } else {
-                                                              alert(
-                                                                  globalScaffoldKey
-                                                                      .currentContext!,
-                                                                  0,
-                                                                  msg.isNotEmpty
-                                                                      ? msg
-                                                                      : 'Gagal approve PO',
-                                                                  'error');
-                                                            }
-                                                          } else {
-                                                            alert(
-                                                                globalScaffoldKey
-                                                                    .currentContext!,
-                                                                0,
-                                                                'Server error: ${res.statusCode}',
-                                                                'error');
-                                                          }
-                                                        } catch (e) {
-                                                          alert(
-                                                              globalScaffoldKey
-                                                                  .currentContext!,
-                                                              2,
-                                                              'Please check your internet connection.',
-                                                              'warning');
-                                                        } finally {
-                                                          if (EasyLoading
-                                                              .isShow) {
-                                                            EasyLoading
-                                                                .dismiss();
-                                                          }
-                                                        }
-                                                      },
-                                                      child: Text('Approve'),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                            child: Text("Approved",
-                                                style: TextStyle(
-                                                    fontSize: 13,
-                                                    fontWeight:
-                                                        FontWeight.w500)),
-                                          ),
-                                        ],
                                       ),
                                     ),
                                   );
@@ -591,6 +548,40 @@ class FrmPoHeader extends StatefulWidget {
   const FrmPoHeader({Key? key, required this.po}) : super(key: key);
   @override
   State<FrmPoHeader> createState() => _FrmPoHeaderState();
+}
+
+Widget _kv(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 2),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 3,
+          child: Text(
+            label,
+            style: const TextStyle(color: Colors.black87, fontSize: 12),
+          ),
+        ),
+        const SizedBox(
+          width: 10,
+          child: Text(
+            ":",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black87, fontSize: 12),
+          ),
+        ),
+        Expanded(
+          flex: 5,
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(color: Colors.black87, fontSize: 12),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _FrmPoHeaderState extends State<FrmPoHeader> {
