@@ -229,10 +229,10 @@ class _ViewDetailApprovedState extends State<ViewDetailApproved> {
     );
   }
 
-  Future<void> _showHargaDialog(String partname, String merk) async {
+  Future<void> _showHargaDialog(String partname, String merk) async {//
     try {
       final uri = Uri.parse(
-          "https://apps.tuluatas.com/trucking/mobile/api/po/list_cek_harga.jsp?method=cek-harga-barang&partname=${Uri.encodeComponent(partname)}&merk=${Uri.encodeComponent(merk)}");
+         GlobalData.baseUrl + "api/po/list_cek_harga.jsp?method=cek-harga-barang&partname=${Uri.encodeComponent(partname)}&merk=${Uri.encodeComponent(merk)}");
       final res = await http.get(uri).timeout(const Duration(seconds: 30));
       if (res.statusCode == 200) {
         final body = json.decode(res.body);
@@ -272,33 +272,42 @@ class _ViewDetailApprovedState extends State<ViewDetailApproved> {
                         itemCount: list.length,
                         itemBuilder: (ctx, i) {
                           final m = list[i] as Map<String, dynamic>;
-                          final c4 = _rupiah(m['COL_4']);
-                          final c13 = _rupiah(m['COL_13']);
-                          final c12 = _rupiah(m['COL_12']);
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _kv("COL_0", (m['COL_0'] ?? '').toString()),
-                                _kv("COL_1", (m['COL_1'] ?? '').toString()),//
-                                _kv("COL_2", (m['COL_2'] ?? '').toString()),
-                                _kv("COL_3", (m['COL_3'] ?? '').toString()),
-                                _kv("COL_4", c4),
-                                _kv("COL_5", (m['COL_5'] ?? '').toString()),
-                                _kv("COL_6", (m['COL_6'] ?? '').toString()),
-                                _kv("COL_7", (m['COL_7'] ?? '').toString()),
-                                _kv("COL_8", (m['COL_8'] ?? '').toString()),
-                                _kv("COL_9", (m['COL_9'] ?? '').toString()),
-                                _kv("COL_10", (m['COL_10'] ?? '').toString()),
-                                _kv("COL_11", (m['COL_11'] ?? '').toString()),
-                                _kv("COL_13", c13),
-                                _kv("COL_12", c12),
-                                _kv("COL_14", (m['COL_14'] ?? '').toString()),
-                                _kv("COL_15", (m['COL_15'] ?? '').toString()),
-                                _kv("COL_16", (m['COL_16'] ?? '').toString()),
-                              ],
-                            ),
+                          final hargaSatuan = _rupiah(m['HARGASATUAN']);
+                          final unitCost = _rupiah(m['ITDUNITCOST']);
+                          final extCost = _rupiah(m['ITDEXTCOST']);
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (list.length > 1 && i > 0)
+                                Container(
+                                  height: 1,
+                                  color: const Color(0xFFE0E0E0),
+                                  margin: const EdgeInsets.symmetric(vertical: 8),
+                                ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _kv("PONBR", (m['PONBR'] ?? '').toString()),
+                                    _kv("PARTNAME", (m['PARTNAME'] ?? '').toString()),
+                                    _kv("MERK", (m['MERK'] ?? '').toString()),
+                                    _kv("IDTYPE", (m['IDTYPE'] ?? '').toString()),
+                                    _kv("ITDITEMID", (m['ITDITEMID'] ?? '').toString()),
+                                    _kv("IDACCESS", (m['IDACCESS'] ?? '').toString()),
+                                    _kv("UOMID", (m['UOMID'] ?? '').toString()),
+                                    _kv("HARGASATUAN", hargaSatuan),
+                                    _kv("ITDUNITCOST", unitCost),
+                                    _kv("ITDEXTCOST", extCost),
+                                    _kv("TGL", (m['TGL'] ?? '').toString()),
+                                    _kv("CPYNAME", (m['CPYNAME'] ?? '').toString()),
+                                    _kv("CPYPHONE1", (m['CPYPHONE1'] ?? '').toString()),
+                                    _kv("SIZEA", (m['SIZEA'] ?? '').toString()),
+                                    _kv("TYPETRUCK", (m['TYPETRUCK'] ?? '').toString()),
+                                  ],
+                                ),
+                              ),
+                            ],
                           );
                         },
                       ),
