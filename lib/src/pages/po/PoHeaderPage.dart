@@ -51,17 +51,21 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
         context, MaterialPageRoute(builder: (context) => ViewDashboard()));
   }
 
-  Future<void> fetchPoData(String search) async {//OUTSTANDING
+  Future<void> fetchPoData(String search) async {
+    //OUTSTANDING
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var username = prefs.getString('name');
     setState(() {
       isLoading = true;
     });
+    // final hasAksesPO = globals.akses_pages != null &&
+    //     globals.akses_pages.where((x) => (x == "PO" && username=="ADMIN") || (x == "PO" && username=="BUDI") || (x == "PO" && username=="BUDI")).isNotEmpty;
     final hasAksesPO = globals.akses_pages != null &&
-        globals.akses_pages.where((x) => x == "PO").isNotEmpty;
-    if ((hasAksesPO && username == "ADMIN") ||
-        (hasAksesPO && username == "BUDI") ||
-        (hasAksesPO && username == "ETIENNE")) {
+        globals.akses_pages
+            .where((x) => x == "PO" || username == "ADMIN")
+            .isNotEmpty;
+    print('hakases ${username}');
+    if (hasAksesPO) {
       try {
         var baseUrl = GlobalData.baseUrl +
             'api/po/po_header.jsp?method=list-po-header&search=$search';
@@ -111,37 +115,49 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
   }
 
   Future<void> fetchPoApprovedData(String search) async {
-    setState(() {
-      isLoadingApproved = true;
-    });
-    try {
-      var baseUrl = GlobalData.baseUrl +
-          'api/po/list_approved_po.jsp?method=list-po' +
-          (search.isNotEmpty ? '&search=$search' : '');
-      print(baseUrl);
-      var url = Uri.parse(baseUrl);
-      var res = await http.get(url);
-      if (res.statusCode == 200) {
-        var body = json.decode(res.body);
-        if (body is Map &&
-            (body['status_code'] == '200' || body['status_code'] == 200)) {
-          setState(() {
-            poApprovedList = body['data'] ?? [];
-            isLoadingApproved = false;
-          });
-        } else {
-          setState(() {
-            poApprovedList = [];
-            isLoadingApproved = false;
-          });
-        }
-      } else {
-        throw Exception("Failed to load approved data");
-      }
-    } catch (e) {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var username = prefs.getString('name');
+    final hasAksesPO = globals.akses_pages != null &&
+        globals.akses_pages
+            .where((x) =>
+                (x == "PO" && username == "ADMIN") ||
+                (x == "PO" && username == "BUDI") ||
+                (x == "PO" && username == "BUDI"))
+            .isNotEmpty;
+    print('hasAksesPO Approved');
+    if (hasAksesPO) {
       setState(() {
-        isLoadingApproved = false;
+        isLoadingApproved = true;
       });
+      try {
+        var baseUrl = GlobalData.baseUrl +
+            'api/po/list_approved_po.jsp?method=list-po' +
+            (search.isNotEmpty ? '&search=$search' : '');
+        print(baseUrl);
+        var url = Uri.parse(baseUrl);
+        var res = await http.get(url);
+        if (res.statusCode == 200) {
+          var body = json.decode(res.body);
+          if (body is Map &&
+              (body['status_code'] == '200' || body['status_code'] == 200)) {
+            setState(() {
+              poApprovedList = body['data'] ?? [];
+              isLoadingApproved = false;
+            });
+          } else {
+            setState(() {
+              poApprovedList = [];
+              isLoadingApproved = false;
+            });
+          }
+        } else {
+          throw Exception("Failed to load approved data");
+        }
+      } catch (e) {
+        setState(() {
+          isLoadingApproved = false;
+        });
+      }
     }
   }
 
@@ -274,27 +290,47 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: <Widget>[
-                                            _kv("CpyName", (po['cpyname'] ?? '').toString()),
-                                            _kv("PoNBR", (po['ponbr'] ?? '').toString()),
-                                            _kv("Warehouse", (po['towarehouse'] ?? '').toString()),
-                                            _kv("Po Date", (po['podate'] ?? '').toString()),
+                                            _kv(
+                                                "CpyName",
+                                                (po['cpyname'] ?? '')
+                                                    .toString()),
+                                            _kv("PoNBR",
+                                                (po['ponbr'] ?? '').toString()),
+                                            _kv(
+                                                "Warehouse",
+                                                (po['towarehouse'] ?? '')
+                                                    .toString()),
+                                            _kv(
+                                                "Po Date",
+                                                (po['podate'] ?? '')
+                                                    .toString()),
                                             // _kv("Status", (po['postatus'] ?? '').toString()),
                                             // _kv("Type", (po['typepo'] ?? '').toString()),
-                                            _kv("Loc", (po['locid'] ?? '').toString()),
-                                            _kv("Notes", (po['notes'] ?? '').toString()),
+                                            _kv("Loc",
+                                                (po['locid'] ?? '').toString()),
+                                            _kv("Notes",
+                                                (po['notes'] ?? '').toString()),
                                             SizedBox(height: 8),
                                             Row(
                                               children: [
                                                 ElevatedButton(
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: accentOrange,
-                                                    foregroundColor: Colors.white,
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        accentOrange,
+                                                    foregroundColor:
+                                                        Colors.white,
                                                     elevation: 0,
-                                                    padding: EdgeInsets.symmetric(
-                                                        horizontal: 12, vertical: 8),
-                                                    shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(6)),
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            horizontal: 12,
+                                                            vertical: 8),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        6)),
                                                   ),
                                                   onPressed: () {
                                                     if (!EasyLoading.isShow) {
@@ -304,14 +340,17 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (context) =>
-                                                            PoDetail(ponbr: po['ponbr']),
+                                                            PoDetail(
+                                                                ponbr: po[
+                                                                    'ponbr']),
                                                       ),
                                                     );
                                                   },
                                                   child: Text("Detail",
                                                       style: TextStyle(
                                                           fontSize: 13,
-                                                          fontWeight: FontWeight.w500)),
+                                                          fontWeight:
+                                                              FontWeight.w500)),
                                                 ),
                                               ],
                                             ),
@@ -374,30 +413,55 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: <Widget>[
-                                            _kv("Warehouse", (po['towarehouse'] ?? '').toString()),
-                                            _kv("Po Date", (po['podate'] ?? '').toString()),
-                                            _kv("Vendor ID", (po['vendorid'] ?? '').toString()),
-                                            _kv("Po Notes", (po['ponotes'] ?? '').toString()),
-                                            _kv("Notes", (po['notes'] ?? '').toString()),
+                                            _kv(
+                                                "Warehouse",
+                                                (po['towarehouse'] ?? '')
+                                                    .toString()),
+                                            _kv(
+                                                "Po Date",
+                                                (po['podate'] ?? '')
+                                                    .toString()),
+                                            _kv(
+                                                "Vendor ID",
+                                                (po['vendorid'] ?? '')
+                                                    .toString()),
+                                            _kv(
+                                                "Po Notes",
+                                                (po['ponotes'] ?? '')
+                                                    .toString()),
+                                            _kv("Notes",
+                                                (po['notes'] ?? '').toString()),
                                             SizedBox(height: 8),
                                             Row(
                                               children: [
                                                 ElevatedButton(
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: accentOrange,
-                                                    foregroundColor: Colors.white,
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        accentOrange,
+                                                    foregroundColor:
+                                                        Colors.white,
                                                     elevation: 0,
-                                                    padding: EdgeInsets.symmetric(
-                                                        horizontal: 12, vertical: 8),
-                                                    shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(6)),
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            horizontal: 12,
+                                                            vertical: 8),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        6)),
                                                   ),
                                                   onPressed: () {
                                                     Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
-                                                        builder: (context) => ViewDetailApproved(ponbr: po['ponbr'].toString()),
+                                                        builder: (context) =>
+                                                            ViewDetailApproved(
+                                                                ponbr: po[
+                                                                        'ponbr']
+                                                                    .toString()),
                                                       ),
                                                     );
                                                   },
@@ -409,81 +473,135 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                                 ),
                                                 SizedBox(width: 8),
                                                 ElevatedButton(
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Colors.deepOrange,
-                                                    foregroundColor: Colors.white,
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.deepOrange,
+                                                    foregroundColor:
+                                                        Colors.white,
                                                     elevation: 0,
-                                                    padding: EdgeInsets.symmetric(
-                                                        horizontal: 12, vertical: 8),
-                                                    shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(6)),
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            horizontal: 12,
+                                                            vertical: 8),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        6)),
                                                   ),
                                                   onPressed: () async {
                                                     showDialog(
                                                       context: context,
-                                                      builder: (ctx) => AlertDialog(
-                                                        title: Text('Konfirmasi'),
+                                                      builder: (ctx) =>
+                                                          AlertDialog(
+                                                        title:
+                                                            Text('Konfirmasi'),
                                                         content: Text(
                                                             'Approve PO ${po['ponbr']}?'),
                                                         actions: [
                                                           TextButton(
                                                             onPressed: () =>
-                                                                Navigator.pop(ctx),
-                                                            child: Text('Batal'),
+                                                                Navigator.pop(
+                                                                    ctx),
+                                                            child:
+                                                                Text('Batal'),
                                                           ),
                                                           TextButton(
-                                                            onPressed: () async {
-                                                              Navigator.pop(ctx);
-                                                              if (!EasyLoading.isShow) {
-                                                                EasyLoading.show();
+                                                            onPressed:
+                                                                () async {
+                                                              Navigator.pop(
+                                                                  ctx);
+                                                              SharedPreferences
+                                                                  prefs =
+                                                                  await SharedPreferences
+                                                                      .getInstance();
+                                                              var username =
+                                                                  prefs.getString(
+                                                                      'name');
+                                                              if (!EasyLoading
+                                                                  .isShow) {
+                                                                EasyLoading
+                                                                    .show();
                                                               }
                                                               try {
-                                                                final uri = Uri.parse(
-                                                                    GlobalData.baseUrl +
-                                                                        'api/po/approved_po.jsp?method=approve-po&ponbr=${po['ponbr']}');
+                                                                final uri = Uri
+                                                                    .parse(GlobalData
+                                                                            .baseUrl +
+                                                                        'api/po/approved_po.jsp?method=approve-po&ponbr=${po['ponbr']}&userid=${username}');
                                                                 final res = await http
                                                                     .get(uri)
-                                                                    .timeout(Duration(seconds: 30));
-                                                                if (res.statusCode == 200) {
-                                                                  final body = json.decode(res.body);
-                                                                  final code = body is Map ? body['status_code'] : null;
-                                                                  final msg = body is Map ? (body['message']?.toString() ?? '') : '';
-                                                                  if (code == '200' || code == 200) {
+                                                                    .timeout(Duration(
+                                                                        seconds:
+                                                                            30));
+                                                                if (res.statusCode ==
+                                                                    200) {
+                                                                  final body = json
+                                                                      .decode(res
+                                                                          .body);
+                                                                  final code = body
+                                                                          is Map
+                                                                      ? body[
+                                                                          'status_code']
+                                                                      : null;
+                                                                  final msg = body
+                                                                          is Map
+                                                                      ? (body['message']
+                                                                              ?.toString() ??
+                                                                          '')
+                                                                      : '';
+                                                                  if (code ==
+                                                                          '200' ||
+                                                                      code ==
+                                                                          200) {
                                                                     alert(
-                                                                        globalScaffoldKey.currentContext!,
+                                                                        globalScaffoldKey
+                                                                            .currentContext!,
                                                                         1,
-                                                                        msg.isNotEmpty ? msg : 'PO berhasil di-approve',
+                                                                        msg.isNotEmpty
+                                                                            ? msg
+                                                                            : 'PO berhasil di-approve',
                                                                         'success');
-                                                                    await fetchPoApprovedData(searchApprovedQuery);
-                                                                    await fetchPoData(searchQuery);
+                                                                    await fetchPoApprovedData(
+                                                                        searchApprovedQuery);
+                                                                    await fetchPoData(
+                                                                        searchQuery);
                                                                   } else {
                                                                     alert(
-                                                                        globalScaffoldKey.currentContext!,
+                                                                        globalScaffoldKey
+                                                                            .currentContext!,
                                                                         0,
-                                                                        msg.isNotEmpty ? msg : 'Gagal approve PO',
+                                                                        msg.isNotEmpty
+                                                                            ? msg
+                                                                            : 'Gagal approve PO',
                                                                         'error');
                                                                   }
                                                                 } else {
                                                                   alert(
-                                                                      globalScaffoldKey.currentContext!,
+                                                                      globalScaffoldKey
+                                                                          .currentContext!,
                                                                       0,
                                                                       'Server error: ${res.statusCode}',
                                                                       'error');
                                                                 }
                                                               } catch (e) {
                                                                 alert(
-                                                                    globalScaffoldKey.currentContext!,
+                                                                    globalScaffoldKey
+                                                                        .currentContext!,
                                                                     2,
                                                                     'Please check your internet connection.',
                                                                     'warning');
                                                               } finally {
-                                                                if (EasyLoading.isShow) {
-                                                                  EasyLoading.dismiss();
+                                                                if (EasyLoading
+                                                                    .isShow) {
+                                                                  EasyLoading
+                                                                      .dismiss();
                                                                 }
                                                               }
                                                             },
-                                                            child: Text('Approve'),
+                                                            child:
+                                                                Text('Approve'),
                                                           ),
                                                         ],
                                                       ),
@@ -570,7 +688,8 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
   void initState() {
     super.initState();
     txtPonbr.text = widget.po['ponbr']?.toString() ?? '';
-    final podate = widget.po['podate']?.toString() ?? _formatDate(DateTime.now());
+    final podate =
+        widget.po['podate']?.toString() ?? _formatDate(DateTime.now());
     txtPodate.text = podate;
     txtPembayaran.text = widget.po['pembayaran']?.toString() ?? '';
     txtNotes.text = widget.po['notes']?.toString() ?? '';
@@ -626,59 +745,83 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(14),
-            boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: Offset(0, 4))],
+            boxShadow: [
+              BoxShadow(color: shadowColor, blurRadius: 8, offset: Offset(0, 4))
+            ],
           ),
           padding: EdgeInsets.all(12),
           child: Column(
             children: [
-              _buildRowField("Purchase Order Number", _buildReadonly(txtPonbr, "* Auto Generate")),
+              _buildRowField("Purchase Order Number",
+                  _buildReadonly(txtPonbr, "* Auto Generate")),
               SizedBox(height: 10),
               _buildRowField("Purchase Order Date", _buildDate(txtPodate)),
               SizedBox(height: 10),
-              _buildRowField("Vendor", _buildDropdown(
-                value: selVendor,
-                items: vendorItems,
-                onChanged: (v) => setState(() => selVendor = v ?? selVendor),
-                trailing: Material(
-                  color: accentOrange,
-                  borderRadius: BorderRadius.circular(6),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(6),
-                    onTap: () async {
-                      final res = await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => FrmMasterVendor()),
-                      );
-                      if (res != null && res is String && res.isNotEmpty) {
-                        setState(() {
-                          selVendor = res;
-                          if (!vendorItems.contains(res)) {
-                            vendorItems = ["[select]", res];
+              _buildRowField(
+                  "Vendor",
+                  _buildDropdown(
+                    value: selVendor,
+                    items: vendorItems,
+                    onChanged: (v) =>
+                        setState(() => selVendor = v ?? selVendor),
+                    trailing: Material(
+                      color: accentOrange,
+                      borderRadius: BorderRadius.circular(6),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(6),
+                        onTap: () async {
+                          final res = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => FrmMasterVendor()),
+                          );
+                          if (res != null && res is String && res.isNotEmpty) {
+                            setState(() {
+                              selVendor = res;
+                              if (!vendorItems.contains(res)) {
+                                vendorItems = ["[select]", res];
+                              }
+                            });
                           }
-                        });
-                      }
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      child: Center(child: Text("Add Vendor", style: TextStyle(color: Colors.white, fontSize: 12))),
+                        },
+                        child: Padding(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          child: Center(
+                              child: Text("Add Vendor",
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 12))),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              )),
+                  )),
               SizedBox(height: 10),
-              _buildRowField("To Warehouse", _buildDropdown(
-                value: selWarehouse.isEmpty ? "" : selWarehouse,
-                items: [""],
-                onChanged: (v) => setState(() => selWarehouse = v ?? selWarehouse),
-              )),
+              _buildRowField(
+                  "To Warehouse",
+                  _buildDropdown(
+                    value: selWarehouse.isEmpty ? "" : selWarehouse,
+                    items: [""],
+                    onChanged: (v) =>
+                        setState(() => selWarehouse = v ?? selWarehouse),
+                  )),
               SizedBox(height: 10),
-              _buildRowField("Type Po", _buildDropdown(
-                value: selTypePo,
-                items: [
-                  "INVENTORY","OPEX","CAPEX","INVESTASI","STOCK","BK","RND","MATERIAL"
-                ],
-                onChanged: (v) => setState(() => selTypePo = v ?? selTypePo),
-              )),
+              _buildRowField(
+                  "Type Po",
+                  _buildDropdown(
+                    value: selTypePo,
+                    items: [
+                      "INVENTORY",
+                      "OPEX",
+                      "CAPEX",
+                      "INVESTASI",
+                      "STOCK",
+                      "BK",
+                      "RND",
+                      "MATERIAL"
+                    ],
+                    onChanged: (v) =>
+                        setState(() => selTypePo = v ?? selTypePo),
+                  )),
               SizedBox(height: 10),
               _buildRowField("Pembayaran", _buildNumber(txtPembayaran)),
               SizedBox(height: 10),
@@ -690,15 +833,19 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => PoDetail(ponbr: txtPonbr.text)),
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                PoDetail(ponbr: txtPonbr.text)),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentOrange,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6)),
                     ),
                     child: Text("Transaction Detail"),
                   ),
@@ -709,11 +856,10 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
                       backgroundColor: accentOrange,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       shape: RoundedRectangleBorder(
-                          borderRadius:
-                          BorderRadius.circular(6)),//
+                          borderRadius: BorderRadius.circular(6)), //
                     ),
                     child: Text("PO Approve"),
                   ),
@@ -724,8 +870,10 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
                       backgroundColor: primaryOrange,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6)),
                     ),
                     child: Text("Edit"),
                   ),
@@ -744,7 +892,8 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
       children: [
         SizedBox(
           width: 170,
-          child: Text(label, style: TextStyle(fontSize: 13, color: Colors.black87)),
+          child: Text(label,
+              style: TextStyle(fontSize: 13, color: Colors.black87)),
         ),
         Expanded(child: field),
       ],
@@ -762,8 +911,11 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
               filled: true,
               fillColor: lightOrange,
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none),
             ),
           ),
         ),
@@ -782,8 +934,12 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
         fillColor: lightOrange,
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        suffixIcon: IconButton(icon: Icon(Icons.date_range, color: primaryOrange), onPressed: _pickDate),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        suffixIcon: IconButton(
+            icon: Icon(Icons.date_range, color: primaryOrange),
+            onPressed: _pickDate),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none),
       ),
     );
   }
@@ -797,7 +953,8 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
     return Row(
       children: [
         Expanded(
-          child: DropdownButtonFormField<String>(//
+          child: DropdownButtonFormField<String>(
+            //
             initialValue: items.contains(value) ? value : null,
             items: items
                 .map((e) => DropdownMenuItem<String>(
@@ -812,7 +969,9 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
               fillColor: lightOrange,
               isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none),
             ),
           ),
         ),
@@ -836,10 +995,12 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
         fillColor: lightOrange,
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none),
       ),
     );
-  }//
+  } //
 
   Widget _buildSingleLine(TextEditingController c) {
     return TextField(
@@ -849,7 +1010,9 @@ class _FrmPoHeaderState extends State<FrmPoHeader> {
         fillColor: lightOrange,
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none),
       ),
     );
   }
@@ -900,26 +1063,34 @@ class _FrmMasterVendorState extends State<FrmMasterVendor> {
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(14),
-            boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: Offset(0, 4))],
+            boxShadow: [
+              BoxShadow(color: shadowColor, blurRadius: 8, offset: Offset(0, 4))
+            ],
           ),
           padding: EdgeInsets.all(12),
           child: Column(
             children: [
-              _buildRowField("ID Vendor", _buildReadonly(txtVendorId, "* Auto Generate")),
+              _buildRowField(
+                  "ID Vendor", _buildReadonly(txtVendorId, "* Auto Generate")),
               SizedBox(height: 10),
               _buildRowField("Nama Vendor", _buildSingleLine(txtNamaVendor)),
               SizedBox(height: 10),
-              _buildRowField("Address Vendor", _buildSingleLine(txtAlamatVendor)),
+              _buildRowField(
+                  "Address Vendor", _buildSingleLine(txtAlamatVendor)),
               SizedBox(height: 10),
-              _buildRowField("Contact Person", _buildSingleLine(txtContactPerson)),
+              _buildRowField(
+                  "Contact Person", _buildSingleLine(txtContactPerson)),
               SizedBox(height: 10),
-              _buildRowField("Tlp", _buildSingleLine(txtTelp)),//
+              _buildRowField("Tlp", _buildSingleLine(txtTelp)), //
               SizedBox(height: 10),
-              _buildRowField("Status", _buildDropdown(
-                value: selStatus,
-                items: ["Active", "Non Active"],
-                onChanged: (v) => setState(() => selStatus = v ?? selStatus),
-              )),
+              _buildRowField(
+                  "Status",
+                  _buildDropdown(
+                    value: selStatus,
+                    items: ["Active", "Non Active"],
+                    onChanged: (v) =>
+                        setState(() => selStatus = v ?? selStatus),
+                  )),
               SizedBox(height: 16),
               Row(
                 children: [
@@ -929,8 +1100,10 @@ class _FrmMasterVendorState extends State<FrmMasterVendor> {
                       backgroundColor: accentOrange,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6)),
                     ),
                     child: Text("View Report"),
                   ),
@@ -943,8 +1116,10 @@ class _FrmMasterVendorState extends State<FrmMasterVendor> {
                       backgroundColor: darkOrange,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6)),
                     ),
                     child: Text("Select"),
                   ),
@@ -955,8 +1130,10 @@ class _FrmMasterVendorState extends State<FrmMasterVendor> {
                       backgroundColor: primaryOrange,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6)),
                     ),
                     child: Text("Add"),
                   ),
@@ -967,8 +1144,10 @@ class _FrmMasterVendorState extends State<FrmMasterVendor> {
                       backgroundColor: primaryOrange,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6)),
                     ),
                     child: Text("Edit"),
                   ),
@@ -987,7 +1166,8 @@ class _FrmMasterVendorState extends State<FrmMasterVendor> {
       children: [
         SizedBox(
           width: 170,
-          child: Text(label, style: TextStyle(fontSize: 13, color: Colors.black87)),
+          child: Text(label,
+              style: TextStyle(fontSize: 13, color: Colors.black87)),
         ),
         Expanded(child: field),
       ],
@@ -1005,8 +1185,11 @@ class _FrmMasterVendorState extends State<FrmMasterVendor> {
               filled: true,
               fillColor: lightOrange,
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none),
             ),
           ),
         ),
@@ -1024,7 +1207,9 @@ class _FrmMasterVendorState extends State<FrmMasterVendor> {
         fillColor: lightOrange,
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none),
       ),
     );
   }
@@ -1053,7 +1238,9 @@ class _FrmMasterVendorState extends State<FrmMasterVendor> {
               fillColor: lightOrange,
               isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none),
             ),
           ),
         ),

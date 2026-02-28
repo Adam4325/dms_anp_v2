@@ -68,7 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // ⭐ GUNAKAN NOTIFICATION SERVICE YANG SUDAH DIPERBAIKI
   final NotificationService _notificationService = NotificationService();
   List<NotificationData> _notifications = [];//
-  bool _isLoading = true;
+  bool _isLoading = true;//
 
   TextStyle style = TextStyle(fontFamily: 'Montserrat', fontSize: 20.0);
 
@@ -134,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  // ⭐ SETUP NOTIFICATION SERVICE
+  // ⭐ SETUP NOTIFICATION SERVICE/
   void _setupNotifications() {
     print('🔍 DEBUG: Setting up notification service...');
 

@@ -158,6 +158,28 @@ class _ViewDetailApprovedState extends State<ViewDetailApproved> {
                                       ],
                                     ),
                                   ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.deepOrange,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 8),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                          BorderRadius.circular(6)),
+                                    ),
+                                    onPressed: () {
+                                      final merk = (it['MERK'] ?? '').toString();
+                                      final partname = (it['PARTNAME'] ?? '').toString();
+                                      _showHargaDialog(partname, merk);
+                                    },
+                                    child: Text("Cek Harga Barang",
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight:
+                                            FontWeight.w500)),
+                                  ),
                                 ],
                               ),
                             );
@@ -205,5 +227,123 @@ class _ViewDetailApprovedState extends State<ViewDetailApproved> {
         ],
       ),
     );
+  }
+
+  Future<void> _showHargaDialog(String partname, String merk) async {
+    try {
+      final uri = Uri.parse(
+          "https://apps.tuluatas.com/trucking/mobile/api/po/list_cek_harga.jsp?method=cek-harga-barang&partname=${Uri.encodeComponent(partname)}&merk=${Uri.encodeComponent(merk)}");
+      final res = await http.get(uri).timeout(const Duration(seconds: 30));
+      if (res.statusCode == 200) {
+        final body = json.decode(res.body);
+        final list = (body is Map && body['data'] is List) ? (body['data'] as List) : const [];
+        showDialog(
+          context: context,
+          builder: (ctx) {
+            final size = MediaQuery.of(ctx).size;
+            return Dialog(
+              insetPadding: const EdgeInsets.all(12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF8C69),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      "Cek Harga Barang",
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16),
+                    ),
+                  ),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: size.height * 0.6),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(12),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: list.length,
+                        itemBuilder: (ctx, i) {
+                          final m = list[i] as Map<String, dynamic>;
+                          final c4 = _rupiah(m['COL_4']);
+                          final c13 = _rupiah(m['COL_13']);
+                          final c12 = _rupiah(m['COL_12']);
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _kv("COL_0", (m['COL_0'] ?? '').toString()),
+                                _kv("COL_1", (m['COL_1'] ?? '').toString()),//
+                                _kv("COL_2", (m['COL_2'] ?? '').toString()),
+                                _kv("COL_3", (m['COL_3'] ?? '').toString()),
+                                _kv("COL_4", c4),
+                                _kv("COL_5", (m['COL_5'] ?? '').toString()),
+                                _kv("COL_6", (m['COL_6'] ?? '').toString()),
+                                _kv("COL_7", (m['COL_7'] ?? '').toString()),
+                                _kv("COL_8", (m['COL_8'] ?? '').toString()),
+                                _kv("COL_9", (m['COL_9'] ?? '').toString()),
+                                _kv("COL_10", (m['COL_10'] ?? '').toString()),
+                                _kv("COL_11", (m['COL_11'] ?? '').toString()),
+                                _kv("COL_13", c13),
+                                _kv("COL_12", c12),
+                                _kv("COL_14", (m['COL_14'] ?? '').toString()),
+                                _kv("COL_15", (m['COL_15'] ?? '').toString()),
+                                _kv("COL_16", (m['COL_16'] ?? '').toString()),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text("Tutup"),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text("Error"),
+            content: Text("Server error: ${res.statusCode}"),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text("Tutup"))
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Error"),
+          content: Text(e.toString()),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text("Tutup"))
+          ],
+        ),
+      );
+    }
   }
 }
