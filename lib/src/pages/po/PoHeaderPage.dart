@@ -59,7 +59,7 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
       isLoading = true;
     });
     // final hasAksesPO = globals.akses_pages != null &&
-    //     globals.akses_pages.where((x) => (x == "PO" && username=="ADMIN") || (x == "PO" && username=="BUDI") || (x == "PO" && username=="BUDI")).isNotEmpty;
+    //     globals.akses_pages.where((x) => (x == "PO" && username=="ADMIN") || (x == "PO" && username=="ETIENNE") || (x == "PO" && username=="BUDI")).isNotEmpty;
     final hasAksesPO = globals.akses_pages != null &&
         globals.akses_pages
             .where((x) => x == "PO" || username == "ADMIN")
@@ -121,10 +121,11 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
         globals.akses_pages
             .where((x) =>
                 (x == "PO" && username == "ADMIN") ||
-                (x == "PO" && username == "BUDI") ||
+                (x == "PO" && username == "ETIENNE") ||
                 (x == "PO" && username == "BUDI"))
             .isNotEmpty;
     print('hasAksesPO Approved');
+    print('username ${username}');
     if (hasAksesPO) {
       setState(() {
         isLoadingApproved = true;
