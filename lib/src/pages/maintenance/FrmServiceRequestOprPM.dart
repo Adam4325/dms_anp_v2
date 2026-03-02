@@ -12599,71 +12599,156 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             width: MediaQuery.of(context).size.width,
             padding: EdgeInsets.only(bottom: 0, top: 0, left: 10, right: 10),
             decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
+            // child: Row(
+            //     crossAxisAlignment: CrossAxisAlignment.center,
+            //     children: <Widget>[
+            //       new ElevatedButton.icon(
+            //         icon: Icon(
+            //           Icons.settings,
+            //           color: Colors.white,
+            //           size: 14.0,
+            //         ),
+            //         label: Text("Add/Update Mechanic",
+            //             style: TextStyle(color: Colors.white)), //PROSES
+            //         onPressed: () async {
+            //           mechanicID = null;
+            //           SharedPreferences prefs =
+            //               await SharedPreferences.getInstance();
+            //           prefs.setString("wo_mcn_detail", item['wodwonbr']);
+            //           prefs.setString("srnumber_mcn_detail", item['srnumber']);
+            //           print(item['wodwonbr']);
+            //           print(item['srnumber']);
+            //           EasyLoading.show();
+            //           Navigator.pushReplacement(
+            //               context,
+            //               MaterialPageRoute(
+            //                   builder: (context) => ViewListMcnDetail()));
+            //         },
+            //         style: ElevatedButton.styleFrom(
+            //             elevation: 0.0,
+            //             backgroundColor: Colors.orange,
+            //             padding:
+            //                 EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+            //             textStyle: TextStyle(
+            //                 fontSize: 14, fontWeight: FontWeight.bold)),
+            //       ),
+            //       SizedBox(width: 35),
+            //       new ElevatedButton.icon(
+            //         icon: Icon(
+            //           Icons.details_outlined,
+            //           color: Colors.white,
+            //           size: 14.0,
+            //         ),
+            //         label: Text("Detail List",
+            //             style: TextStyle(color: Colors.white)), //PROSESS
+            //         onPressed: () async {
+            //           await getListDataListMechanic(item['wodwonbr']);
+            //           await Future.delayed(Duration(milliseconds: 1));
+            //           if (dataListMechanicProses.length > 0) {
+            //             showDialog(
+            //                 context: globalScaffoldKey.currentContext!,
+            //                 builder: (BuildContext context) {
+            //                   return AlertDialog(
+            //                     title: Text('List Detail Mechanic'),
+            //                     content: listDataMechanicProses(context),
+            //                   );
+            //                 });
+            //           }
+            //         },
+            //         style: ElevatedButton.styleFrom(
+            //             elevation: 0.0,
+            //             backgroundColor: Colors.blueAccent,
+            //             padding:
+            //                 EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+            //             textStyle: TextStyle(
+            //                 fontSize: 14, fontWeight: FontWeight.bold)),
+            //       ),
+            //     ]),
             child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.settings,
-                      color: Colors.white,
-                      size: 14.0,
-                    ),
-                    label: Text("Add/Update Mechanic",
-                        style: TextStyle(color: Colors.white)), //PROSESS
-                    onPressed: () async {
-                      mechanicID = null;
-                      SharedPreferences prefs =
-                          await SharedPreferences.getInstance();
-                      prefs.setString("wo_mcn_detail", item['wodwonbr']);
-                      prefs.setString("srnumber_mcn_detail", item['srnumber']);
-                      print(item['wodwonbr']);
-                      print(item['srnumber']);
-                      EasyLoading.show();
-                      Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => ViewListMcnDetail()));
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.orange,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold)),
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+
+                /// BUTTON ADD / UPDATE
+                ElevatedButton.icon(
+                  icon: const Icon(
+                    Icons.settings,
+                    color: Colors.white,
+                    size: 14.0,
                   ),
-                  SizedBox(width: 35),
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.details_outlined,
-                      color: Colors.white,
-                      size: 14.0,
-                    ),
-                    label: Text("Detail List",
-                        style: TextStyle(color: Colors.white)), //PROSESS
-                    onPressed: () async {
-                      await getListDataListMechanic(item['wodwonbr']);
-                      await Future.delayed(Duration(milliseconds: 1));
-                      if (dataListMechanicProses.length > 0) {
-                        showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text('List Detail Mechanic'),
-                                content: listDataMechanicProses(context),
-                              );
-                            });
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.blueAccent,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    "Add/Update Mechanic",
+                    style: TextStyle(color: Colors.white),
                   ),
-                ]),
+                  onPressed: () async {
+                    mechanicID = null;
+
+                    SharedPreferences prefs =
+                    await SharedPreferences.getInstance();
+
+                    prefs.setString("wo_mcn_detail", item['wodwonbr']);
+                    prefs.setString("srnumber_mcn_detail", item['srnumber']);
+
+                    EasyLoading.show();
+
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ViewListMcnDetail(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: Colors.orange,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    textStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                /// BIKIN SPACE OTOMATIS KE KANAN
+                const Spacer(),
+
+                /// BUTTON DETAIL LIST
+                ElevatedButton.icon(
+                  icon: const Icon(
+                    Icons.details_outlined,
+                    color: Colors.white,
+                    size: 14.0,
+                  ),
+                  label: const Text(
+                    "Detail List",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onPressed: () async {
+                    await getListDataListMechanic(item['wodwonbr']);
+
+                    if (dataListMechanicProses.isNotEmpty) {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('List Detail Mechanic'),
+                            content: listDataMechanicProses(context),
+                          );
+                        },
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: Colors.blueAccent,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    textStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           Container(
               width: MediaQuery.of(context).size.width,

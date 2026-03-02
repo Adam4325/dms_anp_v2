@@ -1,7 +1,7 @@
 import 'package:dms_anp/src/Color/hex_color.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
+import 'package:dms_anp/src/pages/maintenance/FrmServiceRequestOprPM.dart';
 import '../../../choices.dart' as choices;
-import 'package:dms_anp/src/pages/maintenance/FrmServiceRequestOpr.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'dart:async';
@@ -23,7 +23,7 @@ class _ViewListMcnDetailState extends State<ViewListMcnDetail> {
   GlobalKey globalScaffoldKey2 = GlobalKey<ScaffoldState>();
   TextEditingController txtNotes = new TextEditingController();
   int _selectedIndex = 0;
-  late List data;
+  List data = [];
   String status_code = "";
   String message = "";
   late List<Map<String, dynamic>> lstMechanicID = [];
@@ -93,7 +93,7 @@ class _ViewListMcnDetailState extends State<ViewListMcnDetail> {
 
   _goBack(BuildContext context) {
     Navigator.pushReplacement(context,
-        MaterialPageRoute(builder: (context) => FrmServiceRequestOpr()));
+        MaterialPageRoute(builder: (context) => FrmServiceRequestOprPM()));
   }
 
   void _onItemTapped(int index) {
@@ -109,13 +109,13 @@ class _ViewListMcnDetailState extends State<ViewListMcnDetail> {
       onPopInvokedWithResult: (bool didPop, dynamic result) {
         if (didPop) return;
         Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (context) => FrmServiceRequestOpr()));
+            MaterialPageRoute(builder: (context) => FrmServiceRequestOprPM()));
       },
       child: Scaffold(
         key: globalScaffoldKey,
         backgroundColor: Colors.white,
         appBar: AppBar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: const Color(0xFFFF8C69),
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               iconSize: 20.0,
@@ -135,7 +135,7 @@ class _ViewListMcnDetailState extends State<ViewListMcnDetail> {
           color: HexColor("#ffffff"),
           child: new Stack(
             children: <Widget>[
-              _buildListView(globalScaffoldKey2.currentContext!)
+              _buildListView(context)
             ],
           ),
         ),
@@ -147,17 +147,17 @@ class _ViewListMcnDetailState extends State<ViewListMcnDetail> {
               Expanded(
                 child: Container(
                   alignment: Alignment.center,
-                  color: Colors.greenAccent,
+                  color: const Color(0xFFFF8C69),
                   child: InkWell(
                       child: Text("Add Mechanic",
                           style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 18)),
+                              fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
                       onTap: () async {
                         SharedPreferences prefs =
                             await SharedPreferences.getInstance();
                         String wonumber = prefs.getString("wo_mcn_detail")!;
                         String wodsvcreqnbr =
-                            prefs.getString("srnumber_mcn_detail")!;
+                            prefs.getString("srnumber_mcn_detail")!;//
                         print("value of your text");
                         var userid = prefs.getString("username")!;
                         await getListMechanicID(wonumber);
@@ -321,7 +321,7 @@ class _ViewListMcnDetailState extends State<ViewListMcnDetail> {
                                                     await UpdateMechanic(
                                                         "add",
                                                         wonumber,
-                                                        srnumber,
+                                                        wodsvcreqnbr,
                                                         mechanicID,
                                                         "",
                                                         "0",
@@ -484,10 +484,10 @@ class _ViewListMcnDetailState extends State<ViewListMcnDetail> {
               child: new ElevatedButton.icon(
                 icon: Icon(
                   Icons.edit,
-                  color: Colors.black45,
+                  color: Colors.white,
                   size: 24.0,
                 ),
-                label: Text("Edit", style: TextStyle(color: Colors.black45)),
+                label: Text("Edit", style: TextStyle(color: Colors.white)),
                 onPressed: () async {
                   SharedPreferences prefs =
                       await SharedPreferences.getInstance();
@@ -632,7 +632,7 @@ class _ViewListMcnDetailState extends State<ViewListMcnDetail> {
                                               await UpdateMechanic(
                                                   mode,
                                                   wonumber,
-                                                  srnumber,
+                                                  wodsvcreqnbr,
                                                   mechanicID,
                                                   mechanic_id_detail,
                                                   seqnumber,
@@ -658,9 +658,9 @@ class _ViewListMcnDetailState extends State<ViewListMcnDetail> {
                     },
                   );
                 },
-                style: ElevatedButton.styleFrom(
+                style: ElevatedButton.styleFrom(//
                     elevation: 0.0,
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: const Color(0xFFFF8C69),
                     padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                     textStyle:
                         TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
