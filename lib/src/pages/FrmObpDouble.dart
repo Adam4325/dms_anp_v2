@@ -194,86 +194,49 @@ class _FrmObpDoubleState extends State<FrmObpDouble> {
               ),
             ),
             centerTitle: true,
-            title: const Text('Open Bukti Pelanggaran', style: TextStyle(color: Colors.white))),
+            title: const Text('Open Bukti Pelanggaran', style: TextStyle(color: Colors.white)),
+        ),
         body: Container(
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.fromLTRB(2, 2, 2, 15),
             child: Theme(
               data: Theme.of(context).copyWith(
                 colorScheme: Theme.of(context).colorScheme.copyWith(primary: primaryOrange),
               ),
               child: Stepper(
               controlsBuilder: (BuildContext context, ControlsDetails details) {
-                return Row(
-                  children: <Widget>[
-                    TextButton(
-                      onPressed: details.onStepContinue,
-                      style: TextButton.styleFrom(
-                        backgroundColor: primaryOrange,
-                        foregroundColor: Colors.white,
-                        minimumSize: Size(88, 40),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                return Padding(
+                  padding: const EdgeInsets.only(top: 6.0, bottom: 10),
+                  child: Row(
+                    children: <Widget>[
+                      TextButton(
+                        onPressed: details.onStepContinue,
+                        style: TextButton.styleFrom(
+                          backgroundColor: primaryOrange,
+                          foregroundColor: Colors.white,
+                          minimumSize: Size(88, 40),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text(currentStep != (getSteps().length - 1) ? 'Next' : 'Submit'),
                       ),
-                      child: Text(currentStep != 3 ? 'Next' : 'Submit'),
-                    ),
-                    const SizedBox(width: 10),
-                    TextButton(
-                      onPressed: details.onStepCancel,
-                      style: TextButton.styleFrom(
-                        backgroundColor: primaryOrange,
-                        foregroundColor: Colors.white,
-                        minimumSize: Size(88, 40),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      const SizedBox(width: 10),
+                      TextButton(
+                        onPressed: details.onStepCancel,
+                        style: TextButton.styleFrom(
+                          backgroundColor: primaryOrange,
+                          foregroundColor: Colors.white,
+                          minimumSize: Size(88, 40),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Cancel'),
                       ),
-                      child: const Text('Cancel'),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               },
-              type: StepperType.vertical,
+              type: StepperType.horizontal,
               currentStep: currentStep,
-              onStepCancel: () => {
-                if (currentStep == 0)
-                  {print('back')}
-                else
-                  setState(() {
-                    currentStep -= 1;
-                  })
-              },
-              onStepContinue: () {
-                bool isLastStep = (currentStep == getSteps().length - 1);
-                print('currentStep ${currentStep}');
-                if (isLastStep) {
-                  print('save');
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) => new AlertDialog(
-                      shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.all(Radius.circular(15.0))),
-                      title: new Text('Alert'),
-                      content: new Text('Create data BP?'),
-                      actions: <Widget>[
-                        new TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: new Text('No'),
-                        ),
-                        new TextButton(
-                          onPressed: () async {
-                            Navigator.of(context).pop(false);
-                            SaveObp(context);
-                          },
-                          child: new Text('Yes'),
-                        ),
-                      ],
-                    ),
-                  );
-                  //save data
-                } else {
-                  setState(() {
-                    currentStep += 1;
-                  });
-                }
-              },
+              onStepCancel: _handleCancel,
+              onStepContinue: _handleContinue,
               onStepTapped: (step) => setState(() {
                 currentStep = step;
                 print('currentStep ${currentStep}');
@@ -358,6 +321,47 @@ class _FrmObpDoubleState extends State<FrmObpDouble> {
       advanvce_cost = 0;
       total_advanvce_cost = 0;
     });
+  }
+
+  void _handleCancel() {
+    if (currentStep == 0) {
+      return;
+    } else {
+      setState(() {
+        currentStep -= 1;
+      });
+    }
+  }
+
+  void _handleContinue() {
+    bool isLastStep = (currentStep == getSteps().length - 1);
+    if (isLastStep) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(15.0))),
+          title: Text('Alert'),
+          content: Text('Create data BP?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('No'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop(false);
+                SaveObp(context);
+              },
+              child: Text('Yes'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      setState(() {
+        currentStep += 1;
+      });
+    }
   }
 
   void GetAttribute(String detail_name, String id) async {
@@ -459,7 +463,7 @@ class _FrmObpDoubleState extends State<FrmObpDouble> {
       } else if (nama_krbn == null || nama_krbn == "") {
         EasyLoading.showError("Nama korban tidak boleh kosong");
       } else if (nopol_krbn == null || nopol_krbn == "") {
-        EasyLoading.showError("Nopol mobil korban tidak boleh kosong");
+        EasyLoading.showError("Nopol mobil korban tidak boleh kosong");//
       } else {
         EasyLoading.show();
         var endpointUrl = "${GlobalData.baseUrl}api/laka/save_data_laka_new.jsp";
@@ -1336,7 +1340,7 @@ class _FrmObpDoubleState extends State<FrmObpDouble> {
       Step(
         state: currentStep > 0 ? StepState.complete : StepState.indexed,
         isActive: currentStep >= 0,
-        title: const Text("B.A"),
+        title: const Text("BA", style: TextStyle(fontSize: 12)),
         content: Column(
           children: [
             Container(
@@ -1556,7 +1560,7 @@ class _FrmObpDoubleState extends State<FrmObpDouble> {
       Step(
         state: currentStep > 1 ? StepState.complete : StepState.indexed,
         isActive: currentStep >= 1,
-        title: const Text("ID UNITS"),
+        title: const Text("UNIT", style: TextStyle(fontSize: 12)),
         content: Column(
           children: [
             SmartSelect<String?>.single(
@@ -1626,7 +1630,7 @@ class _FrmObpDoubleState extends State<FrmObpDouble> {
       Step(
         state: currentStep > 1 ? StepState.complete : StepState.indexed,
         isActive: currentStep >= 1,
-        title: const Text("ID KRBN"),
+        title: const Text("KRBN", style: TextStyle(fontSize: 12)),
         content: Column(
           children: [
             Container(
@@ -1794,7 +1798,7 @@ class _FrmObpDoubleState extends State<FrmObpDouble> {
       Step(
         state: currentStep > 2 ? StepState.complete : StepState.indexed,
         isActive: currentStep >= 2,
-        title: const Text("Advance"),
+        title: const Text("ADV", style: TextStyle(fontSize: 12)),
         content: Column(
           children: [
             Container(
@@ -1882,7 +1886,7 @@ class _FrmObpDoubleState extends State<FrmObpDouble> {
       Step(
         state: currentStep > 3 ? StepState.complete : StepState.indexed,
         isActive: currentStep >= 3,
-        title: const Text("Akomodasi Detail"),
+        title: const Text("AKM", style: TextStyle(fontSize: 12)),
         content: Column(
           children: [
             Container(

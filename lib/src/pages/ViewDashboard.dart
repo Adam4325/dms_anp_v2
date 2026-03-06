@@ -158,6 +158,49 @@ class _ViewDashboardState extends State<ViewDashboard> {
     setState(() {
       _identifier = identifier!;
     });
+
+    // Update IMEIID ke server setelah berhasil mendapatkan identifier dan menyimpannya
+    _updateImeiOnServerFromPrefs();
+  }
+
+  Future<void> _updateImeiOnServerFromPrefs() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final imeiid = prefs.getString("androidID") ?? '';
+      if (imeiid.isEmpty || imeiid == 'Failed to get Unique Identifier') {
+        return;
+      }
+      final statusKaryawan = prefs.getString("status_karyawan") ?? '';
+      final drvid = prefs.getString("drvid") ?? '';
+      final kryid = prefs.getString("kryid") ?? '';
+      print("statusKaryawan");
+      print(statusKaryawan);
+      print(drvid);
+      print(drvid);
+      final status =
+          statusKaryawan.toUpperCase() == 'DRIVER' ? 'driver' : 'karyawan';
+      final id = status == 'driver' ? drvid : kryid;
+      if (id.isEmpty) return;
+
+      final String baseUrl =
+          GlobalData.baseUrl + "api/imeiid/update_imeiid.jsp";
+      final uri = Uri.parse(baseUrl).replace(queryParameters: {
+        'method': 'update-imeiid-anp',
+        'imeiid': imeiid,
+        'status': status,
+        'id': id,
+      });
+      print('update-imeiid url: ${uri.toString()}');
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        // Optional: log response
+        print('update-imeiid response: ${response.body}');//
+      } else {
+        print('update-imeiid error status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('update-imeiid exception: $e');
+    }
   }
 
   Future scanQRCode() async {

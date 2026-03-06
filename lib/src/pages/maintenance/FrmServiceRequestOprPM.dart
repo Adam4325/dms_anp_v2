@@ -6234,7 +6234,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                             children: <Widget>[
                               Container(
                                 margin: EdgeInsets.all(10.0),
-                                child: Text("Save Opname?"),
+                                child: Text("Save Opname?"),//
                               ),
                             ],
                           ),
@@ -6261,7 +6261,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                             ),
                             new ElevatedButton.icon(
                               icon: Icon(
-                                Icons.save,
+                                Icons.close,
                                 color: Colors.white,
                                 size: 20.0,
                               ),
@@ -7550,7 +7550,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           actions: <Widget>[
                             new ElevatedButton.icon(
                               icon: Icon(
-                                Icons.delete,
+                                Icons.save,
                                 color: Colors.white,
                                 size: 20.0,
                               ),
@@ -7570,7 +7570,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                             ),
                             new ElevatedButton.icon(
                               icon: Icon(
-                                Icons.save,
+                                Icons.close,
                                 color: Colors.white,
                                 size: 20.0,
                               ),

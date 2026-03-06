@@ -60,7 +60,7 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> initUniqueIdentifierState() async {
     String? identifier;
     try {
-      //identifier = "3d011a9d72e23c29";//await UniqueIdentifier.serial;
+      //identifier = "3d011a9d72e23c29";//await UniqueIdentifier.serial;//
       identifier = await UniqueIdentifier.serial;
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString("androidID", identifier ?? '');
@@ -134,6 +134,23 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       print('Exception: $e');
     }
+  }
+
+  Future<void> _updateImeiOnServer({required String imeiid, required String statusKaryawan, required String drvid, required String kryid}) async {
+    try {
+      final status = statusKaryawan.toLowerCase() == 'driver' ? 'driver' : 'karyawan';
+      final id = status == 'driver' ? drvid : kryid;
+      final baseUrl = GlobalData.baseUrl + "api/imeiid/update_imeiid.jsp";
+      final uri = Uri.parse(baseUrl).replace(queryParameters: {
+        'method': 'update-imeiid-anp',
+        'imeiid': imeiid,
+        'status': status,
+        'id': id,
+      });
+      print('update-imeiid url: ${uri.toString()}');
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {}
+    } catch (e) {}
   }
 
   Future doLogin(BuildContext context, bool isFinger) async {
@@ -292,6 +309,10 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('status_karyawan', status_karyawan);
           prefs.setString('kryid', kryid);
           print('IMMEIID $_identifier');
+
+          final imeiToSend = (prefs.getString('androidID') ?? _identifier);
+          await _updateImeiOnServer(imeiid: imeiToSend, statusKaryawan: status_karyawan, drvid: drvid, kryid: kryid);
+
           Timer(Duration(seconds: 1), () {
             EasyLoading.dismiss();
             final ctx = globalScaffoldKey.currentContext;
@@ -344,18 +365,11 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   SizedBox(height: 60),
                   // Header Section
+                  //iOCN INI
                   Container(
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          primaryOrange,
-                          lightOrange,
-                        ],
-                      ),
                       borderRadius: BorderRadius.circular(25),
                       boxShadow: [
                         BoxShadow(
@@ -365,12 +379,15 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.business_center_rounded,
-                      size: 50,
-                      color: Colors.white,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(25),
+                      child: Image.network(
+                       GlobalData.baseUrlOri + 'img/dms.jpeg',
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
+                  //SAMPE ICON SINI 
                   SizedBox(height: 20),
                   Text(
                     "PT. Andalan Nusa Pratama",

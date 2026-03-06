@@ -35,7 +35,7 @@ class _ViewListDoOprState extends State<ViewListDoOpr> {
   String _valueChanged1 = "";
   String _valueToValidate1 = '';
   String _valueSaved1 = '';
-  late List data;
+  List data = [];
   String status_code = "";
   String messageAPI = "";
   String dlocustdonbr = "";

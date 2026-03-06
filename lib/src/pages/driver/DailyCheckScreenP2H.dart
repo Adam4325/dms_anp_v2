@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:dms_anp/src/Helper/Provider.dart';
-import 'package:dms_anp/src/pages/FrmCreateAntrianNewDriver.dart';
-import 'package:dms_anp/src/pages/FrmSetKmByDoMixer.dart';
 import 'package:dms_anp/src/pages/FrmSetKmByDriver.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/driver/ListDriverInspeksiV2.dart';
@@ -33,6 +31,72 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
       {}; // key: inspeksi_id, value: 'ya'/'tidak'
   final TextEditingController kilometerController = TextEditingController();
   final TextEditingController notesController = TextEditingController();
+  bool _isSubmitting = false;
+  bool _isLoadingDialogVisible = false;
+
+  void _showSavingOverlay() {
+    if (!mounted || _isLoadingDialogVisible) return;
+    _isLoadingDialogVisible = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black45,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.orange.shade400, Colors.orange.shade600],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.orange.withOpacity(0.35),
+                blurRadius: 20,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3.2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'proses save data...',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).then((_) {
+      _isLoadingDialogVisible = false;
+    });
+  }
+
+  void _hideSavingOverlay() {
+    if (!mounted) return;
+    if (_isLoadingDialogVisible) {
+      Navigator.of(context, rootNavigator: true).pop();
+      _isLoadingDialogVisible = false;
+    }
+  }
 
   void getSession() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -153,6 +217,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
   void handleSubmit() async {
     // Cek apakah widget masih mounted
     if (!mounted) return;
+    if (_isSubmitting) return;
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
@@ -265,6 +330,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
           ? _locid
           : globals.p2hVhclocid.toString(),
       "userid": username,
+      "imeiid": prefs.getString("androidID"),
       "inspeksi_result": result, // ✅ SUDAH UNIQUE
     };
 
@@ -274,10 +340,18 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
         _showConfirmationDialog(
           "Inspeksi berhasil diisi di area $geofence_name. Lanjutkan ke proses Antrian?",
           () async {
-            // Cek mounted lagi sebelum submit
-            if (!mounted) return;
-
+            if (!mounted || _isSubmitting) return;
+            setState(() {
+              _isSubmitting = true;
+            });
+            _showSavingOverlay();
             bool isSuccess = await submitInspeksiP2H(data);
+            _hideSavingOverlay();
+            if (mounted) {
+              setState(() {
+                _isSubmitting = false;
+              });
+            }
             if (isSuccess) {
               if (mounted) {
                 alert(globalScaffoldKey.currentContext!, 1,
@@ -313,8 +387,18 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
         );
       }
     } else {
-      // === Jika Bukan Driver: Langsung Submit ===
+      // === Jika Bukan Driver: Langsung Submit dengan overlay ===
+      setState(() {
+        _isSubmitting = true;
+      });
+      _showSavingOverlay();
       var isSuccess = await submitInspeksiP2H(data);
+      _hideSavingOverlay();
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
       if (!isSuccess) {
         if (mounted) {
           alert(globalScaffoldKey.currentContext!, 0, "Gagal membuat p2h",
@@ -1245,13 +1329,15 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
                         ],
                       ),
                       child: ElevatedButton(
-                        onPressed: () async {
+                        onPressed: _isSubmitting
+                            ? null
+                            : () async {
                           SharedPreferences prefs =
                               await SharedPreferences.getInstance();
                           print('prefs.getString("p2h_antrian")');
                           print(prefs.getString("p2h_antrian"));
                           handleSubmit();
-                        },
+                          },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
@@ -1265,7 +1351,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
                             Icon(Icons.send, color: Colors.white, size: 15),
                             SizedBox(width: 5),
                             Text(
-                              "Submit",
+                              _isSubmitting ? "Menyimpan..." : "Submit",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -1299,9 +1385,11 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
                         ],
                       ),
                       child: ElevatedButton(
-                        onPressed: () async {
-                          handleCancel();
-                        },
+                        onPressed: _isSubmitting
+                            ? null
+                            : () async {
+                                handleCancel();
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
