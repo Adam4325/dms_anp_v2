@@ -156,12 +156,15 @@ class _FrmObpState extends State<FrmObp> {
       child: Scaffold(
         appBar: AppBar(
             backgroundColor: primaryOrange,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: Colors.white),
-              iconSize: 20.0,
-              onPressed: () {
+            leading: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
                 _goBack(context);
               },
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: Icon(Icons.arrow_back, color: Colors.white, size: 20),
+              ),
             ),
             centerTitle: true,
             title: Text('Open Bukti Pelanggaran', style: TextStyle(color: Colors.white))),
@@ -387,15 +390,16 @@ class _FrmObpState extends State<FrmObp> {
       String arr_advance_cost = list_cost.length > 0 ? list_cost.join(';') : '';
       String total_advance_cost = txtTotalAdvanceCost.text;
       print('arr_advance_cost ${arr_advance_cost}');
-      // String b_akomodasi = txtAkomodasi.text;
-      // String b_evakuasi = txtEvakuasi.text;
-      // String b_koordinasi = txtKoordinasi.text;
-      // String b_penggantian_barang = txtPenggantianBarang.text;
-      // String b_pemakaian_spare_part = txtPemakaianSparePart.text;
-      // String b_jasa_perbaikan = txtJasaPerbaikan.text;
-      // String b_penggantian_semen = txtPenggantianSemen.text;
-      // String b_kerugian_idle = txtKerugianIdle.text;
-      // String b_total_summary_laka = txtTotalSummaryLaka.text;
+      String b_akomodasi = txtAkomodasi.text;
+      String b_evakuasi = txtEvakuasi.text;
+      String b_koordinasi = txtKoordinasi.text;
+      String b_penggantian_barang = txtPenggantianBarang.text;
+      String b_pemakaian_spare_part = txtPemakaianSparePart.text;
+      String b_jasa_perbaikan = txtJasaPerbaikan.text;
+      String b_penggantian_semen = txtPenggantianSemen.text;
+      String b_kerugian_idle = txtKerugianIdle.text;
+      String b_total_summary_laka = txtTotalSummaryLaka.text;
+      String b_bukti_pelanggaran = txtBuktiPalenggaran.text;
       if (tgl == null || tgl == "") {
         EasyLoading.showError("Tanggal berita tidak boleh kosong");
       } else if (driver_id == null || driver_id == "") {
@@ -410,7 +414,7 @@ class _FrmObpState extends State<FrmObp> {
         EasyLoading.showError("Sangsi tidak boleh kosong");
       } else {
         EasyLoading.show();
-        var endpointUrl = "${GlobalData.baseUrl}api/laka/save_data_laka.jsp";
+        var endpointUrl = "${GlobalData.baseUrl}api/laka/save_data_laka_new.jsp";
         var encoded = Uri.encodeFull(endpointUrl);
         var status_code = 100;
         var message = "";
@@ -436,6 +440,16 @@ class _FrmObpState extends State<FrmObp> {
         map['foto_kejadian'] = _foto_kejadian;
         map['arr_advance_cost'] = arr_advance_cost;
         map['total_advance_cost'] = total_advance_cost;
+        map['b_akomodasi'] = b_akomodasi;
+        map['b_evakuasi'] = b_evakuasi;
+        map['b_koordinasi'] = b_koordinasi;
+        map['b_penggantian_barang'] = b_penggantian_barang;
+        map['b_pemakaian_spare_part'] = b_pemakaian_spare_part;
+        map['b_jasa_perbaikan'] = b_jasa_perbaikan;
+        map['b_penggantian_semen'] = b_penggantian_semen;
+        map['b_kerugian_idle'] = b_kerugian_idle;
+        map['b_total_summary_laka'] = b_total_summary_laka;
+        map['b_bukti_pelanggaran'] = b_bukti_pelanggaran;//
         map['userid'] = userid;
         Uri urlEncode = Uri.parse(encoded);
         final response = await http.post(
@@ -1381,100 +1395,120 @@ class _FrmObpState extends State<FrmObp> {
           ],
         ),
       ),
-      // Step(
-      //   state: currentStep > 3 ? StepState.complete : StepState.indexed,
-      //   isActive: currentStep >= 3,
-      //   title: const Text("Summary Biaya"),
-      //   content: Column(
-      //     children: [
-      //       Container(
-      //         margin: const EdgeInsets.only(bottom: 10),
-      //         child: TextField(
-      //           controller: txtAkomodasi,
-      //           decoration: const InputDecoration(
-      //               hintText: "Akomodasi", border: OutlineInputBorder()),
-      //         ),
-      //       ),
-      //       Container(
-      //         margin: const EdgeInsets.only(bottom: 10),
-      //         child: TextField(
-      //           controller: txtEvakuasi,
-      //           decoration: const InputDecoration(
-      //               hintText: "Evakuasi", border: OutlineInputBorder()),
-      //         ),
-      //       ),
-      //       Container(
-      //         margin: const EdgeInsets.only(bottom: 10),
-      //         child: TextField(
-      //           controller: txtKoordinasi,
-      //           decoration: const InputDecoration(
-      //               hintText: "Koordinasi", border: OutlineInputBorder()),
-      //         ),
-      //       ),
-      //       Container(
-      //         margin: const EdgeInsets.only(bottom: 10),
-      //         child: TextField(
-      //           controller: txtPenggantianBarang,
-      //           decoration: const InputDecoration(
-      //               hintText: "Penggantian Barang",
-      //               border: OutlineInputBorder()),
-      //         ),
-      //       ),
-      //       Container(
-      //         margin: const EdgeInsets.only(bottom: 10),
-      //         child: TextField(
-      //           controller: txtPemakaianSparePart,
-      //           decoration: const InputDecoration(
-      //               hintText: "Pemakaian Spare Part",
-      //               border: OutlineInputBorder()),
-      //         ),
-      //       ),
-      //       Container(
-      //         margin: const EdgeInsets.only(bottom: 10),
-      //         child: TextField(
-      //           controller: txtJasaPerbaikan,
-      //           decoration: const InputDecoration(
-      //               hintText: "Jasa Perbaikan", border: OutlineInputBorder()),
-      //         ),
-      //       ),
-      //       Container(
-      //         margin: const EdgeInsets.only(bottom: 10),
-      //         child: TextField(
-      //           controller: txtPenggantianSemen,
-      //           decoration: const InputDecoration(
-      //               hintText: "Penggantian Semen",
-      //               border: OutlineInputBorder()),
-      //         ),
-      //       ),
-      //       Container(
-      //         margin: const EdgeInsets.only(bottom: 10),
-      //         child: TextField(
-      //           controller: txtKerugianIdle,
-      //           decoration: const InputDecoration(
-      //               hintText: "Kerugian IDLE", border: OutlineInputBorder()),
-      //         ),
-      //       ),
-      //       Container(
-      //         margin: const EdgeInsets.only(bottom: 10),
-      //         child: TextField(
-      //           controller: txtTotalSummaryLaka,
-      //           decoration: const InputDecoration(
-      //               hintText: "Total Summary Laka",
-      //               border: OutlineInputBorder()),
-      //         ),
-      //       ),
-      //       Container(
-      //         margin: const EdgeInsets.only(bottom: 10),
-      //         child: TextField(
-      //           controller: txtBuktiPalenggaran,
-      //           decoration: const InputDecoration(
-      //               hintText: "Bukti Pelanggaran (BIP)",
-      //               border: OutlineInputBorder()),
-      //         ),
-      //       ),
-      //     ],
-      //   ),
-      // ),
+      Step(
+        state: currentStep > 3 ? StepState.complete : StepState.indexed,
+        isActive: currentStep >= 3,
+        title: const Text("Akomodasi Detail"),
+        content: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: TextField(
+                controller: txtAkomodasi,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'(^\\d*\\.?\\d*)'))],
+                decoration: const InputDecoration(
+                    hintText: "Akomodasi", border: OutlineInputBorder()),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: TextField(
+                controller: txtEvakuasi,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'(^\\d*\\.?\\d*)'))],
+                decoration: const InputDecoration(
+                    hintText: "Evakuasi", border: OutlineInputBorder()),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: TextField(
+                controller: txtKoordinasi,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'(^\\d*\\.?\\d*)'))],
+                decoration: const InputDecoration(
+                    hintText: "Koordinasi", border: OutlineInputBorder()),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: TextField(
+                controller: txtPenggantianBarang,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'(^\\d*\\.?\\d*)'))],
+                decoration: const InputDecoration(
+                    hintText: "Penggantian Barang",
+                    border: OutlineInputBorder()),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: TextField(
+                controller: txtPemakaianSparePart,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'(^\\d*\\.?\\d*)'))],
+                decoration: const InputDecoration(
+                    hintText: "Pemakaian Spare Part",
+                    border: OutlineInputBorder()),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: TextField(
+                controller: txtJasaPerbaikan,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'(^\\d*\\.?\\d*)'))],
+                decoration: const InputDecoration(
+                    hintText: "Jasa Perbaikan", border: OutlineInputBorder()),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: TextField(
+                controller: txtPenggantianSemen,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'(^\\d*\\.?\\d*)'))],
+                decoration: const InputDecoration(
+                    hintText: "Penggantian Semen",
+                    border: OutlineInputBorder()),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: TextField(
+                controller: txtKerugianIdle,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'(^\\d*\\.?\\d*)'))],
+                decoration: const InputDecoration(
+                    hintText: "Kerugian IDLE", border: OutlineInputBorder()),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: TextField(
+                controller: txtTotalSummaryLaka,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'(^\\d*\\.?\\d*)'))],
+                decoration: const InputDecoration(
+                    hintText: "Total Summary Laka",
+                    border: OutlineInputBorder()),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: TextField(
+                controller: txtBuktiPalenggaran,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'(^\\d*\\.?\\d*)'))],
+                decoration: const InputDecoration(
+                    hintText: "Bukti Pelanggaran (BIP)",
+                    border: OutlineInputBorder()),
+              ),
+            ),
+          ],
+        ),
+      ),
     ];
   }
 }

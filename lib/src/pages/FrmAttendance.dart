@@ -553,13 +553,14 @@ class FrmAttendanceState extends State<FrmAttendance> {
           backgroundColor: const Color(0xFFFF8C69), // soft orange appBar
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
+            color: Colors.white,
             iconSize: 20.0,
             onPressed: () {
               _goBack(context);
             },
           ),
           centerTitle: true,
-          title: Text('Attendance'),
+          title: Text('Attendance Karyawan',style: TextStyle(color:Colors.white)),
         ),
         body: Container(
           constraints: BoxConstraints.expand(),
@@ -682,7 +683,7 @@ class FrmAttendanceState extends State<FrmAttendance> {
             _buildInfoRow("Time OUT", timeOUT),
             _buildInfoRow("Duration", duration_check_out),
             SizedBox(height: 12),
-            // _buildShiftDropdown(),
+            _buildShiftDropdown(),
             // SizedBox(height: 12),
             _buildLocationInfo(),
             SizedBox(height: 12),

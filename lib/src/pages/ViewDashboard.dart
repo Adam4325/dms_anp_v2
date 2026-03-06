@@ -3757,7 +3757,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => FrmAttendance()),
+            MaterialPageRoute(builder: (context) => FrmAttendance()),//KARYAWAN
           );
         });
       }

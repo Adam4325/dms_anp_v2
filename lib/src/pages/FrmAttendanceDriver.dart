@@ -669,7 +669,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         backgroundColor: const Color(0xFFFFF4E6), // soft orange background
         appBar: AppBar(
           backgroundColor: const Color(0xFFFF8C69), // soft orange appBar
-          title: Text('Driver Attendance'),
+          title: Text('Driver Attendance',style: TextStyle(color:Colors.white)),
           centerTitle: true,
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
