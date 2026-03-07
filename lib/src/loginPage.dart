@@ -60,7 +60,6 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> initUniqueIdentifierState() async {
     String? identifier;
     try {
-      //identifier = "3d011a9d72e23c29";//await UniqueIdentifier.serial;//
       identifier = await UniqueIdentifier.serial;
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString("androidID", identifier ?? '');

@@ -292,8 +292,8 @@ class FrmAttendanceState extends State<FrmAttendance> {
 
         var data = {
           'method': inorout == "IN" ? "checkin-attendance-v3" : "checkout-attendance-v3",
-          'imeiid': "3d011a9d72e23c29",
-          //'imeiid': androidID.toString(),
+          //'imeiid': "3d011a9d72e23c29",
+          'imeiid': androidID.toString(),
           'userid': user_id,
           'address': address,
           'lat': lat,
