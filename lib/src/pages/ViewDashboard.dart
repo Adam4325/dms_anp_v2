@@ -30,6 +30,7 @@ import 'package:dms_anp/src/pages/hrd/ApvRewards.dart';
 import 'package:dms_anp/src/pages/hrd/ListAbsensiKaryawanV1.dart';
 import 'package:dms_anp/src/pages/hrd/frmAssset.dart';
 import 'package:dms_anp/src/pages/inventory/FrmWareHouseOpName.dart';
+import 'package:dms_anp/src/pages/inventory/ListApprovalOpname.dart';
 import 'package:dms_anp/src/pages/inventory/ListInventoryTransNew.dart';
 import 'package:dms_anp/src/pages/maintenance/FrmServiceRequestTms.dart';
 import 'package:dms_anp/src/pages/maintenance/ViewListWoMCN.dart';
@@ -507,6 +508,20 @@ class _ViewDashboardState extends State<ViewDashboard> {
               idKey: 17,
               title: "WH. Opname"));
         }
+      }
+    }
+
+    if (loginname != "DRIVER") {
+      var isOK = globals.akses_pages == null
+          ? globals.akses_pages
+          : globals.akses_pages
+              .where((x) => (x == "MT" || username == "ADMIN"));
+      if (isOK != null && isOK.length > 0) {
+        _anpServiceList.add(new AnpService(
+            image: Icons.approval,
+            color: Colors.red,
+            idKey: 34,
+            title: "Apr. Opname"));
       }
     }
 
@@ -3837,6 +3852,25 @@ class _ViewDashboardState extends State<ViewDashboard> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => FrmWareHouseOpName()),
+            );
+          });
+        }
+      }
+    } else if (anpService.idKey == 34) {
+      if (loginname == "DRIVER") {
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
+      } else {
+        var isOK = globals.akses_pages == null
+            ? globals.akses_pages
+            : globals.akses_pages
+                .where((x) => x == "ST" || username == "ADMIN");
+        if (isOK != null && isOK.length > 0) {
+          EasyLoading.show();
+          Timer(Duration(seconds: 1), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => ListApprovalOpname()),
             );
           });
         }
