@@ -66,97 +66,6 @@ class _ListDriverInspeksiV2State extends State<ListDriverInspeksiV2> {
     super.initState();
   }
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(
-  //       automaticallyImplyLeading: false,
-  //       title: customSearchBar,
-  //       leading: IconButton(
-  //         icon: Icon(Icons.arrow_back),
-  //         iconSize: 20.0,
-  //         onPressed: () {
-  //           _goBack(context);
-  //         },
-  //       ),
-  //       actions: <Widget>[
-  //         IconButton(
-  //           icon: customIcon,
-  //           onPressed: () {
-  //             setState(() {
-  //               print(customIcon.icon == Icons.search);
-  //               if (customIcon.icon == Icons.search) {
-  //                 customIcon = const Icon(Icons.cancel);
-  //                 customSearchBar = ListTile(
-  //                   onTap: () async {
-  //                     if (_txtSearch.text == null || _txtSearch.text == "") {
-  //                       return;
-  //                     } else {
-  //                       _searchText = _txtSearch.text;
-  //                       paginatorGlobalKey.currentState.changeState(
-  //                           pageLoadFuture: sendDriverDataRequest,
-  //                           resetState: true);
-  //                     }
-  //                   },
-  //                   leading: Icon(
-  //                     Icons.search,
-  //                     color: Colors.white,
-  //                     size: 28,
-  //                   ),
-  //                   title: TextField(
-  //                     controller: _txtSearch,
-  //                     decoration: InputDecoration(
-  //                       hintText: 'Cari name/ Vehicle...',
-  //                       hintStyle: TextStyle(
-  //                         color: Colors.white,
-  //                         fontSize: 18,
-  //                         fontStyle: FontStyle.italic,
-  //                       ),
-  //                       border: InputBorder.none,
-  //                     ),
-  //                     style: TextStyle(
-  //                       color: Colors.white,
-  //                     ),
-  //                   ),
-  //                 );
-  //               } else {
-  //                 setState(() {
-  //                   _searchText = "";
-  //                   _txtSearch.text = "";
-  //                 });
-  //                 customIcon = const Icon(Icons.search);
-  //                 customSearchBar = const Text('List Vehicle');
-  //               }
-  //             });
-  //           },
-  //         ),
-  //       ],
-  //     ),
-  //     body: Paginator.listView(
-  //       key: paginatorGlobalKey,
-  //       pageLoadFuture: sendDriverDataRequest,
-  //       pageItemsGetter: listItemsGetter,
-  //       listItemBuilder: listItemBuilder,
-  //       loadingWidgetBuilder: loadingWidgetMaker,
-  //       errorWidgetBuilder: errorWidgetMaker,
-  //       emptyListWidgetBuilder: emptyListWidgetMaker,
-  //       totalItemsGetter: totalPagesGetter,
-  //       pageErrorChecker: pageErrorChecker,
-  //       scrollPhysics: BouncingScrollPhysics(),
-  //     ),
-  //     floatingActionButton: FloatingActionButton(
-  //       onPressed: () {
-  //         setState(() {
-  //           _searchText = "";
-  //           _txtSearch.text = "";
-  //         });
-  //         paginatorGlobalKey.currentState.changeState(
-  //             pageLoadFuture: sendDriverDataRequest, resetState: true);
-  //       },
-  //       child: Icon(Icons.refresh),
-  //     ),
-  //   );
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -253,7 +162,7 @@ class _ListDriverInspeksiV2State extends State<ListDriverInspeksiV2> {
             paginatorGlobalKey.currentState?.changeState(
                 pageLoadFuture: sendDriverDataRequest, resetState: true);
           },
-          child: Icon(Icons.refresh),
+          child: Icon(Icons.refresh,color: Colors.white,),
         ),
       ),
     );
@@ -274,6 +183,7 @@ class _ListDriverInspeksiV2State extends State<ListDriverInspeksiV2> {
       print('body ${response.body}');
       return DriverDataVehicle.fromResponse(response);
     } catch (e) {
+      print(e);
       if (e is IOException) {
         //paginatorGlobalKey
         alert(context, 2, "Please check your internet connection.", "warning");
@@ -405,7 +315,7 @@ class _ListDriverInspeksiV2State extends State<ListDriverInspeksiV2> {
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Verifikasi"),
+                    label: Text("Verifikasi",style: TextStyle(color:Colors.white)),
                     onPressed: () async {
                       print(value['vhckm']);
                       globals.p2hNumber = value['p2hnumber'];

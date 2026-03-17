@@ -625,7 +625,7 @@ class _ApprovedMekanikDailyCheckScreenP2HState extends State<ApprovedMekanikDail
                     builder: (context) => ListMekanikInspeksiV2()));
           },
         ),
-        title: Text('Approved Inspeksi ${globals.McName.toString()}',
+        title: Text('Approved Inspeksi${globals.McName.toString()}',
             style: const TextStyle(color: Colors.white)),
       ),
       body: inspections.isEmpty

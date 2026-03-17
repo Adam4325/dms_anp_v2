@@ -471,13 +471,13 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
     }
 
-    if (isMenuForeman == true) {
-      _anpServiceList.add(new AnpService(
-          image: Icons.inventory,
-          color: Colors.green,
-          idKey: 27,
-          title: "Inv. Foreman"));
-    }
+    // if (isMenuForeman == true) {
+    //   _anpServiceList.add(new AnpService(
+    //       image: Icons.inventory,
+    //       color: Colors.green,
+    //       idKey: 27,
+    //       title: "Inv. Foreman"));
+    // }
 
     if (loginname != "DRIVER") {
       var isOK = globals.akses_pages == null
@@ -515,7 +515,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages
-              .where((x) => (x == "MT" || username == "ADMIN"));
+              .where((x) => (x == "ST" || username == "ADMIN"));
       if (isOK != null && isOK.length > 0) {
         _anpServiceList.add(new AnpService(
             image: Icons.approval,
@@ -2998,8 +2998,11 @@ class _ViewDashboardState extends State<ViewDashboard> {
       }
 
       var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
-      var latitude = -6.453855; //gpsResult["latitude"] ?? 0;
-      var longitude = 106.8677426; //gpsResult["longitude"] ?? 0;
+      // var latitude = -6.453855; //gpsResult["latitude"] ?? 0;
+      // var longitude = 106.8677426; //gpsResult["longitude"] ?? 0;
+
+      var latitude = gpsResult["latitude"] ?? 0;
+      var longitude = gpsResult["longitude"] ?? 0;
 
       var baseURL = GlobalData.baseUrl +
           "api/do_mixer/update_status_do_mixer.jsp?method=update-status-do-mixer&bujnbr=${item['bujnbr']}"

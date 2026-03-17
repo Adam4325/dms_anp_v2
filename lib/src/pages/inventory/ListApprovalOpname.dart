@@ -154,8 +154,9 @@ class _ListApprovalOpnameState extends State<ListApprovalOpname> {
 
   Future<List<Map<String, dynamic>>> fetchDetail(String wonumber) async {
     try {
-      var url = Uri.encodeFull(
-          '${GlobalData.baseUrl}api/inventory/list_approval_opname.jsp?method=list-approval-opname-detail&wonumber=$wonumber');
+      var baseURL = '${GlobalData.baseUrl}api/inventory/list_approval_opname.jsp?method=list-approval-opname-detail&wonumber=$wonumber';
+      print(baseURL);
+      var url = Uri.encodeFull(baseURL);
       http.Response response = await http.get(Uri.parse(url));
       List<dynamic> raw = json.decode(response.body) as List<dynamic>? ?? [];
       return raw.map((e) => Map<String, dynamic>.from(e is Map ? e : {})).toList();
@@ -171,6 +172,7 @@ class _ListApprovalOpnameState extends State<ListApprovalOpname> {
       list.add({
         "trx_no": m['_trx_no'],
         "vhcid": m['_vhcid'],
+        "posisi": m['_posisi'],
         "wodnotes": m['_wodnotes'],//
       });
     }
@@ -180,12 +182,13 @@ class _ListApprovalOpnameState extends State<ListApprovalOpname> {
   Widget listItemBuilder(value, int index) {
     final trxNo = value['trx_no']?.toString() ?? '-';
     final vhcid = value['vhcid']?.toString() ?? '-';
-    final wodnotes = value['wodnotes']?.toString() ?? '';
+    final merk = value['wodnotes']?.toString() ?? '';
+    final posisi = value['posisi']?.toString() ?? '';
 
     return _HeaderOpnameTile(
       trxNo: trxNo,
       vhcid: vhcid,
-      wodnotes: wodnotes,
+      wodnotes: merk,
       fetchDetail: fetchDetail,
       onCancel: (List<String> detailIds) async {
         if (detailIds.isEmpty) return;
@@ -446,7 +449,9 @@ class _HeaderOpnameTileState extends State<_HeaderOpnameTile> {
                   final id = d['_id']?.toString() ?? '';
                   final part = (d['_partname'] ?? '').toString();
                   final qty = (d['_qty'] ?? '').toString();
-                  final note = (d['_wodnotes'] ?? '').toString();
+                  //final note = (d['_wodnotes'] ?? '').toString();
+                  final merk = (d['_wodnotes'] ?? '').toString();
+                  final posisi = (d['_posisi'] ?? '').toString();
                   return Container(
                     margin: EdgeInsets.only(bottom: 12),
                     padding: EdgeInsets.all(12),
@@ -460,7 +465,8 @@ class _HeaderOpnameTileState extends State<_HeaderOpnameTile> {
                       children: [
                         _kv("Part", part),
                         _kv("Qty", qty),
-                        _kv("Catatan", note),
+                        _kv("Merk", merk),
+                        _kv("Posisi", posisi),
                         SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

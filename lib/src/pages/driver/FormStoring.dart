@@ -142,15 +142,12 @@ class _FormStoringState extends State<FormStoring> {
     String _km = "0";
     if (vhcid != null) {
       print('getApiKM');
-      var urlData =
-          "${GlobalData.baseUrl}api/get_km_by_vehicle_driver.jsp?method=km_vehicle&vhcid=" +
-              vhcid;
+      var urlData = "${GlobalData.baseUrl}api/get_km_by_vehicle_driver.jsp?method=km_vehicle&vhcid=" + vhcid;
 
       var encoded = Uri.encodeFull(urlData);
       Uri myUri = Uri.parse(encoded);
       print(encoded);
-      var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      var response = await http.get(myUri, headers: {"Accept": "application/json"});
 
       setState(() {
         // Get the JSON data
@@ -167,7 +164,6 @@ class _FormStoringState extends State<FormStoring> {
 
   Future<String?> UpdateReceiveLogDo() async {
     try {
-      //String _photo = photo!=null && photo!=""?photo.toString().trim():"";
       SharedPreferences prefs = await SharedPreferences.getInstance();
       var drVID = prefs.getString("drvid")!;
       String vhCID = prefs.getString("vhcid")!;
@@ -415,7 +411,8 @@ class _FormStoringState extends State<FormStoring> {
       txtAddr = "";
       double latUser = userLocation!.latitude;
       double lonUser = userLocation!.longitude;
-
+      txtLat.text = latUser.toString();
+      txtLon.text = lonUser.toString();
       for (var a in listGeofence) {
         double latGeo = double.parse(a['lat']);
         double lonGeo = double.parse(a['lon']);
@@ -425,7 +422,8 @@ class _FormStoringState extends State<FormStoring> {
           LatLng(latGeo, lonGeo),
           LatLng(latUser, lonUser),
         );
-
+        txtLat.text = a['lat'].toString();
+        txtLon.text = a['lon'].toString();
         print(
             "🔹 Cek geofence ${a['name']}: distance = $distance m, radius = $radius m");
         if (radius > 0) {
@@ -433,8 +431,7 @@ class _FormStoringState extends State<FormStoring> {
             print("✅ Dalam geofence ${a['name']} (${a['geo_id']})");
             if(locid.toString()=="BYH-ANP" || locid.toString()=="BYH-ANP MIX"){
               isOutGeo = true; // masih di dalam salah satu geofence
-              txtLat.text = latUser.toString();
-              txtLon.text = lonUser.toString();
+
               print("isOutGeo ${txtLat.text .toString()} ${txtLon.text}");
               print(isOutGeo);
               break; // langsung keluar loop
@@ -843,14 +840,16 @@ class _FormStoringState extends State<FormStoring> {
                                               0,
                                               "USER ID tidak boleh kosong",
                                               "error");
-                                        } else if (txtLat.text == "0.0" ||
+                                        }
+                                        else if (txtLat.text == "0.0" ||
                                             txtLon.text == "0.0") {
                                           alert(
                                               globalScaffoldKey.currentContext!,
                                               0,
                                               "Longitude latitude tidak boleh 0.0",
                                               "error");
-                                        } else if (txtNoTelp.text == "" ||
+                                        }
+                                        else if (txtNoTelp.text == "" ||
                                             txtNoTelp.text == "") {
                                           alert(
                                               globalScaffoldKey.currentContext!,
