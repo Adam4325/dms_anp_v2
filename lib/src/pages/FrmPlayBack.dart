@@ -247,11 +247,12 @@ class FrmPlayBackState extends State<FrmPlayBack> {
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               iconSize: 20.0,
+              color: Colors.white,
               onPressed: () {
                 _goBack(context);
               },
             ),
-            title: Text("Search History Nopol"),
+            title: Text("Search History Nopol",style: TextStyle(color:Colors.white)),
             backgroundColor: Colors.orange,
           ),
           body: Container(

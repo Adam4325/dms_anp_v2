@@ -1100,10 +1100,11 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
                           SizedBox(width: 8),
                           Expanded(
                             child: _buildInfoChip(
-                                'GPS Time',
-                                u_gps_time,
-                                Icons.access_time,
-                                Colors.teal
+                                'Odometer',
+                                '${NumberFormat('0.00').format(double.tryParse(u_odometer) ?? 0.0)} Km',
+                                Icons.speed,
+                                Colors.indigo,
+                                isFullWidth: true
                             ),
                           ),
                         ],
@@ -1113,11 +1114,10 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
 
                       // Odometer chip - full width
                       _buildInfoChip(
-                          'Odometer',
-                          '${NumberFormat('0.00').format(double.tryParse(u_odometer) ?? 0.0)} Km',
-                          Icons.speed,
-                          Colors.indigo,
-                          isFullWidth: true
+                          'GPS Time',
+                          u_gps_time,
+                          Icons.access_time,
+                          Colors.teal
                       ),
 
                       // Event chip - conditional
