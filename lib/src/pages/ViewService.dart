@@ -439,7 +439,7 @@ class _ViewServiceState extends State<ViewService> {
                   },
                   style: ElevatedButton.styleFrom(
                       elevation: 0.0,
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Colors.orange,
                       padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                       textStyle:
@@ -473,7 +473,7 @@ class _ViewServiceState extends State<ViewService> {
                   },
                   style: ElevatedButton.styleFrom(
                       elevation: 0.0,
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Colors.orange,
                       padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                       textStyle:
@@ -577,10 +577,11 @@ class _ViewServiceState extends State<ViewService> {
       child: new Scaffold(
         backgroundColor: Colors.grey,
         appBar: AppBar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: Colors.orangeAccent,
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               iconSize: 20.0,
+              color: Colors.white,
               onPressed: () {
                 _goBack(context);
               },
@@ -588,7 +589,7 @@ class _ViewServiceState extends State<ViewService> {
             //backgroundColor: Colors.transparent,
             //elevation: 0.0,
             centerTitle: true,
-            title: Text('Form Service')),
+            title: Text('Form Service',style: TextStyle(color:Colors.white),)),
         body: Container(
           key: globalScaffoldKey,
           constraints: BoxConstraints.expand(),
@@ -611,7 +612,7 @@ class _ViewServiceState extends State<ViewService> {
           Container(
             child: Card(
               elevation: 0.0,
-              shadowColor: Color(0x802196F3),
+              shadowColor: Colors.orangeAccent,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15.0)),
               clipBehavior: Clip.antiAlias,
@@ -771,7 +772,7 @@ class _ViewServiceState extends State<ViewService> {
                                     },
                                     style: ElevatedButton.styleFrom(
                                         elevation: 0.0,
-                                        backgroundColor: Colors.blue,
+                                        backgroundColor: Colors.orange,
                                         padding: EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 0),
                                         textStyle: TextStyle(
@@ -841,7 +842,7 @@ class _ViewServiceState extends State<ViewService> {
                                     },
                                     style: ElevatedButton.styleFrom(
                                         elevation: 0.0,
-                                        backgroundColor: Colors.blue,
+                                        backgroundColor: Colors.orange,
                                         padding: EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 0),
                                         textStyle: TextStyle(
@@ -854,7 +855,7 @@ class _ViewServiceState extends State<ViewService> {
                           },
                           style: ElevatedButton.styleFrom(
                               elevation: 0.0,
-                              backgroundColor: Colors.blue,
+                              backgroundColor: Colors.orange,
                               padding: EdgeInsets.symmetric(
                                   horizontal: 5, vertical: 0),
                               textStyle: TextStyle(
