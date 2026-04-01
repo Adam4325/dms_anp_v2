@@ -9473,7 +9473,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                 },
                                 style: ElevatedButton.styleFrom(
                                     elevation: 0.0,
-                                    backgroundColor: Colors.blue,
+                                    backgroundColor: Color(0xFFE67E22),
                                     padding: EdgeInsets.symmetric(
                                         horizontal: 10, vertical: 0),
                                     textStyle: TextStyle(
@@ -9566,7 +9566,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                     },
                                     style: ElevatedButton.styleFrom(
                                         elevation: 0.0,
-                                        backgroundColor: Colors.blue,
+                                        backgroundColor: Color(0xFFE67E22),
                                         padding: EdgeInsets.symmetric(
                                             horizontal: 5, vertical: 0),
                                         textStyle: TextStyle(
@@ -9643,7 +9643,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                   },
                                   style: ElevatedButton.styleFrom(
                                       elevation: 0.0,
-                                      backgroundColor: Colors.blue,
+                                      backgroundColor: Color(0xFFE67E22),
                                       padding: EdgeInsets.symmetric(
                                           horizontal: 10, vertical: 0),
                                       textStyle: TextStyle(
@@ -9659,7 +9659,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     },
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
-                        backgroundColor: Colors.blue,
+                        backgroundColor: Color(0xFFE67E22),
                         padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                         textStyle: TextStyle(
@@ -9705,7 +9705,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     },
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
-                        backgroundColor: Colors.blue,
+                        backgroundColor: Colors.orange,
                         padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                         textStyle: TextStyle(
@@ -11672,10 +11672,6 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   }
 
   Widget _buildListViewFinish(BuildContext context) {
-    // print(getAkses("MT"));
-    // print(username);
-    //if (getAkses("MT") || username == "ADMIN") {
-    //if (getAkses("FO") || getAkses("OP")) {
     if (getAkses("FO")) {
       return SingleChildScrollView(
           //shrinkWrap: true,
@@ -11860,7 +11856,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 size: 15.0,
               ),
               label:
-                  Text("Opname Detail", style: TextStyle(color: Colors.white)),
+                  Text("Opname Det.", style: TextStyle(color: Colors.white)),
               onPressed: () async {
                 print('OPNAME FOREMAN LIST ${item['wodwonbr']}');
                 print('show dialog');
@@ -12597,198 +12593,153 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           ),
           Container(
             width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.only(bottom: 0, top: 0, left: 10, right: 10),
+            padding: EdgeInsets.only(bottom: 6, top: 0, left: 10, right: 10),
             decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            // child: Row(
-            //     crossAxisAlignment: CrossAxisAlignment.center,
-            //     children: <Widget>[
-            //       new ElevatedButton.icon(
-            //         icon: Icon(
-            //           Icons.settings,
-            //           color: Colors.white,
-            //           size: 14.0,
-            //         ),
-            //         label: Text("Add/Update Mechanic",
-            //             style: TextStyle(color: Colors.white)), //PROSES
-            //         onPressed: () async {
-            //           mechanicID = null;
-            //           SharedPreferences prefs =
-            //               await SharedPreferences.getInstance();
-            //           prefs.setString("wo_mcn_detail", item['wodwonbr']);
-            //           prefs.setString("srnumber_mcn_detail", item['srnumber']);
-            //           print(item['wodwonbr']);
-            //           print(item['srnumber']);
-            //           EasyLoading.show();
-            //           Navigator.pushReplacement(
-            //               context,
-            //               MaterialPageRoute(
-            //                   builder: (context) => ViewListMcnDetail()));
-            //         },
-            //         style: ElevatedButton.styleFrom(
-            //             elevation: 0.0,
-            //             backgroundColor: Colors.orange,
-            //             padding:
-            //                 EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-            //             textStyle: TextStyle(
-            //                 fontSize: 14, fontWeight: FontWeight.bold)),
-            //       ),
-            //       SizedBox(width: 35),
-            //       new ElevatedButton.icon(
-            //         icon: Icon(
-            //           Icons.details_outlined,
-            //           color: Colors.white,
-            //           size: 14.0,
-            //         ),
-            //         label: Text("Detail List",
-            //             style: TextStyle(color: Colors.white)), //PROSESS
-            //         onPressed: () async {
-            //           await getListDataListMechanic(item['wodwonbr']);
-            //           await Future.delayed(Duration(milliseconds: 1));
-            //           if (dataListMechanicProses.length > 0) {
-            //             showDialog(
-            //                 context: globalScaffoldKey.currentContext!,
-            //                 builder: (BuildContext context) {
-            //                   return AlertDialog(
-            //                     title: Text('List Detail Mechanic'),
-            //                     content: listDataMechanicProses(context),
-            //                   );
-            //                 });
-            //           }
-            //         },
-            //         style: ElevatedButton.styleFrom(
-            //             elevation: 0.0,
-            //             backgroundColor: Colors.blueAccent,
-            //             padding:
-            //                 EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-            //             textStyle: TextStyle(
-            //                 fontSize: 14, fontWeight: FontWeight.bold)),
-            //       ),
-            //     ]),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            child: Column(
               children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(
+                          Icons.build_circle,
+                          color: Colors.white,
+                          size: 16.0,
+                        ),
+                        label: const Text(
+                          "Add/Update MCN",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        onPressed: () async {
+                          mechanicID = null;
 
-                /// BUTTON ADD / UPDATE
-                ElevatedButton.icon(
-                  icon: const Icon(
-                    Icons.settings,
-                    color: Colors.white,
-                    size: 14.0,
-                  ),
-                  label: const Text(
-                    "Add/Update Mechanic",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onPressed: () async {
-                    mechanicID = null;
+                          SharedPreferences prefs =
+                              await SharedPreferences.getInstance();
 
-                    SharedPreferences prefs =
-                    await SharedPreferences.getInstance();
+                          prefs.setString("wo_mcn_detail", item['wodwonbr']);
+                          prefs.setString("srnumber_mcn_detail", item['srnumber']);
 
-                    prefs.setString("wo_mcn_detail", item['wodwonbr']);
-                    prefs.setString("srnumber_mcn_detail", item['srnumber']);
+                          EasyLoading.show();
 
-                    EasyLoading.show();
-
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ViewListMcnDetail(),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.orange,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    textStyle: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-
-                /// BIKIN SPACE OTOMATIS KE KANAN
-                const Spacer(),
-
-                /// BUTTON DETAIL LIST
-                ElevatedButton.icon(
-                  icon: const Icon(
-                    Icons.details_outlined,
-                    color: Colors.white,
-                    size: 14.0,
-                  ),
-                  label: const Text(
-                    "Detail List",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onPressed: () async {
-                    await getListDataListMechanic(item['wodwonbr']);
-
-                    if (dataListMechanicProses.isNotEmpty) {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('List Detail Mechanic'),
-                            content: listDataMechanicProses(context),
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ViewListMcnDetail(),
+                            ),
                           );
                         },
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blueAccent,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    textStyle: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
+                        style: ElevatedButton.styleFrom(
+                          elevation: 4.0,
+                          backgroundColor: Color(0xFFE67E22),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(
+                          Icons.list_alt,
+                          color: Colors.white,
+                          size: 16.0,
+                        ),
+                        label: const Text(
+                          "Detail List",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        onPressed: () async {
+                          await getListDataListMechanic(item['wodwonbr']);
+
+                          if (dataListMechanicProses.isNotEmpty) {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('List Detail Mechanic'),
+                                  content: listDataMechanicProses(context),
+                                );
+                              },
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 4.0,
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),//
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(
+                      Icons.inventory_2_rounded,
+                      color: Colors.white,
+                      size: 16.0,
+                    ),
+                    label: const Text(
+                      "Opname Det.",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () async {
+                      print('OPNAME PROSES ${item['wodwonbr']}');
+                      await getListDataItemForeman(item["wodwonbr"]);
+                      txtOpnameWONUMBER.text = item['srnumber'];
+                      wonumberopname = item['wodwonbr'];
+                      if (dataListItemSearch.length > 0) {
+                        listSRNumberOpnameDetail = item['srnumber'];
+                        listOpnameVHCID = item['vhcid'];
+                      }
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('List Item'), //PROSES
+                              content:
+                                  setupAlertDialoagContainerOpnamDetail(context),
+                            );
+                          });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      elevation: 5.0,
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 11),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          Container(
-              width: MediaQuery.of(context).size.width,
-              padding: EdgeInsets.only(bottom: 0, top: 0, left: 10, right: 10),
-              decoration:
-                  BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-              child: new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.details_outlined,
-                  color: Colors.white,
-                  size: 14.0,
-                ),
-                label: Text("Opname Det.",
-                    style: TextStyle(color: Colors.white)), //PROSESS
-                onPressed: () async {
-                  print('OPNAME PROSES ${item['wodwonbr']}');
-                  await getListDataItemForeman(item["wodwonbr"]);
-                  txtOpnameWONUMBER.text = item['srnumber'];
-                  wonumberopname = item['wodwonbr'];
-                  if (dataListItemSearch.length > 0) {
-                    listSRNumberOpnameDetail = item['srnumber'];
-                    listOpnameVHCID = item['vhcid'];
-                  }
-                  showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text('List Item'), //PROSES
-                          content:
-                              setupAlertDialoagContainerOpnamDetail(context),
-                        );
-                      });
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blueAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-              )),
         ],
       ),
     );
@@ -12886,16 +12837,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                 txtOpnameVHCID.text = fnVHCIDQC;
                               });
                               _tabController.animateTo(1);
-                              // await getListBanTMSQC(true, '');
-                              // showDialog(
-                              //     context: globalScaffoldKey.currentContext!,
-                              //     builder: (BuildContext context) {
-                              //       return AlertDialog(
-                              //         title: Text('List Data'),
-                              //         content:
-                              //             setupAlertDialoadContainerQC(context),
-                              //       );
-                              //     });
+                              // await getListBanTMSQC(true, '
                             },
                             style: ElevatedButton.styleFrom(
                                 elevation: 0.0,
@@ -12956,7 +12898,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   },
                   style: ElevatedButton.styleFrom(
                       elevation: 0.0,
-                      backgroundColor: Colors.green,
+                      backgroundColor: Colors.orange,
                       padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                       textStyle:
@@ -13243,7 +13185,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         },
         style: ElevatedButton.styleFrom(
             elevation: 0.0,
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: Color(0xFFE67E22),
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
       ));

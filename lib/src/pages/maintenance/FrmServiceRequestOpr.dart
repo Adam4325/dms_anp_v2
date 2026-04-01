@@ -129,7 +129,7 @@ class _BottomSheetContentVehicleCHK extends StatelessWidget {
         "${GlobalData.baseUrl}api/maintenance/sr/refferencce_mcn.jsp?method=list-wonumber-by-vhcid&vhcid=${vhcid}");
     print(myUri.toString());
     var response =
-        await http.get(myUri, headers: {"Accept": "application/json"});
+    await http.get(myUri, headers: {"Accept": "application/json"});
 
     if (response.statusCode == 200) {
       listWONumberCHK = json.decode(response.body);
@@ -888,7 +888,7 @@ class _BottomSheetContentTypeSR extends StatelessWidget {
                 var icon = new Image.asset("assets/img/no-image.jpg",
                     height: 30.00, width: 30.00);
                 var srType =
-                    dataSRType[index]['id'].toString().replaceAll("\\s", "");
+                dataSRType[index]['id'].toString().replaceAll("\\s", "");
                 if (srType == "BODY-REPAIRE" || srType == "BODY - REPAIRE") {
                   icon = new Image.asset('assets/img/body-repair.png',
                       height: 30.00, width: 30.00);
@@ -1086,7 +1086,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       if (txtSearchCabangNameCHK.text.length >= 3) {
         for (var i = 0; i < dummySearchListCHK.length; i++) {
           var dtC =
-              dummySearchListCabangCHK[i]['value'].toLowerCase().toString();
+          dummySearchListCabangCHK[i]['value'].toLowerCase().toString();
           //print("${dtC} => ${txtSearchCabangNameCHK.text.toLowerCase().toString()}");
           if (dtC
               .contains(txtSearchCabangNameCHK.text.toLowerCase().toString())) {
@@ -1115,7 +1115,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
         "${GlobalData.baseUrl}api/maintenance/sr/refferencce_mcn.jsp?method=list_cabang");
     print(myUri.toString());
     var response =
-        await http.get(myUri, headers: {"Accept": "application/json"});
+    await http.get(myUri, headers: {"Accept": "application/json"});
 
     if (response.statusCode == 200) {
       listLocidCHK = json.decode(response.body);
@@ -1143,7 +1143,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         listVehicleIdCHK = [];
         listVehicleIdCHK = (jsonDecode(response.body) as List)
@@ -1170,7 +1170,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
           "${GlobalData.baseUrl}api/question_form_checklis.jsp?method=list-question-form");
       print(myUri.toString());
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
 
       setState(() {
         // Get the JSON data
@@ -1209,10 +1209,10 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     var trxnumber = prefs.getString("trxnumber_form_check") ?? "";
     Uri myUri = Uri.parse(
         "${GlobalData.baseUrl}api/question_form_checklis.jsp?method=save-or-update&trxnumber=${trxnumber}&id=${id}"
-        "&vhcid=${vhcid}&nama_group=${group_name}&nama_form_check=${nama_form_check}&pilihan=${pilihan}&input=${input}&is_multiple=${is_multiple}&userid=${userid}");
+            "&vhcid=${vhcid}&nama_group=${group_name}&nama_form_check=${nama_form_check}&pilihan=${pilihan}&input=${input}&is_multiple=${is_multiple}&userid=${userid}");
     print(myUri.toString());
     var response =
-        await http.get(myUri, headers: {"Accept": "application/json"});
+    await http.get(myUri, headers: {"Accept": "application/json"});
 
     setState(() {
       // Get the JSON data
@@ -1231,7 +1231,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
           "${GlobalData.baseUrl}api/question_form_checklis.jsp?method=delete-draft-form-cheklist&trxnumber=${trxnumber}");
       print(myUri.toString());
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
 
       setState(() {
         var message = json.decode(response.body);
@@ -1251,10 +1251,10 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     var trxnumber = prefs.getString("trxnumber_form_check") ?? "";
     Uri myUri = Uri.parse(
         "${GlobalData.baseUrl}api/question_form_checklis.jsp?method=update-form-cheklist&trxnumber=${trxnumber}"
-        "&vhcid=${vhcid}&locid=${locid}&vhtalias=${vhtalias}&odometer=${odometer}&wodwonumber=${wodwonumber}");
+            "&vhcid=${vhcid}&locid=${locid}&vhtalias=${vhtalias}&odometer=${odometer}&wodwonumber=${wodwonumber}");
     print(myUri.toString());
     var response =
-        await http.get(myUri, headers: {"Accept": "application/json"});
+    await http.get(myUri, headers: {"Accept": "application/json"});
 
     setState(() {
       // Get the JSON data
@@ -1286,7 +1286,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     Uri myUri = Uri.parse(encoded);
     print(encoded);
     var response =
-        await http.get(myUri, headers: {"Accept": "application/json"});
+    await http.get(myUri, headers: {"Accept": "application/json"});
 
     setState(() {
       var data = json.decode(response.body);
@@ -1566,7 +1566,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     Uri myUri = Uri.parse(encoded);
     print(encoded);
     var response =
-        await http.get(myUri, headers: {"Accept": "application/json"});
+    await http.get(myUri, headers: {"Accept": "application/json"});
 
     setState(() {
       var data = json.decode(response.body);
@@ -1594,7 +1594,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         setState(() {
           listBanTms = (jsonDecode(response.body) as List)
@@ -1635,7 +1635,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         setState(() {
           listBanTmsQC = (jsonDecode(response.body) as List)
@@ -1666,7 +1666,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
         "${BASE_URL}api/maintenance/sr/refferencce_mcn.jsp?method=mechanic-list&jabatan=STAFF");
     print(myUri.toString());
     var response =
-        await http.get(myUri, headers: {"Accept": "application/json"});
+    await http.get(myUri, headers: {"Accept": "application/json"});
 
     if (response.statusCode == 200) {
       print('loaded mechanic');
@@ -1690,7 +1690,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       setState(() {
         if (response.statusCode == 200) {
           print('loaded driver');
@@ -1715,7 +1715,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
         "${BASE_URL}api/maintenance/sr/refferencce_mcn.jsp?method=list_typeservice");
     print(myUri.toString());
     var response =
-        await http.get(myUri, headers: {"Accept": "application/json"});
+    await http.get(myUri, headers: {"Accept": "application/json"});
 
     if (response.statusCode == 200) {
       dataSRType = json.decode(response.body);
@@ -1739,7 +1739,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
         "${BASE_URL}api/maintenance/sr/refferencce_mcn.jsp?method=list_cabang");
     print(myUri.toString());
     var response =
-        await http.get(myUri, headers: {"Accept": "application/json"});
+    await http.get(myUri, headers: {"Accept": "application/json"});
 
     if (response.statusCode == 200) {
       listLocid = json.decode(response.body);
@@ -1772,7 +1772,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         listVehicleId = [];
         listVehicleId = (jsonDecode(response.body) as List)
@@ -1980,7 +1980,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -2110,7 +2110,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -2371,7 +2371,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -2488,7 +2488,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -2606,7 +2606,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -2648,7 +2648,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         if (json.decode(response.body)["status_code"] == 200) {
           if (EasyLoading.isShow) {
@@ -2717,7 +2717,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         if (json.decode(response.body)["status_code"] == 200) {
           if (EasyLoading.isShow) {
@@ -2786,7 +2786,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         if (json.decode(response.body)["status_code"] == 200) {
           if (EasyLoading.isShow) {
@@ -2855,7 +2855,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         if (json.decode(response.body)["status_code"] == 200) {
           if (EasyLoading.isShow) {
@@ -2924,7 +2924,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         if (json.decode(response.body)["status_code"] == 200) {
           if (EasyLoading.isShow) {
@@ -3000,7 +3000,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         if (json.decode(response.body)["status_code"] == 200) {
           if (EasyLoading.isShow) {
@@ -3082,7 +3082,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       //var isTest =true;
       if (response.statusCode == 200) {
         if (json.decode(response.body)["status_code"] == 200) {
@@ -3158,7 +3158,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
@@ -3193,7 +3193,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
@@ -3228,7 +3228,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
@@ -3263,7 +3263,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
@@ -3299,7 +3299,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
@@ -3335,7 +3335,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = urlData;
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
@@ -3371,7 +3371,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = urlData;
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
@@ -3408,7 +3408,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = urlData;
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
@@ -3444,7 +3444,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = urlData;
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
@@ -3623,7 +3623,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -3744,7 +3744,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -3867,7 +3867,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -3972,7 +3972,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -4079,7 +4079,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -4184,7 +4184,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -4283,7 +4283,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -4381,7 +4381,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -4498,7 +4498,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -4615,7 +4615,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           elevation: 0.0,
                           backgroundColor: Colors.blue,
                           padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                          EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                           textStyle: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
@@ -4674,7 +4674,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               search);
       print(myUri.toString());
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (isloading == true) {
         if (EasyLoading.isShow) {
           EasyLoading.dismiss();
@@ -4718,7 +4718,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                 search);
         print(myUri.toString());
         var response =
-            await http.get(myUri, headers: {"Accept": "application/json"});
+        await http.get(myUri, headers: {"Accept": "application/json"});
         if (isloading == true) {
           if (EasyLoading.isShow) {
             EasyLoading.dismiss();
@@ -4767,7 +4767,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                 search);
         print(myUri.toString());
         var response =
-            await http.get(myUri, headers: {"Accept": "application/json"});
+        await http.get(myUri, headers: {"Accept": "application/json"});
         if (isloading == true) {
           if (EasyLoading.isShow) {
             EasyLoading.dismiss();
@@ -5056,7 +5056,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         if (id_header <= 0) {
           var a = json.decode(response.body)["id_header"];
@@ -5207,606 +5207,606 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     //   return Container();
     // }
     txtGenuino.text = item["original_sn"] == null ||
-            item["original_sn"] == '' ||
-            item["original_sn"] == 'null'
+        item["original_sn"] == '' ||
+        item["original_sn"] == 'null'
         ? ''
         : item["original_sn"];
     return Expanded(
         child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.save,
-        color: Colors.white,
-        size: 15.0,
-      ),
-      label: Text("Pilih item"),
-      onPressed: () async {
-        // print(collTyreNumber
-        //     .where((x) => x['tyrenumber'] == item['tyrenumber'])
-        //     .isEmpty);
-        var isTyreNumberExists =
+          icon: Icon(
+            Icons.save,
+            color: Colors.white,
+            size: 15.0,
+          ),
+          label: Text("Pilih item"),
+          onPressed: () async {
+            // print(collTyreNumber
+            //     .where((x) => x['tyrenumber'] == item['tyrenumber'])
+            //     .isEmpty);
+            var isTyreNumberExists =
             collTyreNumber.where((x) => x['tyrenumber'] == item['tyrenumber']);
-        print("isTyreNumberExists : ${isTyreNumberExists}");
-        if (isTyreNumberExists.isEmpty) {
-          Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-          collTyreNumber = [];
-          collTyreNumber.add({
-            'tyrenumber': item["tyrenumber"],
-            'curdate': item["curdate"],
-            'iditemid': item["iditemid"],
-            'partname': item["partname"],
-            'merk': item["merk"],
-            'genuino': item["genuino"],
-            'itmalias': item["itmalias"],
-            'itdunitcost': item["itdunitcost"]
-          });
-          //print(collTyreNumber);
-          showDialog(
-            context: context,
-            builder: (context) => new AlertDialog(
-              scrollable: true,
-              title: new Text('Information'),
-              //content:
-              //new Text("Save new request service?"),
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                //position
-                mainAxisSize: MainAxisSize.min,
-                // wrap content in flutter
-                children: <Widget>[
-                  Container(
-                    margin: EdgeInsets.only(
-                        top: 5, bottom: 0.0, left: 10, right: 10),
-                    child: Text("Tyre Number : ${item['tyrenumber']}",
-                        style: TextStyle(color: Colors.black)),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        top: 5, bottom: 0.0, left: 10, right: 10),
-                    child: Text(
-                        "Part Name : ${item['partname']}- ${item['merk']}",
-                        style: TextStyle(color: Colors.black)),
-                  ),
-                  Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: TextField(
-                      readOnly: false,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtGenuino,
-                      keyboardType: TextInputType.text,
-                      decoration: new InputDecoration(
-                        fillColor: Colors.yellow,
-                        filled: true,
-                        isDense: true,
-                        labelText: "GENUINENO/ SN BAN",
-                        contentPadding: EdgeInsets.all(5.0),
+            print("isTyreNumberExists : ${isTyreNumberExists}");
+            if (isTyreNumberExists.isEmpty) {
+              Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+              collTyreNumber = [];
+              collTyreNumber.add({
+                'tyrenumber': item["tyrenumber"],
+                'curdate': item["curdate"],
+                'iditemid': item["iditemid"],
+                'partname': item["partname"],
+                'merk': item["merk"],
+                'genuino': item["genuino"],
+                'itmalias': item["itmalias"],
+                'itdunitcost': item["itdunitcost"]
+              });
+              //print(collTyreNumber);
+              showDialog(
+                context: context,
+                builder: (context) => new AlertDialog(
+                  scrollable: true,
+                  title: new Text('Information'),
+                  //content:
+                  //new Text("Save new request service?"),
+                  content: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    //position
+                    mainAxisSize: MainAxisSize.min,
+                    // wrap content in flutter
+                    children: <Widget>[
+                      Container(
+                        margin: EdgeInsets.only(
+                            top: 5, bottom: 0.0, left: 10, right: 10),
+                        child: Text("Tyre Number : ${item['tyrenumber']}",
+                            style: TextStyle(color: Colors.black)),
                       ),
-                    ),
-                  ),
-                  SmartSelect<String>.single(
-                    title: 'FIT POST',
-                    selectedValue: selFitPostId,
-                    onChange: (selected) {
-                      setState(() => selFitPostId = selected.value);
-                    },
-                    choiceType: S2ChoiceType.radios,
-                    choiceItems: choices.collFitPost,
-                    modalType: S2ModalType.popupDialog,
-                    modalHeader: false,
-                    modalConfig: const S2ModalConfig(
-                      style: S2ModalStyle(
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                      Container(
+                        margin: EdgeInsets.only(
+                            top: 5, bottom: 0.0, left: 10, right: 10),
+                        child: Text(
+                            "Part Name : ${item['partname']}- ${item['merk']}",
+                            style: TextStyle(color: Colors.black)),
+                      ),
+                      Container(
+                        margin: EdgeInsets.all(10.0),
+                        child: TextField(
+                          readOnly: false,
+                          cursorColor: Colors.black,
+                          style: TextStyle(color: Colors.grey.shade800),
+                          controller: txtGenuino,
+                          keyboardType: TextInputType.text,
+                          decoration: new InputDecoration(
+                            fillColor: Colors.yellow,
+                            filled: true,
+                            isDense: true,
+                            labelText: "GENUINENO/ SN BAN",
+                            contentPadding: EdgeInsets.all(5.0),
+                          ),
                         ),
                       ),
-                    ),
+                      SmartSelect<String>.single(
+                        title: 'FIT POST',
+                        selectedValue: selFitPostId,
+                        onChange: (selected) {
+                          setState(() => selFitPostId = selected.value);
+                        },
+                        choiceType: S2ChoiceType.radios,
+                        choiceItems: choices.collFitPost,
+                        modalType: S2ModalType.popupDialog,
+                        modalHeader: false,
+                        modalConfig: const S2ModalConfig(
+                          style: S2ModalStyle(
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              actions: <Widget>[
-                new ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 20.0,
-                  ),
-                  label: Text("Close"),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.red,
-                      padding:
+                  actions: <Widget>[
+                    new ElevatedButton.icon(
+                      icon: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 20.0,
+                      ),
+                      label: Text("Close"),
+                      onPressed: () {
+                        Navigator.of(context).pop(false);
+                      },
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.red,
+                          padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      textStyle:
+                          textStyle:
                           TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-                new ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 20.0,
-                  ),
-                  label: Text("Add Ban"),
-                  onPressed: () async {
-                    var isOK = globals.akses_pages == null
-                        ? globals.akses_pages
-                        : globals.akses_pages.where((x) => x == "OP");
-                    if (isOK != null) {
-                      if (isOK.length > 0) {
-                        //collTyreFit = [];
-                        if (txtGenuino.text == null || txtGenuino.text == '') {
-                          alert(globalScaffoldKey.currentContext!, 2,
-                              "Genuine Number tidak boleh kosong", "warning");
-                        } else if (txtGenuino.text.contains("|")) {
-                          alert(
-                              globalScaffoldKey.currentContext!,
-                              2,
-                              "Genuine Number Tidak boleh mengandung karakter '|' ",
-                              "warning");
-                        } else if (selFitPostId == null || selFitPostId == '') {
-                          alert(globalScaffoldKey.currentContext!, 2,
-                              "Fit Post tidak boleh kosong", "warning");
-                        } else if (selFitPostId.contains("|")) {
-                          alert(
-                              globalScaffoldKey.currentContext!,
-                              2,
-                              "Fit Post Tidak boleh mengandung karakter '|' ",
-                              "warning");
-                        } else {
-                          // collTyreNumber.add({'tyrenumber':item["tyrenumber"],'curdate':item["curdate"],'iditemid':item["iditemid"],'genuino':item["genuino"],'itmalias':item["itmalias"],'itdunitcost':item["itdunitcost"]});
-                          // print(collTyreNumber);
-                          var dataItmeTyre = collTyreNumber;
-                          if (dataItmeTyre.length <= 0) {
-                            alert(globalScaffoldKey.currentContext!, 2,
-                                "Item belum ada yang di pilih", "warning");
-                          } else {
-                            var dataFit = collTyreFit.where((x) =>
-                                x['fittyreid'] ==
-                                dataItmeTyre[0]['tyrenumber']);
-                            var fitDesc = choices.collFitPost
-                                .singleWhere((x) => x.value == selFitPostId);
-                            if (dataFit.isEmpty) {
-                              fnVHCID = txtVehicleId.text;
-                              //print(fnVHCID);
-                              collTyreFit.add({
-                                "fittyreid": dataItmeTyre[0]['tyrenumber'],
-                                "fitserialno": dataItmeTyre[0]['tyrenumber'],
-                                "startdate": dataItmeTyre[0]['curdate'],
-                                "tyrebrand": dataItmeTyre[0]['merk'],
-                                "partname": dataItmeTyre[0]['partname'],
-                                "tyrepattern": dataItmeTyre[0]['itmalias'],
-                                "tyreprice": dataItmeTyre[0]['itdunitcost'],
-                                "genuino": txtGenuino.text,
-                                "fitpost": selFitPostId.toString(),
-                                "fitpost_desc": fitDesc.title
-                              });
-                              setState(() {
-                                txtGenuino.text = '';
-                                selFitPostId = '';
-                              });
-                              //print(collTyreFit);
-                              await Future.delayed(Duration(seconds: 1));
-                              Navigator.of(context).pop(false);
-                            } else {
+                    ),
+                    new ElevatedButton.icon(
+                      icon: Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: 20.0,
+                      ),
+                      label: Text("Add Ban"),
+                      onPressed: () async {
+                        var isOK = globals.akses_pages == null
+                            ? globals.akses_pages
+                            : globals.akses_pages.where((x) => x == "OP");
+                        if (isOK != null) {
+                          if (isOK.length > 0) {
+                            //collTyreFit = [];
+                            if (txtGenuino.text == null || txtGenuino.text == '') {
+                              alert(globalScaffoldKey.currentContext!, 2,
+                                  "Genuine Number tidak boleh kosong", "warning");
+                            } else if (txtGenuino.text.contains("|")) {
                               alert(
                                   globalScaffoldKey.currentContext!,
                                   2,
-                                  "Tyre Number ${dataItmeTyre[0]['tyrenumber']} tersebut sudah ada,silahkan gunakan yang lain",
+                                  "Genuine Number Tidak boleh mengandung karakter '|' ",
                                   "warning");
+                            } else if (selFitPostId == null || selFitPostId == '') {
+                              alert(globalScaffoldKey.currentContext!, 2,
+                                  "Fit Post tidak boleh kosong", "warning");
+                            } else if (selFitPostId.contains("|")) {
+                              alert(
+                                  globalScaffoldKey.currentContext!,
+                                  2,
+                                  "Fit Post Tidak boleh mengandung karakter '|' ",
+                                  "warning");
+                            } else {
+                              // collTyreNumber.add({'tyrenumber':item["tyrenumber"],'curdate':item["curdate"],'iditemid':item["iditemid"],'genuino':item["genuino"],'itmalias':item["itmalias"],'itdunitcost':item["itdunitcost"]});
+                              // print(collTyreNumber);
+                              var dataItmeTyre = collTyreNumber;
+                              if (dataItmeTyre.length <= 0) {
+                                alert(globalScaffoldKey.currentContext!, 2,
+                                    "Item belum ada yang di pilih", "warning");
+                              } else {
+                                var dataFit = collTyreFit.where((x) =>
+                                x['fittyreid'] ==
+                                    dataItmeTyre[0]['tyrenumber']);
+                                var fitDesc = choices.collFitPost
+                                    .singleWhere((x) => x.value == selFitPostId);
+                                if (dataFit.isEmpty) {
+                                  fnVHCID = txtVehicleId.text;
+                                  //print(fnVHCID);
+                                  collTyreFit.add({
+                                    "fittyreid": dataItmeTyre[0]['tyrenumber'],
+                                    "fitserialno": dataItmeTyre[0]['tyrenumber'],
+                                    "startdate": dataItmeTyre[0]['curdate'],
+                                    "tyrebrand": dataItmeTyre[0]['merk'],
+                                    "partname": dataItmeTyre[0]['partname'],
+                                    "tyrepattern": dataItmeTyre[0]['itmalias'],
+                                    "tyreprice": dataItmeTyre[0]['itdunitcost'],
+                                    "genuino": txtGenuino.text,
+                                    "fitpost": selFitPostId.toString(),
+                                    "fitpost_desc": fitDesc.title
+                                  });
+                                  setState(() {
+                                    txtGenuino.text = '';
+                                    selFitPostId = '';
+                                  });
+                                  //print(collTyreFit);
+                                  await Future.delayed(Duration(seconds: 1));
+                                  Navigator.of(context).pop(false);
+                                } else {
+                                  alert(
+                                      globalScaffoldKey.currentContext!,
+                                      2,
+                                      "Tyre Number ${dataItmeTyre[0]['tyrenumber']} tersebut sudah ada,silahkan gunakan yang lain",
+                                      "warning");
+                                }
+                              }
                             }
                           }
+                        } else {
+                          alert(globalScaffoldKey.currentContext!, 0,
+                              "Anda tidak dapat melakukan transaksi ini", "error");
                         }
-                      }
-                    } else {
-                      alert(globalScaffoldKey.currentContext!, 0,
-                          "Anda tidak dapat melakukan transaksi ini", "error");
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.blue,
-                      padding:
+                      },
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.blue,
+                          padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      textStyle:
+                          textStyle:
                           TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-                new ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.save,
-                    color: Colors.white,
-                    size: 20.0,
-                  ),
-                  label: Text("Submit"),
-                  onPressed: () async {
-                    Navigator.of(context).pop(false);
-                    var isOK = globals.akses_pages == null
-                        ? globals.akses_pages
-                        : globals.akses_pages.where((x) => x == "OP");
-                    if (isOK != null) {
-                      if (isOK.length > 0) {
-                        //collTyreFit = [];
-                        if (collTyreFit.length > 0) {
-                          //collTyreFit.add({"genuino": txtGenuino.text,"fitpost": selFitPostId.toString()});
-                          selFitPostName = '';
-                          for (var i = 0; i < collTyreFit.length; i++) {
-                            var fitArr = i == (collTyreFit.length - 1)
-                                ? "${collTyreFit[i]['fittyreid']};${collTyreFit[i]['fitserialno']};${collTyreFit[i]['startdate']};${collTyreFit[i]['tyrebrand']};${collTyreFit[i]['tyrepattern']};${collTyreFit[i]['tyreprice']};${collTyreFit[i]['genuino']};${collTyreFit[i]['fitpost']}"
-                                : "${collTyreFit[i]['fittyreid']};${collTyreFit[i]['fitserialno']};${collTyreFit[i]['startdate']};${collTyreFit[i]['tyrebrand']};${collTyreFit[i]['tyrepattern']};${collTyreFit[i]['tyreprice']};${collTyreFit[i]['genuino']};${collTyreFit[i]['fitpost']}<=>";
-                            selFitPostName += fitArr;
+                    ),
+                    new ElevatedButton.icon(
+                      icon: Icon(
+                        Icons.save,
+                        color: Colors.white,
+                        size: 20.0,
+                      ),
+                      label: Text("Submit"),
+                      onPressed: () async {
+                        Navigator.of(context).pop(false);
+                        var isOK = globals.akses_pages == null
+                            ? globals.akses_pages
+                            : globals.akses_pages.where((x) => x == "OP");
+                        if (isOK != null) {
+                          if (isOK.length > 0) {
+                            //collTyreFit = [];
+                            if (collTyreFit.length > 0) {
+                              //collTyreFit.add({"genuino": txtGenuino.text,"fitpost": selFitPostId.toString()});
+                              selFitPostName = '';
+                              for (var i = 0; i < collTyreFit.length; i++) {
+                                var fitArr = i == (collTyreFit.length - 1)
+                                    ? "${collTyreFit[i]['fittyreid']};${collTyreFit[i]['fitserialno']};${collTyreFit[i]['startdate']};${collTyreFit[i]['tyrebrand']};${collTyreFit[i]['tyrepattern']};${collTyreFit[i]['tyreprice']};${collTyreFit[i]['genuino']};${collTyreFit[i]['fitpost']}"
+                                    : "${collTyreFit[i]['fittyreid']};${collTyreFit[i]['fitserialno']};${collTyreFit[i]['startdate']};${collTyreFit[i]['tyrebrand']};${collTyreFit[i]['tyrepattern']};${collTyreFit[i]['tyreprice']};${collTyreFit[i]['genuino']};${collTyreFit[i]['fitpost']}<=>";
+                                selFitPostName += fitArr;
+                              }
+                              is_edit_req = false;
+                              saveRequestService(
+                                  'save',
+                                  'yes',
+                                  item["iditemid"],
+                                  item["tyrenumber"],
+                                  item["curdate"],
+                                  '',
+                                  item["merk"],
+                                  item["itmalias"],
+                                  item["itdunitcost"],
+                                  item["original_sn"]);
+                            }
                           }
-                          is_edit_req = false;
-                          saveRequestService(
-                              'save',
-                              'yes',
-                              item["iditemid"],
-                              item["tyrenumber"],
-                              item["curdate"],
-                              '',
-                              item["merk"],
-                              item["itmalias"],
-                              item["itdunitcost"],
-                              item["original_sn"]);
+                        } else {
+                          alert(globalScaffoldKey.currentContext!, 0,
+                              "Anda tidak dapat melakukan transaksi ini", "error");
                         }
-                      }
-                    } else {
-                      alert(globalScaffoldKey.currentContext!, 0,
-                          "Anda tidak dapat melakukan transaksi ini", "error");
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.blue,
-                      padding:
+                      },
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.blue,
+                          padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      textStyle:
+                          textStyle:
                           TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        } else {
-          alert(globalScaffoldKey.currentContext!, 2,
-              "Item tyre Number sudah ada", "warning");
-        }
+              );
+            } else {
+              alert(globalScaffoldKey.currentContext!, 2,
+                  "Item tyre Number sudah ada", "warning");
+            }
 
-        // showDialog(
-        //     context: context,
-        //     builder: (_) => new AlertDialog(
-        //       shape: RoundedRectangleBorder(
-        //           borderRadius:
-        //           BorderRadius.all(
-        //               Radius.circular(10.0))),
-        //       content: Builder(
-        //         builder: (context) {
-        //           // Get available height and width of the build area of this widget. Make a choice depending on the size.
-        //           var height = MediaQuery.of(context).size.height;
-        //           var width = MediaQuery.of(context).size.width;
-        //
-        //           return Container(
-        //             height: height - 10,
-        //             width: width - 10,
-        //             child: ,
-        //           );
-        //         },
-        //       ),
-        //     )
-        // );
-      },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.blueAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-    ));
+            // showDialog(
+            //     context: context,
+            //     builder: (_) => new AlertDialog(
+            //       shape: RoundedRectangleBorder(
+            //           borderRadius:
+            //           BorderRadius.all(
+            //               Radius.circular(10.0))),
+            //       content: Builder(
+            //         builder: (context) {
+            //           // Get available height and width of the build area of this widget. Make a choice depending on the size.
+            //           var height = MediaQuery.of(context).size.height;
+            //           var width = MediaQuery.of(context).size.width;
+            //
+            //           return Container(
+            //             height: height - 10,
+            //             width: width - 10,
+            //             child: ,
+            //           );
+            //         },
+            //       ),
+            //     )
+            // );
+          },
+          style: ElevatedButton.styleFrom(
+              elevation: 0.0,
+              backgroundColor: Colors.blueAccent,
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ));
   }
 
   Widget buildButtonAddBanFinish(BuildContext context, dynamic item) {
     txtGenuinoFinish.text = item["original_sn"] == null ||
-            item["original_sn"] == '' ||
-            item["original_sn"] == 'null'
+        item["original_sn"] == '' ||
+        item["original_sn"] == 'null'
         ? ''
         : item["original_sn"];
     return Expanded(
         child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.save,
-        color: Colors.white,
-        size: 15.0,
-      ),
-      label: Text("Pilih"),
-      onPressed: () async {
-        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-        fnFITTYREID = item['iditemid'];
-        fnFITSERIALNO = item['tyrenumber'];
-        fnSTARTDATE = item['curdate'];
-        //fnSTARTKM = '0';
-        fnTYREBRAND = item['merk'];
-        fnTYREPATTERN = item['itmalias'];
-        fnTYREPRICE = item['itdunitcost'];
-        //fnGENUINENO = '';
-        //fnFitPost = '';
-        //fnWONUMBER='';
-        await Future.delayed(Duration(seconds: 1));
-        //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
-        showDialog(
-          context: context,
-          builder: (context) => new AlertDialog(
-            scrollable: true,
-            title: new Text('Information'),
-            //content:
-            //new Text("Save new request service?"),
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              //position
-              mainAxisSize: MainAxisSize.min,
-              // wrap content in flutter
-              children: <Widget>[
-                Container(
-                  margin:
+          icon: Icon(
+            Icons.save,
+            color: Colors.white,
+            size: 15.0,
+          ),
+          label: Text("Pilih"),
+          onPressed: () async {
+            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+            fnFITTYREID = item['iditemid'];
+            fnFITSERIALNO = item['tyrenumber'];
+            fnSTARTDATE = item['curdate'];
+            //fnSTARTKM = '0';
+            fnTYREBRAND = item['merk'];
+            fnTYREPATTERN = item['itmalias'];
+            fnTYREPRICE = item['itdunitcost'];
+            //fnGENUINENO = '';
+            //fnFitPost = '';
+            //fnWONUMBER='';
+            await Future.delayed(Duration(seconds: 1));
+            //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
+            showDialog(
+              context: context,
+              builder: (context) => new AlertDialog(
+                scrollable: true,
+                title: new Text('Information'),
+                //content:
+                //new Text("Save new request service?"),
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  //position
+                  mainAxisSize: MainAxisSize.min,
+                  // wrap content in flutter
+                  children: <Widget>[
+                    Container(
+                      margin:
                       EdgeInsets.only(top: 5, bottom: 0.0, left: 10, right: 10),
-                  child: Text("Tyre Number : ${item['tyrenumber']}",
-                      style: TextStyle(color: Colors.black)),
-                ),
-                Container(
-                  margin:
-                      EdgeInsets.only(top: 5, bottom: 0.0, left: 10, right: 10),
-                  child: Text(
-                      "Part Name : ${item['partname']}- ${item['merk']}",
-                      style: TextStyle(color: Colors.black)),
-                ),
-                Container(
-                  margin: EdgeInsets.all(10.0),
-                  child: TextField(
-                    readOnly: false,
-                    cursorColor: Colors.black,
-                    style: TextStyle(color: Colors.grey.shade800),
-                    controller: txtGenuinoFinish,
-                    keyboardType: TextInputType.text,
-                    decoration: new InputDecoration(
-                      fillColor: Colors.yellow,
-                      filled: true,
-                      isDense: true,
-                      labelText: "GENUINENO/ SN BAN",
-                      contentPadding: EdgeInsets.all(5.0),
+                      child: Text("Tyre Number : ${item['tyrenumber']}",
+                          style: TextStyle(color: Colors.black)),
                     ),
-                  ),
-                ),
-                SmartSelect<String>.single(
-                  title: 'FIT POST',
-                  selectedValue: selFitPostIdFinish,
-                  onChange: (selected) {
-                    setState(() => selFitPostIdFinish = selected.value);
-                  },
-                  choiceType: S2ChoiceType.radios,
-                  choiceItems: choices.collFitPost,
-                  modalType: S2ModalType.popupDialog,
-                  modalHeader: false,
-                  modalConfig: const S2ModalConfig(
-                    style: S2ModalStyle(
-                      elevation: 3,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                    Container(
+                      margin:
+                      EdgeInsets.only(top: 5, bottom: 0.0, left: 10, right: 10),
+                      child: Text(
+                          "Part Name : ${item['partname']}- ${item['merk']}",
+                          style: TextStyle(color: Colors.black)),
+                    ),
+                    Container(
+                      margin: EdgeInsets.all(10.0),
+                      child: TextField(
+                        readOnly: false,
+                        cursorColor: Colors.black,
+                        style: TextStyle(color: Colors.grey.shade800),
+                        controller: txtGenuinoFinish,
+                        keyboardType: TextInputType.text,
+                        decoration: new InputDecoration(
+                          fillColor: Colors.yellow,
+                          filled: true,
+                          isDense: true,
+                          labelText: "GENUINENO/ SN BAN",
+                          contentPadding: EdgeInsets.all(5.0),
+                        ),
                       ),
                     ),
+                    SmartSelect<String>.single(
+                      title: 'FIT POST',
+                      selectedValue: selFitPostIdFinish,
+                      onChange: (selected) {
+                        setState(() => selFitPostIdFinish = selected.value);
+                      },
+                      choiceType: S2ChoiceType.radios,
+                      choiceItems: choices.collFitPost,
+                      modalType: S2ModalType.popupDialog,
+                      modalHeader: false,
+                      modalConfig: const S2ModalConfig(
+                        style: S2ModalStyle(
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                actions: <Widget>[
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 20.0,
+                    ),
+                    label: Text("Close"),
+                    onPressed: () {
+                      Navigator.of(context).pop(false);
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.red,
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
-                ),
-              ],
-            ),
-            actions: <Widget>[
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 20.0,
-                ),
-                label: Text("Close"),
-                onPressed: () {
-                  Navigator.of(context).pop(false);
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.red,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    textStyle:
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.save,
+                      color: Colors.white,
+                      size: 20.0,
+                    ),
+                    label: Text("Save"),
+                    onPressed: () async {
+                      Navigator.of(context).pop(false);
+                      var isOK = globals.akses_pages == null
+                          ? globals.akses_pages
+                          : globals.akses_pages.where((x) => x == "OP");
+                      if (isOK != null) {
+                        if (isOK.length > 0) {
+                          fnGENUINENO = txtGenuinoFinish.text;
+                          fnFitPost = selFitPostIdFinish;
+                          //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
+                          saveFitPost();
+                        }
+                      } else {
+                        alert(globalScaffoldKey.currentContext!, 0,
+                            "Anda tidak dapat melakukan transaksi ini", "error");
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        textStyle:
                         TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ),
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.save,
-                  color: Colors.white,
-                  size: 20.0,
-                ),
-                label: Text("Save"),
-                onPressed: () async {
-                  Navigator.of(context).pop(false);
-                  var isOK = globals.akses_pages == null
-                      ? globals.akses_pages
-                      : globals.akses_pages.where((x) => x == "OP");
-                  if (isOK != null) {
-                    if (isOK.length > 0) {
-                      fnGENUINENO = txtGenuinoFinish.text;
-                      fnFitPost = selFitPostIdFinish;
-                      //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
-                      saveFitPost();
-                    }
-                  } else {
-                    alert(globalScaffoldKey.currentContext!, 0,
-                        "Anda tidak dapat melakukan transaksi ini", "error");
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
-      },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.blueAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-    ));
+            );
+          },
+          style: ElevatedButton.styleFrom(
+              elevation: 0.0,
+              backgroundColor: Colors.blueAccent,
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ));
   }
 
   Widget buildButtonAddBanQC(BuildContext context, dynamic item) {
     txtGenuinoQC.text = item["original_sn"] == null ||
-            item["original_sn"] == '' ||
-            item["original_sn"] == 'null'
+        item["original_sn"] == '' ||
+        item["original_sn"] == 'null'
         ? ''
         : item["original_sn"];
     return Expanded(
         child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.save,
-        color: Colors.white,
-        size: 15.0,
-      ),
-      label: Text("Pilih"),
-      onPressed: () async {
-        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-        fnFITTYREID = item['iditemid'];
-        fnFITSERIALNO = item['tyrenumber'];
-        fnSTARTDATE = item['curdate'];
-        //fnSTARTKM = '0';
-        fnTYREBRAND = item['merk'];
-        fnTYREPATTERN = item['itmalias'];
-        fnTYREPRICE = item['itdunitcost'];
-        //fnGENUINENO = '';
-        //fnFitPost = '';
-        //fnWONUMBER='';
-        await Future.delayed(Duration(seconds: 1));
-        //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
-        showDialog(
-          context: context,
-          builder: (context) => new AlertDialog(
-            scrollable: true,
-            title: new Text('Information'),
-            //content:
-            //new Text("Save new request service?"),
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              //position
-              mainAxisSize: MainAxisSize.min,
-              // wrap content in flutter
-              children: <Widget>[
-                Container(
-                  margin:
+          icon: Icon(
+            Icons.save,
+            color: Colors.white,
+            size: 15.0,
+          ),
+          label: Text("Pilih"),
+          onPressed: () async {
+            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+            fnFITTYREID = item['iditemid'];
+            fnFITSERIALNO = item['tyrenumber'];
+            fnSTARTDATE = item['curdate'];
+            //fnSTARTKM = '0';
+            fnTYREBRAND = item['merk'];
+            fnTYREPATTERN = item['itmalias'];
+            fnTYREPRICE = item['itdunitcost'];
+            //fnGENUINENO = '';
+            //fnFitPost = '';
+            //fnWONUMBER='';
+            await Future.delayed(Duration(seconds: 1));
+            //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
+            showDialog(
+              context: context,
+              builder: (context) => new AlertDialog(
+                scrollable: true,
+                title: new Text('Information'),
+                //content:
+                //new Text("Save new request service?"),
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  //position
+                  mainAxisSize: MainAxisSize.min,
+                  // wrap content in flutter
+                  children: <Widget>[
+                    Container(
+                      margin:
                       EdgeInsets.only(top: 5, bottom: 0.0, left: 10, right: 10),
-                  child: Text("Tyre Number : ${item['tyrenumber']}",
-                      style: TextStyle(color: Colors.black)),
-                ),
-                Container(
-                  margin:
-                      EdgeInsets.only(top: 5, bottom: 0.0, left: 10, right: 10),
-                  child: Text(
-                      "Part Name : ${item['partname']}- ${item['merk']}",
-                      style: TextStyle(color: Colors.black)),
-                ),
-                Container(
-                  margin: EdgeInsets.all(10.0),
-                  child: TextField(
-                    readOnly: false,
-                    cursorColor: Colors.black,
-                    style: TextStyle(color: Colors.grey.shade800),
-                    controller: txtGenuinoQC,
-                    keyboardType: TextInputType.text,
-                    decoration: new InputDecoration(
-                      fillColor: Colors.yellow,
-                      filled: true,
-                      isDense: true,
-                      labelText: "GENUINENO/ SN BAN",
-                      contentPadding: EdgeInsets.all(5.0),
+                      child: Text("Tyre Number : ${item['tyrenumber']}",
+                          style: TextStyle(color: Colors.black)),
                     ),
-                  ),
-                ),
-                SmartSelect<String>.single(
-                  title: 'FIT POST',
-                  selectedValue: selFitPostIdQC,
-                  onChange: (selected) {
-                    setState(() => selFitPostIdQC = selected.value);
-                  },
-                  choiceType: S2ChoiceType.radios,
-                  choiceItems: choices.collFitPost,
-                  modalType: S2ModalType.popupDialog,
-                  modalHeader: false,
-                  modalConfig: const S2ModalConfig(
-                    style: S2ModalStyle(
-                      elevation: 3,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                    Container(
+                      margin:
+                      EdgeInsets.only(top: 5, bottom: 0.0, left: 10, right: 10),
+                      child: Text(
+                          "Part Name : ${item['partname']}- ${item['merk']}",
+                          style: TextStyle(color: Colors.black)),
+                    ),
+                    Container(
+                      margin: EdgeInsets.all(10.0),
+                      child: TextField(
+                        readOnly: false,
+                        cursorColor: Colors.black,
+                        style: TextStyle(color: Colors.grey.shade800),
+                        controller: txtGenuinoQC,
+                        keyboardType: TextInputType.text,
+                        decoration: new InputDecoration(
+                          fillColor: Colors.yellow,
+                          filled: true,
+                          isDense: true,
+                          labelText: "GENUINENO/ SN BAN",
+                          contentPadding: EdgeInsets.all(5.0),
+                        ),
                       ),
                     ),
+                    SmartSelect<String>.single(
+                      title: 'FIT POST',
+                      selectedValue: selFitPostIdQC,
+                      onChange: (selected) {
+                        setState(() => selFitPostIdQC = selected.value);
+                      },
+                      choiceType: S2ChoiceType.radios,
+                      choiceItems: choices.collFitPost,
+                      modalType: S2ModalType.popupDialog,
+                      modalHeader: false,
+                      modalConfig: const S2ModalConfig(
+                        style: S2ModalStyle(
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                actions: <Widget>[
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 20.0,
+                    ),
+                    label: Text("Close"),
+                    onPressed: () {
+                      Navigator.of(context).pop(false);
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.red,
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
-                ),
-              ],
-            ),
-            actions: <Widget>[
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 20.0,
-                ),
-                label: Text("Close"),
-                onPressed: () {
-                  Navigator.of(context).pop(false);
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.red,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    textStyle:
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.save,
+                      color: Colors.white,
+                      size: 20.0,
+                    ),
+                    label: Text("Save"),
+                    onPressed: () async {
+                      Navigator.of(context).pop(false);
+                      var isOK = globals.akses_pages == null
+                          ? globals.akses_pages
+                          : globals.akses_pages.where((x) => x == "OP");
+                      if (isOK != null) {
+                        if (isOK.length > 0) {
+                          fnGENUINENO = txtGenuinoQC.text;
+                          fnFitPost = selFitPostIdQC;
+                          //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
+                          saveFitPost();
+                        }
+                      } else {
+                        alert(globalScaffoldKey.currentContext!, 0,
+                            "Anda tidak dapat melakukan transaksi ini", "error");
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        textStyle:
                         TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ),
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.save,
-                  color: Colors.white,
-                  size: 20.0,
-                ),
-                label: Text("Save"),
-                onPressed: () async {
-                  Navigator.of(context).pop(false);
-                  var isOK = globals.akses_pages == null
-                      ? globals.akses_pages
-                      : globals.akses_pages.where((x) => x == "OP");
-                  if (isOK != null) {
-                    if (isOK.length > 0) {
-                      fnGENUINENO = txtGenuinoQC.text;
-                      fnFitPost = selFitPostIdQC;
-                      //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
-                      saveFitPost();
-                    }
-                  } else {
-                    alert(globalScaffoldKey.currentContext!, 0,
-                        "Anda tidak dapat melakukan transaksi ini", "error");
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
-      },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.blueAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-    ));
+            );
+          },
+          style: ElevatedButton.styleFrom(
+              elevation: 0.0,
+              backgroundColor: Colors.blueAccent,
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ));
   }
 
   String listSRNumberOpnameDetail = '';
@@ -5816,210 +5816,102 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
   Widget buildButtonOpnameDetail(BuildContext context, dynamic item) {
     return Expanded(
         child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.add,
-        color: Colors.white,
-        size: 15.0,
-      ),
-      label: Text("Add"),
-      onPressed: () async {
-        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-        showDialog(
-          context: context,
-          builder: (context) => new AlertDialog(
-            title: new Text('Information'),
-            //content:
-            //new Text("Save new request service?"),
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              //position
-              mainAxisSize: MainAxisSize.min,
-              // wrap content in flutter
-              children: <Widget>[
-                Container(
-                  margin: EdgeInsets.all(10.0),
-                  child: Text("Add data?"),
-                ),
-              ],
-            ),
-            actions: <Widget>[
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 20.0,
-                ),
-                label: Text("Add"),
-                onPressed: () async {
-                  Navigator.of(context).pop(false);
-                  setState(() {
-                    txtItemID.text = "";
-                    txtPartName.text = "";
-                    txtItemSize.text = "";
-                    txtTypeID.text = "";
-                    txtTypeAccess.text = "";
-                    txtGenuineNoOpname.text = "";
-                    txtOpnameMerk.text = "";
-                    txtOpnameWONUMBER.text = listSRNumberOpnameDetail;
-                    txtOpnameVHCID.text = listOpnameVHCID;
-                    print(item[0]['id_header']);
-                    id_header = int.parse(item[0]['id_header'].toString());
-                    item_id_apr = item[0]['item_id'].toString();
-                    //txtItemID.text = item_id_apr;
-                    METHOD_DETAIL = 'OPNAME';
-                    status_apr = 'APR';
-                  });
-                  _tabController.animateTo(2);
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-              ),
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 20.0,
-                ),
-                label: Text("Close"),
-                onPressed: () async {
-                  Navigator.of(context).pop(false);
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.orangeAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-              ),
-            ],
+          icon: Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 15.0,
           ),
-        );
-      },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.blueAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-    ));
+          label: Text("Add"),
+          onPressed: () async {
+            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+            showDialog(
+              context: context,
+              builder: (context) => new AlertDialog(
+                title: new Text('Information'),
+                //content:
+                //new Text("Save new request service?"),
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  //position
+                  mainAxisSize: MainAxisSize.min,
+                  // wrap content in flutter
+                  children: <Widget>[
+                    Container(
+                      margin: EdgeInsets.all(10.0),
+                      child: Text("Add data?"),
+                    ),
+                  ],
+                ),
+                actions: <Widget>[
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 20.0,
+                    ),
+                    label: Text("Add"),
+                    onPressed: () async {
+                      Navigator.of(context).pop(false);
+                      setState(() {
+                        txtItemID.text = "";
+                        txtPartName.text = "";
+                        txtItemSize.text = "";
+                        txtTypeID.text = "";
+                        txtTypeAccess.text = "";
+                        txtGenuineNoOpname.text = "";
+                        txtOpnameMerk.text = "";
+                        txtOpnameWONUMBER.text = listSRNumberOpnameDetail;
+                        txtOpnameVHCID.text = listOpnameVHCID;
+                        print(item[0]['id_header']);
+                        id_header = int.parse(item[0]['id_header'].toString());
+                        item_id_apr = item[0]['item_id'].toString();
+                        //txtItemID.text = item_id_apr;
+                        METHOD_DETAIL = 'OPNAME';
+                        status_apr = 'APR';
+                      });
+                      _tabController.animateTo(2);
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 20.0,
+                    ),
+                    label: Text("Close"),
+                    onPressed: () async {
+                      Navigator.of(context).pop(false);
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.orangeAccent,
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+              elevation: 0.0,
+              backgroundColor: Colors.blueAccent,
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ));
   }
 
   Widget buildButtonDeleteBan(BuildContext context, dynamic item) {
     return Expanded(
         child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.delete,
-        color: Colors.white,
-        size: 15.0,
-      ),
-      label: Text("Delete"),
-      onPressed: () async {
-        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-        showDialog(
-          context: context,
-          builder: (context) => new AlertDialog(
-            title: new Text('Information'),
-            //content:
-            //new Text("Save new request service?"),
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              //position
-              mainAxisSize: MainAxisSize.min,
-              // wrap content in flutter
-              children: <Widget>[
-                Container(
-                  margin: EdgeInsets.all(10.0),
-                  child: Text("Delete this data?"),
-                ),
-              ],
-            ),
-            actions: <Widget>[
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.delete,
-                  color: Colors.white,
-                  size: 20.0,
-                ),
-                label: Text("Delete Ban"),
-                onPressed: () async {
-                  //Navigator.of(context).pop(false);
-                  var isOK = globals.akses_pages == null
-                      ? globals.akses_pages
-                      : globals.akses_pages.where((x) => x == "OP");
-                  if (isOK != null) {
-                    if (isOK.length > 0) {
-                      collTyreFit.removeWhere((x) =>
-                          x['genuino'] == item['genuino'] &&
-                          x['fitpost'] == item['fitpost']);
-                      var isExists = collTyreFit.where((x) =>
-                          x['genuino'] == item['genuino'] &&
-                          x['fitpost'] == item['fitpost']);
-                      //print(item);
-                      collTyreNumber.removeWhere(
-                          (x) => x['tyrenumber'] == item['fittyreid']);
-                      //print(collTyreNumber.length);
-                      //print(collTyreFit.length);
-                      if (isExists.length > 0) {
-                        alert(globalScaffoldKey.currentContext!, 0,
-                            "Gagal delete this row", "error");
-                      } else {
-                        Navigator.of(context).pop(false);
-                        alert(globalScaffoldKey.currentContext!, 1,
-                            "Delete this row success", "success");
-                      }
-                    }
-                  } else {
-                    alert(globalScaffoldKey.currentContext!, 0,
-                        "Anda tidak dapat melakukan transaksi ini", "error");
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.orangeAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-              ),
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.save,
-                  color: Colors.white,
-                  size: 20.0,
-                ),
-                label: Text("Close"),
-                onPressed: () async {
-                  Navigator.of(context).pop(false);
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.orangeAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
-      },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.blueAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-    ));
-  }
-
-  Widget buildButtonDeleteDetailOpname(dynamic item) {
-    return Container(
-        child: Row(
-      children: <Widget>[
-        Expanded(
-            child: ElevatedButton.icon(
           icon: Icon(
-            Icons.remove_circle,
+            Icons.delete,
             color: Colors.white,
             size: 15.0,
           ),
@@ -6040,39 +5932,60 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                   children: <Widget>[
                     Container(
                       margin: EdgeInsets.all(10.0),
-                      child: Text("Delete this data ?"),
+                      child: Text("Delete this data?"),
                     ),
                   ],
                 ),
                 actions: <Widget>[
                   new ElevatedButton.icon(
                     icon: Icon(
-                      Icons.save,
+                      Icons.delete,
                       color: Colors.white,
                       size: 20.0,
                     ),
-                    label: Text("Submit"),
+                    label: Text("Delete Ban"),
                     onPressed: () async {
-                      Navigator.of(context).pop(false);
-                      setState(() {
-                        var idheader = int.parse(item['id_header'].toString());
-                        var iddetail = int.parse(item['id_detail'].toString());
-                        print(idheader);
-                        print(iddetail);
-                        DeleteOpnameSrDetail(idheader, iddetail);
-                      });
+                      //Navigator.of(context).pop(false);
+                      var isOK = globals.akses_pages == null
+                          ? globals.akses_pages
+                          : globals.akses_pages.where((x) => x == "OP");
+                      if (isOK != null) {
+                        if (isOK.length > 0) {
+                          collTyreFit.removeWhere((x) =>
+                          x['genuino'] == item['genuino'] &&
+                              x['fitpost'] == item['fitpost']);
+                          var isExists = collTyreFit.where((x) =>
+                          x['genuino'] == item['genuino'] &&
+                              x['fitpost'] == item['fitpost']);
+                          //print(item);
+                          collTyreNumber.removeWhere(
+                                  (x) => x['tyrenumber'] == item['fittyreid']);
+                          //print(collTyreNumber.length);
+                          //print(collTyreFit.length);
+                          if (isExists.length > 0) {
+                            alert(globalScaffoldKey.currentContext!, 0,
+                                "Gagal delete this row", "error");
+                          } else {
+                            Navigator.of(context).pop(false);
+                            alert(globalScaffoldKey.currentContext!, 1,
+                                "Delete this row success", "success");
+                          }
+                        }
+                      } else {
+                        alert(globalScaffoldKey.currentContext!, 0,
+                            "Anda tidak dapat melakukan transaksi ini", "error");
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
-                        backgroundColor: Colors.blue,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.bold)),
+                        backgroundColor: Colors.orangeAccent,
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                   new ElevatedButton.icon(
                     icon: Icon(
-                      Icons.close,
+                      Icons.save,
                       color: Colors.white,
                       size: 20.0,
                     ),
@@ -6083,10 +5996,9 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
                         backgroundColor: Colors.orangeAccent,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.bold)),
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -6094,60 +6006,148 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
           },
           style: ElevatedButton.styleFrom(
               elevation: 0.0,
-              backgroundColor: Colors.orangeAccent,
+              backgroundColor: Colors.blueAccent,
               padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ))
-      ],
-    ));
+        ));
+  }
+
+  Widget buildButtonDeleteDetailOpname(dynamic item) {
+    return Container(
+        child: Row(
+          children: <Widget>[
+            Expanded(
+                child: ElevatedButton.icon(
+                  icon: Icon(
+                    Icons.remove_circle,
+                    color: Colors.white,
+                    size: 15.0,
+                  ),
+                  label: Text("Delete"),
+                  onPressed: () async {
+                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                    showDialog(
+                      context: context,
+                      builder: (context) => new AlertDialog(
+                        title: new Text('Information'),
+                        //content:
+                        //new Text("Save new request service?"),
+                        content: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          //position
+                          mainAxisSize: MainAxisSize.min,
+                          // wrap content in flutter
+                          children: <Widget>[
+                            Container(
+                              margin: EdgeInsets.all(10.0),
+                              child: Text("Delete this data ?"),
+                            ),
+                          ],
+                        ),
+                        actions: <Widget>[
+                          new ElevatedButton.icon(
+                            icon: Icon(
+                              Icons.save,
+                              color: Colors.white,
+                              size: 20.0,
+                            ),
+                            label: Text("Submit"),
+                            onPressed: () async {
+                              Navigator.of(context).pop(false);
+                              setState(() {
+                                var idheader = int.parse(item['id_header'].toString());
+                                var iddetail = int.parse(item['id_detail'].toString());
+                                print(idheader);
+                                print(iddetail);
+                                DeleteOpnameSrDetail(idheader, iddetail);
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                                elevation: 0.0,
+                                backgroundColor: Colors.blue,
+                                padding:
+                                EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                                textStyle: TextStyle(
+                                    fontSize: 10, fontWeight: FontWeight.bold)),
+                          ),
+                          new ElevatedButton.icon(
+                            icon: Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 20.0,
+                            ),
+                            label: Text("Close"),
+                            onPressed: () async {
+                              Navigator.of(context).pop(false);
+                            },
+                            style: ElevatedButton.styleFrom(
+                                elevation: 0.0,
+                                backgroundColor: Colors.orangeAccent,
+                                padding:
+                                EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                                textStyle: TextStyle(
+                                    fontSize: 10, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 0.0,
+                      backgroundColor: Colors.orangeAccent,
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ))
+          ],
+        ));
   }
 
   Widget buildButtonCancelBan(BuildContext context) {
     return Expanded(
         child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.cancel,
-        color: Colors.white,
-        size: 15.0,
-      ),
-      label: Text("Cancel"),
-      onPressed: () async {
-        listItemApprove = [];
-        dummylistBanTms = [];
-        txtWodCloseNotes.text = "";
-        txtGenuino.text = "";
-        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-      },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.orangeAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-    ));
+          icon: Icon(
+            Icons.cancel,
+            color: Colors.white,
+            size: 15.0,
+          ),
+          label: Text("Cancel"),
+          onPressed: () async {
+            listItemApprove = [];
+            dummylistBanTms = [];
+            txtWodCloseNotes.text = "";
+            txtGenuino.text = "";
+            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+          },
+          style: ElevatedButton.styleFrom(
+              elevation: 0.0,
+              backgroundColor: Colors.orangeAccent,
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ));
   }
 
   Widget buildButtonCancelBanQC(BuildContext context) {
     return Expanded(
         child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.cancel,
-        color: Colors.white,
-        size: 15.0,
-      ),
-      label: Text("Cancel"),
-      onPressed: () async {
-        listItemApprove = [];
-        dummylistBanTmsQC = [];
-        txtWodCloseNotesQC.text = "";
-        txtGenuino.text = "";
-        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-      },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.orangeAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-    ));
+          icon: Icon(
+            Icons.cancel,
+            color: Colors.white,
+            size: 15.0,
+          ),
+          label: Text("Cancel"),
+          onPressed: () async {
+            listItemApprove = [];
+            dummylistBanTmsQC = [];
+            txtWodCloseNotesQC.text = "";
+            txtGenuino.text = "";
+            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+          },
+          style: ElevatedButton.styleFrom(
+              elevation: 0.0,
+              backgroundColor: Colors.orangeAccent,
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ));
   }
 
   Widget _buildDListTempBan(dynamic item, int index) {
@@ -6162,7 +6162,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -6216,7 +6216,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
             child: Container(
               child:
-                  Row(children: <Widget>[buildButtonDeleteBan(context, item)]),
+              Row(children: <Widget>[buildButtonDeleteBan(context, item)]),
             ),
           ),
         ],
@@ -6236,7 +6236,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -6307,7 +6307,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -6406,7 +6406,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -6481,171 +6481,171 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                 ),
                 Expanded(
                     child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Close"),
-                  onPressed: () async {
-                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.orangeAccent,
-                      padding:
+                      icon: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 15.0,
+                      ),
+                      label: Text("Close"),
+                      onPressed: () async {
+                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      },
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.orangeAccent,
+                          padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
+                          textStyle:
                           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                )),
+                    )),
                 SizedBox(
                   width: 5,
                 ),
                 Expanded(
                     child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Edit"),
-                  onPressed: () async {
-                    print('Edit Proses');
-                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                    var item_id_edit = "${item['item_id']}";
-                    var id_detail = "${item['id_detail']}";
-                    setState(() {
-                      selStatusItemEditProses = item['status_item'];
-                      txtOpnameQtyEditProses.text = item['qty'];
-                    });
-                    showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Update Detail Item'),
-                            content: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              //position
-                              mainAxisSize: MainAxisSize.min,
-                              // wrap content in flutter
-                              children: <Widget>[
-                                Container(
-                                  margin: EdgeInsets.only(
-                                      left: 10, top: 10, right: 10, bottom: 10),
-                                  child: TextField(
-                                    readOnly: false,
-                                    cursorColor: Colors.black,
-                                    style:
-                                        TextStyle(color: Colors.grey.shade800),
-                                    controller: txtOpnameQtyEditProses,
-                                    keyboardType: TextInputType.number,
-                                    decoration: new InputDecoration(
-                                      //fillColor: Colors.black12,
-                                      filled: true,
-                                      labelText: 'QTY',
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.all(2.0),
-                                    ),
-                                  ),
-                                ),
-                                SmartSelect<String>.single(
-                                  title: 'Status Item',
-                                  selectedValue: selStatusItemEditProses,
-                                  onChange: (selected) {
-                                    setState(() => selStatusItemEditProses =
-                                        selected.value);
-                                  },
-                                  choiceType: S2ChoiceType.radios,
-                                  choiceItems: choices.collStatusItemOpname,
-                                  modalType: S2ModalType.popupDialog,
-                                  modalHeader: false,
-                                  modalConfig: const S2ModalConfig(
-                                    style: S2ModalStyle(
-                                      elevation: 3,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(20.0)),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  width: MediaQuery.of(context).size.width,
-                                  padding: EdgeInsets.all(10.0),
-                                  decoration: BoxDecoration(
-                                      color: Color.fromRGBO(230, 232, 238, .9)),
-                                  child: Container(
-                                    child: Row(children: <Widget>[
-                                      Expanded(
-                                          child: ElevatedButton.icon(
-                                        icon: Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                          size: 15.0,
-                                        ),
-                                        label: Text("Close"),
-                                        onPressed: () async {
-                                          Navigator.of(globalScaffoldKey
-                                                  .currentContext!)
-                                              .pop(false);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                            elevation: 0.0,
-                                            backgroundColor:
-                                                Colors.orangeAccent,
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 10),
-                                            textStyle: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold)),
-                                      )),
-                                      SizedBox(
-                                        width: 5,
-                                      ),
-                                      Expanded(
-                                          child: ElevatedButton.icon(
-                                        icon: Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                          size: 15.0,
-                                        ),
-                                        label: Text("Update"),
-                                        onPressed: () async {
-                                          print('Edit Proses');
-                                          Navigator.of(globalScaffoldKey
-                                                  .currentContext!)
-                                              .pop(false);
-                                          //print(id_detail);
-                                          //print(item_id_edit);
-                                          UpdateDetailProses(
-                                              id_detail, item_id_edit);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                            elevation: 0.0,
-                                            backgroundColor:
-                                                Colors.orangeAccent,
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 10),
-                                            textStyle: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold)),
-                                      ))
-                                    ]),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
+                      icon: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 15.0,
+                      ),
+                      label: Text("Edit"),
+                      onPressed: () async {
+                        print('Edit Proses');
+                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                        var item_id_edit = "${item['item_id']}";
+                        var id_detail = "${item['id_detail']}";
+                        setState(() {
+                          selStatusItemEditProses = item['status_item'];
+                          txtOpnameQtyEditProses.text = item['qty'];
                         });
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.orangeAccent,
-                      padding:
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text('Update Detail Item'),
+                                content: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  //position
+                                  mainAxisSize: MainAxisSize.min,
+                                  // wrap content in flutter
+                                  children: <Widget>[
+                                    Container(
+                                      margin: EdgeInsets.only(
+                                          left: 10, top: 10, right: 10, bottom: 10),
+                                      child: TextField(
+                                        readOnly: false,
+                                        cursorColor: Colors.black,
+                                        style:
+                                        TextStyle(color: Colors.grey.shade800),
+                                        controller: txtOpnameQtyEditProses,
+                                        keyboardType: TextInputType.number,
+                                        decoration: new InputDecoration(
+                                          //fillColor: Colors.black12,
+                                          filled: true,
+                                          labelText: 'QTY',
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.all(2.0),
+                                        ),
+                                      ),
+                                    ),
+                                    SmartSelect<String>.single(
+                                      title: 'Status Item',
+                                      selectedValue: selStatusItemEditProses,
+                                      onChange: (selected) {
+                                        setState(() => selStatusItemEditProses =
+                                            selected.value);
+                                      },
+                                      choiceType: S2ChoiceType.radios,
+                                      choiceItems: choices.collStatusItemOpname,
+                                      modalType: S2ModalType.popupDialog,
+                                      modalHeader: false,
+                                      modalConfig: const S2ModalConfig(
+                                        style: S2ModalStyle(
+                                          elevation: 3,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(20.0)),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      width: MediaQuery.of(context).size.width,
+                                      padding: EdgeInsets.all(10.0),
+                                      decoration: BoxDecoration(
+                                          color: Color.fromRGBO(230, 232, 238, .9)),
+                                      child: Container(
+                                        child: Row(children: <Widget>[
+                                          Expanded(
+                                              child: ElevatedButton.icon(
+                                                icon: Icon(
+                                                  Icons.close,
+                                                  color: Colors.white,
+                                                  size: 15.0,
+                                                ),
+                                                label: Text("Close"),
+                                                onPressed: () async {
+                                                  Navigator.of(globalScaffoldKey
+                                                      .currentContext!)
+                                                      .pop(false);
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                    elevation: 0.0,
+                                                    backgroundColor:
+                                                    Colors.orangeAccent,
+                                                    padding: EdgeInsets.symmetric(
+                                                        horizontal: 10, vertical: 10),
+                                                    textStyle: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.bold)),
+                                              )),
+                                          SizedBox(
+                                            width: 5,
+                                          ),
+                                          Expanded(
+                                              child: ElevatedButton.icon(
+                                                icon: Icon(
+                                                  Icons.close,
+                                                  color: Colors.white,
+                                                  size: 15.0,
+                                                ),
+                                                label: Text("Update"),
+                                                onPressed: () async {
+                                                  print('Edit Proses');
+                                                  Navigator.of(globalScaffoldKey
+                                                      .currentContext!)
+                                                      .pop(false);
+                                                  //print(id_detail);
+                                                  //print(item_id_edit);
+                                                  UpdateDetailProses(
+                                                      id_detail, item_id_edit);
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                    elevation: 0.0,
+                                                    backgroundColor:
+                                                    Colors.orangeAccent,
+                                                    padding: EdgeInsets.symmetric(
+                                                        horizontal: 10, vertical: 10),
+                                                    textStyle: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.bold)),
+                                              ))
+                                        ]),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            });
+                      },
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.orangeAccent,
+                          padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
+                          textStyle:
                           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                ))
+                    ))
               ]),
             ),
           ),
@@ -6666,7 +6666,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -6735,171 +6735,171 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                 ),
                 Expanded(
                     child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Close"),
-                  onPressed: () async {
-                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.redAccent,
-                      padding:
+                      icon: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 15.0,
+                      ),
+                      label: Text("Close"),
+                      onPressed: () async {
+                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      },
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.redAccent,
+                          padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
+                          textStyle:
                           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                )),
+                    )),
                 SizedBox(
                   width: 5,
                 ),
                 Expanded(
                     child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Edit"),
-                  onPressed: () async {
-                    print('Edit QC');
-                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                    var item_id_edit = "${item['item_id']}";
-                    var id_detail = "${item['id_detail']}";
-                    setState(() {
-                      selStatusItemEditProses = item['status_item'];
-                      txtOpnameQtyEditProses.text = item['qty'];
-                    });
-                    showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Update Detail Item'),
-                            content: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              //position
-                              mainAxisSize: MainAxisSize.min,
-                              // wrap content in flutter
-                              children: <Widget>[
-                                Container(
-                                  margin: EdgeInsets.only(
-                                      left: 10, top: 10, right: 10, bottom: 10),
-                                  child: TextField(
-                                    readOnly: false,
-                                    cursorColor: Colors.black,
-                                    style:
-                                        TextStyle(color: Colors.grey.shade800),
-                                    controller: txtOpnameQtyEditProses,
-                                    keyboardType: TextInputType.number,
-                                    decoration: new InputDecoration(
-                                      //fillColor: Colors.black12,
-                                      filled: true,
-                                      labelText: 'QTY',
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.all(2.0),
-                                    ),
-                                  ),
-                                ),
-                                SmartSelect<String>.single(
-                                  title: 'Status Item 2',
-                                  selectedValue: selStatusItemEditQC,
-                                  onChange: (selected) {
-                                    setState(() =>
-                                        selStatusItemEditQC = selected.value);
-                                  },
-                                  choiceType: S2ChoiceType.radios,
-                                  choiceItems: choices.collStatusItemOpname,
-                                  modalType: S2ModalType.popupDialog,
-                                  modalHeader: false,
-                                  modalConfig: const S2ModalConfig(
-                                    style: S2ModalStyle(
-                                      elevation: 3,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(20.0)),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  width: MediaQuery.of(context).size.width,
-                                  padding: EdgeInsets.all(10.0),
-                                  decoration: BoxDecoration(
-                                      color: Color.fromRGBO(230, 232, 238, .9)),
-                                  child: Container(
-                                    child: Row(children: <Widget>[
-                                      Expanded(
-                                          child: ElevatedButton.icon(
-                                        icon: Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                          size: 15.0,
-                                        ),
-                                        label: Text("Close"),
-                                        onPressed: () async {
-                                          Navigator.of(globalScaffoldKey
-                                                  .currentContext!)
-                                              .pop(false);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                            elevation: 0.0,
-                                            backgroundColor:
-                                                Colors.orangeAccent,
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 10),
-                                            textStyle: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold)),
-                                      )),
-                                      SizedBox(
-                                        width: 5,
-                                      ),
-                                      Expanded(
-                                          child: ElevatedButton.icon(
-                                        icon: Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                          size: 15.0,
-                                        ),
-                                        label: Text("Update"),
-                                        onPressed: () async {
-                                          print('Edit Proses');
-                                          Navigator.of(globalScaffoldKey
-                                                  .currentContext!)
-                                              .pop(false);
-                                          //print(id_detail);
-                                          //print(item_id_edit);
-                                          UpdateDetailQC(
-                                              id_detail, item_id_edit);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                            elevation: 0.0,
-                                            backgroundColor:
-                                                Colors.orangeAccent,
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 10),
-                                            textStyle: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold)),
-                                      ))
-                                    ]),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
+                      icon: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 15.0,
+                      ),
+                      label: Text("Edit"),
+                      onPressed: () async {
+                        print('Edit QC');
+                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                        var item_id_edit = "${item['item_id']}";
+                        var id_detail = "${item['id_detail']}";
+                        setState(() {
+                          selStatusItemEditProses = item['status_item'];
+                          txtOpnameQtyEditProses.text = item['qty'];
                         });
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.orangeAccent,
-                      padding:
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text('Update Detail Item'),
+                                content: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  //position
+                                  mainAxisSize: MainAxisSize.min,
+                                  // wrap content in flutter
+                                  children: <Widget>[
+                                    Container(
+                                      margin: EdgeInsets.only(
+                                          left: 10, top: 10, right: 10, bottom: 10),
+                                      child: TextField(
+                                        readOnly: false,
+                                        cursorColor: Colors.black,
+                                        style:
+                                        TextStyle(color: Colors.grey.shade800),
+                                        controller: txtOpnameQtyEditProses,
+                                        keyboardType: TextInputType.number,
+                                        decoration: new InputDecoration(
+                                          //fillColor: Colors.black12,
+                                          filled: true,
+                                          labelText: 'QTY',
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.all(2.0),
+                                        ),
+                                      ),
+                                    ),
+                                    SmartSelect<String>.single(
+                                      title: 'Status Item 2',
+                                      selectedValue: selStatusItemEditQC,
+                                      onChange: (selected) {
+                                        setState(() =>
+                                        selStatusItemEditQC = selected.value);
+                                      },
+                                      choiceType: S2ChoiceType.radios,
+                                      choiceItems: choices.collStatusItemOpname,
+                                      modalType: S2ModalType.popupDialog,
+                                      modalHeader: false,
+                                      modalConfig: const S2ModalConfig(
+                                        style: S2ModalStyle(
+                                          elevation: 3,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(20.0)),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      width: MediaQuery.of(context).size.width,
+                                      padding: EdgeInsets.all(10.0),
+                                      decoration: BoxDecoration(
+                                          color: Color.fromRGBO(230, 232, 238, .9)),
+                                      child: Container(
+                                        child: Row(children: <Widget>[
+                                          Expanded(
+                                              child: ElevatedButton.icon(
+                                                icon: Icon(
+                                                  Icons.close,
+                                                  color: Colors.white,
+                                                  size: 15.0,
+                                                ),
+                                                label: Text("Close"),
+                                                onPressed: () async {
+                                                  Navigator.of(globalScaffoldKey
+                                                      .currentContext!)
+                                                      .pop(false);
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                    elevation: 0.0,
+                                                    backgroundColor:
+                                                    Colors.orangeAccent,
+                                                    padding: EdgeInsets.symmetric(
+                                                        horizontal: 10, vertical: 10),
+                                                    textStyle: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.bold)),
+                                              )),
+                                          SizedBox(
+                                            width: 5,
+                                          ),
+                                          Expanded(
+                                              child: ElevatedButton.icon(
+                                                icon: Icon(
+                                                  Icons.close,
+                                                  color: Colors.white,
+                                                  size: 15.0,
+                                                ),
+                                                label: Text("Update"),
+                                                onPressed: () async {
+                                                  print('Edit Proses');
+                                                  Navigator.of(globalScaffoldKey
+                                                      .currentContext!)
+                                                      .pop(false);
+                                                  //print(id_detail);
+                                                  //print(item_id_edit);
+                                                  UpdateDetailQC(
+                                                      id_detail, item_id_edit);
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                    elevation: 0.0,
+                                                    backgroundColor:
+                                                    Colors.orangeAccent,
+                                                    padding: EdgeInsets.symmetric(
+                                                        horizontal: 10, vertical: 10),
+                                                    textStyle: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.bold)),
+                                              ))
+                                        ]),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            });
+                      },
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.orangeAccent,
+                          padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
+                          textStyle:
                           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                ))
+                    ))
               ]),
             ),
           ),
@@ -6920,7 +6920,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -6996,24 +6996,24 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                   ),
                   Expanded(
                       child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: Text("Close"),
-                    onPressed: () async {
-                      Navigator.of(globalScaffoldKey.currentContext!)
-                          .pop(false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.orangeAccent,
-                        padding:
+                        icon: Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 15.0,
+                        ),
+                        label: Text("Close"),
+                        onPressed: () async {
+                          Navigator.of(globalScaffoldKey.currentContext!)
+                              .pop(false);
+                        },
+                        style: ElevatedButton.styleFrom(
+                            elevation: 0.0,
+                            backgroundColor: Colors.orangeAccent,
+                            padding:
                             EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold)),
-                  ))
+                            textStyle: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold)),
+                      ))
                 ],
               ),
             ),
@@ -7035,7 +7035,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -7101,106 +7101,106 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               child: Row(children: <Widget>[
                 Expanded(
                     child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.edit,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Add"),
-                  onPressed: () async {
-                    Navigator.of(context).pop(false);
-                    txtOpnameVHCID.text = item['vhcid'].toString();
-                    txtOpnameWONUMBER.text = item['srnumber'].toString();
-                    wonumberopname = item['wodwonbr'].toString();
-                    showDialog(
-                      context: globalScaffoldKey.currentContext!,
-                      builder: (context) => new AlertDialog(
-                        title: new Text('Information'),
-                        content: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Container(
-                              margin: EdgeInsets.all(10.0),
-                              child: Text("Save Opname ?"),
-                            ),
-                          ],
-                        ),
-                        actions: <Widget>[
-                          new ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.delete,
-                              color: Colors.white,
-                              size: 20.0,
-                            ),
-                            label: Text("Save Opname ?"),
-                            onPressed: () async {
-                              Navigator.of(context).pop(false);
-                              print('save opname');
-                              createOpname();
-                            },
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0.0,
-                                backgroundColor: Colors.blue,
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 0),
-                                textStyle: TextStyle(
-                                    fontSize: 10, fontWeight: FontWeight.bold)),
-                          ),
-                          new ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.save,
-                              color: Colors.white,
-                              size: 20.0,
-                            ),
-                            label: Text("Close"),
-                            onPressed: () async {
-                              Navigator.of(context).pop(false);
-                              setState(() {
-                                wonumberopname = "";
-                                txtOpnameVHCID.text = "";
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0.0,
-                                backgroundColor: Colors.orangeAccent,
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 0),
-                                textStyle: TextStyle(
-                                    fontSize: 10, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
+                      icon: Icon(
+                        Icons.edit,
+                        color: Colors.white,
+                        size: 15.0,
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.blueAccent,
-                      padding:
+                      label: Text("Add"),
+                      onPressed: () async {
+                        Navigator.of(context).pop(false);
+                        txtOpnameVHCID.text = item['vhcid'].toString();
+                        txtOpnameWONUMBER.text = item['srnumber'].toString();
+                        wonumberopname = item['wodwonbr'].toString();
+                        showDialog(
+                          context: globalScaffoldKey.currentContext!,
+                          builder: (context) => new AlertDialog(
+                            title: new Text('Information'),
+                            content: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Container(
+                                  margin: EdgeInsets.all(10.0),
+                                  child: Text("Save Opname ?"),
+                                ),
+                              ],
+                            ),
+                            actions: <Widget>[
+                              new ElevatedButton.icon(
+                                icon: Icon(
+                                  Icons.delete,
+                                  color: Colors.white,
+                                  size: 20.0,
+                                ),
+                                label: Text("Save Opname ?"),
+                                onPressed: () async {
+                                  Navigator.of(context).pop(false);
+                                  print('save opname');
+                                  createOpname();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                    elevation: 0.0,
+                                    backgroundColor: Colors.blue,
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 0),
+                                    textStyle: TextStyle(
+                                        fontSize: 10, fontWeight: FontWeight.bold)),
+                              ),
+                              new ElevatedButton.icon(
+                                icon: Icon(
+                                  Icons.save,
+                                  color: Colors.white,
+                                  size: 20.0,
+                                ),
+                                label: Text("Close"),
+                                onPressed: () async {
+                                  Navigator.of(context).pop(false);
+                                  setState(() {
+                                    wonumberopname = "";
+                                    txtOpnameVHCID.text = "";
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                    elevation: 0.0,
+                                    backgroundColor: Colors.orangeAccent,
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 0),
+                                    textStyle: TextStyle(
+                                        fontSize: 10, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.blueAccent,
+                          padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
+                          textStyle:
                           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                )),
+                    )),
                 SizedBox(width: 10),
                 Expanded(
                     child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Close"),
-                  onPressed: () async {
-                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.orangeAccent,
-                      padding:
+                      icon: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 15.0,
+                      ),
+                      label: Text("Close"),
+                      onPressed: () async {
+                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      },
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.orangeAccent,
+                          padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
+                          textStyle:
                           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                )),
+                    )),
               ]),
             ),
           ),
@@ -7221,7 +7221,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -7292,51 +7292,51 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               child: Row(children: <Widget>[
                 Expanded(
                     child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.edit,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Pilih"),
-                  onPressed: () async {
-                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                    //print(item);
-                    txtItemID.text = item['item_id'];
-                    txtPartName.text = item['part_name'];
-                    txtItemSize.text = item['item_size'];
-                    txtTypeID.text = item['type'];
-                    txtTypeAccess.text = item['accessories'];
-                    txtGenuineNoOpname.text = item['genuine_no'];
-                    txtOpnameMerk.text = item['merk'];
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.blueAccent,
-                      padding:
+                      icon: Icon(
+                        Icons.edit,
+                        color: Colors.white,
+                        size: 15.0,
+                      ),
+                      label: Text("Pilih"),
+                      onPressed: () async {
+                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                        //print(item);
+                        txtItemID.text = item['item_id'];
+                        txtPartName.text = item['part_name'];
+                        txtItemSize.text = item['item_size'];
+                        txtTypeID.text = item['type'];
+                        txtTypeAccess.text = item['accessories'];
+                        txtGenuineNoOpname.text = item['genuine_no'];
+                        txtOpnameMerk.text = item['merk'];
+                      },
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.blueAccent,
+                          padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
+                          textStyle:
                           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                )),
+                    )),
                 SizedBox(width: 10),
                 Expanded(
                     child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Close"),
-                  onPressed: () async {
-                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.orangeAccent,
-                      padding:
+                      icon: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 15.0,
+                      ),
+                      label: Text("Close"),
+                      onPressed: () async {
+                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      },
+                      style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.orangeAccent,
+                          padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
+                          textStyle:
                           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                )),
+                    )),
               ]),
             ),
           ),
@@ -7366,12 +7366,12 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               padding: EdgeInsets.all(10),
               child: Text(
                   "WOD Number: ${item['wodwonbr']}\n"
-                  "MechanicID: ${item['mechanicid']}\n"
-                  "MechanicName: ${item['mechanicname']}\n"
-                  "Start Date: ${item['startdate']}\n"
-                  "Start Note: ${item['start_notes']}\n"
-                  "Stop Date: ${item['stopdate']}\n"
-                  "Stop Note: ${item['stop_notes']}\n",
+                      "MechanicID: ${item['mechanicid']}\n"
+                      "MechanicName: ${item['mechanicname']}\n"
+                      "Start Date: ${item['startdate']}\n"
+                      "Start Note: ${item['start_notes']}\n"
+                      "Stop Date: ${item['stopdate']}\n"
+                      "Stop Note: ${item['stop_notes']}\n",
                   style: TextStyle(
                       color: Colors.black, fontWeight: FontWeight.bold)),
             ),
@@ -7393,7 +7393,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -7478,307 +7478,307 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
   Widget buildDeleteTyreFit(BuildContext context, dynamic item) {
     return Expanded(
         child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.cancel,
-        color: Colors.white,
-        size: 15.0,
-      ),
-      label: Text("Delete"),
-      onPressed: () async {
-        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-        showDialog(
-          context: globalScaffoldKey.currentContext!,
-          builder: (context) => new AlertDialog(
-            title: new Text('Information'),
-            content: new Text("Delete this data?"),
-            actions: <Widget>[
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 24.0,
-                ),
-                label: Text("Close"),
-                onPressed: () async {
-                  //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.redAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.delete,
-                  color: Colors.white,
-                  size: 24.0,
-                ),
-                label: Text("Delete"),
-                onPressed: () async {
-                  print('show');
-                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  //await Future.delayed(Duration(milliseconds: 1));
-                  print(item['wonumber']);
-                  print(item['id']);
-                  if (item['id'] == '' || item['id'] == null) {
-                    alert(globalScaffoldKey.currentContext!, 2,
-                        "Id tidak boleh kosong", "warning");
-                  } else if (item['wonumber'] == '' ||
-                      item['wonumber'] == null) {
-                    alert(globalScaffoldKey.currentContext!, 2,
-                        "WO NUMBER tidak boleh kosong", "warning");
-                  } else {
-                    await DeleteTyreFit(true, item['wonumber'], item['id']);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-            ],
+          icon: Icon(
+            Icons.cancel,
+            color: Colors.white,
+            size: 15.0,
           ),
-        );
-      },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.orangeAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-    ));
+          label: Text("Delete"),
+          onPressed: () async {
+            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+            showDialog(
+              context: globalScaffoldKey.currentContext!,
+              builder: (context) => new AlertDialog(
+                title: new Text('Information'),
+                content: new Text("Delete this data?"),
+                actions: <Widget>[
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    label: Text("Close"),
+                    onPressed: () async {
+                      //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.redAccent,
+                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    label: Text("Delete"),
+                    onPressed: () async {
+                      print('show');
+                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      //await Future.delayed(Duration(milliseconds: 1));
+                      print(item['wonumber']);
+                      print(item['id']);
+                      if (item['id'] == '' || item['id'] == null) {
+                        alert(globalScaffoldKey.currentContext!, 2,
+                            "Id tidak boleh kosong", "warning");
+                      } else if (item['wonumber'] == '' ||
+                          item['wonumber'] == null) {
+                        alert(globalScaffoldKey.currentContext!, 2,
+                            "WO NUMBER tidak boleh kosong", "warning");
+                      } else {
+                        await DeleteTyreFit(true, item['wonumber'], item['id']);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+              elevation: 0.0,
+              backgroundColor: Colors.orangeAccent,
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ));
   }
 
   Widget buildDeleteProses(BuildContext context, dynamic item) {
     return Expanded(
         child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.cancel,
-        color: Colors.white,
-        size: 15.0,
-      ),
-      label: Text("Delete"),
-      onPressed: () async {
-        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-        showDialog(
-          context: globalScaffoldKey.currentContext!,
-          builder: (context) => new AlertDialog(
-            title: new Text('Information'),
-            content: new Text("Delete this data?"),
-            actions: <Widget>[
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 24.0,
-                ),
-                label: Text("Close"),
-                onPressed: () async {
-                  //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.redAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.delete,
-                  color: Colors.white,
-                  size: 24.0,
-                ),
-                label: Text("Delete"),
-                onPressed: () async {
-                  print('show');
-                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  //await Future.delayed(Duration(milliseconds: 1));
-                  print(item['wonumber']);
-                  print(item['id']);
-                  if (item['id'] == '' || item['id'] == null) {
-                    alert(globalScaffoldKey.currentContext!, 2,
-                        "Id tidak boleh kosong", "warning");
-                  } else if (item['wonumber'] == '' ||
-                      item['wonumber'] == null) {
-                    alert(globalScaffoldKey.currentContext!, 2,
-                        "WO NUMBER tidak boleh kosong", "warning");
-                  } else {
-                    await DeleteViewProses(true, item['wonumber'], item['id']);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-            ],
+          icon: Icon(
+            Icons.cancel,
+            color: Colors.white,
+            size: 15.0,
           ),
-        );
-      },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.orangeAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-    ));
+          label: Text("Delete"),
+          onPressed: () async {
+            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+            showDialog(
+              context: globalScaffoldKey.currentContext!,
+              builder: (context) => new AlertDialog(
+                title: new Text('Information'),
+                content: new Text("Delete this data?"),
+                actions: <Widget>[
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    label: Text("Close"),
+                    onPressed: () async {
+                      //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.redAccent,
+                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    label: Text("Delete"),
+                    onPressed: () async {
+                      print('show');
+                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      //await Future.delayed(Duration(milliseconds: 1));
+                      print(item['wonumber']);
+                      print(item['id']);
+                      if (item['id'] == '' || item['id'] == null) {
+                        alert(globalScaffoldKey.currentContext!, 2,
+                            "Id tidak boleh kosong", "warning");
+                      } else if (item['wonumber'] == '' ||
+                          item['wonumber'] == null) {
+                        alert(globalScaffoldKey.currentContext!, 2,
+                            "WO NUMBER tidak boleh kosong", "warning");
+                      } else {
+                        await DeleteViewProses(true, item['wonumber'], item['id']);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+              elevation: 0.0,
+              backgroundColor: Colors.orangeAccent,
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ));
   }
 
   Widget buildDeleteQC(BuildContext context, dynamic item) {
     return Expanded(
         child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.cancel,
-        color: Colors.white,
-        size: 15.0,
-      ),
-      label: Text("Delete"),
-      onPressed: () async {
-        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-        showDialog(
-          context: globalScaffoldKey.currentContext!,
-          builder: (context) => new AlertDialog(
-            title: new Text('Information'),
-            content: new Text("Delete this data?"),
-            actions: <Widget>[
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 24.0,
-                ),
-                label: Text("Close"),
-                onPressed: () async {
-                  //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.redAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.delete,
-                  color: Colors.white,
-                  size: 24.0,
-                ),
-                label: Text("Delete"),
-                onPressed: () async {
-                  print('show');
-                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  //await Future.delayed(Duration(milliseconds: 1));
-                  print(item['wonumber']);
-                  print(item['id']);
-                  if (item['id'] == '' || item['id'] == null) {
-                    alert(globalScaffoldKey.currentContext!, 2,
-                        "Id tidak boleh kosong", "warning");
-                  } else if (item['wonumber'] == '' ||
-                      item['wonumber'] == null) {
-                    alert(globalScaffoldKey.currentContext!, 2,
-                        "WO NUMBER tidak boleh kosong", "warning");
-                  } else {
-                    await DeleteViewQC(true, item['wonumber'], item['id']);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-            ],
+          icon: Icon(
+            Icons.cancel,
+            color: Colors.white,
+            size: 15.0,
           ),
-        );
-      },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.orangeAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-    ));
+          label: Text("Delete"),
+          onPressed: () async {
+            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+            showDialog(
+              context: globalScaffoldKey.currentContext!,
+              builder: (context) => new AlertDialog(
+                title: new Text('Information'),
+                content: new Text("Delete this data?"),
+                actions: <Widget>[
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    label: Text("Close"),
+                    onPressed: () async {
+                      //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.redAccent,
+                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    label: Text("Delete"),
+                    onPressed: () async {
+                      print('show');
+                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      //await Future.delayed(Duration(milliseconds: 1));
+                      print(item['wonumber']);
+                      print(item['id']);
+                      if (item['id'] == '' || item['id'] == null) {
+                        alert(globalScaffoldKey.currentContext!, 2,
+                            "Id tidak boleh kosong", "warning");
+                      } else if (item['wonumber'] == '' ||
+                          item['wonumber'] == null) {
+                        alert(globalScaffoldKey.currentContext!, 2,
+                            "WO NUMBER tidak boleh kosong", "warning");
+                      } else {
+                        await DeleteViewQC(true, item['wonumber'], item['id']);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+              elevation: 0.0,
+              backgroundColor: Colors.orangeAccent,
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ));
   }
 
   Widget buildDeleteOpnameDetail(BuildContext context, dynamic item) {
     return Expanded(
         child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.cancel,
-        color: Colors.white,
-        size: 15.0,
-      ),
-      label: Text("Delete"),
-      onPressed: () async {
-        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-        showDialog(
-          context: globalScaffoldKey.currentContext!,
-          builder: (context) => new AlertDialog(
-            title: new Text('Information'),
-            content: new Text("Delete this data?"), //DELETE OPNAME
-            actions: <Widget>[
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 24.0,
-                ),
-                label: Text("Close"),
-                onPressed: () async {
-                  //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.redAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-              new ElevatedButton.icon(
-                icon: Icon(
-                  Icons.delete,
-                  color: Colors.white,
-                  size: 24.0,
-                ),
-                label: Text("Delete"),
-                onPressed: () async {
-                  print('show');
-                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  print(item['id']);
-                  if (item['id'] == '' || item['id'] == null) {
-                    alert(globalScaffoldKey.currentContext!, 2,
-                        "Id tidak boleh kosong", "warning");
-                  } else {
-                    await DeleteOpnameDetail(true, item['vhcid'], item['id']);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-            ],
+          icon: Icon(
+            Icons.cancel,
+            color: Colors.white,
+            size: 15.0,
           ),
-        );
-      },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.redAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-    ));
+          label: Text("Delete"),
+          onPressed: () async {
+            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+            showDialog(
+              context: globalScaffoldKey.currentContext!,
+              builder: (context) => new AlertDialog(
+                title: new Text('Information'),
+                content: new Text("Delete this data?"), //DELETE OPNAME
+                actions: <Widget>[
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    label: Text("Close"),
+                    onPressed: () async {
+                      //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.redAccent,
+                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    label: Text("Delete"),
+                    onPressed: () async {
+                      print('show');
+                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      print(item['id']);
+                      if (item['id'] == '' || item['id'] == null) {
+                        alert(globalScaffoldKey.currentContext!, 2,
+                            "Id tidak boleh kosong", "warning");
+                      } else {
+                        await DeleteOpnameDetail(true, item['vhcid'], item['id']);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                        textStyle:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+              elevation: 0.0,
+              backgroundColor: Colors.redAccent,
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ));
   }
 
   Widget _buildDListBanTmsFinish(dynamic item, int index) {
@@ -7793,7 +7793,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -7891,7 +7891,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -7995,7 +7995,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                   physics: ScrollPhysics(),
                   padding: const EdgeInsets.all(2.0),
                   itemCount:
-                      dataListTyreFit == null ? 0 : dataListTyreFit.length,
+                  dataListTyreFit == null ? 0 : dataListTyreFit.length,
                   itemBuilder: (BuildContext context, int index) {
                     return _buildDListTyreFitDetailFinish(
                         dataListTyreFit[index], index);
@@ -8023,7 +8023,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                   physics: ScrollPhysics(),
                   padding: const EdgeInsets.all(2.0),
                   itemCount:
-                      dataListTyreFitQC == null ? 0 : dataListTyreFitQC.length,
+                  dataListTyreFitQC == null ? 0 : dataListTyreFitQC.length,
                   itemBuilder: (BuildContext context, int index) {
                     return _buildDListTyreFitDetailQC(
                         dataListTyreFitQC[index], index);
@@ -8089,7 +8089,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           txtSearchVehicleSr.text != "" &&
                           METHOD_DETAIL == '') {
                         var vhcid =
-                            txtSearchVehicleSr.text.split('/')[0].toString();
+                        txtSearchVehicleSr.text.split('/')[0].toString();
                         print(vhcid);
                         await getListDataSr(true, vhcid);
                       }
@@ -8115,7 +8115,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                   physics: ScrollPhysics(),
                   padding: const EdgeInsets.all(2.0),
                   itemCount:
-                      dataListSrOpname == null ? 0 : dataListSrOpname.length,
+                  dataListSrOpname == null ? 0 : dataListSrOpname.length,
                   itemBuilder: (BuildContext context, int index) {
                     return _buildDListDetailOpnameSr(
                         dataListSrOpname[index], index);
@@ -8635,7 +8635,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                 margin: EdgeInsets.all(10.0),
                 child: TextField(
                   readOnly:
-                      is_edit_req != null && is_edit_req == true ? true : false,
+                  is_edit_req != null && is_edit_req == true ? true : false,
                   cursorColor: Colors.black,
                   style: TextStyle(color: Colors.grey.shade800),
                   controller: txtDriverName,
@@ -8720,327 +8720,327 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                 child: Row(children: <Widget>[
                   Expanded(
                       child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.cancel,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: Text("Cancel"),
-                    onPressed: () async {
-                      resetTeks();
-                      setState(() {
-                        btnSubmitText = bSave;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.orangeAccent,
-                        padding:
+                        icon: Icon(
+                          Icons.cancel,
+                          color: Colors.white,
+                          size: 15.0,
+                        ),
+                        label: Text("Cancel"),
+                        onPressed: () async {
+                          resetTeks();
+                          setState(() {
+                            btnSubmitText = bSave;
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                            elevation: 0.0,
+                            backgroundColor: Colors.orangeAccent,
+                            padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold)),
-                  )),
+                            textStyle: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold)),
+                      )),
                   SizedBox(width: 5),
                   Expanded(
                       child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.save,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: Text("${btnSubmitText}"),
-                    onPressed: () async {
-                      if (is_edit_req != null && is_edit_req == true) {
-                        showDialog(
-                          context: context,
-                          builder: (context) => new AlertDialog(
-                            title: new Text('Information'),
-                            content: new Text("${bUpdate}?"),
-                            actions: <Widget>[
-                              new ElevatedButton.icon(
-                                icon: Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 20.0,
-                                ),
-                                label: Text("No"),
-                                onPressed: () {
-                                  Navigator.of(context).pop(false);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 0.0,
-                                    backgroundColor: Colors.red,
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 0),
-                                    textStyle: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold)),
-                              ),
-                              new ElevatedButton.icon(
-                                icon: Icon(
-                                  Icons.save,
-                                  color: Colors.white,
-                                  size: 20.0,
-                                ),
-                                label: Text("Ok"),
-                                onPressed: () async {
-                                  Navigator.of(context).pop(false);
-                                  var isOK = globals.akses_pages == null
-                                      ? globals.akses_pages
-                                      : globals.akses_pages.where((x) =>
-                                          x == "OP" || username == "ADMIN");
-                                  if (isOK != null) {
-                                    if (isOK.length > 0) {
-                                      saveRequestService('update', 'no', '', '',
-                                          '', '', '', '', '', '');
-                                    }
-                                  } else {
-                                    alert(
-                                        globalScaffoldKey.currentContext!,
-                                        0,
-                                        "Anda tidak dapat melakukan transaksi ini",
-                                        "error");
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 0.0,
-                                    backgroundColor: Colors.blue,
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 0),
-                                    textStyle: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
-                        );
-                        print('Update');
-                      } else {
-                        print(txtSrTypeId.text);
-                        //SHOW MODAL LIST BAN
-                        if (txtSrTypeId.text.contains("BAN LUAR") ||
-                            txtSrTypeId.text.contains("BANLUAR") ||
-                            txtSrTypeId.text.contains("BAN-LUAR")) {
-                          if (collTyreFit.length > 0) {
+                        icon: Icon(
+                          Icons.save,
+                          color: Colors.white,
+                          size: 15.0,
+                        ),
+                        label: Text("${btnSubmitText}"),
+                        onPressed: () async {
+                          if (is_edit_req != null && is_edit_req == true) {
                             showDialog(
-                              context: globalScaffoldKey.currentContext!,
+                              context: context,
                               builder: (context) => new AlertDialog(
                                 title: new Text('Information'),
-                                content: new Text("Save/ pilih item kembali?"),
+                                content: new Text("${bUpdate}?"),
                                 actions: <Widget>[
                                   new ElevatedButton.icon(
                                     icon: Icon(
-                                      Icons.check,
+                                      Icons.close,
                                       color: Colors.white,
-                                      size: 24.0,
+                                      size: 20.0,
                                     ),
-                                    label: Text("pilih"),
-                                    onPressed: () async {
-                                      //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                                      Navigator.of(
-                                              globalScaffoldKey.currentContext!)
-                                          .pop(false);
-                                      await Future.delayed(
-                                          Duration(seconds: 1));
-                                      fnVHCID = txtVehicleId.text;
-                                      print("VEHICL ID ${fnVHCID}");
-                                      await getListBanTMS(true, '');
-                                      showDialog(
-                                          context:
-                                              globalScaffoldKey.currentContext!,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title:
-                                                  Text('List Ban Create SR '),
-                                              content:
-                                                  setupAlertDialoadContainer(
-                                                      context),
-                                            );
-                                          });
+                                    label: Text("No"),
+                                    onPressed: () {
+                                      Navigator.of(context).pop(false);
                                     },
                                     style: ElevatedButton.styleFrom(
                                         elevation: 0.0,
-                                        backgroundColor: Colors.green,
+                                        backgroundColor: Colors.red,
                                         padding: EdgeInsets.symmetric(
-                                            horizontal: 5, vertical: 0),
+                                            horizontal: 10, vertical: 0),
                                         textStyle: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 10,
                                             fontWeight: FontWeight.bold)),
                                   ),
                                   new ElevatedButton.icon(
                                     icon: Icon(
                                       Icons.save,
                                       color: Colors.white,
-                                      size: 24.0,
+                                      size: 20.0,
                                     ),
-                                    label: Text("Save"),
-                                    onPressed: () {
-                                      fnVHCID = txtVehicleId.text;
-                                      print("VEHICL ID ${fnVHCID}");
-                                      Navigator.of(
-                                              globalScaffoldKey.currentContext!)
-                                          .pop(false);
-                                      selFitPostName = '';
-                                      for (var i = 0;
-                                          i < collTyreFit.length;
-                                          i++) {
-                                        var fitArr = i ==
-                                                (collTyreFit.length - 1)
-                                            ? "${collTyreFit[i]['fittyreid']};${collTyreFit[i]['fitserialno']};${collTyreFit[i]['startdate']};${collTyreFit[i]['tyrebrand']};${collTyreFit[i]['tyrepattern']};${collTyreFit[i]['tyreprice']};${collTyreFit[i]['genuino']};${collTyreFit[i]['fitpost']}"
-                                            : "${collTyreFit[i]['fittyreid']};${collTyreFit[i]['fitserialno']};${collTyreFit[i]['startdate']};${collTyreFit[i]['tyrebrand']};${collTyreFit[i]['tyrepattern']};${collTyreFit[i]['tyreprice']};${collTyreFit[i]['genuino']};${collTyreFit[i]['fitpost']}<=>";
-                                        selFitPostName += fitArr;
+                                    label: Text("Ok"),
+                                    onPressed: () async {
+                                      Navigator.of(context).pop(false);
+                                      var isOK = globals.akses_pages == null
+                                          ? globals.akses_pages
+                                          : globals.akses_pages.where((x) =>
+                                      x == "OP" || username == "ADMIN");
+                                      if (isOK != null) {
+                                        if (isOK.length > 0) {
+                                          saveRequestService('update', 'no', '', '',
+                                              '', '', '', '', '', '');
+                                        }
+                                      } else {
+                                        alert(
+                                            globalScaffoldKey.currentContext!,
+                                            0,
+                                            "Anda tidak dapat melakukan transaksi ini",
+                                            "error");
                                       }
-                                      //print(selFitPostName);
-                                      is_edit_req = false;
-                                      saveRequestService('save', 'yes', '', '',
-                                          '', '', '', '', '', '');
                                     },
                                     style: ElevatedButton.styleFrom(
                                         elevation: 0.0,
                                         backgroundColor: Colors.blue,
                                         padding: EdgeInsets.symmetric(
-                                            horizontal: 5, vertical: 0),
+                                            horizontal: 10, vertical: 0),
                                         textStyle: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 10,
                                             fontWeight: FontWeight.bold)),
                                   ),
                                 ],
                               ),
                             );
+                            print('Update');
                           } else {
-                            await getListBanTMS(true, '');
-                            showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('List Ban Create SR'),
-                                    content:
+                            print(txtSrTypeId.text);
+                            //SHOW MODAL LIST BAN
+                            if (txtSrTypeId.text.contains("BAN LUAR") ||
+                                txtSrTypeId.text.contains("BANLUAR") ||
+                                txtSrTypeId.text.contains("BAN-LUAR")) {
+                              if (collTyreFit.length > 0) {
+                                showDialog(
+                                  context: globalScaffoldKey.currentContext!,
+                                  builder: (context) => new AlertDialog(
+                                    title: new Text('Information'),
+                                    content: new Text("Save/ pilih item kembali?"),
+                                    actions: <Widget>[
+                                      new ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 24.0,
+                                        ),
+                                        label: Text("pilih"),
+                                        onPressed: () async {
+                                          //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                                          Navigator.of(
+                                              globalScaffoldKey.currentContext!)
+                                              .pop(false);
+                                          await Future.delayed(
+                                              Duration(seconds: 1));
+                                          fnVHCID = txtVehicleId.text;
+                                          print("VEHICL ID ${fnVHCID}");
+                                          await getListBanTMS(true, '');
+                                          showDialog(
+                                              context:
+                                              globalScaffoldKey.currentContext!,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  title:
+                                                  Text('List Ban Create SR '),
+                                                  content:
+                                                  setupAlertDialoadContainer(
+                                                      context),
+                                                );
+                                              });
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            elevation: 0.0,
+                                            backgroundColor: Colors.green,
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 5, vertical: 0),
+                                            textStyle: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold)),
+                                      ),
+                                      new ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.save,
+                                          color: Colors.white,
+                                          size: 24.0,
+                                        ),
+                                        label: Text("Save"),
+                                        onPressed: () {
+                                          fnVHCID = txtVehicleId.text;
+                                          print("VEHICL ID ${fnVHCID}");
+                                          Navigator.of(
+                                              globalScaffoldKey.currentContext!)
+                                              .pop(false);
+                                          selFitPostName = '';
+                                          for (var i = 0;
+                                          i < collTyreFit.length;
+                                          i++) {
+                                            var fitArr = i ==
+                                                (collTyreFit.length - 1)
+                                                ? "${collTyreFit[i]['fittyreid']};${collTyreFit[i]['fitserialno']};${collTyreFit[i]['startdate']};${collTyreFit[i]['tyrebrand']};${collTyreFit[i]['tyrepattern']};${collTyreFit[i]['tyreprice']};${collTyreFit[i]['genuino']};${collTyreFit[i]['fitpost']}"
+                                                : "${collTyreFit[i]['fittyreid']};${collTyreFit[i]['fitserialno']};${collTyreFit[i]['startdate']};${collTyreFit[i]['tyrebrand']};${collTyreFit[i]['tyrepattern']};${collTyreFit[i]['tyreprice']};${collTyreFit[i]['genuino']};${collTyreFit[i]['fitpost']}<=>";
+                                            selFitPostName += fitArr;
+                                          }
+                                          //print(selFitPostName);
+                                          is_edit_req = false;
+                                          saveRequestService('save', 'yes', '', '',
+                                              '', '', '', '', '', '');
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            elevation: 0.0,
+                                            backgroundColor: Colors.blue,
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 5, vertical: 0),
+                                            textStyle: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              } else {
+                                await getListBanTMS(true, '');
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text('List Ban Create SR'),
+                                        content:
                                         setupAlertDialoadContainer(context),
-                                  );
-                                });
-                          }
-                        } else {
-                          showDialog(
-                            context: context,
-                            builder: (context) => new AlertDialog(
-                              title: new Text('Information'),
-                              content: new Text("Save new request service?"),
-                              actions: <Widget>[
-                                new ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                    size: 20.0,
-                                  ),
-                                  label: Text("No"),
-                                  onPressed: () {
-                                    Navigator.of(context).pop(false);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.red,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                                new ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.save,
-                                    color: Colors.white,
-                                    size: 20.0,
-                                  ),
-                                  label: Text("Ok"),
-                                  onPressed: () async {
-                                    Navigator.of(context).pop(false);
-                                    var isOK = globals.akses_pages == null
-                                        ? globals.akses_pages
-                                        : globals.akses_pages
+                                      );
+                                    });
+                              }
+                            } else {
+                              showDialog(
+                                context: context,
+                                builder: (context) => new AlertDialog(
+                                  title: new Text('Information'),
+                                  content: new Text("Save new request service?"),
+                                  actions: <Widget>[
+                                    new ElevatedButton.icon(
+                                      icon: Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 20.0,
+                                      ),
+                                      label: Text("No"),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(false);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          elevation: 0.0,
+                                          backgroundColor: Colors.red,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 0),
+                                          textStyle: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                    new ElevatedButton.icon(
+                                      icon: Icon(
+                                        Icons.save,
+                                        color: Colors.white,
+                                        size: 20.0,
+                                      ),
+                                      label: Text("Ok"),
+                                      onPressed: () async {
+                                        Navigator.of(context).pop(false);
+                                        var isOK = globals.akses_pages == null
+                                            ? globals.akses_pages
+                                            : globals.akses_pages
                                             .where((x) => x == "OP");
-                                    if (isOK != null) {
-                                      if (isOK.length > 0) {
-                                        is_edit_req = false;
-                                        saveRequestService('save', 'no', '', '',
-                                            '', '', '', '', '', '');
-                                      }
-                                    } else {
-                                      alert(
-                                          globalScaffoldKey.currentContext!,
-                                          0,
-                                          "Anda tidak dapat melakukan transaksi ini",
-                                          "error");
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.blue,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold)),
+                                        if (isOK != null) {
+                                          if (isOK.length > 0) {
+                                            is_edit_req = false;
+                                            saveRequestService('save', 'no', '', '',
+                                                '', '', '', '', '', '');
+                                          }
+                                        } else {
+                                          alert(
+                                              globalScaffoldKey.currentContext!,
+                                              0,
+                                              "Anda tidak dapat melakukan transaksi ini",
+                                              "error");
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          elevation: 0.0,
+                                          backgroundColor: Colors.blue,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 0),
+                                          textStyle: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          );
-                          print('save');
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.blue,
-                        padding:
+                              );
+                              print('save');
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                            elevation: 0.0,
+                            backgroundColor: Colors.blue,
+                            padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold)),
-                  )),
+                            textStyle: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold)),
+                      )),
                   SizedBox(width: 5),
                   Expanded(
                       child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.details_outlined,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: Text("Detail List Ban"),
-                    onPressed: () async {
-                      var value = txtSrTypeId.text;
-                      if (value != null && value != '') {
-                        if (value.toString().contains("BAN LUAR") ||
-                            value.toString().contains("BANLUAR") ||
-                            value.toString().contains("BAN-LUAR")) {
-                          if (collTyreFit.length > 0) {
-                            print('List total fit post ${collTyreFit.length}');
-                            // collTyreFit.add({"genuino": i.toString(),"fitpost": i.toString()});
-                            showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('List Ban'),
-                                    content: setupAlertDialoadContainerTempBan(
-                                        context),
-                                  );
-                                });
-                          } else {
-                            alert(
-                                globalScaffoldKey.currentContext!,
-                                2,
-                                "Maaf,Tidak ada data, silahkan add terlebih dahulu",
-                                "warning");
+                        icon: Icon(
+                          Icons.details_outlined,
+                          color: Colors.white,
+                          size: 15.0,
+                        ),
+                        label: Text("Detail List Ban"),
+                        onPressed: () async {
+                          var value = txtSrTypeId.text;
+                          if (value != null && value != '') {
+                            if (value.toString().contains("BAN LUAR") ||
+                                value.toString().contains("BANLUAR") ||
+                                value.toString().contains("BAN-LUAR")) {
+                              if (collTyreFit.length > 0) {
+                                print('List total fit post ${collTyreFit.length}');
+                                // collTyreFit.add({"genuino": i.toString(),"fitpost": i.toString()});
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text('List Ban'),
+                                        content: setupAlertDialoadContainerTempBan(
+                                            context),
+                                      );
+                                    });
+                              } else {
+                                alert(
+                                    globalScaffoldKey.currentContext!,
+                                    2,
+                                    "Maaf,Tidak ada data, silahkan add terlebih dahulu",
+                                    "warning");
+                              }
+                            }
                           }
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.blue,
-                        padding:
+                        },
+                        style: ElevatedButton.styleFrom(
+                            elevation: 0.0,
+                            backgroundColor: Colors.blue,
+                            padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold)),
-                  )),
+                            textStyle: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold)),
+                      )),
                 ]),
               ),
             ],
@@ -9050,11 +9050,11 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     } else {
       return Container(
           child: Center(
-        child: Text(
-          "Anda tidak punya akses",
-          textAlign: TextAlign.center,
-        ),
-      ));
+            child: Text(
+              "Anda tidak punya akses",
+              textAlign: TextAlign.center,
+            ),
+          ));
     }
   }
 
@@ -9111,9 +9111,9 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
           Container(
             decoration: BoxDecoration(
                 border: Border.all(
-              color: Colors.black12, //
-              width: 10.0,
-            )),
+                  color: Colors.black12, //
+                  width: 10.0,
+                )),
             child: Column(
               children: [
                 Container(
@@ -9212,14 +9212,14 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             ),
           ),
           Container(
-              //height: 30,
+            //height: 30,
               padding: const EdgeInsets.all(18.0),
               margin: const EdgeInsets.all(0.0),
               decoration: BoxDecoration(
                   border: Border.all(
-                color: Colors.black12, //
-                width: 10.0,
-              )),
+                    color: Colors.black12, //
+                    width: 10.0,
+                  )),
               child: Row(
                 children: [
                   Text('Note: Baik'),
@@ -9227,21 +9227,21 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                     value: "0",
                     //groupValue:
                     fillColor: MaterialStateColor.resolveWith(
-                        (states) => Colors.green),
+                            (states) => Colors.green),
                   ),
                   Text('Tidak Baik'),
                   Radio(
                     value: "0",
                     //groupValue:
                     fillColor: MaterialStateColor.resolveWith(
-                        (states) => Colors.orange),
+                            (states) => Colors.orange),
                   ),
                   Text('Tidak Ada'),
                   Radio(
                     value: "0",
                     //groupValue:
                     fillColor:
-                        MaterialStateColor.resolveWith((states) => Colors.red),
+                    MaterialStateColor.resolveWith((states) => Colors.red),
                   )
                 ],
               )),
@@ -9273,10 +9273,10 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                     children: <Widget>[
                       ListTile(
                         visualDensity:
-                            VisualDensity(horizontal: 0, vertical: -4),
+                        VisualDensity(horizontal: 0, vertical: -4),
                         //leading: Icon(Icons.album),
                         title:
-                            Text("${element['seq']}. ${element['question']}"),
+                        Text("${element['seq']}. ${element['question']}"),
                         //subtitle: Text(element['note']!=null && element['note']!="null"?element['note']:""),
                       ),
                       Padding(
@@ -9291,9 +9291,9 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                               Radio(
                                 value: "baik$element['index']",
                                 groupValue:
-                                    listChecklistValueCHK[element['index']],
+                                listChecklistValueCHK[element['index']],
                                 fillColor: MaterialStateColor.resolveWith(
-                                    (states) => Colors.green),
+                                        (states) => Colors.green),
                                 onChanged: (val) {
                                   setState(() {
                                     listChecklistValueCHK[element['index']] =
@@ -9315,9 +9315,9 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                               Radio(
                                 value: "tidak_baik$element['index']",
                                 groupValue:
-                                    listChecklistValueCHK[element['index']],
+                                listChecklistValueCHK[element['index']],
                                 fillColor: MaterialStateColor.resolveWith(
-                                    (states) => Colors.orange),
+                                        (states) => Colors.orange),
                                 onChanged: (val) {
                                   setState(() {
                                     listChecklistValueCHK[element['index']] =
@@ -9339,9 +9339,9 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                               Radio(
                                 value: "tidak_ada$element['index']",
                                 groupValue:
-                                    listChecklistValueCHK[element['index']],
+                                listChecklistValueCHK[element['index']],
                                 fillColor: MaterialStateColor.resolveWith(
-                                    (states) => Colors.red),
+                                        (states) => Colors.red),
                                 onChanged: (val) {
                                   setState(() {
                                     listChecklistValueCHK[element['index']] =
@@ -9385,7 +9385,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           element['note'] != "null") ...[
                         ListTile(
                             visualDensity:
-                                VisualDensity(horizontal: 0, vertical: -4),
+                            VisualDensity(horizontal: 0, vertical: -4),
                             title: Text("Note: ${element['note']}")),
                       ]
                     ],
@@ -9522,132 +9522,132 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             //height: 150,
             decoration: BoxDecoration(
                 gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [
-                Colors.grey,
-                Colors.black12,
-              ],
-            )),
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                    Colors.grey,
+                    Colors.black12,
+                  ],
+                )),
             margin: EdgeInsets.all(0),
             padding: EdgeInsets.all(5),
             child: Row(children: <Widget>[
               Expanded(
                   child: ElevatedButton.icon(
-                icon: Icon(
-                  Icons.delete,
-                  color: Colors.white,
-                  size: 15.0,
-                ),
-                label: Text("Cancel"),
-                onPressed: () async {
-                  await DeleteDraft();
-                  print('Delete');
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.orangeAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                    textStyle:
+                    icon: Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                      size: 15.0,
+                    ),
+                    label: Text("Cancel"),
+                    onPressed: () async {
+                      await DeleteDraft();
+                      print('Delete');
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.orangeAccent,
+                        padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                        textStyle:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              )),
+                  )),
               SizedBox(width: 10),
               Expanded(
                   child: ElevatedButton.icon(
-                icon: Icon(
-                  Icons.save,
-                  color: Colors.white,
-                  size: 15.0,
-                ),
-                label: Text("Submit"),
-                onPressed: () async {
-                  if (txtCabangIdCHK.text == null ||
-                      txtCabangIdCHK.text == '') {
-                    alert(globalScaffoldKey.currentContext!, 2,
-                        "Cabang tidak boleh kosong", "warning");
-                  } else if (txtVHCIDCHK.text == null ||
-                      txtVHCIDCHK.text == '') {
-                    alert(globalScaffoldKey.currentContext!, 2,
-                        "Nopol tidak boleh kosong", "warning");
-                  } else if (txtJenisTypeCHK.text == null ||
-                      txtJenisTypeCHK.text == '') {
-                    alert(globalScaffoldKey.currentContext!, 2,
-                        "Type Kendaraan tidak boleh kosong", "warning");
-                  } else if (txtKMCHK.text == null || txtKMCHK.text == '') {
-                    alert(globalScaffoldKey.currentContext!, 2,
-                        "Milage/KM Kendaraan tidak boleh kosong", "warning");
-                  } else if (int.parse(txtKMCHK.text) <= 0) {
-                    alert(globalScaffoldKey.currentContext!, 2,
-                        "Milage/KM Kendaraan tidak boleh kosong", "warning");
-                  } else {
-                    SharedPreferences prefs =
+                    icon: Icon(
+                      Icons.save,
+                      color: Colors.white,
+                      size: 15.0,
+                    ),
+                    label: Text("Submit"),
+                    onPressed: () async {
+                      if (txtCabangIdCHK.text == null ||
+                          txtCabangIdCHK.text == '') {
+                        alert(globalScaffoldKey.currentContext!, 2,
+                            "Cabang tidak boleh kosong", "warning");
+                      } else if (txtVHCIDCHK.text == null ||
+                          txtVHCIDCHK.text == '') {
+                        alert(globalScaffoldKey.currentContext!, 2,
+                            "Nopol tidak boleh kosong", "warning");
+                      } else if (txtJenisTypeCHK.text == null ||
+                          txtJenisTypeCHK.text == '') {
+                        alert(globalScaffoldKey.currentContext!, 2,
+                            "Type Kendaraan tidak boleh kosong", "warning");
+                      } else if (txtKMCHK.text == null || txtKMCHK.text == '') {
+                        alert(globalScaffoldKey.currentContext!, 2,
+                            "Milage/KM Kendaraan tidak boleh kosong", "warning");
+                      } else if (int.parse(txtKMCHK.text) <= 0) {
+                        alert(globalScaffoldKey.currentContext!, 2,
+                            "Milage/KM Kendaraan tidak boleh kosong", "warning");
+                      } else {
+                        SharedPreferences prefs =
                         await SharedPreferences.getInstance();
-                    if (prefs.getString("trxnumber_form_check") == null) {
-                      alert(globalScaffoldKey.currentContext!, 2,
-                          "Anda belum memilih form checklist", "warning");
-                    } else {
-                      showDialog(
-                        context: globalScaffoldKey.currentContext!,
-                        builder: (context) => new AlertDialog(
-                          title: new Text('Information'),
-                          content: new Text("Save data form checklist?"),
-                          actions: <Widget>[
-                            new ElevatedButton.icon(
-                              icon: Icon(
-                                Icons.info,
-                                color: Colors.white,
-                                size: 24.0,
-                              ),
-                              label: Text("Cancel"),
-                              onPressed: () {
-                                Navigator.of(context, rootNavigator: true)
-                                    .pop();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: Colors.blue,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  textStyle: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
+                        if (prefs.getString("trxnumber_form_check") == null) {
+                          alert(globalScaffoldKey.currentContext!, 2,
+                              "Anda belum memilih form checklist", "warning");
+                        } else {
+                          showDialog(
+                            context: globalScaffoldKey.currentContext!,
+                            builder: (context) => new AlertDialog(
+                              title: new Text('Information'),
+                              content: new Text("Save data form checklist?"),
+                              actions: <Widget>[
+                                new ElevatedButton.icon(
+                                  icon: Icon(
+                                    Icons.info,
+                                    color: Colors.white,
+                                    size: 24.0,
+                                  ),
+                                  label: Text("Cancel"),
+                                  onPressed: () {
+                                    Navigator.of(context, rootNavigator: true)
+                                        .pop();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      elevation: 0.0,
+                                      backgroundColor: Colors.blue,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 0),
+                                      textStyle: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                                SizedBox(width: 10),
+                                new ElevatedButton.icon(
+                                  icon: Icon(
+                                    Icons.info,
+                                    color: Colors.white,
+                                    size: 24.0,
+                                  ),
+                                  label: Text("Ok"),
+                                  onPressed: () async {
+                                    Navigator.of(context, rootNavigator: true)
+                                        .pop();
+                                    await UpdateAll();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      elevation: 0.0,
+                                      backgroundColor: Colors.blue,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 0),
+                                      textStyle: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ],
                             ),
-                            SizedBox(width: 10),
-                            new ElevatedButton.icon(
-                              icon: Icon(
-                                Icons.info,
-                                color: Colors.white,
-                                size: 24.0,
-                              ),
-                              label: Text("Ok"),
-                              onPressed: () async {
-                                Navigator.of(context, rootNavigator: true)
-                                    .pop();
-                                await UpdateAll();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: Colors.blue,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  textStyle: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    print('Save');
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                    textStyle:
+                          );
+                        }
+                        print('Save');
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                        textStyle:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              )),
+                  )),
             ]),
           )
         ],
@@ -9787,7 +9787,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               ),
               Container(
                 margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
                 child: TextField(
                   readOnly: true,
                   cursorColor: Colors.black,
@@ -9814,7 +9814,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           builder: (BuildContext context) => new AlertDialog(
                             title: new Text('Information'),
                             content:
-                                new Text("Search Partname/ Item By Scan Code"),
+                            new Text("Search Partname/ Item By Scan Code"),
                             actions: <Widget>[
                               new ElevatedButton.icon(
                                 icon: Icon(
@@ -9865,12 +9865,12 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                                       print('Show dialog');
                                       showDialog(
                                           context:
-                                              globalScaffoldKey.currentContext!,
+                                          globalScaffoldKey.currentContext!,
                                           builder: (BuildContext context) {
                                             return AlertDialog(
                                               title: Text('List Detail Item'),
                                               content:
-                                                  listDataSearchItem(context),
+                                              listDataSearchItem(context),
                                             );
                                           });
                                     });
@@ -9927,7 +9927,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               ),
               Container(
                 margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
                 child: TextField(
                   readOnly: true,
                   cursorColor: Colors.black,
@@ -9945,7 +9945,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               ),
               Container(
                 margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
                 child: TextField(
                   readOnly: true,
                   cursorColor: Colors.black,
@@ -9963,7 +9963,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               ),
               Container(
                 margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
                 child: TextField(
                   readOnly: true,
                   cursorColor: Colors.black,
@@ -9981,7 +9981,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               ),
               Container(
                 margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
                 child: TextField(
                   readOnly: true,
                   cursorColor: Colors.black,
@@ -9999,7 +9999,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               ),
               Container(
                 margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
                 child: TextField(
                   readOnly: true,
                   cursorColor: Colors.black,
@@ -10017,7 +10017,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               ),
               Container(
                 margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
                 child: TextField(
                   readOnly: true,
                   cursorColor: Colors.black,
@@ -10035,7 +10035,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               ),
               Container(
                 margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
                 child: TextField(
                   readOnly: false,
                   cursorColor: Colors.black,
@@ -10092,7 +10092,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               // ),
               Container(
                 margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
                 child: TextField(
                   onTap: () {
                     dateTimePickerWidget(context);
@@ -10136,410 +10136,410 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                   // SizedBox(width: 10),
                   Expanded(
                       child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.save,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: Text("Create"),
-                    onPressed: () async {
-                      print(fnWONUMBER);
-                      print("METHOD_DETAIL ${METHOD_DETAIL}");
-                      print(id_header);
-                      if (txtOpnameVHCID.text == null ||
-                          txtOpnameVHCID.text == '') {
-                        alert(globalScaffoldKey.currentContext!, 0,
-                            "Vehicle ID tidak boleh kosong", "error");
-                      } else {
-                        if (id_header > 0 && METHOD_DETAIL != '') {
-                          showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (context) => new AlertDialog(
-                              title: new Text('Information'),
-                              content: new Text("Create new detail opname?"),
-                              actions: <Widget>[
-                                new ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.cancel,
-                                    color: Colors.white,
-                                    size: 24.0,
-                                  ),
-                                  label: Text("Cancel"),
-                                  onPressed: () async {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .pop();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.orangeAccent,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
+                        icon: Icon(
+                          Icons.save,
+                          color: Colors.white,
+                          size: 15.0,
+                        ),
+                        label: Text("Create"),
+                        onPressed: () async {
+                          print(fnWONUMBER);
+                          print("METHOD_DETAIL ${METHOD_DETAIL}");
+                          print(id_header);
+                          if (txtOpnameVHCID.text == null ||
+                              txtOpnameVHCID.text == '') {
+                            alert(globalScaffoldKey.currentContext!, 0,
+                                "Vehicle ID tidak boleh kosong", "error");
+                          } else {
+                            if (id_header > 0 && METHOD_DETAIL != '') {
+                              showDialog(
+                                context: globalScaffoldKey.currentContext!,
+                                builder: (context) => new AlertDialog(
+                                  title: new Text('Information'),
+                                  content: new Text("Create new detail opname?"),
+                                  actions: <Widget>[
+                                    new ElevatedButton.icon(
+                                      icon: Icon(
+                                        Icons.cancel,
+                                        color: Colors.white,
+                                        size: 24.0,
+                                      ),
+                                      label: Text("Cancel"),
+                                      onPressed: () async {
+                                        Navigator.of(context, rootNavigator: true)
+                                            .pop();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          elevation: 0.0,
+                                          backgroundColor: Colors.orangeAccent,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 0),
+                                          textStyle: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                    new SizedBox(width: 10),
+                                    new ElevatedButton.icon(
+                                      icon: Icon(
+                                        Icons.info,
+                                        color: Colors.white,
+                                        size: 24.0,
+                                      ),
+                                      label: Text("Ok"),
+                                      onPressed: () async {
+                                        Navigator.of(context, rootNavigator: true)
+                                            .pop();
+                                        createOpnameDetail(); //TEST
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          elevation: 0.0,
+                                          backgroundColor: Colors.blue,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 0),
+                                          textStyle: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
                                 ),
-                                new SizedBox(width: 10),
-                                new ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.info,
-                                    color: Colors.white,
-                                    size: 24.0,
-                                  ),
-                                  label: Text("Ok"),
-                                  onPressed: () async {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .pop();
-                                    createOpnameDetail(); //TEST
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.blue,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
+                              );
+                            }
 
-                        if (fnWONUMBER != '' && METHOD_DETAIL == 'PROSES') {
-                          showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (context) => new AlertDialog(
-                              title: new Text('Information'),
-                              content: new Text("Create new detail opname?"),
-                              actions: <Widget>[
-                                new ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.cancel,
-                                    color: Colors.white,
-                                    size: 24.0,
-                                  ),
-                                  label: Text("Cancel"),
-                                  onPressed: () async {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .pop();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.orangeAccent,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
+                            if (fnWONUMBER != '' && METHOD_DETAIL == 'PROSES') {
+                              showDialog(
+                                context: globalScaffoldKey.currentContext!,
+                                builder: (context) => new AlertDialog(
+                                  title: new Text('Information'),
+                                  content: new Text("Create new detail opname?"),
+                                  actions: <Widget>[
+                                    new ElevatedButton.icon(
+                                      icon: Icon(
+                                        Icons.cancel,
+                                        color: Colors.white,
+                                        size: 24.0,
+                                      ),
+                                      label: Text("Cancel"),
+                                      onPressed: () async {
+                                        Navigator.of(context, rootNavigator: true)
+                                            .pop();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          elevation: 0.0,
+                                          backgroundColor: Colors.orangeAccent,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 0),
+                                          textStyle: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                    new SizedBox(width: 10),
+                                    new ElevatedButton.icon(
+                                      icon: Icon(
+                                        Icons.info,
+                                        color: Colors.white,
+                                        size: 24.0,
+                                      ),
+                                      label: Text("Ok"),
+                                      onPressed: () async {
+                                        Navigator.of(context, rootNavigator: true)
+                                            .pop();
+                                        createOpnameDetailProses();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          elevation: 0.0,
+                                          backgroundColor: Colors.blue,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 0),
+                                          textStyle: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
                                 ),
-                                new SizedBox(width: 10),
-                                new ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.info,
-                                    color: Colors.white,
-                                    size: 24.0,
-                                  ),
-                                  label: Text("Ok"),
-                                  onPressed: () async {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .pop();
-                                    createOpnameDetailProses();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.blue,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
+                              );
+                            }
 
-                        if (fnWONUMBERQC != '' && METHOD_DETAIL == 'QC') {
-                          showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (context) => new AlertDialog(
-                              title: new Text('Information'),
-                              content: new Text("Create new detail opname?"),
-                              actions: <Widget>[
-                                new ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.cancel,
-                                    color: Colors.white,
-                                    size: 24.0,
-                                  ),
-                                  label: Text("Cancel"),
-                                  onPressed: () async {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .pop();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.orangeAccent,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
+                            if (fnWONUMBERQC != '' && METHOD_DETAIL == 'QC') {
+                              showDialog(
+                                context: globalScaffoldKey.currentContext!,
+                                builder: (context) => new AlertDialog(
+                                  title: new Text('Information'),
+                                  content: new Text("Create new detail opname?"),
+                                  actions: <Widget>[
+                                    new ElevatedButton.icon(
+                                      icon: Icon(
+                                        Icons.cancel,
+                                        color: Colors.white,
+                                        size: 24.0,
+                                      ),
+                                      label: Text("Cancel"),
+                                      onPressed: () async {
+                                        Navigator.of(context, rootNavigator: true)
+                                            .pop();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          elevation: 0.0,
+                                          backgroundColor: Colors.orangeAccent,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 0),
+                                          textStyle: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                    new SizedBox(width: 10),
+                                    new ElevatedButton.icon(
+                                      icon: Icon(
+                                        Icons.info,
+                                        color: Colors.white,
+                                        size: 24.0,
+                                      ),
+                                      label: Text("Ok"),
+                                      onPressed: () async {
+                                        Navigator.of(context, rootNavigator: true)
+                                            .pop();
+                                        createOpnameDetailQC();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          elevation: 0.0,
+                                          backgroundColor: Colors.blue,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 0),
+                                          textStyle: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
                                 ),
-                                new SizedBox(width: 10),
-                                new ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.info,
-                                    color: Colors.white,
-                                    size: 24.0,
-                                  ),
-                                  label: Text("Ok"),
-                                  onPressed: () async {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .pop();
-                                    createOpnameDetailQC();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.blue,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                        print('save detail opname');
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.blue,
-                        padding:
+                              );
+                            }
+                            print('save detail opname');
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                            elevation: 0.0,
+                            backgroundColor: Colors.blue,
+                            padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold)),
-                  )),
+                            textStyle: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold)),
+                      )),
                   SizedBox(width: 5),
                   Expanded(
                       child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.book,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: Text("List Detail"),
-                    onPressed: () async {
-                      print("Button List Detail Opname");
-                      //txtOpnameVHCID.text = 'B 9474 YU/B 9474 YU'; //DEV
-                      //id_header = 3740;
-                      if (txtOpnameVHCID.text == null ||
-                          txtOpnameVHCID.text == '') {
-                        alert(globalScaffoldKey.currentContext!, 0,
-                            "Vehicle ID tidak boleh kosong", "error");
-                      } else {
-                        dataListOpnameDetail = [];
-                        await getListDataOpnameDetail(
-                            true, id_header.toString(), txtOpnameVHCID.text);
+                        icon: Icon(
+                          Icons.book,
+                          color: Colors.white,
+                          size: 15.0,
+                        ),
+                        label: Text("List Detail"),
+                        onPressed: () async {
+                          print("Button List Detail Opname");
+                          //txtOpnameVHCID.text = 'B 9474 YU/B 9474 YU'; //DEV
+                          //id_header = 3740;
+                          if (txtOpnameVHCID.text == null ||
+                              txtOpnameVHCID.text == '') {
+                            alert(globalScaffoldKey.currentContext!, 0,
+                                "Vehicle ID tidak boleh kosong", "error");
+                          } else {
+                            dataListOpnameDetail = [];
+                            await getListDataOpnameDetail(
+                                true, id_header.toString(), txtOpnameVHCID.text);
 
-                        await Future.delayed(Duration(milliseconds: 1));
-                        if (dataListOpnameDetail.length > 0) {
-                          //Navigator.of(context).pop(false);
-                          await Future.delayed(Duration(milliseconds: 1));
-                          showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                    title: Text('List Detail'),
-                                    content: listDataOpnameDetail(context),
-                                    actions: <Widget>[
-                                      Flex(
-                                        direction: Axis.horizontal,
-                                        children: [
-                                          Expanded(
-                                              child: ElevatedButton.icon(
-                                            icon: Icon(
-                                              Icons.book,
-                                              color: Colors.white,
-                                              size: 15.0,
-                                            ),
-                                            label: Text(
-                                                "Approve"), //Approve Opname
-                                            onPressed: () async {
-                                              //selEstimasi = "1";
-                                              //id_header=88;
-                                              //print('getAkses("FO") ${getAkses("FO")}');
-                                              if (username == "ADMIN" ||
-                                                  getAkses("SA")) {
-                                                if (txtOpnameVHCID.text ==
-                                                        null ||
-                                                    txtOpnameVHCID.text == '') {
-                                                  alert(
-                                                      globalScaffoldKey
-                                                          .currentContext!,
-                                                      0,
-                                                      "Vehicle ID tidak boleh kosong",
-                                                      "error");
-                                                } else if (id_header <= 0) {
-                                                  alert(
-                                                      globalScaffoldKey
-                                                          .currentContext!,
-                                                      0,
-                                                      "ID Opname tidak boleh kosong",
-                                                      "error");
-                                                } else if (selEstimasi ==
-                                                        null ||
-                                                    selEstimasi == "") {
-                                                  alert(
-                                                      globalScaffoldKey
-                                                          .currentContext!,
-                                                      0,
-                                                      "Estimasi tidak boleh kosong 2",
-                                                      "error");
-                                                } else {
-                                                  Navigator.of(context)
-                                                      .pop(false);
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (context) =>
-                                                        new AlertDialog(
-                                                      title: new Text(
-                                                          'Information'),
-                                                      //content:
-                                                      //new Text("Save new request service?"),
-                                                      content: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .stretch,
-                                                        //position
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        // wrap content in flutter
-                                                        children: <Widget>[
-                                                          Container(
-                                                            margin:
-                                                                EdgeInsets.all(
-                                                                    10.0),
-                                                            child: Text(
-                                                                "Approve this data?"),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      actions: <Widget>[
-                                                        new ElevatedButton.icon(
-                                                          icon: Icon(
-                                                            Icons.delete,
-                                                            color: Colors.white,
-                                                            size: 20.0,
-                                                          ),
-                                                          label:
-                                                              Text("Approve"),
-                                                          onPressed: () async {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop(false);
-                                                            await Future.delayed(
-                                                                Duration(
-                                                                    milliseconds:
-                                                                        1));
-                                                            await ApproveOpnameDetail(
-                                                                true,
-                                                                txtOpnameVHCID
-                                                                    .text,
-                                                                id_header
-                                                                    .toString());
-                                                          },
-                                                          style: ElevatedButton.styleFrom(
-                                                              elevation: 0.0,
-                                                              backgroundColor:
-                                                                  Colors.blue,
-                                                              padding: EdgeInsets
-                                                                  .symmetric(
-                                                                      horizontal:
-                                                                          10,
-                                                                      vertical:
-                                                                          0),
-                                                              textStyle: TextStyle(
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold)),
-                                                        ),
-                                                        new ElevatedButton.icon(
-                                                          icon: Icon(
-                                                            Icons.save,
-                                                            color: Colors.white,
-                                                            size: 20.0,
-                                                          ),
-                                                          label: Text("Close"),
-                                                          onPressed: () async {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop(false);
-                                                          },
-                                                          style: ElevatedButton.styleFrom(
-                                                              elevation: 0.0,
-                                                              backgroundColor:
-                                                                  Colors
-                                                                      .orangeAccent,
-                                                              padding: EdgeInsets
-                                                                  .symmetric(
-                                                                      horizontal:
-                                                                          10,
-                                                                      vertical:
-                                                                          0),
-                                                              textStyle: TextStyle(
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold)),
-                                                        ),
-                                                      ],
+                            await Future.delayed(Duration(milliseconds: 1));
+                            if (dataListOpnameDetail.length > 0) {
+                              //Navigator.of(context).pop(false);
+                              await Future.delayed(Duration(milliseconds: 1));
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                        title: Text('List Detail'),
+                                        content: listDataOpnameDetail(context),
+                                        actions: <Widget>[
+                                          Flex(
+                                            direction: Axis.horizontal,
+                                            children: [
+                                              Expanded(
+                                                  child: ElevatedButton.icon(
+                                                    icon: Icon(
+                                                      Icons.book,
+                                                      color: Colors.white,
+                                                      size: 15.0,
                                                     ),
-                                                  );
-                                                }
-                                              } else {
-                                                alert(
-                                                    globalScaffoldKey
-                                                        .currentContext!,
-                                                    0,
-                                                    "Anda tidak punya izin untuk melakukan approval",
-                                                    "error");
-                                              }
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                                elevation: 0.0,
-                                                backgroundColor: Colors.blue,
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 5, vertical: 0),
-                                                textStyle: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                          )),
-                                        ],
-                                      ),
-                                    ]);
-                              });
-                        } else {
-                          //Navigator.of(context).pop(false);
-                          await Future.delayed(Duration(milliseconds: 1));
-                          alert(context, 2, "tidak ada data yang di temukan",
-                              "warning");
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.blue,
-                        padding:
+                                                    label: Text(
+                                                        "Approve"), //Approve Opname
+                                                    onPressed: () async {
+                                                      //selEstimasi = "1";
+                                                      //id_header=88;
+                                                      //print('getAkses("FO") ${getAkses("FO")}');
+                                                      if (username == "ADMIN" ||
+                                                          getAkses("SA")) {
+                                                        if (txtOpnameVHCID.text ==
+                                                            null ||
+                                                            txtOpnameVHCID.text == '') {
+                                                          alert(
+                                                              globalScaffoldKey
+                                                                  .currentContext!,
+                                                              0,
+                                                              "Vehicle ID tidak boleh kosong",
+                                                              "error");
+                                                        } else if (id_header <= 0) {
+                                                          alert(
+                                                              globalScaffoldKey
+                                                                  .currentContext!,
+                                                              0,
+                                                              "ID Opname tidak boleh kosong",
+                                                              "error");
+                                                        } else if (selEstimasi ==
+                                                            null ||
+                                                            selEstimasi == "") {
+                                                          alert(
+                                                              globalScaffoldKey
+                                                                  .currentContext!,
+                                                              0,
+                                                              "Estimasi tidak boleh kosong 2",
+                                                              "error");
+                                                        } else {
+                                                          Navigator.of(context)
+                                                              .pop(false);
+                                                          showDialog(
+                                                            context: context,
+                                                            builder: (context) =>
+                                                            new AlertDialog(
+                                                              title: new Text(
+                                                                  'Information'),
+                                                              //content:
+                                                              //new Text("Save new request service?"),
+                                                              content: Column(
+                                                                crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .stretch,
+                                                                //position
+                                                                mainAxisSize:
+                                                                MainAxisSize.min,
+                                                                // wrap content in flutter
+                                                                children: <Widget>[
+                                                                  Container(
+                                                                    margin:
+                                                                    EdgeInsets.all(
+                                                                        10.0),
+                                                                    child: Text(
+                                                                        "Approve this data?"),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              actions: <Widget>[
+                                                                new ElevatedButton.icon(
+                                                                  icon: Icon(
+                                                                    Icons.delete,
+                                                                    color: Colors.white,
+                                                                    size: 20.0,
+                                                                  ),
+                                                                  label:
+                                                                  Text("Approve"),
+                                                                  onPressed: () async {
+                                                                    Navigator.of(
+                                                                        context)
+                                                                        .pop(false);
+                                                                    await Future.delayed(
+                                                                        Duration(
+                                                                            milliseconds:
+                                                                            1));
+                                                                    await ApproveOpnameDetail(
+                                                                        true,
+                                                                        txtOpnameVHCID
+                                                                            .text,
+                                                                        id_header
+                                                                            .toString());
+                                                                  },
+                                                                  style: ElevatedButton.styleFrom(
+                                                                      elevation: 0.0,
+                                                                      backgroundColor:
+                                                                      Colors.blue,
+                                                                      padding: EdgeInsets
+                                                                          .symmetric(
+                                                                          horizontal:
+                                                                          10,
+                                                                          vertical:
+                                                                          0),
+                                                                      textStyle: TextStyle(
+                                                                          fontSize: 10,
+                                                                          fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                                ),
+                                                                new ElevatedButton.icon(
+                                                                  icon: Icon(
+                                                                    Icons.save,
+                                                                    color: Colors.white,
+                                                                    size: 20.0,
+                                                                  ),
+                                                                  label: Text("Close"),
+                                                                  onPressed: () async {
+                                                                    Navigator.of(
+                                                                        context)
+                                                                        .pop(false);
+                                                                  },
+                                                                  style: ElevatedButton.styleFrom(
+                                                                      elevation: 0.0,
+                                                                      backgroundColor:
+                                                                      Colors
+                                                                          .orangeAccent,
+                                                                      padding: EdgeInsets
+                                                                          .symmetric(
+                                                                          horizontal:
+                                                                          10,
+                                                                          vertical:
+                                                                          0),
+                                                                      textStyle: TextStyle(
+                                                                          fontSize: 10,
+                                                                          fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          );
+                                                        }
+                                                      } else {
+                                                        alert(
+                                                            globalScaffoldKey
+                                                                .currentContext!,
+                                                            0,
+                                                            "Anda tidak punya izin untuk melakukan approval",
+                                                            "error");
+                                                      }
+                                                    },
+                                                    style: ElevatedButton.styleFrom(
+                                                        elevation: 0.0,
+                                                        backgroundColor: Colors.blue,
+                                                        padding: EdgeInsets.symmetric(
+                                                            horizontal: 5, vertical: 0),
+                                                        textStyle: TextStyle(
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                            FontWeight.bold)),
+                                                  )),
+                                            ],
+                                          ),
+                                        ]);
+                                  });
+                            } else {
+                              //Navigator.of(context).pop(false);
+                              await Future.delayed(Duration(milliseconds: 1));
+                              alert(context, 2, "tidak ada data yang di temukan",
+                                  "warning");
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                            elevation: 0.0,
+                            backgroundColor: Colors.blue,
+                            padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold)),
-                  )),
+                            textStyle: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold)),
+                      )),
                   //SizedBox(width: 5),
                 ]),
               )
@@ -10550,11 +10550,11 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     } else {
       return Container(
           child: Center(
-        child: Text(
-          "Anda tidak punya akses",
-          textAlign: TextAlign.center,
-        ),
-      ));
+            child: Text(
+              "Anda tidak punya akses",
+              textAlign: TextAlign.center,
+            ),
+          ));
     }
   }
 
@@ -10572,7 +10572,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
       print(urlData);
       Uri myUri = urlData;
       var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
+      await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         //print(jsonDecode(response.body));
         setState(() {
@@ -10644,11 +10644,11 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     } else {
       return Container(
           child: Center(
-        child: Text(
-          "Anda tidak punya akses",
-          textAlign: TextAlign.center,
-        ),
-      ));
+            child: Text(
+              "Anda tidak punya akses",
+              textAlign: TextAlign.center,
+            ),
+          ));
     }
   }
 
@@ -10659,7 +10659,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     //if (getAkses("FO") || getAkses("OP")) {
     if (getAkses("FO")) {
       return SingleChildScrollView(
-          //shrinkWrap: true,
+        //shrinkWrap: true,
           padding: EdgeInsets.all(2.0),
           clipBehavior: Clip.antiAlias,
           //margin: EdgeInsets.only(left: 0, top: 0, right: 0, bottom: 5),
@@ -10682,7 +10682,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                       //prefixIcon: Icon(Icons.search),
                       border: OutlineInputBorder(
                           borderRadius:
-                              BorderRadius.all(Radius.circular(25.0)))),
+                          BorderRadius.all(Radius.circular(25.0)))),
                 ),
               ),
               Container(
@@ -10706,11 +10706,11 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     } else {
       return Container(
           child: Center(
-        child: Text(
-          "Anda tidak punya akses",
-          textAlign: TextAlign.center,
-        ),
-      ));
+            child: Text(
+              "Anda tidak punya akses",
+              textAlign: TextAlign.center,
+            ),
+          ));
     }
   }
 
@@ -10720,7 +10720,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     // if (getAkses("MT") || username == "ADMIN") {
     if (getAkses("FO")) {
       return SingleChildScrollView(
-          //shrinkWrap: true,
+        //shrinkWrap: true,
           padding: EdgeInsets.all(2.0),
           clipBehavior: Clip.antiAlias,
           //margin: EdgeInsets.only(left: 0, top: 0, right: 0, bottom: 5),
@@ -10743,7 +10743,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                       //prefixIcon: Icon(Icons.search),
                       border: OutlineInputBorder(
                           borderRadius:
-                              BorderRadius.all(Radius.circular(25.0)))),
+                          BorderRadius.all(Radius.circular(25.0)))),
                 ),
               ),
               Container(
@@ -10754,7 +10754,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                     physics: ScrollPhysics(),
                     padding: const EdgeInsets.all(5.0),
                     itemCount:
-                        dataListOprsQC == null ? 0 : dataListOprsQC.length,
+                    dataListOprsQC == null ? 0 : dataListOprsQC.length,
                     itemBuilder: (context, index) {
                       return _buildDListRequestOprQC(
                           dataListOprsQC[index], index);
@@ -10765,11 +10765,11 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     } else {
       return Container(
           child: Center(
-        child: Text(
-          "Anda tidak punya akses",
-          textAlign: TextAlign.center,
-        ),
-      ));
+            child: Text(
+              "Anda tidak punya akses",
+              textAlign: TextAlign.center,
+            ),
+          ));
     }
   }
 
@@ -10785,7 +10785,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -10859,257 +10859,257 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
           child: Row(children: <Widget>[
             Expanded(
                 child: ElevatedButton.icon(
-              icon: Icon(
-                Icons.list,
-                color: Colors.white,
-                size: 15.0,
-              ),
-              label: Text("Opname Detail"),
-              onPressed: () async {
-                print('OPNAME FOREMAN ${item['wodwonbr']}');
-                await getListDataItemForeman(item["wodwonbr"]);
-                if (dataListItemSearch.length > 0) {
-                  print("item ${item['id_header'].toString()}");
-                  listSRNumberOpnameDetail = item['srnumber'];
-                  listOpnameVHCID = item['vhcid'];
-                  //print(dataListItemSearch);
+                  icon: Icon(
+                    Icons.list,
+                    color: Colors.white,
+                    size: 15.0,
+                  ),
+                  label: Text("Opname Detail"),
+                  onPressed: () async {
+                    print('OPNAME FOREMAN ${item['wodwonbr']}');
+                    await getListDataItemForeman(item["wodwonbr"]);
+                    if (dataListItemSearch.length > 0) {
+                      print("item ${item['id_header'].toString()}");
+                      listSRNumberOpnameDetail = item['srnumber'];
+                      listOpnameVHCID = item['vhcid'];
+                      //print(dataListItemSearch);
 
-                  showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text('List Item'),
-                          content:
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('List Item'),
+                              content:
                               setupAlertDialoagContainerOpnamDetail(context),
-                        );
-                      });
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                  elevation: 0.0,
-                  backgroundColor: Colors.blueAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                  textStyle:
+                            );
+                          });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 0.0,
+                      backgroundColor: Colors.blueAccent,
+                      padding: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                      textStyle:
                       TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            )),
+                )),
             SizedBox(width: 2),
             Expanded(
                 child: ElevatedButton.icon(
-              icon: Icon(
-                Icons.delete,
-                color: Colors.white,
-                size: 15.0,
-              ),
-              label: Text("Cancel"),
-              onPressed: () async {
-                showDialog(
-                  context: globalScaffoldKey.currentContext!,
-                  builder: (context) => new AlertDialog(
-                    title: new Text('Information'),
-                    content: new Text("Cancel data ${item['srnumber']}"),
-                    actions: <Widget>[
-                      new TextButton(
-                          onPressed: () {
-                            Navigator.of(globalScaffoldKey.currentContext!)
-                                .pop(false);
-                          },
-                          child: new Text('No')),
-                      new TextButton(
-                        onPressed: () async {
-                          //_tabController.animateTo(0);
-                          Navigator.of(globalScaffoldKey.currentContext!)
-                              .pop(false);
-                          cancelRequestService(
-                              item['srnumber'], item['vhcid'], item['drvid']);
-                          //
-                        },
-                        child: new Text('Ok'),
-                      ),
-                    ],
+                  icon: Icon(
+                    Icons.delete,
+                    color: Colors.white,
+                    size: 15.0,
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                  elevation: 0.0,
-                  backgroundColor: Colors.redAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                  textStyle:
+                  label: Text("Cancel"),
+                  onPressed: () async {
+                    showDialog(
+                      context: globalScaffoldKey.currentContext!,
+                      builder: (context) => new AlertDialog(
+                        title: new Text('Information'),
+                        content: new Text("Cancel data ${item['srnumber']}"),
+                        actions: <Widget>[
+                          new TextButton(
+                              onPressed: () {
+                                Navigator.of(globalScaffoldKey.currentContext!)
+                                    .pop(false);
+                              },
+                              child: new Text('No')),
+                          new TextButton(
+                            onPressed: () async {
+                              //_tabController.animateTo(0);
+                              Navigator.of(globalScaffoldKey.currentContext!)
+                                  .pop(false);
+                              cancelRequestService(
+                                  item['srnumber'], item['vhcid'], item['drvid']);
+                              //
+                            },
+                            child: new Text('Ok'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 0.0,
+                      backgroundColor: Colors.redAccent,
+                      padding: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                      textStyle:
                       TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            )),
+                )),
             SizedBox(width: 2),
             Expanded(
                 child: ElevatedButton.icon(
-              icon: Icon(
-                Icons.edit,
-                color: Colors.white,
-                size: 15.0,
-              ),
-              label: Text("WO Start"),
-              onPressed: () async {
-                showDialog(
-                  context: globalScaffoldKey.currentContext!,
-                  builder: (context) => new AlertDialog(
-                    title: new Text('Information'),
-                    content: new Text("Start data ${item['srnumber']}"),
-                    actions: <Widget>[
-                      new TextButton(
-                          onPressed: () {
-                            Navigator.of(globalScaffoldKey.currentContext!)
-                                .pop(false);
-                            resetTeks();
-                          },
-                          child: new Text('No')),
-                      new TextButton(
-                        onPressed: () async {
-                          print("Start Foremman ${userid.toUpperCase()}");
-                          //_tabController.animateTo(0);
-                          Navigator.of(globalScaffoldKey.currentContext!)
-                              .pop(false);
-                          showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (context) => new AlertDialog(
-                              //title: new Text('Start '),
-                              //content: new Text("Cancel data ini?"),
-                              content: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                //position
-                                mainAxisSize: MainAxisSize.min,
-                                // wrap content in flutter
-                                children: <Widget>[
-                                  Container(
-                                    margin: EdgeInsets.all(10.0),
-                                    child: TextField(
-                                      cursorColor: Colors.black,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade800),
-                                      controller: txtWorkedBy,
-                                      onTap: () {
-                                        _showModalListMechanic(context);
-                                      },
-                                      keyboardType: TextInputType.text,
-                                      decoration: new InputDecoration(
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        isDense: true,
-                                        labelText: "Mechanic ID 1",
-                                        contentPadding: EdgeInsets.all(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: EdgeInsets.all(10.0),
-                                    child: TextField(
-                                      cursorColor: Colors.black,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade800),
-                                      controller: txtWorkedBy2,
-                                      onTap: () {
-                                        _showModalListMechanic2(context);
-                                      },
-                                      keyboardType: TextInputType.text,
-                                      decoration: new InputDecoration(
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        isDense: true,
-                                        labelText: "Mechanic ID 2",
-                                        contentPadding: EdgeInsets.all(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: EdgeInsets.all(10.0),
-                                    child: TextField(
-                                      cursorColor: Colors.black,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade800),
-                                      controller: txtWodNotes,
-                                      keyboardType: TextInputType.text,
-                                      decoration: new InputDecoration(
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        isDense: true,
-                                        labelText: "Notes",
-                                        contentPadding: EdgeInsets.all(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              actions: <Widget>[
-                                new TextButton(
-                                    onPressed: () async {
-                                      Navigator.of(
-                                              globalScaffoldKey.currentContext!)
-                                          .pop(false);
-                                    },
-                                    child: new Text('No')),
-                                new TextButton(
-                                  onPressed: () async {
-                                    Navigator.of(
-                                            globalScaffoldKey.currentContext!)
-                                        .pop(false);
-                                    showDialog(
-                                      context:
-                                          globalScaffoldKey.currentContext!,
-                                      builder: (context) => new AlertDialog(
-                                        title: new Text(
-                                            'Information: Start this data?'),
-                                        //content: new Text("Cancel data ini?"),
-
-                                        actions: <Widget>[
-                                          new TextButton(
-                                              onPressed: () async {
-                                                Navigator.of(globalScaffoldKey
-                                                        .currentContext!)
-                                                    .pop(false);
-                                              },
-                                              child: new Text('No')),
-                                          new TextButton(
-                                            onPressed: () async {
-                                              Navigator.of(globalScaffoldKey
-                                                      .currentContext!)
-                                                  .pop(false);
-                                              var workedby = txtWorkedById.text;
-                                              var workedby2 =
-                                                  txtWorkedById2.text;
-                                              print(txtWodNotes.text);
-                                              startRequestServiceForeman(
-                                                  item['srnumber'],
-                                                  item['wodwonbr'],
-                                                  workedby,
-                                                  workedby2,
-                                                  item['vhcid'],
-                                                  item['drvid'],
-                                                  item['srkm'],
-                                                  txtWodNotes.text,
-                                                  item['srtypeid']);
-                                            },
-                                            child: new Text('Ok'),
+                  icon: Icon(
+                    Icons.edit,
+                    color: Colors.white,
+                    size: 15.0,
+                  ),
+                  label: Text("WO Start"),
+                  onPressed: () async {
+                    showDialog(
+                      context: globalScaffoldKey.currentContext!,
+                      builder: (context) => new AlertDialog(
+                        title: new Text('Information'),
+                        content: new Text("Start data ${item['srnumber']}"),
+                        actions: <Widget>[
+                          new TextButton(
+                              onPressed: () {
+                                Navigator.of(globalScaffoldKey.currentContext!)
+                                    .pop(false);
+                                resetTeks();
+                              },
+                              child: new Text('No')),
+                          new TextButton(
+                            onPressed: () async {
+                              print("Start Foremman ${userid.toUpperCase()}");
+                              //_tabController.animateTo(0);
+                              Navigator.of(globalScaffoldKey.currentContext!)
+                                  .pop(false);
+                              showDialog(
+                                context: globalScaffoldKey.currentContext!,
+                                builder: (context) => new AlertDialog(
+                                  //title: new Text('Start '),
+                                  //content: new Text("Cancel data ini?"),
+                                  content: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    //position
+                                    mainAxisSize: MainAxisSize.min,
+                                    // wrap content in flutter
+                                    children: <Widget>[
+                                      Container(
+                                        margin: EdgeInsets.all(10.0),
+                                        child: TextField(
+                                          cursorColor: Colors.black,
+                                          style: TextStyle(
+                                              color: Colors.grey.shade800),
+                                          controller: txtWorkedBy,
+                                          onTap: () {
+                                            _showModalListMechanic(context);
+                                          },
+                                          keyboardType: TextInputType.text,
+                                          decoration: new InputDecoration(
+                                            fillColor: Colors.white,
+                                            filled: true,
+                                            isDense: true,
+                                            labelText: "Mechanic ID 1",
+                                            contentPadding: EdgeInsets.all(5.0),
                                           ),
-                                        ],
+                                        ),
                                       ),
-                                    );
-                                  },
-                                  child: new Text('Ok'),
+                                      Container(
+                                        margin: EdgeInsets.all(10.0),
+                                        child: TextField(
+                                          cursorColor: Colors.black,
+                                          style: TextStyle(
+                                              color: Colors.grey.shade800),
+                                          controller: txtWorkedBy2,
+                                          onTap: () {
+                                            _showModalListMechanic2(context);
+                                          },
+                                          keyboardType: TextInputType.text,
+                                          decoration: new InputDecoration(
+                                            fillColor: Colors.white,
+                                            filled: true,
+                                            isDense: true,
+                                            labelText: "Mechanic ID 2",
+                                            contentPadding: EdgeInsets.all(5.0),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        margin: EdgeInsets.all(10.0),
+                                        child: TextField(
+                                          cursorColor: Colors.black,
+                                          style: TextStyle(
+                                              color: Colors.grey.shade800),
+                                          controller: txtWodNotes,
+                                          keyboardType: TextInputType.text,
+                                          decoration: new InputDecoration(
+                                            fillColor: Colors.white,
+                                            filled: true,
+                                            isDense: true,
+                                            labelText: "Notes",
+                                            contentPadding: EdgeInsets.all(5.0),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  actions: <Widget>[
+                                    new TextButton(
+                                        onPressed: () async {
+                                          Navigator.of(
+                                              globalScaffoldKey.currentContext!)
+                                              .pop(false);
+                                        },
+                                        child: new Text('No')),
+                                    new TextButton(
+                                      onPressed: () async {
+                                        Navigator.of(
+                                            globalScaffoldKey.currentContext!)
+                                            .pop(false);
+                                        showDialog(
+                                          context:
+                                          globalScaffoldKey.currentContext!,
+                                          builder: (context) => new AlertDialog(
+                                            title: new Text(
+                                                'Information: Start this data?'),
+                                            //content: new Text("Cancel data ini?"),
+
+                                            actions: <Widget>[
+                                              new TextButton(
+                                                  onPressed: () async {
+                                                    Navigator.of(globalScaffoldKey
+                                                        .currentContext!)
+                                                        .pop(false);
+                                                  },
+                                                  child: new Text('No')),
+                                              new TextButton(
+                                                onPressed: () async {
+                                                  Navigator.of(globalScaffoldKey
+                                                      .currentContext!)
+                                                      .pop(false);
+                                                  var workedby = txtWorkedById.text;
+                                                  var workedby2 =
+                                                      txtWorkedById2.text;
+                                                  print(txtWodNotes.text);
+                                                  startRequestServiceForeman(
+                                                      item['srnumber'],
+                                                      item['wodwonbr'],
+                                                      workedby,
+                                                      workedby2,
+                                                      item['vhcid'],
+                                                      item['drvid'],
+                                                      item['srkm'],
+                                                      txtWodNotes.text,
+                                                      item['srtypeid']);
+                                                },
+                                                child: new Text('Ok'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                      child: new Text('Ok'),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          );
-                          //
-                        },
-                        child: new Text('Ok'),
+                              );
+                              //
+                            },
+                            child: new Text('Ok'),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                  elevation: 0.0,
-                  backgroundColor: Colors.blueAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                  textStyle:
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 0.0,
+                      backgroundColor: Colors.blueAccent,
+                      padding: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                      textStyle:
                       TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            )),
+                )),
           ]),
         ),
       );
@@ -11123,64 +11123,64 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Row(children: <Widget>[
               Expanded(
                   child: ElevatedButton.icon(
-                icon: Icon(
-                  Icons.edit,
-                  color: Colors.white,
-                  size: 15.0,
-                ),
-                label: Text("Edit"),
-                onPressed: () async {
-                  showDialog(
-                    context: globalScaffoldKey.currentContext!,
-                    builder: (context) => new AlertDialog(
-                      title: new Text('Information'),
-                      content: new Text("Edit data ${item['srnumber']}"),
-                      actions: <Widget>[
-                        new TextButton(
-                            onPressed: () {
-                              Navigator.of(globalScaffoldKey.currentContext!)
-                                  .pop(false);
-                              resetTeks();
-                            },
-                            child: new Text('No')),
-                        new TextButton(
-                          onPressed: () async {
-                            //_tabController.animateTo(0);
-                            setState(() {
-                              is_edit_req = true;
-                              txtSRNumber.text = item['srnumber'];
-                              txtDate.text = item['requestdate'];
-                              txtSrType.text = item['srtypeiddesc'];
-                              txtSrTypeId.text = item['srtypeid'];
-                              txtDriverIdList.text = item['drvid'];
-                              txtVehicleIdList.text = item['vhcid'];
-                              txtVehicleName.text = item['vhcid'];
-                              txtDriverName.text = item['drvname'];
-                              txtNotes.text = item['srnotes'];
-                              txtKM.text = item['srkm'];
-                              srnumber = item['srnumber'];
-                              txtCabangId.text = item['srlocid'];
-                              btnSubmitText = bUpdate;
-                            });
-                            Navigator.of(globalScaffoldKey.currentContext!)
-                                .pop(false);
-                            await Future.delayed(Duration(milliseconds: 50));
-                            _tabController.animateTo(0);
-                            //
-                          },
-                          child: new Text('Ok'),
-                        ),
-                      ],
+                    icon: Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 15.0,
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.orangeAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    textStyle:
+                    label: Text("Edit"),
+                    onPressed: () async {
+                      showDialog(
+                        context: globalScaffoldKey.currentContext!,
+                        builder: (context) => new AlertDialog(
+                          title: new Text('Information'),
+                          content: new Text("Edit data ${item['srnumber']}"),
+                          actions: <Widget>[
+                            new TextButton(
+                                onPressed: () {
+                                  Navigator.of(globalScaffoldKey.currentContext!)
+                                      .pop(false);
+                                  resetTeks();
+                                },
+                                child: new Text('No')),
+                            new TextButton(
+                              onPressed: () async {
+                                //_tabController.animateTo(0);
+                                setState(() {
+                                  is_edit_req = true;
+                                  txtSRNumber.text = item['srnumber'];
+                                  txtDate.text = item['requestdate'];
+                                  txtSrType.text = item['srtypeiddesc'];
+                                  txtSrTypeId.text = item['srtypeid'];
+                                  txtDriverIdList.text = item['drvid'];
+                                  txtVehicleIdList.text = item['vhcid'];
+                                  txtVehicleName.text = item['vhcid'];
+                                  txtDriverName.text = item['drvname'];
+                                  txtNotes.text = item['srnotes'];
+                                  txtKM.text = item['srkm'];
+                                  srnumber = item['srnumber'];
+                                  txtCabangId.text = item['srlocid'];
+                                  btnSubmitText = bUpdate;
+                                });
+                                Navigator.of(globalScaffoldKey.currentContext!)
+                                    .pop(false);
+                                await Future.delayed(Duration(milliseconds: 50));
+                                _tabController.animateTo(0);
+                                //
+                              },
+                              child: new Text('Ok'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.orangeAccent,
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        textStyle:
                         TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              )),
+                  )),
             ]),
           ),
         );
@@ -11200,281 +11200,281 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
           child: Row(children: <Widget>[
             Expanded(
                 child: ElevatedButton.icon(
-              icon: Icon(
-                Icons.edit,
-                color: Colors.white,
-                size: 15.0,
-              ),
-              label: Text("Edit"),
-              onPressed: () async {
-                showDialog(
-                  context: globalScaffoldKey.currentContext!,
-                  builder: (context) => new AlertDialog(
-                    title: new Text('Information'),
-                    content: new Text("Edit data ${item['srnumber']}"),
-                    actions: <Widget>[
-                      new TextButton(
-                          onPressed: () {
-                            Navigator.of(globalScaffoldKey.currentContext!)
-                                .pop(false);
-                            resetTeks();
-                          },
-                          child: new Text('No')),
-                      new TextButton(
-                        onPressed: () async {
-                          //_tabController.animateTo(0);
-                          setState(() {
-                            is_edit_req = true;
-                            txtSRNumber.text = item['srnumber'];
-                            txtDate.text = item['requestdate'];
-                            txtSrType.text = item['srtypeiddesc'];
-                            txtSrTypeId.text = item['srtypeid'];
-                            txtDriverIdList.text = item['drvid'];
-                            txtVehicleIdList.text = item['vhcid'];
-                            txtVehicleName.text = item['vhcid'];
-                            txtDriverName.text = item['drvname'];
-                            txtNotes.text = item['srnotes'];
-                            txtKM.text = item['srkm'];
-                            srnumber = item['srnumber'];
-                            txtCabangId.text = item['srlocid'];
-                            btnSubmitText = bUpdate;
-                          });
-                          Navigator.of(globalScaffoldKey.currentContext!)
-                              .pop(false);
-                          await Future.delayed(Duration(milliseconds: 50));
-                          _tabController.animateTo(0);
-                          //
-                        },
-                        child: new Text('Ok'),
-                      ),
-                    ],
+                  icon: Icon(
+                    Icons.edit,
+                    color: Colors.white,
+                    size: 15.0,
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                  elevation: 0.0,
-                  backgroundColor: Colors.orangeAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  textStyle:
+                  label: Text("Edit"),
+                  onPressed: () async {
+                    showDialog(
+                      context: globalScaffoldKey.currentContext!,
+                      builder: (context) => new AlertDialog(
+                        title: new Text('Information'),
+                        content: new Text("Edit data ${item['srnumber']}"),
+                        actions: <Widget>[
+                          new TextButton(
+                              onPressed: () {
+                                Navigator.of(globalScaffoldKey.currentContext!)
+                                    .pop(false);
+                                resetTeks();
+                              },
+                              child: new Text('No')),
+                          new TextButton(
+                            onPressed: () async {
+                              //_tabController.animateTo(0);
+                              setState(() {
+                                is_edit_req = true;
+                                txtSRNumber.text = item['srnumber'];
+                                txtDate.text = item['requestdate'];
+                                txtSrType.text = item['srtypeiddesc'];
+                                txtSrTypeId.text = item['srtypeid'];
+                                txtDriverIdList.text = item['drvid'];
+                                txtVehicleIdList.text = item['vhcid'];
+                                txtVehicleName.text = item['vhcid'];
+                                txtDriverName.text = item['drvname'];
+                                txtNotes.text = item['srnotes'];
+                                txtKM.text = item['srkm'];
+                                srnumber = item['srnumber'];
+                                txtCabangId.text = item['srlocid'];
+                                btnSubmitText = bUpdate;
+                              });
+                              Navigator.of(globalScaffoldKey.currentContext!)
+                                  .pop(false);
+                              await Future.delayed(Duration(milliseconds: 50));
+                              _tabController.animateTo(0);
+                              //
+                            },
+                            child: new Text('Ok'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 0.0,
+                      backgroundColor: Colors.orangeAccent,
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      textStyle:
                       TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            )),
+                )),
             SizedBox(width: 10),
             Expanded(
                 child: ElevatedButton.icon(
-              icon: Icon(
-                Icons.delete,
-                color: Colors.white,
-                size: 15.0,
-              ),
-              label: Text("Cancel"),
-              onPressed: () async {
-                showDialog(
-                  context: globalScaffoldKey.currentContext!,
-                  builder: (context) => new AlertDialog(
-                    title: new Text('Information'),
-                    content: new Text("Cancel data ${item['srnumber']}"),
-                    actions: <Widget>[
-                      new TextButton(
-                          onPressed: () {
-                            Navigator.of(globalScaffoldKey.currentContext!)
-                                .pop(false);
-                          },
-                          child: new Text('No')),
-                      new TextButton(
-                        onPressed: () async {
-                          //_tabController.animateTo(0);
-                          Navigator.of(globalScaffoldKey.currentContext!)
-                              .pop(false);
-                          cancelRequestService(
-                              item['srnumber'], item['vhcid'], item['drvid']);
-                          //
-                        },
-                        child: new Text('Ok'),
-                      ),
-                    ],
+                  icon: Icon(
+                    Icons.delete,
+                    color: Colors.white,
+                    size: 15.0,
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                  elevation: 0.0,
-                  backgroundColor: Colors.redAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  textStyle:
+                  label: Text("Cancel"),
+                  onPressed: () async {
+                    showDialog(
+                      context: globalScaffoldKey.currentContext!,
+                      builder: (context) => new AlertDialog(
+                        title: new Text('Information'),
+                        content: new Text("Cancel data ${item['srnumber']}"),
+                        actions: <Widget>[
+                          new TextButton(
+                              onPressed: () {
+                                Navigator.of(globalScaffoldKey.currentContext!)
+                                    .pop(false);
+                              },
+                              child: new Text('No')),
+                          new TextButton(
+                            onPressed: () async {
+                              //_tabController.animateTo(0);
+                              Navigator.of(globalScaffoldKey.currentContext!)
+                                  .pop(false);
+                              cancelRequestService(
+                                  item['srnumber'], item['vhcid'], item['drvid']);
+                              //
+                            },
+                            child: new Text('Ok'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 0.0,
+                      backgroundColor: Colors.redAccent,
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      textStyle:
                       TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            )),
+                )),
             SizedBox(width: 10),
             Expanded(
                 child: ElevatedButton.icon(
-              icon: Icon(
-                Icons.edit,
-                color: Colors.white,
-                size: 15.0,
-              ),
-              label: Text("Start"),
-              onPressed: () async {
-                showDialog(
-                  context: globalScaffoldKey.currentContext!,
-                  builder: (context) => new AlertDialog(
-                    title: new Text('Information'),
-                    content: new Text("Start data ${item['srnumber']}"),
-                    actions: <Widget>[
-                      new TextButton(
-                          onPressed: () {
-                            Navigator.of(globalScaffoldKey.currentContext!)
-                                .pop(false);
-                            resetTeks();
-                          },
-                          child: new Text('No')),
-                      new TextButton(
-                        onPressed: () async {
-                          //_tabController.animateTo(0);
-                          Navigator.of(globalScaffoldKey.currentContext!)
-                              .pop(false);
-                          showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (context) => new AlertDialog(
-                              //title: new Text('Start '),
-                              //content: new Text("Cancel data ini?"),
-                              content: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                //position
-                                mainAxisSize: MainAxisSize.min,
-                                // wrap content in flutter
-                                children: <Widget>[
-                                  Container(
-                                    margin: EdgeInsets.all(10.0),
-                                    child: TextField(
-                                      cursorColor: Colors.black,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade800),
-                                      controller: txtWorkedBy,
-                                      onTap: () {
-                                        _showModalListMechanic(context);
-                                      },
-                                      keyboardType: TextInputType.text,
-                                      decoration: new InputDecoration(
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        isDense: true,
-                                        labelText: "Mechanic ID 1",
-                                        contentPadding: EdgeInsets.all(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: EdgeInsets.all(10.0),
-                                    child: TextField(
-                                      cursorColor: Colors.black,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade800),
-                                      controller: txtWorkedBy2,
-                                      onTap: () {
-                                        _showModalListMechanic2(context);
-                                      },
-                                      keyboardType: TextInputType.text,
-                                      decoration: new InputDecoration(
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        isDense: true,
-                                        labelText: "Mechanic ID 2",
-                                        contentPadding: EdgeInsets.all(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: EdgeInsets.all(10.0),
-                                    child: TextField(
-                                      cursorColor: Colors.black,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade800),
-                                      controller: txtWodNotes,
-                                      keyboardType: TextInputType.text,
-                                      decoration: new InputDecoration(
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        isDense: true,
-                                        labelText: "Notes",
-                                        contentPadding: EdgeInsets.all(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              actions: <Widget>[
-                                new TextButton(
-                                    onPressed: () async {
-                                      Navigator.of(
-                                              globalScaffoldKey.currentContext!)
-                                          .pop(false);
-                                    },
-                                    child: new Text('No')),
-                                new TextButton(
-                                  onPressed: () async {
-                                    Navigator.of(
-                                            globalScaffoldKey.currentContext!)
-                                        .pop(false);
-                                    showDialog(
-                                      context:
-                                          globalScaffoldKey.currentContext!,
-                                      builder: (context) => new AlertDialog(
-                                        title: new Text(
-                                            'Information: Start this data?'),
-                                        //content: new Text("Cancel data ini?"),
-
-                                        actions: <Widget>[
-                                          new TextButton(
-                                              onPressed: () async {
-                                                Navigator.of(globalScaffoldKey
-                                                        .currentContext!)
-                                                    .pop(false);
-                                              },
-                                              child: new Text('No')),
-                                          new TextButton(
-                                            onPressed: () async {
-                                              Navigator.of(globalScaffoldKey
-                                                      .currentContext!)
-                                                  .pop(false);
-                                              var workedby = txtWorkedById.text;
-                                              var workedby2 =
-                                                  txtWorkedById2.text;
-                                              print(txtWodNotes.text);
-                                              startRequestServiceForeman(
-                                                  item['srnumber'],
-                                                  item['wodwonbr'],
-                                                  workedby,
-                                                  workedby2,
-                                                  item['vhcid'],
-                                                  item['drvid'],
-                                                  item['srkm'],
-                                                  txtWodNotes.text,
-                                                  item['srtypeid']);
-                                            },
-                                            child: new Text('Ok'),
+                  icon: Icon(
+                    Icons.edit,
+                    color: Colors.white,
+                    size: 15.0,
+                  ),
+                  label: Text("Start"),
+                  onPressed: () async {
+                    showDialog(
+                      context: globalScaffoldKey.currentContext!,
+                      builder: (context) => new AlertDialog(
+                        title: new Text('Information'),
+                        content: new Text("Start data ${item['srnumber']}"),
+                        actions: <Widget>[
+                          new TextButton(
+                              onPressed: () {
+                                Navigator.of(globalScaffoldKey.currentContext!)
+                                    .pop(false);
+                                resetTeks();
+                              },
+                              child: new Text('No')),
+                          new TextButton(
+                            onPressed: () async {
+                              //_tabController.animateTo(0);
+                              Navigator.of(globalScaffoldKey.currentContext!)
+                                  .pop(false);
+                              showDialog(
+                                context: globalScaffoldKey.currentContext!,
+                                builder: (context) => new AlertDialog(
+                                  //title: new Text('Start '),
+                                  //content: new Text("Cancel data ini?"),
+                                  content: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    //position
+                                    mainAxisSize: MainAxisSize.min,
+                                    // wrap content in flutter
+                                    children: <Widget>[
+                                      Container(
+                                        margin: EdgeInsets.all(10.0),
+                                        child: TextField(
+                                          cursorColor: Colors.black,
+                                          style: TextStyle(
+                                              color: Colors.grey.shade800),
+                                          controller: txtWorkedBy,
+                                          onTap: () {
+                                            _showModalListMechanic(context);
+                                          },
+                                          keyboardType: TextInputType.text,
+                                          decoration: new InputDecoration(
+                                            fillColor: Colors.white,
+                                            filled: true,
+                                            isDense: true,
+                                            labelText: "Mechanic ID 1",
+                                            contentPadding: EdgeInsets.all(5.0),
                                           ),
-                                        ],
+                                        ),
                                       ),
-                                    );
-                                  },
-                                  child: new Text('Ok'),
+                                      Container(
+                                        margin: EdgeInsets.all(10.0),
+                                        child: TextField(
+                                          cursorColor: Colors.black,
+                                          style: TextStyle(
+                                              color: Colors.grey.shade800),
+                                          controller: txtWorkedBy2,
+                                          onTap: () {
+                                            _showModalListMechanic2(context);
+                                          },
+                                          keyboardType: TextInputType.text,
+                                          decoration: new InputDecoration(
+                                            fillColor: Colors.white,
+                                            filled: true,
+                                            isDense: true,
+                                            labelText: "Mechanic ID 2",
+                                            contentPadding: EdgeInsets.all(5.0),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        margin: EdgeInsets.all(10.0),
+                                        child: TextField(
+                                          cursorColor: Colors.black,
+                                          style: TextStyle(
+                                              color: Colors.grey.shade800),
+                                          controller: txtWodNotes,
+                                          keyboardType: TextInputType.text,
+                                          decoration: new InputDecoration(
+                                            fillColor: Colors.white,
+                                            filled: true,
+                                            isDense: true,
+                                            labelText: "Notes",
+                                            contentPadding: EdgeInsets.all(5.0),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  actions: <Widget>[
+                                    new TextButton(
+                                        onPressed: () async {
+                                          Navigator.of(
+                                              globalScaffoldKey.currentContext!)
+                                              .pop(false);
+                                        },
+                                        child: new Text('No')),
+                                    new TextButton(
+                                      onPressed: () async {
+                                        Navigator.of(
+                                            globalScaffoldKey.currentContext!)
+                                            .pop(false);
+                                        showDialog(
+                                          context:
+                                          globalScaffoldKey.currentContext!,
+                                          builder: (context) => new AlertDialog(
+                                            title: new Text(
+                                                'Information: Start this data?'),
+                                            //content: new Text("Cancel data ini?"),
+
+                                            actions: <Widget>[
+                                              new TextButton(
+                                                  onPressed: () async {
+                                                    Navigator.of(globalScaffoldKey
+                                                        .currentContext!)
+                                                        .pop(false);
+                                                  },
+                                                  child: new Text('No')),
+                                              new TextButton(
+                                                onPressed: () async {
+                                                  Navigator.of(globalScaffoldKey
+                                                      .currentContext!)
+                                                      .pop(false);
+                                                  var workedby = txtWorkedById.text;
+                                                  var workedby2 =
+                                                      txtWorkedById2.text;
+                                                  print(txtWodNotes.text);
+                                                  startRequestServiceForeman(
+                                                      item['srnumber'],
+                                                      item['wodwonbr'],
+                                                      workedby,
+                                                      workedby2,
+                                                      item['vhcid'],
+                                                      item['drvid'],
+                                                      item['srkm'],
+                                                      txtWodNotes.text,
+                                                      item['srtypeid']);
+                                                },
+                                                child: new Text('Ok'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                      child: new Text('Ok'),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          );
-                          //
-                        },
-                        child: new Text('Ok'),
+                              );
+                              //
+                            },
+                            child: new Text('Ok'),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                  elevation: 0.0,
-                  backgroundColor: Colors.blueAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  textStyle:
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 0.0,
+                      backgroundColor: Colors.blueAccent,
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      textStyle:
                       TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            )),
+                )),
           ]),
         ),
       );
@@ -11488,64 +11488,64 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Row(children: <Widget>[
               Expanded(
                   child: ElevatedButton.icon(
-                icon: Icon(
-                  Icons.edit,
-                  color: Colors.white,
-                  size: 15.0,
-                ),
-                label: Text("Edit"),
-                onPressed: () async {
-                  showDialog(
-                    context: globalScaffoldKey.currentContext!,
-                    builder: (context) => new AlertDialog(
-                      title: new Text('Information'),
-                      content: new Text("Edit data ${item['srnumber']}"),
-                      actions: <Widget>[
-                        new TextButton(
-                            onPressed: () {
-                              Navigator.of(globalScaffoldKey.currentContext!)
-                                  .pop(false);
-                              resetTeks();
-                            },
-                            child: new Text('No')),
-                        new TextButton(
-                          onPressed: () async {
-                            //_tabController.animateTo(0);
-                            setState(() {
-                              is_edit_req = true;
-                              txtSRNumber.text = item['srnumber'];
-                              txtDate.text = item['requestdate'];
-                              txtSrType.text = item['srtypeiddesc'];
-                              txtSrTypeId.text = item['srtypeid'];
-                              txtDriverIdList.text = item['drvid'];
-                              txtVehicleIdList.text = item['vhcid'];
-                              txtVehicleName.text = item['vhcid'];
-                              txtDriverName.text = item['drvname'];
-                              txtNotes.text = item['srnotes'];
-                              txtKM.text = item['srkm'];
-                              srnumber = item['srnumber'];
-                              txtCabangId.text = item['srlocid'];
-                              btnSubmitText = bUpdate;
-                            });
-                            Navigator.of(globalScaffoldKey.currentContext!)
-                                .pop(false);
-                            await Future.delayed(Duration(milliseconds: 50));
-                            _tabController.animateTo(0);
-                            //
-                          },
-                          child: new Text('Ok'),
-                        ),
-                      ],
+                    icon: Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 15.0,
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.orangeAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    textStyle:
+                    label: Text("Edit"),
+                    onPressed: () async {
+                      showDialog(
+                        context: globalScaffoldKey.currentContext!,
+                        builder: (context) => new AlertDialog(
+                          title: new Text('Information'),
+                          content: new Text("Edit data ${item['srnumber']}"),
+                          actions: <Widget>[
+                            new TextButton(
+                                onPressed: () {
+                                  Navigator.of(globalScaffoldKey.currentContext!)
+                                      .pop(false);
+                                  resetTeks();
+                                },
+                                child: new Text('No')),
+                            new TextButton(
+                              onPressed: () async {
+                                //_tabController.animateTo(0);
+                                setState(() {
+                                  is_edit_req = true;
+                                  txtSRNumber.text = item['srnumber'];
+                                  txtDate.text = item['requestdate'];
+                                  txtSrType.text = item['srtypeiddesc'];
+                                  txtSrTypeId.text = item['srtypeid'];
+                                  txtDriverIdList.text = item['drvid'];
+                                  txtVehicleIdList.text = item['vhcid'];
+                                  txtVehicleName.text = item['vhcid'];
+                                  txtDriverName.text = item['drvname'];
+                                  txtNotes.text = item['srnotes'];
+                                  txtKM.text = item['srkm'];
+                                  srnumber = item['srnumber'];
+                                  txtCabangId.text = item['srlocid'];
+                                  btnSubmitText = bUpdate;
+                                });
+                                Navigator.of(globalScaffoldKey.currentContext!)
+                                    .pop(false);
+                                await Future.delayed(Duration(milliseconds: 50));
+                                _tabController.animateTo(0);
+                                //
+                              },
+                              child: new Text('Ok'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.orangeAccent,
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        textStyle:
                         TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              )),
+                  )),
             ]),
           ),
         );
@@ -11568,7 +11568,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -11630,7 +11630,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                     onPressed: () async {
                       mechanicID = null;
                       SharedPreferences prefs =
-                          await SharedPreferences.getInstance();
+                      await SharedPreferences.getInstance();
                       prefs.setString("wo_mcn_detail", item['wodwonbr']);
                       prefs.setString("srnumber_mcn_detail", item['srnumber']);
                       print(item['wodwonbr']);
@@ -11645,7 +11645,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                         elevation: 0.0,
                         backgroundColor: Colors.orange,
                         padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                         textStyle: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.bold)),
                   ),
@@ -11675,7 +11675,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                         elevation: 0.0,
                         backgroundColor: Colors.blueAccent,
                         padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                         textStyle: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.bold)),
                   ),
@@ -11685,7 +11685,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
               width: MediaQuery.of(context).size.width,
               padding: EdgeInsets.only(bottom: 0, top: 0, left: 10, right: 10),
               decoration:
-                  BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
+              BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
               child: new ElevatedButton.icon(
                 icon: Icon(
                   Icons.details_outlined,
@@ -11705,7 +11705,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                           return AlertDialog(
                             title: Text('List Item'),
                             content:
-                                setupAlertDialoagContainerOpnamDetail(context),
+                            setupAlertDialoagContainerOpnamDetail(context),
                           );
                         });
                   }
@@ -11715,7 +11715,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                     backgroundColor: Colors.blueAccent,
                     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                     textStyle:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
               )),
         ],
       ),
@@ -11734,7 +11734,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             child: Container(
               child: ListTile(
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 leading: Container(
                   padding: EdgeInsets.only(right: 12.0),
                   decoration: new BoxDecoration(
@@ -11871,8 +11871,8 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                                       return AlertDialog(
                                         title: Text('List Item'),
                                         content:
-                                            setupAlertDialoadContainerViewQC(
-                                                context),
+                                        setupAlertDialoadContainerViewQC(
+                                            context),
                                       );
                                     });
                               } else {
@@ -11901,9 +11901,9 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                       elevation: 0.0,
                       backgroundColor: Colors.green,
                       padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                      EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                       textStyle:
-                          TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                      TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                 ),
               ]),
             ),
@@ -11929,84 +11929,84 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     if (getAkses("OP")) {
       return Expanded(
           child: ElevatedButton.icon(
-        icon: Icon(
-          Icons.save,
-          color: Colors.white,
-          size: 15.0,
-        ),
-        label: Text("Approve"),
-        onPressed: () async {
-          showDialog(
-            context: globalScaffoldKey.currentContext!,
-            builder: (context) => new AlertDialog(
-              title: new Text('Information'),
-              //content: new Text("Close WO data ${appSrnumber}"),
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                //position
-                mainAxisSize: MainAxisSize.min,
-                // wrap content in flutter
-                children: <Widget>[
-                  Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: Text("Close WO data ${appSrnumber}"),
-                  ),
-                  Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: TextField(
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtWodCloseNotes,
-                      keyboardType: TextInputType.text,
-                      decoration: new InputDecoration(
-                        fillColor: Colors.white,
-                        filled: true,
-                        isDense: true,
-                        labelText: "Notes...",
-                        contentPadding: EdgeInsets.all(5.0),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              actions: <Widget>[
-                new TextButton(
-                    onPressed: () {
-                      Navigator.of(globalScaffoldKey.currentContext!)
-                          .pop(false);
-                      resetTeks();
-                    },
-                    child: new Text('No')),
-                new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: Text("Finish"),
-                    onPressed: () async {
-                      Navigator.of(globalScaffoldKey.currentContext!)
-                          .pop(false);
-                      closeWoRequestService(appSrnumber, wodNumber, appVhcid,
-                          appDrvid, woPrint, txtWodCloseNotes.text);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.redAccent,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold))),
-              ],
+            icon: Icon(
+              Icons.save,
+              color: Colors.white,
+              size: 15.0,
             ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-            elevation: 0.0,
-            backgroundColor: Colors.blueAccent,
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-      ));
+            label: Text("Approve"),
+            onPressed: () async {
+              showDialog(
+                context: globalScaffoldKey.currentContext!,
+                builder: (context) => new AlertDialog(
+                  title: new Text('Information'),
+                  //content: new Text("Close WO data ${appSrnumber}"),
+                  content: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    //position
+                    mainAxisSize: MainAxisSize.min,
+                    // wrap content in flutter
+                    children: <Widget>[
+                      Container(
+                        margin: EdgeInsets.all(10.0),
+                        child: Text("Close WO data ${appSrnumber}"),
+                      ),
+                      Container(
+                        margin: EdgeInsets.all(10.0),
+                        child: TextField(
+                          cursorColor: Colors.black,
+                          style: TextStyle(color: Colors.grey.shade800),
+                          controller: txtWodCloseNotes,
+                          keyboardType: TextInputType.text,
+                          decoration: new InputDecoration(
+                            fillColor: Colors.white,
+                            filled: true,
+                            isDense: true,
+                            labelText: "Notes...",
+                            contentPadding: EdgeInsets.all(5.0),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: <Widget>[
+                    new TextButton(
+                        onPressed: () {
+                          Navigator.of(globalScaffoldKey.currentContext!)
+                              .pop(false);
+                          resetTeks();
+                        },
+                        child: new Text('No')),
+                    new ElevatedButton.icon(
+                        icon: Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 15.0,
+                        ),
+                        label: Text("Finish"),
+                        onPressed: () async {
+                          Navigator.of(globalScaffoldKey.currentContext!)
+                              .pop(false);
+                          closeWoRequestService(appSrnumber, wodNumber, appVhcid,
+                              appDrvid, woPrint, txtWodCloseNotes.text);
+                        },
+                        style: ElevatedButton.styleFrom(
+                            elevation: 0.0,
+                            backgroundColor: Colors.redAccent,
+                            padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            textStyle: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold))),
+                  ],
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+                elevation: 0.0,
+                backgroundColor: Colors.blueAccent,
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          ));
     } else {
       return Container();
     }
@@ -12017,84 +12017,84 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     if (getAkses("FO")) {
       return Expanded(
           child: ElevatedButton.icon(
-        icon: Icon(
-          Icons.save,
-          color: Colors.white,
-          size: 15.0,
-        ),
-        label: Text("Approve"),
-        onPressed: () async {
-          showDialog(
-            context: globalScaffoldKey.currentContext!,
-            builder: (context) => new AlertDialog(
-              title: new Text('Information'),
-              //content: new Text("Close WO data ${appSrnumber}"),
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                //position
-                mainAxisSize: MainAxisSize.min,
-                // wrap content in flutter
-                children: <Widget>[
-                  Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: Text("Close WO data ${appSrnumber}"),
-                  ),
-                  Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: TextField(
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtWodCloseNotesQC,
-                      keyboardType: TextInputType.text,
-                      decoration: new InputDecoration(
-                        fillColor: Colors.white,
-                        filled: true,
-                        isDense: true,
-                        labelText: "Notes...",
-                        contentPadding: EdgeInsets.all(5.0),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              actions: <Widget>[
-                new TextButton(
-                    onPressed: () {
-                      Navigator.of(globalScaffoldKey.currentContext!)
-                          .pop(false);
-                      resetTeks();
-                    },
-                    child: new Text('No')),
-                new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: Text("Finish"),
-                    onPressed: () async {
-                      Navigator.of(globalScaffoldKey.currentContext!)
-                          .pop(false);
-                      closeWoRequestServicePROSES(appSrnumber, wodNumber,
-                          appVhcid, appDrvid, woPrint, txtWodCloseNotesQC.text);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.redAccent,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold))),
-              ],
+            icon: Icon(
+              Icons.save,
+              color: Colors.white,
+              size: 15.0,
             ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-            elevation: 0.0,
-            backgroundColor: Colors.blueAccent,
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-      ));
+            label: Text("Approve"),
+            onPressed: () async {
+              showDialog(
+                context: globalScaffoldKey.currentContext!,
+                builder: (context) => new AlertDialog(
+                  title: new Text('Information'),
+                  //content: new Text("Close WO data ${appSrnumber}"),
+                  content: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    //position
+                    mainAxisSize: MainAxisSize.min,
+                    // wrap content in flutter
+                    children: <Widget>[
+                      Container(
+                        margin: EdgeInsets.all(10.0),
+                        child: Text("Close WO data ${appSrnumber}"),
+                      ),
+                      Container(
+                        margin: EdgeInsets.all(10.0),
+                        child: TextField(
+                          cursorColor: Colors.black,
+                          style: TextStyle(color: Colors.grey.shade800),
+                          controller: txtWodCloseNotesQC,
+                          keyboardType: TextInputType.text,
+                          decoration: new InputDecoration(
+                            fillColor: Colors.white,
+                            filled: true,
+                            isDense: true,
+                            labelText: "Notes...",
+                            contentPadding: EdgeInsets.all(5.0),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: <Widget>[
+                    new TextButton(
+                        onPressed: () {
+                          Navigator.of(globalScaffoldKey.currentContext!)
+                              .pop(false);
+                          resetTeks();
+                        },
+                        child: new Text('No')),
+                    new ElevatedButton.icon(
+                        icon: Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 15.0,
+                        ),
+                        label: Text("Finish"),
+                        onPressed: () async {
+                          Navigator.of(globalScaffoldKey.currentContext!)
+                              .pop(false);
+                          closeWoRequestServicePROSES(appSrnumber, wodNumber,
+                              appVhcid, appDrvid, woPrint, txtWodCloseNotesQC.text);
+                        },
+                        style: ElevatedButton.styleFrom(
+                            elevation: 0.0,
+                            backgroundColor: Colors.redAccent,
+                            padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            textStyle: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold))),
+                  ],
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+                elevation: 0.0,
+                backgroundColor: Colors.blueAccent,
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          ));
     } else {
       return Container();
     }
@@ -12106,84 +12106,84 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
     if (getAkses("FO")) {
       return Expanded(
           child: ElevatedButton.icon(
-        icon: Icon(
-          Icons.save,
-          color: Colors.white,
-          size: 15.0,
-        ),
-        label: Text("Approve"),
-        onPressed: () async {
-          showDialog(
-            context: globalScaffoldKey.currentContext!,
-            builder: (context) => new AlertDialog(
-              title: new Text('Information'),
-              //content: new Text("Close WO data ${appSrnumber}"),
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                //position
-                mainAxisSize: MainAxisSize.min,
-                // wrap content in flutter
-                children: <Widget>[
-                  Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: Text("Close WO data ${appSrnumber}"),
-                  ),
-                  Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: TextField(
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtWodCloseNotesQC,
-                      keyboardType: TextInputType.text,
-                      decoration: new InputDecoration(
-                        fillColor: Colors.white,
-                        filled: true,
-                        isDense: true,
-                        labelText: "Notes...",
-                        contentPadding: EdgeInsets.all(5.0),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              actions: <Widget>[
-                new TextButton(
-                    onPressed: () {
-                      Navigator.of(globalScaffoldKey.currentContext!)
-                          .pop(false);
-                      resetTeks();
-                    },
-                    child: new Text('No')),
-                new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: Text("Finish"),
-                    onPressed: () async {
-                      Navigator.of(globalScaffoldKey.currentContext!)
-                          .pop(false);
-                      closeWoRequestServiceQC(appSrnumber, wodNumber, appVhcid,
-                          appDrvid, woPrint, txtWodCloseNotesQC.text);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.redAccent,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold))),
-              ],
+            icon: Icon(
+              Icons.save,
+              color: Colors.white,
+              size: 15.0,
             ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-            elevation: 0.0,
-            backgroundColor: Colors.blueAccent,
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-      ));
+            label: Text("Approve"),
+            onPressed: () async {
+              showDialog(
+                context: globalScaffoldKey.currentContext!,
+                builder: (context) => new AlertDialog(
+                  title: new Text('Information'),
+                  //content: new Text("Close WO data ${appSrnumber}"),
+                  content: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    //position
+                    mainAxisSize: MainAxisSize.min,
+                    // wrap content in flutter
+                    children: <Widget>[
+                      Container(
+                        margin: EdgeInsets.all(10.0),
+                        child: Text("Close WO data ${appSrnumber}"),
+                      ),
+                      Container(
+                        margin: EdgeInsets.all(10.0),
+                        child: TextField(
+                          cursorColor: Colors.black,
+                          style: TextStyle(color: Colors.grey.shade800),
+                          controller: txtWodCloseNotesQC,
+                          keyboardType: TextInputType.text,
+                          decoration: new InputDecoration(
+                            fillColor: Colors.white,
+                            filled: true,
+                            isDense: true,
+                            labelText: "Notes...",
+                            contentPadding: EdgeInsets.all(5.0),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: <Widget>[
+                    new TextButton(
+                        onPressed: () {
+                          Navigator.of(globalScaffoldKey.currentContext!)
+                              .pop(false);
+                          resetTeks();
+                        },
+                        child: new Text('No')),
+                    new ElevatedButton.icon(
+                        icon: Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 15.0,
+                        ),
+                        label: Text("Finish"),
+                        onPressed: () async {
+                          Navigator.of(globalScaffoldKey.currentContext!)
+                              .pop(false);
+                          closeWoRequestServiceQC(appSrnumber, wodNumber, appVhcid,
+                              appDrvid, woPrint, txtWodCloseNotesQC.text);
+                        },
+                        style: ElevatedButton.styleFrom(
+                            elevation: 0.0,
+                            backgroundColor: Colors.redAccent,
+                            padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            textStyle: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold))),
+                  ],
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+                elevation: 0.0,
+                backgroundColor: Colors.blueAccent,
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          ));
     } else {
       return Container();
     }
