@@ -294,7 +294,7 @@ class _FormStoringState extends State<FormStoring> {
       var address =
           await getAddressFromLatLon(double.parse(lat), double.parse(lon));
       var urlData =
-          "${GlobalData.baseUrl}api/maintenance/req_service_driver.jsp?method=set-service-v2" +
+          "${GlobalData.baseUrl}api/maintenance/req_service_driver_new.jsp?method=set-service-v2" +
               "&vhcid=${vhcid}&locid=${locid}&drvid=${drvid}&vhckm=${vhckm}&vhckm=${vhckm}"
                   "&typereq=STORING&userid=${userid}&dlodate=&notes=${notes}&notelpon=${notelpon}&lat=${lat}&lon=${lon}&address=${address}&imeiid${imeiid}";
 

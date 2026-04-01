@@ -17,6 +17,8 @@ class ViewAntrianP2H extends StatefulWidget {
 }
 
 class _ViewAntrianP2HState extends State<ViewAntrianP2H> {
+  static const Color _softOrange = Color(0xFFFFA657);
+  static const Color _softOrangeDark = Color(0xFFFF8C42);
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController txtNotes = new TextEditingController();
   ProgressDialog? pr;
@@ -48,18 +50,17 @@ class _ViewAntrianP2HState extends State<ViewAntrianP2H> {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: _softOrange,
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               iconSize: 20.0,
+              color: Colors.white,
               onPressed: () {
                 _goBack(context);
               },
             ),
-            //backgroundColor: Colors.transparent,
-            //elevation: 0.0,
             centerTitle: true,
-            title: Text('List Antrian DO 2')),
+            title: Text('List Antrian DO 2',style: TextStyle(color: Colors.white),)),
         body: new Container(
           key: globalScaffoldKey,
           margin: const EdgeInsets.only(top: 5.0),
@@ -523,7 +524,8 @@ class _ViewAntrianP2HState extends State<ViewAntrianP2H> {
                     },
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: _softOrange,
+                        foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                         textStyle:
                         TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
@@ -581,7 +583,7 @@ class _ViewAntrianP2HState extends State<ViewAntrianP2H> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.blueAccent, Colors.blue],
+                        colors: [Colors.orangeAccent, Colors.orange],
                       ),
                       borderRadius: new BorderRadius.only(
                           topLeft: new Radius.circular(15.0),
@@ -651,7 +653,8 @@ class _ViewAntrianP2HState extends State<ViewAntrianP2H> {
                             },
                             style: ElevatedButton.styleFrom(
                                 elevation: 0.0,
-                                backgroundColor: Colors.blue,
+                                backgroundColor: _softOrangeDark,
+                                foregroundColor: Colors.white,
                                 padding: EdgeInsets.symmetric(
                                     horizontal: 20, vertical: 10),
                                 textStyle: TextStyle(
@@ -767,6 +770,10 @@ class _ViewAntrianP2HState extends State<ViewAntrianP2H> {
                                 Navigator.of(globalScaffoldKey.currentContext!)
                                     .pop(false);
                               },
+                              style: TextButton.styleFrom(
+                                backgroundColor: _softOrangeDark,
+                                foregroundColor: Colors.white,
+                              ),
                               child: new Text('No')),
                           new TextButton(
                             onPressed: () async {
@@ -820,6 +827,10 @@ class _ViewAntrianP2HState extends State<ViewAntrianP2H> {
                                 }
                               }
                             },
+                            style: TextButton.styleFrom(
+                              backgroundColor: _softOrange,
+                              foregroundColor: Colors.white,
+                            ),
                             child: new Text('Ok'),
                           ),
                         ],
@@ -828,7 +839,8 @@ class _ViewAntrianP2HState extends State<ViewAntrianP2H> {
                   },
                   style: ElevatedButton.styleFrom(
                       elevation: 0.0,
-                      backgroundColor: Colors.blueAccent,
+                      backgroundColor: _softOrange,
+                      foregroundColor: Colors.white,
                       padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                       textStyle:
@@ -939,6 +951,10 @@ class _ViewAntrianP2HState extends State<ViewAntrianP2H> {
                                           Navigator.of(globalScaffoldKey.currentContext!)
                                               .pop(false);
                                         },
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: _softOrangeDark,
+                                          foregroundColor: Colors.white,
+                                        ),
                                         child: new Text('No')),
                                     new TextButton(
                                       onPressed: () async {
@@ -1015,6 +1031,10 @@ class _ViewAntrianP2HState extends State<ViewAntrianP2H> {
                                           }
                                         }
                                       },
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: _softOrange,
+                                        foregroundColor: Colors.white,
+                                      ),
                                       child: new Text('Ok'),
                                     ),
                                   ],
@@ -1023,7 +1043,8 @@ class _ViewAntrianP2HState extends State<ViewAntrianP2H> {
                             },
                             style: ElevatedButton.styleFrom(
                                 elevation: 0.0,
-                                backgroundColor: Colors.blueAccent,
+                                backgroundColor: _softOrange,
+                                foregroundColor: Colors.white,
                                 padding: EdgeInsets.symmetric(
                                     horizontal: 20, vertical: 10),
                                 textStyle: TextStyle(

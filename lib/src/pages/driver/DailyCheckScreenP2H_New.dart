@@ -145,266 +145,70 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
     }
   }
 
+  void _printLong(String text, {int chunkSize = 800}) {
+    final pattern = RegExp('.{1,$chunkSize}', dotAll: true);
+    for (final match in pattern.allMatches(text)) {
+      debugPrint(match.group(0));
+    }
+  }
+
+  String _submitErrorMessage = "";
+
   Future<bool> submitInspeksiP2H(Map<String, dynamic> data) async {
-    final jsonString = jsonEncode(data);
+    _submitErrorMessage = "";
+    try {
+      final jsonString = jsonEncode(data);
 
-    final response = await http.post(
-      Uri.parse(
-          GlobalData.baseUrl +  'api/create_form_inspeksiv2_new.jsp'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonString,
-    );
+      final response = await http.post(
+        Uri.parse(
+            GlobalData.baseUrl +  'api/create_form_inspeksi_newv3.jsp'),//
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonString,
+      );
+      print(GlobalData.baseUrl +  'api/create_form_inspeksi_newv3.jsp');
+      _printLong("submitInspeksiP2H payload: $jsonString");
+      _printLong("submitInspeksiP2H response: ${response.body}");
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
+        try {
+          final responseData = jsonDecode(response.body);
 
-    if (response.statusCode == 200 && response.body.isNotEmpty) {
-      try {
-        final responseData = jsonDecode(response.body);
+          if (responseData['status'] == 'success') {
+            SharedPreferences prefs = await SharedPreferences.getInstance();
+            prefs.setString("km_new", kilometerController.text.toString());
+            prefs.setString("vhcid_last_antrian", globals.p2hVhcid!);
+            prefs.setString("method", "new");
 
-        if (responseData['status'] == 'success') {
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          prefs.setString("km_new", kilometerController.text.toString());
-          prefs.setString("vhcid_last_antrian", globals.p2hVhcid!);
-          prefs.setString("method", "new");
+            globals.page_inspeksi = "new_driver";
+            globals.p2hVhcid = globals.p2hVhcid;
+            globals.p2hVhclocid = globals.p2hVhclocid;
+            globals.p2hVhcDriver = "";
 
-          globals.page_inspeksi = "new_driver";
-          globals.p2hVhcid = globals.p2hVhcid;
-          globals.p2hVhclocid = globals.p2hVhclocid;
-          globals.p2hVhcDriver = "";
-
-          return true;
-        } else {
-          // Gunakan mounted check
-          if (mounted) {
-            showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: Text('Gagal'),
-                content: Text(responseData['message'] ?? 'Terjadi kesalahan.'),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(ctx), child: Text('OK'))
-                ],
-              ),
-            );
+            return true;
+          } else {
+            _submitErrorMessage =
+                (responseData['message'] ?? 'Terjadi kesalahan.').toString();
+            return false;
           }
+        } catch (e) {
+          print("JSON decode error: $e");
+          _submitErrorMessage = 'Respon tidak valid dari server.';
           return false;
         }
-      } catch (e) {
-        print("JSON decode error: $e");
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text('Error'),
-              content: Text('Respon tidak valid dari server.'),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(ctx), child: Text('OK'))
-              ],
-            ),
-          );
-        }
+      } else {
+        _submitErrorMessage = 'Tidak dapat menghubungi server.';
         return false;
       }
-    } else {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text('Gagal'),
-            content: Text('Tidak dapat menghubungi server.'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('OK'))
-            ],
-          ),
-        );
-      }
+    } catch (e) {
+      print("submitInspeksiP2H error: $e");
+      _submitErrorMessage = 'Gagal mengirim data ke server.';
       return false;
     }
   }
 
-  void handleSubmitOld() async {
-    // Cek apakah widget masih mounted
-    if (!mounted) return;
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    String lat = userLocation!.latitude.toString() ?? "";
-    String lon = userLocation!.longitude.toString() ?? "";
-    String speed = userLocation!.speed.toString() ?? "";
-
-    if (lat.isEmpty && lon.isEmpty) {
-      if (mounted) {
-        alert(
-            context,
-            0,
-            "Coordinate/Lokasi tidak ditemukan, silakan aktifkan GPS terlebih dahulu",
-            "warning");
-      }
-      return;
-    }
-
-    await updatePosition("IN");
-
-// Cek apakah widget masih mounted sebelum validasi
-    if (!mounted) return;
-
-    if (txtAddr != null &&
-        txtAddr.toString().isNotEmpty &&
-        (txtAddr.toString().toUpperCase() == "OUTGEO" ||
-            txtAddr.toString().toUpperCase() != "INGEO")) {
-      if (mounted) {
-        alert(globalScaffoldKey.currentContext!, 0,
-            "P2H tidak diijinkan, silakan ke Geofence/Area Pool", "warning");
-      }
-      return;
-    }
-
-    if (txtAddr == null || txtAddr == "") {
-      if (mounted) {
-        alert(globalScaffoldKey.currentContext!, 2,
-            "Coba lagi untuk melakukan submit P2H", "warning");
-      }
-      return;
-    }
-    var username = prefs.getString("name");
-    var _locid = prefs.getString("locid");
-
-    final uniqueIds = inspections.map((e) => e['id']).toSet();
-    final incomplete = uniqueIds.any((id) => selectedValues[id] == null);
-
-    if (incomplete) {
-      if (mounted) {
-        showDialog(
-          context: globalScaffoldKey.currentContext!,
-          builder: (ctx) => AlertDialog(
-            title: Text('Validasi Gagal'),
-            content: Text('Semua inspeksi wajib diisi!'),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(), child: Text('OK')),
-            ],
-          ),
-        );
-      }
-      return;
-    }
-
-    // Buat hasil inspeksi
-    List<Map<String, dynamic>> result = [];
-    for (var item in inspections) {
-      result.add({
-        "id": item['id'],
-        "inspeksi_name": item['inspeksi_name'],
-        "inspeksi": selectedValues[item['id']] == "ya" ? 1 : 0,
-      });
-    }
-
-    // Buat payload
-    final data = {
-      "kilometer": globals.p2hVhcDriver == "yes"
-          ? prefs.getString("km_new")
-          : kilometerController.text,
-      "catatan": notesController.text,
-      "drvid":
-      globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
-      "lon": lon,
-      "lat": lat,
-      "geoid": geo_id_area,
-      "geo_name": geofence_name,
-      "vhcid": globals.p2hVhcDriver == "yes"
-          ? (prefs.getString("vhcidfromdo")?.isEmpty ?? true
-          ? prefs.getString("vhcid_last_antrian")
-          : prefs.getString("vhcidfromdo"))
-          : globals.p2hVhcid.toString(),
-      "locid": globals.p2hVhcDriver == "yes"
-          ? _locid
-          : globals.p2hVhclocid.toString(),
-      "userid": username,
-      "imeiid": prefs.getString("androidID"),
-      "inspeksi_result": result,
-    };
-
-    // === Jika Driver: Tampilkan Dialog Konfirmasi Submit ===
-    if (globals.p2hVhcDriver == "yes") {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Informasi'),
-            content: Text(
-                "Inspeksi berhasil diisi di area $geofence_name. Lanjutkan ke proses Antrian?"),
-            actions: [
-              ElevatedButton.icon(
-                icon: Icon(Icons.close, color: Colors.white),
-                label: Text("Tidak"),
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-              ),
-              ElevatedButton.icon(
-                icon: Icon(Icons.save, color: Colors.white),
-                label: Text("Submit"),
-                onPressed: () async {
-                  Navigator.of(context).pop(); // Tutup dialog
-
-                  // Cek mounted lagi sebelum submit
-                  if (!mounted) return;
-
-                  bool isSuccess = await submitInspeksiP2H(data);
-                  if (isSuccess) {
-                    if (mounted) {
-                      alert(globalScaffoldKey.currentContext!, 1,
-                          "Success membuat p2h", "success");
-                      Timer(Duration(seconds: 1), () async{
-                        SharedPreferences prefs = await SharedPreferences.getInstance();
-                        var p2h_antrian = prefs.setString("p2h_antrian", "true");
-                        Navigator.pushReplacement(
-                          globalScaffoldKey.currentContext!,
-                          MaterialPageRoute(
-                              builder: (context) => ViewAntrianP2H()),
-                        );
-                      });
-                    }
-                  } else {
-                    if (mounted) {
-                      alert(globalScaffoldKey.currentContext!, 0,
-                          "Gagal membuat p2h", "error");
-                    }
-                  }
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-              ),
-            ],
-          ),
-        );
-      }
-    } else {
-      // === Jika Bukan Driver: Langsung Submit ===
-      var isSuccess = await submitInspeksiP2H(data);
-      if (!isSuccess) {
-        if (mounted) {
-          alert(globalScaffoldKey.currentContext!, 0, "Gagal membuat p2h",
-              "error");
-        }
-      } else {
-        if (mounted) {
-          alert(globalScaffoldKey.currentContext!, 1, "Success membuat p2h",
-              "success");
-          Timer(Duration(seconds: 1), () {
-            if (mounted) {
-              _showSuccessDialog();
-            }
-          });
-        }
-      }
-    }
-  }
-
-
 
   void handleSubmit() async {
-    // Cek apakah widget masih mounted
     if (!mounted) return;
     if (_isSubmitting) return;
 
@@ -518,6 +322,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
       "locid": globals.p2hVhcDriver == "yes"
           ? _locid
           : globals.p2hVhclocid.toString(),
+      "imeiid": prefs.getString("androidID"),
       "userid": username,
       "inspeksi_result": result, // ✅ SUDAH UNIQUE
     };
@@ -559,7 +364,10 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
             } else {
               if (mounted) {
                 alert(globalScaffoldKey.currentContext!, 0,
-                    "Gagal membuat p2h", "error");
+                    _submitErrorMessage.isNotEmpty
+                        ? _submitErrorMessage
+                        : "Gagal membuat p2h",
+                    "error");
               }
             }
           },
@@ -580,8 +388,11 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
       }
       if (!isSuccess) {
         if (mounted) {
-          alert(globalScaffoldKey.currentContext!, 0, "Gagal membuat p2h",
-              "error");
+          alert(globalScaffoldKey.currentContext!, 0,
+              _submitErrorMessage.isNotEmpty
+                  ? _submitErrorMessage
+                  : "Gagal membuat p2h",
+              "error");//
         }
       } else {
         if (mounted) {
@@ -1451,7 +1262,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
         ),
         backgroundColor: Colors.grey.shade100,
         bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.only(top:12,bottom: 50,left: 12,right: 12),
           child: Row(
             children: [
               Expanded(
@@ -1488,20 +1299,23 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
                           borderRadius: BorderRadius.circular(15),
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.send, color: Colors.white, size: 15),
-                          SizedBox(width: 5),
-                          Text(
-                            _isSubmitting ? "Menyimpan..." : "Submit",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                      child: FittedBox(//
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.send, color: Colors.white, size: 15),
+                            SizedBox(width: 5),
+                            Text(
+                              _isSubmitting ? "Menyimpan..." : "Submit",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1539,20 +1353,23 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
                           borderRadius: BorderRadius.circular(15),
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.refresh, color: Colors.white, size: 15),
-                          SizedBox(width: 5),
-                          Text(
-                            "Reset",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.refresh, color: Colors.white, size: 15),
+                            SizedBox(width: 5),
+                            Text(
+                              "Reset",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

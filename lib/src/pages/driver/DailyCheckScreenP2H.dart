@@ -140,7 +140,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
     final jsonString = jsonEncode(data);
 
     final response = await http.post(
-      Uri.parse(GlobalData.baseUrl + 'api/create_form_inspeksiv2_new.jsp'),
+      Uri.parse(GlobalData.baseUrl + 'api/create_form_inspeksi_newv3.jsp'),
       headers: {
         'Content-Type': 'application/json',
       },
