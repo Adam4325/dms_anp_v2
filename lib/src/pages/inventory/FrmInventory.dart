@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dms_anp/src/pages/inventory/ListInventory.dart';
 import 'package:dms_anp/src/pages/inventory/ListInventoryDetail.dart';
 import 'package:dms_anp/src/pages/inventory/ListInventoryTransNew.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -93,7 +94,14 @@ class _FrmInventoryState extends State<FrmInventory> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {//
+          if (didPop) return;
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) =>ListInventoryDetail(tabName: '', invTrxStatusBarang: '',)));
+        },
+        child: Scaffold(
       key: globalScaffoldKey,
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -124,7 +132,7 @@ class _FrmInventoryState extends State<FrmInventory> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   void reseTeks() {

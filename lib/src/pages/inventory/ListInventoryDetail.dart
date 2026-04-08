@@ -11,6 +11,7 @@ import 'package:dms_anp/src/pages/inventory/ListInventoryTransNew.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:dms_anp/src/widgets/simple_paginator.dart';
 
@@ -23,6 +24,7 @@ class ListInventoryDetail extends StatefulWidget {
 }
 
 class _ListInventoryDetailState extends State<ListInventoryDetail> {
+
   GlobalKey<PaginatorState> paginatorGlobalKey = GlobalKey();
   String _searchText = "";
   final TextEditingController _filter = new TextEditingController();
@@ -59,6 +61,8 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
         },
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: Colors.deepOrange, // ✅ Orange background
+          foregroundColor: Colors.white, // ✅ White text/icons
           automaticallyImplyLeading: false,
           title: customSearchBar,
           leading: IconButton(
@@ -297,7 +301,7 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
                     color: Colors.white,
                     size: 15.0,
                   ),
-                  label: Text("Select"),
+                  label: Text("Select Item",style: TextStyle(color:Colors.white),),
                   onPressed: () async {
                     globals.inv_ititemid = value['ititemid'];
                     globals.inv_partname = value['partname'];
@@ -325,6 +329,29 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
                   style: ElevatedButton.styleFrom(
                       elevation: 0.0,
                       backgroundColor: Colors.blueAccent,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      textStyle:
+                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                )),
+                SizedBox(width: 8),
+                Expanded(
+                    child: ElevatedButton.icon(
+                  icon: Icon(
+                    Icons.delete,
+                    color: Colors.white,
+                    size: 15.0,
+                  ),
+                  label: Text(
+                    "Delete Item",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onPressed: () async {
+                    await _deleteInventoryDetail(value);
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 0.0,
+                      backgroundColor: Colors.redAccent,
                       padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                       textStyle:
@@ -375,6 +402,106 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
 
   bool pageErrorChecker(dynamic data) {
     return (data as DriverDataModel).statusCode != 200;
+  }
+
+  Future<void> _deleteInventoryDetail(Map<String, dynamic> value) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Konfirmasi"),
+        content: Text(
+            "Hapus item ${value['itdinvtrannbr']} - ${value['ititemid']} - ${value['partname']} dari detail inventory?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),//
+            child: Text("Hapus", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      _showDeleteLoader();
+      final prefs = await SharedPreferences.getInstance();
+      final userId =
+          prefs.getString("name") ?? prefs.getString("loginname") ?? "";
+      final itdinvtrannbr = (value['itdinvtrannbr'] ?? '').toString();
+      final itdlinenbr = (value['itdlinenbr'] ?? '').toString();
+      final ititemid = (value['ititemid'] ?? '').toString();
+
+      if (itdinvtrannbr.isEmpty || itdlinenbr.isEmpty) {
+        _hideDeleteLoader();
+        alert(context, 0, "Data item tidak valid untuk dihapus", "error");
+        return;
+      }
+
+      final encoded = Uri.encodeFull(
+          "${GlobalData.baseUrl}api/inventory/delete_inv_detail.jsp");
+      final uri = Uri.parse(encoded);
+      final payload = {
+        'method': 'delete-item-detail',
+        'id': itdlinenbr,
+        'itdinvtrannbr': itdinvtrannbr,
+        'itemid': ititemid,
+        'userid': userId,
+      };
+
+      final response = await http.post(
+        uri,
+        body: payload,
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        encoding: Encoding.getByName('utf-8'),
+      );
+
+      if (response.statusCode != 200) {
+        _hideDeleteLoader();
+        alert(context, 0, "Gagal menghapus item (${response.statusCode})", "error");
+        return;
+      }
+
+      final decoded = json.decode(response.body);
+      final status = decoded['status']?.toString().toLowerCase() ?? '';
+      final message = decoded['message']?.toString() ?? 'Item gagal dihapus';
+      _hideDeleteLoader();
+
+      if (status == 'success') {
+        alert(context, 2, message, "success");
+        paginatorGlobalKey.currentState?.changeState(
+          pageLoadFuture: sendDriverDataRequest,
+          resetState: true,
+        );
+      } else {
+        alert(context, 0, message, "error");
+      }
+    } catch (e) {
+      alert(context, 0, "Client, gagal menghapus item", "error");
+      print(e.toString());
+      _hideDeleteLoader();
+    }
+  }
+
+  void _showDeleteLoader() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  void _hideDeleteLoader() {
+    if (!mounted) return;
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
   }
 }
 

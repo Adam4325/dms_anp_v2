@@ -35,7 +35,7 @@ class _ListInventoryState extends State<ListInventory> {
 
   TextEditingController _txtSearch = new TextEditingController();
   Icon customIcon = const Icon(Icons.search);
-  Widget customSearchBar = const Text('List Inventory');
+  Widget customSearchBar = const Text('List Inventory 2');
 
   @override
   void initState() {

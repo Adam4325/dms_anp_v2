@@ -104,6 +104,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   SharedPreferences? sharedPreferences;
   String spLoginName = '';
   String loginname = '';
+  String statusKaryawanInfo = '';
   String login_type = '';
   String ismixer = '';
   String vhcid = '';
@@ -144,8 +145,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   static const Color paleOrange = Color(0xFFFFF0E6);
   static const Color darkOrange = Color(0xFFE65100);
   static const Color accentOrange = Color(0xFFFF7043);
-  static const String _informasiApiUrl =
-      'https://apps.tuluatas.com/trucking/mobile/api/informasi.jsp?method=informasi-driver-v1';
+  static final String _informasiApiUrl = GlobalData.baseUrl + 'api/informasi.jsp?method=informasi-driver-v1';
 
   final ScrollController _runningTextScrollController = ScrollController();
   Timer? _runningTextTimer;
@@ -153,6 +153,12 @@ class _ViewDashboardState extends State<ViewDashboard>
   late final Animation<double> _shineAnimation;
   List<String> _runningInfoItems = [];
   bool _isLoadingRunningInfo = false;
+
+  String _normalizedStatusKaryawan() => statusKaryawanInfo.trim().toUpperCase();
+  bool _isRunningInfoAllowedRole() =>
+      _normalizedStatusKaryawan() == 'DRIVER' ||
+      _normalizedStatusKaryawan() == 'KARYAWAN';
+  String _runningInfoTypeForRole() => _normalizedStatusKaryawan();
 
   Future<void> initUniqueIdentifierState() async {
     String? identifier;
@@ -260,7 +266,9 @@ class _ViewDashboardState extends State<ViewDashboard>
       print(globals.akses_pages);
       username = sharedPreferences!.getString("username") ?? '';
       loginname = sharedPreferences!.getString("loginname") ?? '';
-      login_type = sharedPreferences!.getString("login_type") ?? '';
+      statusKaryawanInfo =
+          sharedPreferences!.getString("status_karyawan") ?? '';
+      login_type = sharedPreferences!.getString("login_type") ?? '';//
 
       ismixer = sharedPreferences!.getString("ismixer") ?? 'false';
 
@@ -269,6 +277,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       vhcnopol = sharedPreferences!.getString("vhcnopol") ?? '';
       locid = sharedPreferences!.getString("locid") ?? '';
       print("loginname ${loginname}");
+      print("statusKaryawanInfo ${statusKaryawanInfo}");
       print(locid);
       firstName = sharedPreferences!.getString("name") ?? '';
       cpyid = sharedPreferences!.getString("cpyid") ?? '';
@@ -293,6 +302,7 @@ class _ViewDashboardState extends State<ViewDashboard>
         _setupBannerItems();
       }
     });
+    _fetchRunningInfo();
   }
 
   void _setupMenuItems() {
@@ -1215,7 +1225,6 @@ class _ViewDashboardState extends State<ViewDashboard>
     _checkBiometric();
     _getAvailableBiometric();
     GetListDo();
-    _fetchRunningInfo();
     //print('widget_isMenuForeman ${widget.widget_isMenuForeman}');
     Future.delayed(Duration(milliseconds: 1000), () {
       if (mounted) {
@@ -1288,6 +1297,17 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   Future<void> _fetchRunningInfo() async {
+    if (!_isRunningInfoAllowedRole()) {
+      _runningTextTimer?.cancel();
+      if (mounted) {
+        setState(() {
+          _isLoadingRunningInfo = false;
+          _runningInfoItems = [];
+        });
+      }
+      return;
+    }
+
     if (!mounted) return;
 
     setState(() {
@@ -1305,8 +1325,12 @@ class _ViewDashboardState extends State<ViewDashboard>
         throw Exception('Format response informasi tidak sesuai');
       }
 
+      final filteredType = _runningInfoTypeForRole();
       final items = decoded
           .whereType<Map>()
+          .where((e) =>
+              (e['intype'] ?? '').toString().trim().toUpperCase() ==
+              filteredType)
           .map((e) => (e['teks_informasi'] ?? '').toString().trim())
           .where((text) => text.isNotEmpty)
           .toList();
@@ -1433,6 +1457,10 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   Widget _buildRunningInfoBanner() {
+    if (!_isRunningInfoAllowedRole()) {
+      return SizedBox.shrink();
+    }
+
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(16),
@@ -1796,8 +1824,10 @@ class _ViewDashboardState extends State<ViewDashboard>
             ],
           ),
           SizedBox(height: 16),
-          _buildRunningInfoBanner(),
-          SizedBox(height: 16),
+          if (_isRunningInfoAllowedRole()) ...[
+            _buildRunningInfoBanner(),
+            SizedBox(height: 16),
+          ],
           GridView.builder(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
