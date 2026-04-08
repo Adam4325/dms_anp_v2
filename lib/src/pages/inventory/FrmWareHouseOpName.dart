@@ -114,6 +114,10 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         selTypePO = "";
         withMonth = "";
       }
+      selTypePO = "STOCK";
+      txtTypePO.text = "STOCK";
+      selCuryID = "IDR";
+      txtCurrencyTypeID.text = "IDR";
       globals.wh_itdlinenbr = "";
       globals.wh_method = "";
       globals.wh_id = "";
@@ -169,7 +173,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         "${BASE_URL}api/inventory/list_warehouse_item_id.jsp?method=list-item-wh-v2&item_id=" +
             value +
             "&search_part=";
-
+    print(urlData);
     var encoded = Uri.encodeFull(urlData);
     Uri myUri = Uri.parse(encoded);
     print(encoded);
@@ -185,7 +189,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         if (lstItemID.length > 0) {
           print(lstItemID[0]['item_id']);
           setState(() {
-            txtTypeAccessories.text = lstItemID[0]['idaccess'];
+            txtTypeAccessories.text = lstItemID[0]['accessories'];
             txtMerk.text = lstItemID[0]['merk'];
             txtVHTID.text = lstItemID[0]['vhtid'];
             txtGenuinoNumber.text = lstItemID[0]['genuino_number'];
@@ -199,6 +203,8 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
             witwarehouseid = lstItemID[0]['witwarehouseid'];
             txtIDWareHouse.text = lstItemID[0]['witwarehouseid'];
             selWareHouseID = lstItemID[0]['witwarehouseid'];
+            ///txtQuantityOnHands.text = lstItemID[0]['quantity'];
+            print(lstItemID[0]['quantity']);
           });
         }
         //print("lstVheicleType");
@@ -268,9 +274,9 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
           txtQuantityOnActual.text == null || txtQuantityOnActual.text == ""
               ? "0"
               : txtQuantityOnActual.text;
-      var wh_typepo = txtTypePO.text;
+      var wh_typepo = "STOCK"; //txtTypePO.text;
       var wh_itemcost = "0"; // txtItemCost.text;
-      var wh_currency_id = txtCurrencyTypeID.text;
+      var wh_currency_id = "IDR";//txtCurrencyTypeID.text;
 
       if (wh_id == null || wh_id == "") {
         alert(scafoldGlobal.currentContext!!, 0, "WH ID tidak boleh kosong",
@@ -632,7 +638,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
             print(lstItemID[0]['item_id']);//
             setState(() {
               final row = lstItemID[0];
-              txtTypeAccessories.text = (row['idaccess'] ?? '').toString();
+              txtTypeAccessories.text = (row['accessories'] ?? '').toString();
               txtItemID.text = (row['item_id'] ?? '').toString();
               txtMerk.text = (row['merk'] ?? '').toString();
               txtPartName.text = (row['part_name'] ?? '').toString();
@@ -641,7 +647,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
               txtType.text = (row['idtype'] ?? '').toString();
               txtCurrencyTypeID.text = (row['curyid'] ?? '').toString();
               selCuryID = (row['curyid'] ?? '').toString();
-              txtQuantityOnHands.text = (row['qty_on_hand'] ?? '0').toString();
+              txtQuantityOnHands.text = (row['quantity'] ?? '0').toString();
               txtQuantityOnActual.text = '0';
               txtVHTID.text = (row['vhtid'] ?? '').toString();
               txtGenuinoNumber.text = (row['genuine_no'] ?? '').toString();
@@ -1431,96 +1437,96 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       decoration: softDecoration(label: 'Quantity Actual', readOnly: globals.wh_method == "edit"),
                     ),
                   ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: new Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          new Flexible(
-                            child: SmartSelect<String?>.single(
-                              title: 'Type PO',
-                              selectedValue: selTypePO,
-                              onChange: (selected) {
-                                setState(() {
-                                  selTypePO = selected.value!;
-                                  print('selTypePO ${selTypePO}');
-                                  txtTypePO.text = selTypePO;
-                                });
-                              },
-                              choiceType: S2ChoiceType.radios,
-                              choiceItems: choices.listTypePO,
-                              modalType: S2ModalType.popupDialog,
-                              modalHeader: false,
-                              modalConfig: const S2ModalConfig(
-                                style: S2ModalStyle(
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(20.0)),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),//OK
-                          SizedBox(width: 5),
-                          new Flexible(
-                              child: new TextField(
-                            readOnly: true,
-                            cursorColor: Colors.black,
-                            style: TextStyle(color: Colors.grey.shade800),
-                            controller: txtTypePO,
-                            keyboardType: TextInputType.text,
-                            decoration: softDecoration(label: 'Type Po', readOnly: true),
-                          )),
-                        ]),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: new Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          new Flexible(
-                            child: SmartSelect<String?>.single(
-                              title: 'Curr.',
-                              selectedValue: selCuryID,
-                              onChange: (selected) {
-                                setState(() {
-                                  selCuryID = selected.value!;
-                                  txtCurrencyTypeID.text = selCuryID;
-                                  print('selCuryID ${selCuryID}');
-                                });
-                              },
-                              choiceType: S2ChoiceType.radios,
-                              choiceItems: choices.currencyID,
-                              modalType: S2ModalType.popupDialog,
-                              modalHeader: false,
-                              modalConfig: const S2ModalConfig(
-                                style: S2ModalStyle(
-                                  elevation: 3,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(20.0)),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 5.0,
-                          ),
-                          new Flexible(
-                              child: new TextField(
-                            readOnly: true,
-                            cursorColor: Colors.black,
-                            style: TextStyle(color: Colors.grey.shade800),
-                            controller: txtCurrencyTypeID,
-                            keyboardType: TextInputType.text,
-                            decoration: softDecoration(readOnly: true, label: 'Curr.'),
-                          )),
-                        ]),
-                  ),
+                  // Container(
+                  //   margin: EdgeInsets.only(
+                  //       left: 10, top: 10, right: 10, bottom: 10),
+                  //   child: new Row(
+                  //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //       children: <Widget>[
+                  //         new Flexible(
+                  //           child: SmartSelect<String?>.single(
+                  //             title: 'Type PO',
+                  //             selectedValue: selTypePO,
+                  //             onChange: (selected) {
+                  //               setState(() {
+                  //                 selTypePO = selected.value!;
+                  //                 print('selTypePO ${selTypePO}');
+                  //                 txtTypePO.text = selTypePO;
+                  //               });
+                  //             },
+                  //             choiceType: S2ChoiceType.radios,
+                  //             choiceItems: choices.listTypePO,
+                  //             modalType: S2ModalType.popupDialog,
+                  //             modalHeader: false,
+                  //             modalConfig: const S2ModalConfig(
+                  //               style: S2ModalStyle(
+                  //                 elevation: 0,
+                  //                 shape: RoundedRectangleBorder(
+                  //                   borderRadius:
+                  //                       BorderRadius.all(Radius.circular(20.0)),
+                  //                 ),
+                  //               ),
+                  //             ),
+                  //           ),
+                  //         ),//OK
+                  //         SizedBox(width: 5),
+                  //         new Flexible(
+                  //             child: new TextField(
+                  //           readOnly: true,
+                  //           cursorColor: Colors.black,
+                  //           style: TextStyle(color: Colors.grey.shade800),
+                  //           controller: txtTypePO,
+                  //           keyboardType: TextInputType.text,
+                  //           decoration: softDecoration(label: 'Type Po', readOnly: true),
+                  //         )),
+                  //       ]),
+                  // ),
+                  // Container(
+                  //   margin: EdgeInsets.only(
+                  //       left: 10, top: 10, right: 10, bottom: 10),
+                  //   child: new Row(
+                  //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //       children: <Widget>[
+                  //         new Flexible(
+                  //           child: SmartSelect<String?>.single(
+                  //             title: 'Curr.',
+                  //             selectedValue: selCuryID,
+                  //             onChange: (selected) {
+                  //               setState(() {
+                  //                 selCuryID = selected.value!;
+                  //                 txtCurrencyTypeID.text = selCuryID;
+                  //                 print('selCuryID ${selCuryID}');
+                  //               });
+                  //             },
+                  //             choiceType: S2ChoiceType.radios,
+                  //             choiceItems: choices.currencyID,
+                  //             modalType: S2ModalType.popupDialog,
+                  //             modalHeader: false,
+                  //             modalConfig: const S2ModalConfig(
+                  //               style: S2ModalStyle(
+                  //                 elevation: 3,
+                  //                 shape: RoundedRectangleBorder(
+                  //                   borderRadius:
+                  //                       BorderRadius.all(Radius.circular(20.0)),
+                  //                 ),
+                  //               ),
+                  //             ),
+                  //           ),
+                  //         ),
+                  //         SizedBox(
+                  //           width: 5.0,
+                  //         ),
+                  //         new Flexible(
+                  //             child: new TextField(
+                  //           readOnly: true,
+                  //           cursorColor: Colors.black,
+                  //           style: TextStyle(color: Colors.grey.shade800),
+                  //           controller: txtCurrencyTypeID,
+                  //           keyboardType: TextInputType.text,
+                  //           decoration: softDecoration(readOnly: true, label: 'Curr.'),
+                  //         )),
+                  //       ]),
+                  // ),
                   // Container(
                   //   margin: EdgeInsets.only(
                   //       left: 10, top: 10, right: 10, bottom: 10),

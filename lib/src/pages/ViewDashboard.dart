@@ -77,7 +77,8 @@ class ViewDashboard extends StatefulWidget {
   _ViewDashboardState createState() => _ViewDashboardState();
 }
 
-class _ViewDashboardState extends State<ViewDashboard> {
+class _ViewDashboardState extends State<ViewDashboard>
+    with SingleTickerProviderStateMixin {
   final NotificationService _notificationService = NotificationService();
   List<NotificationData> _notifications = [];
   StreamSubscription<List<NotificationData>>? _notificationSubscription;
@@ -143,6 +144,15 @@ class _ViewDashboardState extends State<ViewDashboard> {
   static const Color paleOrange = Color(0xFFFFF0E6);
   static const Color darkOrange = Color(0xFFE65100);
   static const Color accentOrange = Color(0xFFFF7043);
+  static const String _informasiApiUrl =
+      'https://apps.tuluatas.com/trucking/mobile/api/informasi.jsp?method=informasi-driver-v1';
+
+  final ScrollController _runningTextScrollController = ScrollController();
+  Timer? _runningTextTimer;
+  late final AnimationController _shineController;
+  late final Animation<double> _shineAnimation;
+  List<String> _runningInfoItems = [];
+  bool _isLoadingRunningInfo = false;
 
   Future<void> initUniqueIdentifierState() async {
     String? identifier;
@@ -483,7 +493,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages.where((x) =>
-              (x == "OP" || x == "MT" || username == "ADMIN") && x != "MK");
+              (x == "TI" || username == "ADMIN"));
       if (isOK != null) {
         if (isOK.length > 0) {
           _anpServiceList.add(new AnpService(
@@ -569,7 +579,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages
-              .where((x) => (x == "OP" || username == "ADMIN"));
+              .where((x) => (x == "HD" || username == "ADMIN"));
       if (isOK != null) {
         if (isOK.length > 0) {
           _anpServiceList.add(new AnpService(
@@ -585,7 +595,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages
-              .where((x) => (x == "OP" || username == "ADMIN"));
+              .where((x) => (x == "HD" || username == "ADMIN"));
       if (isOK != null) {
         if (isOK.length > 0) {
           _anpServiceList.add(new AnpService(
@@ -601,7 +611,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages
-              .where((x) => (x == "OP" || username == "ADMIN"));
+              .where((x) => (x == "MK" || username == "ADMIN"));
       if (isOK != null) {
         if (isOK.length > 0) {
           _anpServiceList.add(new AnpService(
@@ -616,7 +626,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages
-              .where((x) => (x == "OP" || username == "ADMIN"));
+              .where((x) => (x == "MK" || username == "ADMIN"));
       if (isOK != null) {
         if (isOK.length > 0) {
           _anpServiceList.add(new AnpService(
@@ -1183,6 +1193,16 @@ class _ViewDashboardState extends State<ViewDashboard> {
   @override
   void initState() {
     super.initState();
+    _shineController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+    _shineAnimation = Tween<double>(begin: -0.75, end: 1.25).animate(
+      CurvedAnimation(
+        parent: _shineController,
+        curve: Curves.linear,
+      ),
+    );
     if (EasyLoading.isShow) {
       EasyLoading.dismiss();
     }
@@ -1195,6 +1215,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
     _checkBiometric();
     _getAvailableBiometric();
     GetListDo();
+    _fetchRunningInfo();
     //print('widget_isMenuForeman ${widget.widget_isMenuForeman}');
     Future.delayed(Duration(milliseconds: 1000), () {
       if (mounted) {
@@ -1211,6 +1232,9 @@ class _ViewDashboardState extends State<ViewDashboard> {
     print('🔍 DEBUG: ViewDashboard dispose called');
     _notificationSubscription?.cancel();
     timer?.cancel();
+    _runningTextTimer?.cancel();
+    _runningTextScrollController.dispose();
+    _shineController.dispose();
     _dialogDebounceTimer?.cancel();
     _isDialogShowing = false;
     _shownNotificationIds.clear();
@@ -1261,6 +1285,255 @@ class _ViewDashboardState extends State<ViewDashboard> {
     } catch (e) {
       print("Exception: $e");
     }
+  }
+
+  Future<void> _fetchRunningInfo() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingRunningInfo = true;
+    });
+
+    try {
+      final response = await http.get(Uri.parse(_informasiApiUrl));
+      if (response.statusCode != 200) {
+        throw Exception('Gagal mengambil data informasi (${response.statusCode})');
+      }
+
+      final decoded = json.decode(response.body);
+      if (decoded is! List) {
+        throw Exception('Format response informasi tidak sesuai');
+      }
+
+      final items = decoded
+          .whereType<Map>()
+          .map((e) => (e['teks_informasi'] ?? '').toString().trim())
+          .where((text) => text.isNotEmpty)
+          .toList();
+
+      if (!mounted) return;
+
+      setState(() {
+        _runningInfoItems = items;
+        _isLoadingRunningInfo = false;
+      });
+
+      _startRunningText();
+    } catch (e) {
+      print('Failed to fetch running info: $e');
+      if (!mounted) return;
+      setState(() {
+        _isLoadingRunningInfo = false;
+        _runningInfoItems = [];
+      });
+    }
+  }
+
+  void _startRunningText() {
+    _runningTextTimer?.cancel();
+
+    if (_runningInfoItems.isEmpty) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_runningTextScrollController.hasClients) return;
+
+      final maxExtent = _runningTextScrollController.position.maxScrollExtent;
+      if (maxExtent <= 0) return;
+
+      _runningTextTimer =
+          Timer.periodic(const Duration(milliseconds: 35), (timer) {
+        if (!mounted || !_runningTextScrollController.hasClients) {
+          timer.cancel();
+          return;
+        }
+
+        final currentOffset = _runningTextScrollController.offset;
+        final maxOffset = _runningTextScrollController.position.maxScrollExtent;
+        final nextOffset = currentOffset + 1.1;
+
+        if (nextOffset >= maxOffset) {
+          _runningTextScrollController.jumpTo(0);
+          return;
+        }
+
+        _runningTextScrollController.jumpTo(nextOffset);
+      });
+    });
+  }
+
+  String _buildRunningInfoText() {
+    if (_runningInfoItems.isEmpty) return 'Tidak ada informasi terbaru';
+
+    final baseText = _runningInfoItems.join('     •     ');
+    return '$baseText     •     $baseText';
+  }
+
+  void _showRunningInfoDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.campaign, color: Color(0xFFFF6A00)),
+              SizedBox(width: 8),
+              Text('Informasi Terbaru'),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: _runningInfoItems.isEmpty
+                ? Text(
+                    'Tidak ada informasi untuk ditampilkan.',
+                    style: TextStyle(fontSize: 14),
+                  )
+                : ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _runningInfoItems.length,
+                    separatorBuilder: (_, __) => Divider(height: 14),
+                    itemBuilder: (context, index) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(top: 3),
+                            child: Icon(
+                              Icons.circle,
+                              size: 8,
+                              color: Color(0xFFFF8A00),
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _runningInfoItems[index],
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade800,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Tutup'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRunningInfoBanner() {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: _showRunningInfoDialog,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          clipBehavior: Clip.hardEdge,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFFF6A00), Color(0xFFFFA726)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x66FF7A18),
+                blurRadius: 15,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.campaign, color: Colors.white, size: 18),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: _isLoadingRunningInfo
+                        ? Text(
+                            'Memuat informasi...',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          )
+                        : ClipRect(
+                            child: SingleChildScrollView(
+                              controller: _runningTextScrollController,
+                              scrollDirection: Axis.horizontal,
+                              physics: NeverScrollableScrollPhysics(),
+                              child: Text(
+                                _buildRunningInfoText(),
+                                maxLines: 1,
+                                softWrap: false,
+                                overflow: TextOverflow.visible,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                  ),
+                  SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _fetchRunningInfo,
+                    child: Icon(Icons.refresh, size: 18, color: Colors.white),
+                  ),
+                ],
+              ),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _shineAnimation,
+                    builder: (context, child) {
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          return Stack(
+                            children: [
+                              Positioned(
+                                top: 0,
+                                bottom: 0,
+                                left: constraints.maxWidth * _shineAnimation.value,
+                                width: constraints.maxWidth * 0.5,
+                                child: Transform(
+                                  alignment: Alignment.center,
+                                  transform: Matrix4.skewX(-0.45),
+                                  child: Container(
+                                    color: Colors.white.withOpacity(0.2),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildProfileHeader() {
@@ -1522,6 +1795,8 @@ class _ViewDashboardState extends State<ViewDashboard> {
                 ),
             ],
           ),
+          SizedBox(height: 16),
+          _buildRunningInfoBanner(),
           SizedBox(height: 16),
           GridView.builder(
             shrinkWrap: true,
@@ -3579,14 +3854,21 @@ class _ViewDashboardState extends State<ViewDashboard> {
         if (!EasyLoading.isShow) {
           EasyLoading.show();
         }
-        Timer(Duration(seconds: 1), () {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) =>
-                    FrmApprovalReqDriver()), //ApprovedDriverRequest
-          );
-        });
+        var isOK = globals.akses_pages == null
+            ? globals.akses_pages
+            : globals.akses_pages
+            .where((x) => (x == "HD" || username == "ADMIN"));
+        if(isOK.length>0){
+          Timer(Duration(seconds: 1), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      FrmApprovalReqDriver()), //ApprovedDriverRequest
+            );
+          });
+        }
+
       } else {
         _showAlert(globalScaffoldKey.currentContext!, 0,
             "Anda tidak punya akses", "error");
@@ -3594,7 +3876,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
     } else if (anpService.idKey == 29) {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
-          : globals.akses_pages.where((x) => x == "HR" || x == "HD");
+          : globals.akses_pages.where((x) => x == "HD");
       if ((isOK != null && isOK.length > 0) || username == "ADMIN") {
         if (!EasyLoading.isShow) {
           EasyLoading.show();
@@ -3613,7 +3895,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
     } else if (anpService.idKey == 30) {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
-          : globals.akses_pages.where((x) => x == "OP");
+          : globals.akses_pages.where((x) => x == "MK");
       if ((isOK != null && isOK.length > 0) || username == "ADMIN") {
         if (!EasyLoading.isShow) {
           EasyLoading.show();
@@ -3633,7 +3915,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
     } else if (anpService.idKey == 33) {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
-          : globals.akses_pages.where((x) => x == "OP");
+          : globals.akses_pages.where((x) => x == "MK");
       if ((isOK != null && isOK.length > 0) || username == "ADMIN") {
         if (!EasyLoading.isShow) {
           EasyLoading.show();
@@ -3818,7 +4100,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => FrmAttendance()),//KARYAWAN
+            MaterialPageRoute(builder: (context) => FrmAttendance()),//KARYAWAN///
           );
         });
       }
@@ -3829,7 +4111,7 @@ class _ViewDashboardState extends State<ViewDashboard> {
       } else {
         var isOK = globals.akses_pages == null
             ? globals.akses_pages
-            : globals.akses_pages.where((x) => x == "OP" || x == "HR");
+            : globals.akses_pages.where((x) => x == "OP" || x == "TI");
         if (isOK != null) {
           EasyLoading.show();
           Timer(Duration(seconds: 1), () {

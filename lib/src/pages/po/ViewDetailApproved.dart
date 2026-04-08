@@ -33,7 +33,9 @@ class _ViewDetailApprovedState extends State<ViewDetailApproved> {
 
   Future<void> _fetch() async {
     try {
-      final url = Uri.parse(GlobalData.baseUrl + "api/po/list_detail_po_approval.jsp?ponbr=${widget.ponbr}&method=list-view-approved");//
+      var baseURL = GlobalData.baseUrl + "api/po/list_detail_po_approval.jsp?ponbr=${widget.ponbr}&method=list-view-approved";
+      print(baseURL);
+      final url = Uri.parse(baseURL);//
       final resp = await http.get(url, headers: {"Accept": "application/json"});
       if (resp.statusCode == 200) {
         final data = json.decode(resp.body);
@@ -231,8 +233,9 @@ class _ViewDetailApprovedState extends State<ViewDetailApproved> {
 
   Future<void> _showHargaDialog(String partname, String merk) async {//
     try {
-      final uri = Uri.parse(
-         GlobalData.baseUrl + "api/po/list_cek_harga.jsp?method=cek-harga-barang&partname=${Uri.encodeComponent(partname)}&merk=${Uri.encodeComponent(merk)}");
+      var baseURL = GlobalData.baseUrl + "api/po/list_cek_harga.jsp?method=cek-harga-barang&partname=${Uri.encodeComponent(partname)}&merk=${Uri.encodeComponent(merk)}";
+      final uri = Uri.parse(baseURL);
+      print(baseURL);
       final res = await http.get(uri).timeout(const Duration(seconds: 30));
       if (res.statusCode == 200) {
         final body = json.decode(res.body);

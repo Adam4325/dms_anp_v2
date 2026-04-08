@@ -466,7 +466,7 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                                       ),
                                                     );
                                                   },
-                                                  child: Text("Detail",
+                                                  child: Text("Detail", //PO APPORVED
                                                       style: TextStyle(
                                                           fontSize: 12,
                                                           fontWeight:
