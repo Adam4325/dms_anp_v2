@@ -67,7 +67,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   // ⭐ GUNAKAN NOTIFICATION SERVICE YANG SUDAH DIPERBAIKI
   final NotificationService _notificationService = NotificationService();
-  List<NotificationData> _notifications = [];//
+  //List<NotificationData> _notifications = [];
   bool _isLoading = true;
 
   TextStyle style = TextStyle(fontFamily: 'Montserrat', fontSize: 20.0);
@@ -120,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
       print('🔍 DEBUG: drvid: ${GlobalData.frmDrvId}');
       print('🔍 DEBUG: loginname: ${GlobalData.loginname}');
 
-      if (GlobalData.frmDrvId == null || GlobalData.frmDrvId.isEmpty) {
+      if (GlobalData.frmDrvId.isEmpty) {
         print('🔍 DEBUG: No login data, redirecting to LoginPage');
         _navigateToLogin();
       } else {
@@ -145,9 +145,9 @@ class _MyHomePageState extends State<MyHomePage> {
     _notificationService.notificationStream.listen((notifications) {
       print('🔍 DEBUG: Received ${notifications.length} notifications in main');
 
-      setState(() {
-        _notifications = notifications;
-      });
+      // setState(() {
+      //   _notifications = notifications;
+      // });
 
       // Tampilkan notifikasi sebagai dialog untuk testing
       if (notifications.isNotEmpty) {
@@ -183,11 +183,11 @@ class _MyHomePageState extends State<MyHomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                notification.title ?? 'Tidak ada judul',
+                notification.title,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
-              Text(notification.message ?? 'Tidak ada pesan'),
+              Text(notification.message),
               SizedBox(height: 8),
               Text(
                 'ID: ${notification.id}',

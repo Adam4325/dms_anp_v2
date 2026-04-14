@@ -70,6 +70,7 @@ dependencies:
   qr_flutter: ^4.0.0
   #webview_flutter: ^2.0.0
   iamport_webview_flutter: ^3.0.5
+  webview_flutter: ^4.8.0
   # Use a Dart 3 compatible version that still depends on http ^0.13.x
   flutter_polyline_points: ^3.1.0
   url_launcher: ^6.0.10
@@ -102,6 +103,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   google_fonts: ^8.0.1
   share_plus: ^12.0.1
+  flutter_pdfview: ^1.4.4
 
 dev_dependencies:
   flutter_test:

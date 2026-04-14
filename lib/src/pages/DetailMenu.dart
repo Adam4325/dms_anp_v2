@@ -2,7 +2,7 @@
 
 import 'dart:async';
 
-import 'package:dms_anp/src/Color/hex_color.dart';
+
 import 'package:dms_anp/src/pages/FrmObp.dart';
 import 'package:dms_anp/src/pages/FrmObpDouble.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
@@ -16,7 +16,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../flusbar.dart';
+
 
 class DetailMenu extends StatefulWidget {
   @override
@@ -157,12 +157,12 @@ class _DetailMenuState extends State<DetailMenu> {
                 Container(
                   padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: (iconColor ?? primaryOrange).withOpacity(0.1),
+                    color: (iconColor).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     icon,
-                    color: iconColor ?? primaryOrange,
+                    color: iconColor,
                     size: 24,
                   ),
                 ),
@@ -199,11 +199,9 @@ class _DetailMenuState extends State<DetailMenu> {
 
   Widget menuFormObp(BuildContext context) {
     print('username ${username}');
-    var isOK = globals.akses_pages == null
-        ? globals.akses_pages
-        : globals.akses_pages.where((x) => x == "OT");
-    print((isOK != null && isOK.length > 0));
-    if ((isOK != null && isOK.length > 0)|| username == 'ADMIN') {
+    var isOK = globals.akses_pages.where((x) => x == "OT");
+    print((isOK.length > 0));
+    if ((isOK.length > 0)|| username == 'ADMIN') {
       print('dapat akses');
       return _buildMenuCard(
         title: "BP Laka Tunggal",
@@ -225,10 +223,8 @@ class _DetailMenuState extends State<DetailMenu> {
   }
 
   Widget menuFormObpDouble(BuildContext context) {
-    var isOK = globals.akses_pages == null
-        ? globals.akses_pages
-        : globals.akses_pages.where((x) => x == "OT");
-    if ((isOK != null && isOK.length > 0) || username == 'ADMIN') {
+    var isOK = globals.akses_pages.where((x) => x == "OT");
+    if ((isOK.length > 0) || username == 'ADMIN') {
       return _buildMenuCard(
         title: "BP Laka Double",
         icon: Icons.group,
@@ -246,10 +242,8 @@ class _DetailMenuState extends State<DetailMenu> {
   }
 
   Widget menuFormObpDetail(BuildContext context) {
-    var isOK = globals.akses_pages == null
-        ? globals.akses_pages
-        : globals.akses_pages.where((x) => x == "OT");
-    if ((isOK != null && isOK.length > 0) || username == 'ADMIN') {
+    var isOK = globals.akses_pages.where((x) => x == "OT");
+    if ((isOK.length > 0) || username == 'ADMIN') {
       return _buildMenuCard(
         title: "Close OBP",
         icon: Icons.assignment_turned_in,

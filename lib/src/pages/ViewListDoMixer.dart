@@ -373,6 +373,11 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
                                 await SharedPreferences.getInstance();
                             var no_do = await CreateDoDiTerima(value['driverid'], value['dlodetaildonumber']);//value['dlodetaildonumber']
                             GlobalData.frmDloDoNumber = value['dlodetaildonumber'];
+                            GlobalData.frmBujDoNumber = value['dlodonumber'];
+                            GlobalData.frmVhcid = value['vhcid'];
+                            GlobalData.frmDrvId = value['driverid'];
+                            GlobalData.frmUserId = prefs.getString("name").toString();
+                            GlobalData.frmLocid = value['locid'];
                             print(value);
                             //var no_do="CG/LB7/DUM-ANP/04/25/1067013";
                             if (no_do != null && no_do != "") {
@@ -386,9 +391,6 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
                                 print(prefs.getString("bujnumber"));
                                 print(value['dlodonumber']);
                                 prefs.remove("submit_bujnumber");
-
-
-
                               });
                               showDialog(
                                   context: context,

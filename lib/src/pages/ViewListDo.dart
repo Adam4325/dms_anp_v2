@@ -20,7 +20,8 @@ class ViewListDo extends StatefulWidget {
   _ViewListDoState createState() => _ViewListDoState();
 }
 
-class _ViewListDoState extends State<ViewListDo> {//
+class _ViewListDoState extends State<ViewListDo> {
+  //
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey globalScaffoldKey2 = GlobalKey<ScaffoldState>();
   List data = [];
@@ -97,8 +98,10 @@ class _ViewListDoState extends State<ViewListDo> {//
                 _goBack(context);
               },
             ),
-            centerTitle: true,//
-            title: Text('Form List DO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+            centerTitle: true, //
+            title: Text('Form List DO',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w600))),
         body: new Container(
           key: globalScaffoldKey2,
           margin: const EdgeInsets.only(top: 5.0),
@@ -106,9 +109,7 @@ class _ViewListDoState extends State<ViewListDo> {//
           //color: new Color(0xFF736AB7),
           color: HexColor("#ffffff"),
           child: new Stack(
-            children: <Widget>[
-              _buildListView(context)
-            ],
+            children: <Widget>[_buildListView(context)],
           ),
         ),
       ),
@@ -372,8 +373,9 @@ class _ViewListDoState extends State<ViewListDo> {//
                                 await SharedPreferences.getInstance();
                             var no_do = await CreateDoDiTerima(
                                 value['driverid'], value['dlodetaildonumber']);
-                            GlobalData.frmDloDoNumber = value['dlodetaildonumber'];
-  print(value);
+                            GlobalData.frmDloDoNumber =
+                                value['dlodetaildonumber'];
+                            print(value);
                             //var no_do="CG/LB7/DUM-ANP/04/25/1067013";
                             if (no_do != null && no_do != "") {
                               setState(() {
@@ -407,15 +409,14 @@ class _ViewListDoState extends State<ViewListDo> {//
                                 //     "bujnumber", "ANBU25052774");
                                 // print("Only dev");
                                 // print(value['dlodonumber']);
-
                               });
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext dialogContext) {
-                                    return Center(
-                                      child: CircularProgressIndicator(),
-                                    );
-                                  });
+                              // showDialog(
+                              //     context: context,
+                              //     builder: (BuildContext dialogContext) {
+                              //       return Center(
+                              //         child: CircularProgressIndicator(),
+                              //       );
+                              //     });
                               Timer(Duration(seconds: 1), () {
                                 // 5s over, navigate to a new page
                                 Navigator.pushReplacement(
@@ -433,7 +434,9 @@ class _ViewListDoState extends State<ViewListDo> {//
                               padding: EdgeInsets.symmetric(
                                   horizontal: 5, vertical: 5),
                               textStyle: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
                         ),
                       ]),
                 ],

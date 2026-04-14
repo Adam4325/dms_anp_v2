@@ -308,8 +308,8 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
           ? prefs.getString("km_new")
           : kilometerController.text,
       "catatan": notesController.text,
-      "drvid":
-      globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
+      //"drvid":'8194-01.2025.06.09.84',//globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
+      "drvid": globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
       "lon": lon,
       "lat": lat,
       "geoid": geo_id_area,
@@ -322,6 +322,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
       "locid": globals.p2hVhcDriver == "yes"
           ? _locid
           : globals.p2hVhclocid.toString(),
+      //"imeiid": "3d011a9d72e23c29",//prefs.getString("androidID"),
       "imeiid": prefs.getString("androidID"),
       "userid": username,
       "inspeksi_result": result, // ✅ SUDAH UNIQUE

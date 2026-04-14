@@ -17,6 +17,8 @@ class ViewAntrian extends StatefulWidget {
 }
 
 class _ViewAntrianState extends State<ViewAntrian> {
+  static const Color _softOrange = Color(0xFFFFA657);
+  static const Color _softOrangeDark = Color(0xFFFF8C42);
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController txtNotes = new TextEditingController();
   ProgressDialog? pr;
@@ -48,7 +50,7 @@ class _ViewAntrianState extends State<ViewAntrian> {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: _softOrange,
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               iconSize: 20.0,
@@ -59,7 +61,7 @@ class _ViewAntrianState extends State<ViewAntrian> {
             //backgroundColor: Colors.transparent,
             //elevation: 0.0,
             centerTitle: true,
-            title: Text('List Antrian DO 1')),
+            title: Text('List Antrian DO 1',style: TextStyle(color: Colors.white))),
         body: new Container(
           key: globalScaffoldKey,
           margin: const EdgeInsets.only(top: 5.0),
@@ -251,8 +253,8 @@ class _ViewAntrianState extends State<ViewAntrian> {
 
   Future<String?> createAntrianNewDriver(String dlodate, nodo) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String km_newDriver = prefs.getString("km_new")!;
-    String page_antrian = prefs.getString("page_antrian")!;
+    String km_newDriver = prefs.getString("km_new") ?? "0";
+    String page_antrian = prefs.getString("page_antrian")??"";
     drvid = prefs.getString("drvid")!;
     locid = prefs.getString("locid")!;
     vhcid = prefs.getString("vhcid_last_antrian")!;
@@ -433,7 +435,7 @@ class _ViewAntrianState extends State<ViewAntrian> {
 
       var messageData = "";
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String km_newDo = prefs.getString("km_new")!;
+      String km_newDo = prefs.getString("km_new")??"0";
       drvid = prefs.getString("drvid")!;
       locid = prefs.getString("locid")!;
       vhcid = prefs.getString("vhcid")!;
@@ -807,7 +809,7 @@ class _ViewAntrianState extends State<ViewAntrian> {
                     color: Colors.white,
                     size: 15.0,
                   ),
-                  label: Text("Submit"),
+                  label: Text("Submit",style: TextStyle(color:Colors.white)),
                   onPressed: () async {
                     showDialog(
                       context: globalScaffoldKey.currentContext!,
@@ -825,12 +827,12 @@ class _ViewAntrianState extends State<ViewAntrian> {
                             onPressed: () async {
                               SharedPreferences prefs =
                                   await SharedPreferences.getInstance();
-                              String km_newDo = prefs.getString("km_new")!;
+                              String km_newDo = prefs.getString("km_new")??"0";
                               Navigator.of(globalScaffoldKey.currentContext!)
                                   .pop(false);
-                              var nodo = item['nodo'];
-                              var dlodate = item['customerdate'];
-                              if (km_newDo == null || km_newDo == "") {
+                              var nodo = item['nodo']??"";
+                              var dlodate = item['customerdate']??"";
+                              if (km_newDo == null || km_newDo == "" || km_newDo == "0") {
                                 alert(globalScaffoldKey.currentContext!, 0,
                                     "KM tidak boleh kosong", "error");
                               } else if (nodo == null || nodo == '') {
@@ -840,8 +842,12 @@ class _ViewAntrianState extends State<ViewAntrian> {
                                 alert(globalScaffoldKey.currentContext!, 0,
                                     "DO Date tidak boleh kosong", "error");
                               } else {
-                                String method = prefs.getString("method")!;
+                                String method = prefs.getString("method")?? "new";
+                                print("method");
+
                                 print(method);
+                                method = "new";
+                                //return;
                                 if (method == "new") {
                                   await createAntrianNewDriver(dlodate, nodo);
                                   getAntrianLast();
@@ -881,7 +887,8 @@ class _ViewAntrianState extends State<ViewAntrian> {
                   },
                   style: ElevatedButton.styleFrom(
                       elevation: 0.0,
-                      backgroundColor: Colors.blueAccent,
+                      backgroundColor: _softOrange,
+                      foregroundColor: Colors.white,
                       padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                       textStyle:
@@ -999,11 +1006,12 @@ class _ViewAntrianState extends State<ViewAntrian> {
                                         SharedPreferences prefs =
                                             await SharedPreferences
                                                 .getInstance();
-                                        String km_newDo =
-                                            prefs.getString("km_new")!;
+                                        String km_newDo ="";///prefs.getString("km_new")!;
                                         Navigator.of(globalScaffoldKey
                                                 .currentContext!)
                                             .pop(false);
+                                        print(item);
+                                        return;
                                         var nodo = item['nodo'];
                                         var dlodate = item['customerdate'];
                                         if (km_newDo == null ||

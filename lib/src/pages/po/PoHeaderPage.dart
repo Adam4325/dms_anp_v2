@@ -7,7 +7,11 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
+import 'dart:io';
 
 import '../../flusbar.dart';
 
@@ -32,15 +36,22 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
   List poList = []; //
   bool isLoading = true;
   String searchQuery = '';
-  List poApprovedList = [];
-  bool isLoadingApproved = true;
-  String searchApprovedQuery = '';
+  List poApprovedListGte5jt = [];
+  List poApprovedListLt5jt = [];
+  bool isLoadingApprovedGte5jt = true;
+  bool isLoadingApprovedLt5jt = true;
+  String searchApprovedQueryGte5jt = '';
+  String searchApprovedQueryLt5jt = '';
+  List poPrintList = [];
+  bool isLoadingPoPrint = true;
+  String searchPoPrintQuery = '';
 
   @override
   void initState() {
     super.initState();
     fetchPoData('');
-    fetchPoApprovedData('');
+    fetchPoApprovedDataGte5jt('');
+    fetchPoPrintData('');
     if (EasyLoading.isShow) {
       EasyLoading.dismiss();
     }
@@ -114,21 +125,19 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
     );
   }
 
-  Future<void> fetchPoApprovedData(String search) async {
+  Future<void> fetchPoApprovedDataGte5jt(String search) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var username = prefs.getString('name');
     final hasAksesPO = globals.akses_pages != null &&
         globals.akses_pages
             .where((x) =>
-                (x == "PO" && username == "ADMIN") ||
-                (x == "PO" && username == "ETIENNE") ||
-                (x == "PO" && username == "BUDI"))
+                (x == "PO" || username == "ADMIN" || username == "ETIENNE" || username == "BUDI"))
             .isNotEmpty;
     print('hasAksesPO Approved');
     print('username ${username}');
     if (hasAksesPO) {
       setState(() {
-        isLoadingApproved = true;
+        isLoadingApprovedGte5jt = true;
       });
       try {
         var baseUrl = GlobalData.baseUrl +
@@ -142,13 +151,13 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
           if (body is Map &&
               (body['status_code'] == '200' || body['status_code'] == 200)) {
             setState(() {
-              poApprovedList = body['data'] ?? [];
-              isLoadingApproved = false;
+              poApprovedListGte5jt = body['data'] ?? [];
+              isLoadingApprovedGte5jt = false;
             });
           } else {
             setState(() {
-              poApprovedList = [];
-              isLoadingApproved = false;
+              poApprovedListGte5jt = [];
+              isLoadingApprovedGte5jt = false;
             });
           }
         } else {
@@ -156,18 +165,377 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
         }
       } catch (e) {
         setState(() {
-          isLoadingApproved = false;
+          isLoadingApprovedGte5jt = false;
         });
       }
+    } else {
+      setState(() {
+        poApprovedListGte5jt = [];
+        isLoadingApprovedGte5jt = false;
+      });
     }
   }
 
-  Widget buildSearchFieldApproved() {
+  Future<void> fetchPoApprovedDataLt5jt(String search) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var username = prefs.getString('name');
+    final hasAksesPO = globals.akses_pages != null &&
+        globals.akses_pages
+            .where((x) =>
+        (x == "PO" || username == "ADMIN"))
+            .isNotEmpty;
+    print('hasAksesPO Approved');
+    print('username ${username}');
+    if (hasAksesPO) {
+      setState(() {
+        isLoadingApprovedLt5jt = true;
+      });
+      try {
+        var baseUrl = GlobalData.baseUrl +
+            'api/po/list_approved_po2.jsp?method=list-po' +
+            (search.isNotEmpty ? '&search=$search' : '');
+        print(baseUrl);
+        var url = Uri.parse(baseUrl);
+        var res = await http.get(url);
+        if (res.statusCode == 200) {
+          var body = json.decode(res.body);
+          if (body is Map &&
+              (body['status_code'] == '200' || body['status_code'] == 200)) {
+            setState(() {
+              poApprovedListLt5jt = body['data'] ?? [];
+              print("poApprovedListLt5jt");
+              print(poApprovedListLt5jt);
+              isLoadingApprovedLt5jt = false;
+            });
+          } else {
+            setState(() {
+              poApprovedListLt5jt = [];
+              isLoadingApprovedLt5jt = false;
+            });
+          }
+        } else {
+          throw Exception("Failed to load approved data");
+        }
+      } catch (e) {
+        setState(() {
+          isLoadingApprovedLt5jt = false;
+        });
+      }
+    } else {
+      setState(() {
+        poApprovedListLt5jt = [];
+        isLoadingApprovedLt5jt = false;
+      });
+    }
+  }
+
+  Future<void> fetchPoPrintData(String search, {String? ponbr}) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var username = prefs.getString('name');
+    final hasAksesPO = globals.akses_pages != null &&
+        globals.akses_pages
+            .where((x) => x == "PO" || username == "ADMIN")
+            .isNotEmpty;
+    if (hasAksesPO) {
+      setState(() {
+        isLoadingPoPrint = true;
+      });
+      try {
+        final queryParams = <String, String>{
+          'method': 'list-print-po',
+        };
+        if (search.trim().isNotEmpty) {
+          queryParams['search'] = search.trim();
+        }
+        //ponbr = "ANPO26001086";//
+        if (ponbr != null && ponbr.trim().isNotEmpty) {
+          queryParams['ponbr'] = ponbr.trim();
+        }
+
+        final url = Uri.parse('${GlobalData.baseUrl}api/po/list_print_po.jsp')
+            .replace(queryParameters: queryParams);
+        final res = await http.get(url);
+        if (res.statusCode == 200) {
+          final body = json.decode(res.body);
+          if (body is Map && body['status'] == 'success') {
+            final fetchedList = body['data'] is List ? body['data'] : [];
+            setState(() {
+              poPrintList = fetchedList;
+              isLoadingPoPrint = false;
+            });
+          } else {
+            setState(() {
+              poPrintList = [];
+              isLoadingPoPrint = false;
+            });
+          }
+        } else {
+          throw Exception("Failed to load print data");
+        }
+      } catch (e) {
+        setState(() {
+          isLoadingPoPrint = false;
+        });
+      }
+    } else {
+      setState(() {
+        poPrintList = [];
+        isLoadingPoPrint = false;
+      });
+    }
+  }
+
+  String _buildPoPrintReportUrl(String ponbr) {
+    final uri = Uri.parse('${GlobalData.baseUrlOri}reporting/report_it_po_mobile.jsp')//
+        .replace(queryParameters: {
+      'method': 'print-po-view-pdf',
+      'jasperFile': 'rpt_order_barang',
+      'viewer': 'pdf',
+      'fieldName': 'PONBR',
+      'fieldValue':  ponbr,//ANPO26001086
+      'viewName': 'vpoprintnew',
+    });//
+    return uri.toString();
+  }
+
+  Future<String> _downloadPoPrintPdfToTempFile(String ponbr) async {
+    final reportUrl = _buildPoPrintReportUrl(ponbr);
+    print("PO Print PDF URL: $reportUrl");
+    final uri = Uri.parse(reportUrl);
+    final res = await http.get(uri);
+    if (res.statusCode != 200) {
+      throw Exception("HTTP ${res.statusCode}");
+    }
+    final tempDir = await getTemporaryDirectory();
+    final safeName =
+        'po_print_${ponbr.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_')}.pdf';
+    final file = File('${tempDir.path}/$safeName');
+    await file.writeAsBytes(res.bodyBytes, flush: true);
+    return file.path;
+  }
+
+  Future<void> _sendPoPrintToEmail({
+    required String ponbr,
+    required String email,
+  }) async {
+    final safePonbr = ponbr.trim();
+    final safeEmail = email.trim();
+    if (safePonbr.isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 2, "PONBR tidak valid", "warning");
+      return;
+    }
+    if (safeEmail.isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 2, "Email tujuan kosong", "warning");
+      return;
+    }
+    try {
+      final sendUri = Uri.parse(
+              '${GlobalData.baseUrlOri}reporting/send_po_print_email.jsp')
+          .replace(queryParameters: {
+        'ponbr': safePonbr,
+        'email': safeEmail,
+      });
+      print("PO Send Email URL: $sendUri");
+      final res = await http.get(sendUri);
+      if (res.statusCode == 200) {
+        final body = json.decode(res.body);
+        final isSuccess = (body is Map &&
+            ((body['status'] == 'success') ||
+                (body['status_code'] == 200) ||
+                (body['status_code'] == '200')));
+        if (isSuccess) {
+          alert(globalScaffoldKey.currentContext!, 1,
+              "Email PO $safePonbr berhasil dikirim ke $safeEmail", "success");
+        } else {
+          final message = body is Map
+              ? (body['message']?.toString() ?? 'Gagal kirim email')
+              : 'Gagal kirim email';
+          alert(globalScaffoldKey.currentContext!, 0, message, "error");
+        }
+      } else {
+        String serverMessage = 'Gagal kirim email. HTTP ${res.statusCode}';
+        try {
+          final body = json.decode(res.body);
+          if (body is Map && body['message'] != null) {
+            serverMessage = body['message'].toString();
+          }
+        } catch (_) {}
+        alert(globalScaffoldKey.currentContext!, 0, serverMessage, "error");
+      }
+    } catch (e) {
+      alert(globalScaffoldKey.currentContext!, 0,
+          "Gagal kirim email: ${e.toString()}", "error");
+    }
+  }
+
+  Future<bool> _confirmSendPoPrintEmail(
+      BuildContext ctx, String ponbr, String email) async {
+    final result = await showDialog<bool>(
+      context: ctx,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Konfirmasi'),
+        content: Text('Kirim email PO $ponbr ke $email?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text('Yes'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  Future<void> _showPoPrintPdfDialog({
+    required String ponbr,
+    required String email,
+  }) async {
+    final safePonbr = ponbr.trim();
+    if (safePonbr.isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 2, "PONBR tidak valid", "warning");//
+      return;
+    }
+
+    final pdfFuture = _downloadPoPrintPdfToTempFile(safePonbr);
+
+    bool isSending = false;
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: Text("View PDF - $safePonbr"),
+              contentPadding: EdgeInsets.fromLTRB(12, 12, 12, 8),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 380,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: FutureBuilder<String>(
+                          future: pdfFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircularProgressIndicator(
+                                        color: primaryOrange),
+                                    SizedBox(height: 8),
+                                    Text("Menyiapkan PDF..."),
+                                  ],
+                                ),
+                              );
+                            }
+                            if (snapshot.hasError || !snapshot.hasData) {
+                              return Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.picture_as_pdf_outlined,
+                                          size: 40, color: Colors.grey),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        "PDF tidak dapat ditampilkan di dialog.",
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      SizedBox(height: 8),
+                                      ElevatedButton(
+                                        onPressed: () async {
+                                          final uri = Uri.parse(
+                                              _buildPoPrintReportUrl(
+                                                  safePonbr));
+                                          if (await canLaunchUrl(uri)) {
+                                            await launchUrl(uri,
+                                                mode: LaunchMode
+                                                    .externalApplication);
+                                          }
+                                        },
+                                        child: Text("Buka di Browser"),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+                            return PDFView(
+                              filePath: snapshot.data!,
+                              enableSwipe: true,
+                              swipeHorizontal: false,
+                              autoSpacing: true,
+                              pageFling: true,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: darkOrange,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: isSending
+                            ? null
+                            : () async {
+                                final confirmed = await _confirmSendPoPrintEmail(
+                                    ctx, safePonbr, email);
+                                if (!confirmed) return;
+                                setDialogState(() => isSending = true);
+                                await _sendPoPrintToEmail(
+                                    ponbr: safePonbr, email: email);
+                                if (ctx.mounted) {
+                                  setDialogState(() => isSending = false);
+                                }
+                              },
+                        icon: isSending
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : Icon(Icons.email_outlined, size: 18),
+                        label: Text(isSending ? "Sending..." : "Send to Email"),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text("Close"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget buildSearchFieldApprovedLesThan5jt() {
     return Padding(
       padding: EdgeInsets.all(10.0),
       child: TextField(
         decoration: InputDecoration(
-          hintText: "Cari Vendor / PO Approved",
+          hintText: "Cari Vendor / PO Approved < 5jt",
           hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
           filled: true,
           fillColor: lightOrange,
@@ -179,16 +547,72 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
           prefixIcon: Icon(Icons.search, color: primaryOrange),
         ),
         onChanged: (val) {
-          searchApprovedQuery = val;
+          searchApprovedQueryLt5jt = val;
           () async {
             if (!EasyLoading.isShow) {
               EasyLoading.show();
             }
-            await fetchPoApprovedData(searchApprovedQuery);
+            await fetchPoApprovedDataLt5jt(searchApprovedQueryLt5jt);
             if (EasyLoading.isShow) {
               EasyLoading.dismiss();
             }
           }();
+        },
+      ),
+    );
+  }
+
+  Widget buildSearchFieldApproved() {
+    return Padding(
+      padding: EdgeInsets.all(10.0),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: "Cari Vendor / PO Approved >= 5jt",
+          hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
+          filled: true,
+          fillColor: lightOrange,
+          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          prefixIcon: Icon(Icons.search, color: primaryOrange),
+        ),
+        onChanged: (val) {
+          searchApprovedQueryGte5jt = val;
+          () async {
+            if (!EasyLoading.isShow) {
+              EasyLoading.show();
+            }
+            await fetchPoApprovedDataGte5jt(searchApprovedQueryGte5jt);
+            if (EasyLoading.isShow) {
+              EasyLoading.dismiss();
+            }
+          }();
+        },
+      ),
+    );
+  }
+
+  Widget buildSearchFieldPoPrint() {
+    return Padding(
+      padding: EdgeInsets.all(10.0),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: "Cari PO Number / Email",
+          hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
+          filled: true,
+          fillColor: lightOrange,
+          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          prefixIcon: Icon(Icons.search, color: primaryOrange),
+        ),
+        onChanged: (val) {
+          searchPoPrintQuery = val;
+          fetchPoPrintData(searchPoPrintQuery);
         },
       ),
     );
@@ -204,7 +628,7 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
       },
       child: DefaultTabController(
         key: globalScaffoldKey,
-        length: 2,
+        length: 4,
         child: Scaffold(
           backgroundColor: backgroundColor,
           appBar: AppBar(
@@ -228,7 +652,23 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                   if (!EasyLoading.isShow) {
                     EasyLoading.show();
                   }
-                  await fetchPoApprovedData(searchApprovedQuery);
+                  await fetchPoApprovedDataLt5jt(searchApprovedQueryLt5jt);
+                  if (EasyLoading.isShow) {
+                    EasyLoading.dismiss();
+                  }
+                } else if (index == 2) {
+                  if (!EasyLoading.isShow) {
+                    EasyLoading.show();
+                  }
+                  await fetchPoApprovedDataGte5jt(searchApprovedQueryGte5jt);
+                  if (EasyLoading.isShow) {
+                    EasyLoading.dismiss();
+                  }
+                } else if (index == 3) {
+                  if (!EasyLoading.isShow) {
+                    EasyLoading.show();
+                  }
+                  await fetchPoPrintData(searchPoPrintQuery);
                   if (EasyLoading.isShow) {
                     EasyLoading.dismiss();
                   }
@@ -236,7 +676,9 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
               },
               tabs: [
                 Tab(text: 'Outstanding'),
-                Tab(text: 'PO Approved'),
+                Tab(text: 'PO Appr < 5jt'),
+                Tab(text: 'PO Appr >= 5jt'),
+                Tab(text: 'PO Print'),
               ],
             ),
           ),
@@ -367,22 +809,22 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
               ),
               Column(
                 children: <Widget>[
-                  buildSearchFieldApproved(),
+                  buildSearchFieldApprovedLesThan5jt(),
                   Expanded(
-                    child: isLoadingApproved
+                    child: isLoadingApprovedLt5jt
                         ? Center(
                             child:
                                 CircularProgressIndicator(color: primaryOrange))
-                        : poApprovedList.isEmpty
+                        : poApprovedListLt5jt.isEmpty
                             ? Center(
                                 child: Text("Tidak ada data",
                                     style: TextStyle(color: Colors.grey)))
                             : ListView.builder(
                                 padding: EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
-                                itemCount: poApprovedList.length,
+                                itemCount: poApprovedListLt5jt.length,
                                 itemBuilder: (context, index) {
-                                  var po = poApprovedList[index];
+                                  var po = poApprovedListLt5jt[index];
                                   return Container(
                                     margin: EdgeInsets.symmetric(vertical: 6),
                                     decoration: BoxDecoration(
@@ -564,8 +1006,8 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                                                             ? msg
                                                                             : 'PO berhasil di-approve',
                                                                         'success');
-                                                                    await fetchPoApprovedData(
-                                                                        searchApprovedQuery);
+                                                                    await fetchPoApprovedDataLt5jt(
+                                                                        searchApprovedQueryLt5jt);
                                                                     await fetchPoData(
                                                                         searchQuery);
                                                                   } else {
@@ -609,6 +1051,373 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                                     );
                                                   },
                                                   child: Text("Approved",
+                                                      style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.w500)),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                  ),
+                ],
+              ),
+              Column(
+                children: <Widget>[
+                  buildSearchFieldApproved(),
+                  Expanded(
+                    child: isLoadingApprovedGte5jt
+                        ? Center(
+                        child:
+                        CircularProgressIndicator(color: primaryOrange))
+                        : poApprovedListGte5jt.isEmpty
+                        ? Center(
+                        child: Text("Tidak ada data",
+                            style: TextStyle(color: Colors.grey)))
+                        : ListView.builder(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      itemCount: poApprovedListGte5jt.length,
+                      itemBuilder: (context, index) {
+                        var po = poApprovedListGte5jt[index];
+                        return Container(
+                          margin: EdgeInsets.symmetric(vertical: 6),
+                          decoration: BoxDecoration(
+                            color: cardColor,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: shadowColor,
+                                spreadRadius: 1,
+                                blurRadius: 6,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: ListTile(
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 10),
+                            title: Text(
+                              po['ponbr'] ?? '',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: darkOrange,
+                                fontSize: 16,
+                              ),
+                            ),
+                            subtitle: Padding(
+                              padding: EdgeInsets.only(top: 4),
+                              child: Column(
+                                crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  _kv(
+                                      "Warehouse",
+                                      (po['towarehouse'] ?? '')
+                                          .toString()),
+                                  _kv(
+                                      "Po Date",
+                                      (po['podate'] ?? '')
+                                          .toString()),
+                                  _kv(
+                                      "Vendor ID",
+                                      (po['vendorid'] ?? '')
+                                          .toString()),
+                                  _kv(
+                                      "Po Notes",
+                                      (po['ponotes'] ?? '')
+                                          .toString()),
+                                  _kv("Notes",
+                                      (po['notes'] ?? '').toString()),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      ElevatedButton(
+                                        style:
+                                        ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                          accentOrange,
+                                          foregroundColor:
+                                          Colors.white,
+                                          elevation: 0,
+                                          padding:
+                                          EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8),
+                                          shape:
+                                          RoundedRectangleBorder(
+                                              borderRadius:
+                                              BorderRadius
+                                                  .circular(
+                                                  6)),
+                                        ),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ViewDetailApproved(
+                                                      ponbr: po[
+                                                      'ponbr']
+                                                          .toString()),
+                                            ),
+                                          );
+                                        },
+                                        child: Text("Detail", //PO APPORVED
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight:
+                                                FontWeight.w500)),
+                                      ),
+                                      SizedBox(width: 8),
+                                      ElevatedButton(
+                                        style:
+                                        ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                          Colors.deepOrange,
+                                          foregroundColor:
+                                          Colors.white,
+                                          elevation: 0,
+                                          padding:
+                                          EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8),
+                                          shape:
+                                          RoundedRectangleBorder(
+                                              borderRadius:
+                                              BorderRadius
+                                                  .circular(
+                                                  6)),
+                                        ),
+                                        onPressed: () async {
+                                          showDialog(
+                                            context: context,
+                                            builder: (ctx) =>
+                                                AlertDialog(
+                                                  title:
+                                                  Text('Konfirmasi'),
+                                                  content: Text(
+                                                      'Approve PO ${po['ponbr']}?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () =>
+                                                          Navigator.pop(
+                                                              ctx),
+                                                      child:
+                                                      Text('Batal'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed:
+                                                          () async {
+                                                        Navigator.pop(
+                                                            ctx);
+                                                        SharedPreferences
+                                                        prefs =
+                                                        await SharedPreferences
+                                                            .getInstance();
+                                                        var username =
+                                                        prefs.getString(
+                                                            'name');
+                                                        if (!EasyLoading
+                                                            .isShow) {
+                                                          EasyLoading
+                                                              .show();
+                                                        }
+                                                        try {
+                                                          final uri = Uri
+                                                              .parse(GlobalData
+                                                              .baseUrl +
+                                                              'api/po/approved_po.jsp?method=approve-po&ponbr=${po['ponbr']}&userid=${username}');
+                                                          final res = await http
+                                                              .get(uri)
+                                                              .timeout(Duration(
+                                                              seconds:
+                                                              30));
+                                                          if (res.statusCode ==
+                                                              200) {
+                                                            final body = json
+                                                                .decode(res
+                                                                .body);
+                                                            final code = body
+                                                            is Map
+                                                                ? body[
+                                                            'status_code']
+                                                                : null;
+                                                            final msg = body
+                                                            is Map
+                                                                ? (body['message']
+                                                                ?.toString() ??
+                                                                '')
+                                                                : '';
+                                                            if (code ==
+                                                                '200' ||
+                                                                code ==
+                                                                    200) {
+                                                              alert(
+                                                                  globalScaffoldKey
+                                                                      .currentContext!,
+                                                                  1,
+                                                                  msg.isNotEmpty
+                                                                      ? msg
+                                                                      : 'PO berhasil di-approve',
+                                                                  'success');
+                                                              await fetchPoApprovedDataGte5jt(
+                                                                  searchApprovedQueryGte5jt);
+                                                              await fetchPoData(
+                                                                  searchQuery);
+                                                            } else {
+                                                              alert(
+                                                                  globalScaffoldKey
+                                                                      .currentContext!,
+                                                                  0,
+                                                                  msg.isNotEmpty
+                                                                      ? msg
+                                                                      : 'Gagal approve PO',
+                                                                  'error');
+                                                            }
+                                                          } else {
+                                                            alert(
+                                                                globalScaffoldKey
+                                                                    .currentContext!,
+                                                                0,
+                                                                'Server error: ${res.statusCode}',
+                                                                'error');
+                                                          }
+                                                        } catch (e) {
+                                                          alert(
+                                                              globalScaffoldKey
+                                                                  .currentContext!,
+                                                              2,
+                                                              'Please check your internet connection.',
+                                                              'warning');
+                                                        } finally {
+                                                          if (EasyLoading
+                                                              .isShow) {
+                                                            EasyLoading
+                                                                .dismiss();
+                                                          }
+                                                        }
+                                                      },
+                                                      child:
+                                                      Text('Approve'),
+                                                    ),
+                                                  ],
+                                                ),
+                                          );
+                                        },
+                                        child: Text("Approved",
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight:
+                                                FontWeight.w500)),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                children: <Widget>[
+                  buildSearchFieldPoPrint(),
+                  Expanded(
+                    child: isLoadingPoPrint
+                        ? Center(
+                            child:
+                                CircularProgressIndicator(color: primaryOrange))
+                        : poPrintList.isEmpty
+                            ? Center(
+                                child: Text("Tidak ada data",
+                                    style: TextStyle(color: Colors.grey)))
+                            : ListView.builder(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                itemCount: poPrintList.length,
+                                itemBuilder: (context, index) {
+                                  var po = poPrintList[index];
+                                  final ponbr =
+                                      (po['ponbr'] ?? '').toString().trim();
+                                  final cpyemail =(po['cpyemail'] ?? '').toString().trim();
+                                  return Container(
+                                    margin: EdgeInsets.symmetric(vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: cardColor,
+                                      borderRadius: BorderRadius.circular(14),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: shadowColor,
+                                          spreadRadius: 1,
+                                          blurRadius: 6,
+                                          offset: Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 10),
+                                      title: Text(
+                                        ponbr,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: darkOrange,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      subtitle: Padding(
+                                        padding: EdgeInsets.only(top: 4),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            _kv("Po Date",
+                                                (po['podate'] ?? '').toString()),
+                                            _kv(
+                                                "Warehouse",
+                                                (po['towarehouse'] ?? '')
+                                                    .toString()),
+                                            _kv("Vendor ID",
+                                                (po['vendorid'] ?? '').toString()),
+                                            _kv("Po Notes",
+                                                (po['ponotes'] ?? '').toString()),
+                                            _kv("Email",
+                                                (po['cpyemail'] ?? '').toString()),
+                                            SizedBox(height: 8),
+                                            Row(
+                                              children: [
+                                                ElevatedButton(
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor: accentOrange,
+                                                    foregroundColor: Colors.white,
+                                                    elevation: 0,
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            horizontal: 12,
+                                                            vertical: 8),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        6)),
+                                                  ),
+                                                  onPressed: () =>
+                                                      _showPoPrintPdfDialog(
+                                                          ponbr: ponbr,
+                                                          email: cpyemail),
+                                                  child: Text("View PDF",
                                                       style: TextStyle(
                                                           fontSize: 13,
                                                           fontWeight:

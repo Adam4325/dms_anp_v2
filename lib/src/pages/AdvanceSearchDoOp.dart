@@ -1,4 +1,4 @@
-import 'dart:async';
+
 import 'package:dms_anp/src/pages/ViewListDoOpr.dart';
 import 'package:flutter/material.dart';
 import 'package:dms_anp/src/Color/hex_color.dart';
@@ -14,7 +14,7 @@ class AdvanceSearchDoOp extends StatefulWidget {
 
 final globalScaffoldKey = GlobalKey<ScaffoldState>();
 class _AdvanceSearchDoOpState extends State<AdvanceSearchDoOp> {
-  TextEditingController _locid = new TextEditingController();
+  //TextEditingController _locid = new TextEditingController();
   TextEditingController _vhcid = new TextEditingController();
   late String _chosenValue;
   String arrayLocid ="";

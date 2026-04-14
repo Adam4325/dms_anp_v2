@@ -3113,6 +3113,84 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   Future<bool> _onWillPop() async {
     return (await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        titlePadding: EdgeInsets.fromLTRB(24, 24, 24, 10),
+        contentPadding: EdgeInsets.fromLTRB(24, 10, 24, 20),
+        actionsPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+
+        title: Row(
+          children: [
+            Icon(Icons.logout, color: Color(0xFFFF8C42)),
+            SizedBox(width: 10),
+            Text(
+              'Keluar Aplikasi',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+
+        content: Text(
+          'Apakah Anda yakin ingin keluar dari aplikasi?',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.black54,
+          ),
+        ),
+
+        actions: [
+          // Tombol Tidak
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text('Tidak'),
+          ),
+
+          // Tombol Ya
+          ElevatedButton(
+            onPressed: () async {
+              SharedPreferences preferences =
+              await SharedPreferences.getInstance();
+              await preferences.clear();
+
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => LoginPage()),
+                    (Route<dynamic> route) => false,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFFFF8C42), // Orange soft
+              elevation: 2,
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Ya',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    )) ??
+        false;
+  }
+
+  Future<bool> _onWillPopOL() async {
+    return (await showDialog(
           context: context,
           builder: (context) => AlertDialog(
             shape:
@@ -3122,7 +3200,7 @@ class _ViewDashboardState extends State<ViewDashboard>
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: Text('Tidak'),
+                child: Text('Tidak',style: TextStyle(color: Colors.black38))
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -3140,7 +3218,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                 ),
-                child: Text('Ya'),
+                child: Text('Ya',style: TextStyle(color: Colors.white)),
               ),
             ],
           ),

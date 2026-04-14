@@ -40,7 +40,7 @@ class _LoginPageState extends State<LoginPage> {
 
   // Soft Orange Color Palette
   static const Color primaryOrange = Color(0xFFFF8A50);
-  static const Color lightOrange = Color(0xFFFFA376);
+  //static const Color lightOrange = Color(0xFFFFA376);
   static const Color veryLightOrange = Color(0xFFFFE4D6);
   static const Color backgroundColor = Color(0xFFFFF5F0);
   static const Color cardBackground = Color(0xFFFEFEFE);
@@ -60,6 +60,7 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> initUniqueIdentifierState() async {
     String? identifier;
     try {
+      //identifier = "3d011a9d72e23c29"; //await UniqueIdentifier.serial;
       identifier = await UniqueIdentifier.serial;
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString("androidID", identifier ?? '');
@@ -650,6 +651,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void initState() {
+    super.initState();
     if (EasyLoading.isShow) {
       EasyLoading.dismiss();
     }

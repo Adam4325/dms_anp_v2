@@ -1,6 +1,5 @@
 import 'package:dms_anp/src/model/PinInformation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:share_plus/share_plus.dart';
 
 class MapPinPillComponentPB extends StatefulWidget {

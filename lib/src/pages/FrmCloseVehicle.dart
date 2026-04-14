@@ -430,9 +430,11 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
       var response =
           await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
-        int status_code = jsonDecode(response.body)["status_code"];
+        // int status_code = jsonDecode(response.body)["status_code"];
+        var body = jsonDecode(response.body);
+        int status_code = body["status_code"] ?? 0;
         if (status_code == 200) {
-          bujnumber_diterima = jsonDecode(response.body)["bujnumber"];
+          bujnumber_diterima = jsonDecode(response.body)["bujnumber"] ?? "";
         }
       } else {
         alert(globalScaffoldKey.currentContext!, 0, "Gagal create session data ",
@@ -503,7 +505,7 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
 
         status_code = json.decode(response.body)["status_code"];
         message = json.decode(response.body)["message"];
-        if (status_code != null && status_code == "200") {
+        if (status_code == "200") {
           var bjNUmber = await CreateVehicleDoDiTerima(
               vhcid.toString(), bujnumber, drvid.toString());
           print("Create do diterima ${bjNUmber}");
@@ -526,16 +528,6 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
     }
   }
 
-  // Future<Position> _getLocation() async {
-  //   var currentLocation;
-  //   try {
-  //     currentLocation = await Geolocator.getCurrentPosition(
-  //         desiredAccuracy: LocationAccuracy.best);
-  //   } catch (e) {
-  //     currentLocation = null;
-  //   }
-  //   return currentLocation;
-  // }
 
   List? dataDo;
   Future GetListDo(String no_do) async {
@@ -581,8 +573,11 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);
+
       var response =
           await http.get(myUri, headers: {"Accept": "application/json"});
+      print('response.body)["status_code"]');
+      print(response.body);
       if (response.statusCode == 200) {
         int status_code = jsonDecode(response.body)["status_code"];
         if (status_code == 200) {
@@ -590,26 +585,55 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
           await GetListDo(noDo_Diterima);
         }
         setState(() {
-          if (dataDo != null) {
-            print(dataDo![0]);
+          // if (dataDo != null) {
+          //   print(dataDo[0]);
+          //   var items = dataDo![0];
+          //   GlobalData.loginname = prefs!.getString("loginname")!;
+          //   GlobalData.frmLocid = prefs!.getString("locid")!;
+          //   GlobalData.frmDrvId = items["driverid"];
+          //   GlobalData.frmUserId = prefs!.getString("name")!;
+          //   GlobalData.frmVhcid = items["vhcid"]!;
+          //   prefs?.setString("vhcidfromdo", GlobalData.frmVhcid);
+          //   GlobalData.frmGeoCodeAsal = items["dloorigin"];
+          //   GlobalData.frmGeoCodeTujuan = items["dlodestination"];
+          //   if(items["dlodetaildonumber"]==GlobalData.frmDloDoNumber){
+          //     GlobalData.frmDloDoNumber = items["dlodetaildonumber"];
+          //   }
+          //   GlobalData.frmBujDoNumber = items["dlodonumber"];
+          //   if (prefs!.getString("imageDo")! != null &&
+          //       prefs!.getString("imageDo")! != "") {
+          //     imageDo = prefs!.getString("imageDo")!;
+          //   }
+          //   txtKMOld.text = prefs!.getString("vhckm")!.toString();
+          // }
+
+          if (dataDo != null && dataDo!.isNotEmpty) {
             var items = dataDo![0];
+
             GlobalData.loginname = prefs!.getString("loginname")!;
             GlobalData.frmLocid = prefs!.getString("locid")!;
             GlobalData.frmDrvId = items["driverid"];
             GlobalData.frmUserId = prefs!.getString("name")!;
             GlobalData.frmVhcid = items["vhcid"]!;
             prefs?.setString("vhcidfromdo", GlobalData.frmVhcid);
+
             GlobalData.frmGeoCodeAsal = items["dloorigin"];
             GlobalData.frmGeoCodeTujuan = items["dlodestination"];
-            if(items["dlodetaildonumber"]==GlobalData.frmDloDoNumber){
+
+            if (items["dlodetaildonumber"] == GlobalData.frmDloDoNumber) {
               GlobalData.frmDloDoNumber = items["dlodetaildonumber"];
             }
+
             GlobalData.frmBujDoNumber = items["dlodonumber"];
-            if (prefs!.getString("imageDo")! != null &&
-                prefs!.getString("imageDo")! != "") {
+
+            if (prefs!.getString("imageDo") != null &&
+                prefs!.getString("imageDo")!.isNotEmpty) {
               imageDo = prefs!.getString("imageDo")!;
             }
-            txtKMOld.text = prefs!.getString("vhckm")!.toString();
+
+            txtKMOld.text = prefs!.getString("vhckm") ?? "";
+          } else {
+            print("dataDo kosong!");
           }
         });
       } else {
@@ -958,9 +982,7 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                                             alert(dialogCtx, 0, "FAKE GPS terdeteksi: $fakeReason", "error");
                                             return;
                                           }
-                                          if (GlobalData.frmDloDoNumber ==
-                                                  null ||
-                                              GlobalData.frmDloDoNumber == "") {
+                                          if (GlobalData.frmDloDoNumber == null || GlobalData.frmDloDoNumber == "") {
                                             Navigator.of(dialogCtx).pop(false);
                                             alert(dialogCtx, 0,
                                                 "DLOCUSTDONUMBER tidak boleh kosong",
@@ -1012,6 +1034,9 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                                               //     "success");
 
                                               //SHOW ALERT SUCCESS
+                                              if(EasyLoading.isShow){
+                                                EasyLoading.dismiss();
+                                              }
                                               final showCtx = globalScaffoldKey.currentContext;
                                               if (showCtx != null) {
                                                 await showDialog(

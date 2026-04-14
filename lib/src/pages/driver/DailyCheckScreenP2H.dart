@@ -135,7 +135,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
       EasyLoading.dismiss();
     }
   }
-
+  var globalMessageErr = "";
   Future<bool> submitInspeksiP2H(Map<String, dynamic> data) async {
     final jsonString = jsonEncode(data);
 
@@ -146,16 +146,18 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
       },
       body: jsonString,
     );
-
+    print("response.body");
+    print(response.body);
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString("km_new", kilometerController.text.toString());
+    prefs.setString("vhcid_last_antrian", globals.p2hVhcid!);
+    prefs.setString("method", "new");
     if (response.statusCode == 200 && response.body.isNotEmpty) {
       try {
         final responseData = jsonDecode(response.body);
 
         if (responseData['status'] == 'success') {
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          prefs.setString("km_new", kilometerController.text.toString());
-          prefs.setString("vhcid_last_antrian", globals.p2hVhcid!);
-          prefs.setString("method", "new");
+
 
           globals.page_inspeksi = "new_driver";
           globals.p2hVhcid = globals.p2hVhcid;
@@ -165,6 +167,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
           return true;
         } else {
           // Gunakan mounted check
+          final responseData2 = jsonDecode(response.body);
+          globalMessageErr = responseData2["message"];
           if (mounted) {
             showDialog(
               context: context,
@@ -182,12 +186,14 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
         }
       } catch (e) {
         print("JSON decode error: $e");
+        final responseData2 = jsonDecode(response.body);
+        globalMessageErr = responseData2["message"];
         if (mounted) {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
               title: Text('Error'),
-              content: Text('Respon tidak valid dari server.'),
+              content: Text('Respon tidak valid dari server. ${responseData2["message"]}'),
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(ctx), child: Text('OK'))
@@ -198,6 +204,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
         return false;
       }
     } else {
+      final responseData2 = jsonDecode(response.body);
+      globalMessageErr = responseData2["message"];
       if (mounted) {
         showDialog(
           context: context,
@@ -224,7 +232,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
     String lat = userLocation?.latitude?.toString() ?? "";
     String lon = userLocation?.longitude?.toString() ?? "";
     String speed = userLocation?.speed?.toString() ?? "";
-
+    //lon = "106.8842442";
+    //lat = "-6.4538807";
     if (lat.isEmpty && lon.isEmpty) {
       if (mounted) {
         alert(
@@ -241,7 +250,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
     // Cek apakah widget masih mounted sebelum validasi
     if (!mounted) return;
 
-    //txtAddr = "INGEO"; BUATT TEST
+    //txtAddr = "INGEO"; //BUATT TEST
     if (txtAddr != null &&
         txtAddr.toString().isNotEmpty &&
         (txtAddr.toString().toUpperCase() == "OUTGEO" ||
@@ -315,8 +324,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
           ? prefs.getString("km_new")
           : kilometerController.text,
       "catatan": notesController.text,
-      "drvid":
-          globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
+      //"drvid":'8194-01.2025.06.09.84',//globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
+      "drvid": globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
       "lon": lon,
       "lat": lat,
       "geoid": geo_id_area,
@@ -330,11 +339,16 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
           ? _locid
           : globals.p2hVhclocid.toString(),
       "userid": username,
+      //"imeiid": "3d011a9d72e23c29",
       "imeiid": prefs.getString("androidID"),
       "inspeksi_result": result, // ✅ SUDAH UNIQUE
     };
 
     // === Jika Driver: Tampilkan Dialog Konfirmasi Submit ===
+    //globals.p2hVhcDriver = "yes";
+    print(data);
+    print('globals.p2hVhcDriver');
+    print(globals.p2hVhcDriver);
     if (globals.p2hVhcDriver == "yes") {
       if (mounted) {
         _showConfirmationDialog(
@@ -345,7 +359,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
               _isSubmitting = true;
             });
             _showSavingOverlay();
-            bool isSuccess = await submitInspeksiP2H(data);
+            bool isSuccess = await submitInspeksiP2H(data);//1
             _hideSavingOverlay();
             if (mounted) {
               setState(() {
@@ -378,8 +392,9 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
                 });
               }
             } else {
+              _hideSavingOverlay();
               if (mounted) {
-                alert(globalScaffoldKey.currentContext!, 0, "Gagal membuat p2h",
+                alert(globalScaffoldKey.currentContext!, 0, "Failed membuat P2H ${globalMessageErr}",
                     "error");
               }
             }
@@ -392,6 +407,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
         _isSubmitting = true;
       });
       _showSavingOverlay();
+      print(data);
+      print('imeiid');
       var isSuccess = await submitInspeksiP2H(data);
       _hideSavingOverlay();
       if (mounted) {
@@ -401,7 +418,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
       }
       if (!isSuccess) {
         if (mounted) {
-          alert(globalScaffoldKey.currentContext!, 0, "Gagal membuat p2h",
+          alert(globalScaffoldKey.currentContext!, 0, "Gagal membuat P2H ${globalMessageErr}",
               "error");
         }
       } else {

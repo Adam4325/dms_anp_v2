@@ -17,6 +17,7 @@ class ViewAntrianNgepok extends StatefulWidget {
 }
 
 class _ViewAntrianNgepokState extends State<ViewAntrianNgepok> {
+  static const Color _softOrange = Color(0xFFFFA657);
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController txtNotes = new TextEditingController();
   ProgressDialog? pr;
@@ -48,9 +49,10 @@ class _ViewAntrianNgepokState extends State<ViewAntrianNgepok> {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: _softOrange,
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
+              color: Colors.white,
               iconSize: 20.0,
               onPressed: () {
                 _goBack(context);
@@ -59,7 +61,7 @@ class _ViewAntrianNgepokState extends State<ViewAntrianNgepok> {
             //backgroundColor: Colors.transparent,
             //elevation: 0.0,
             centerTitle: true,
-            title: Text('List Antrian DO')),
+            title: Text('List Antrian DO',style: TextStyle(color: Colors.white))),
         body: new Container(
           key: globalScaffoldKey,
           margin: const EdgeInsets.only(top: 5.0),
@@ -287,7 +289,7 @@ class _ViewAntrianNgepokState extends State<ViewAntrianNgepok> {
       locid = prefs.getString("locid")!;
       vhcid = prefs.getString("vhcid")!;
       userid = prefs.getString("name")!;
-      String bujnumber = prefs.getString("bujnumber")!;
+      String bujnumber = prefs.getString("bujnumber").toString() ?? "";
       if (bujnumber == null || bujnumber == '') {
         alert(
             globalScaffoldKey.currentContext!,
@@ -396,7 +398,7 @@ class _ViewAntrianNgepokState extends State<ViewAntrianNgepok> {
             height: 150.0,
             width: double.infinity,
             decoration: new BoxDecoration(
-                border: Border.all(color: Colors.blueAccent),
+                border: Border.all(color: Colors.orangeAccent),
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -411,7 +413,7 @@ class _ViewAntrianNgepokState extends State<ViewAntrianNgepok> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.blueAccent, Colors.blue],
+                        colors: [Colors.orangeAccent, Colors.orange],
                       ),
                       borderRadius: new BorderRadius.only(
                           topLeft: new Radius.circular(15.0),
@@ -462,7 +464,7 @@ class _ViewAntrianNgepokState extends State<ViewAntrianNgepok> {
                               color: Colors.white,
                               size: 20.0,
                             ),
-                            label: Text("Refresh"),
+                            label: Text("Refresh",style: TextStyle(color:Colors.white)),
                             onPressed: () async {
                               try {
                                 await getAntrianLast();
@@ -481,7 +483,7 @@ class _ViewAntrianNgepokState extends State<ViewAntrianNgepok> {
                             },
                             style: ElevatedButton.styleFrom(
                                 elevation: 0.0,
-                                backgroundColor: Colors.blue,
+                                backgroundColor: _softOrange,
                                 padding: EdgeInsets.symmetric(
                                     horizontal: 20, vertical: 10),
                                 textStyle: TextStyle(
@@ -584,7 +586,7 @@ class _ViewAntrianNgepokState extends State<ViewAntrianNgepok> {
                     color: Colors.white,
                     size: 15.0,
                   ),
-                  label: Text("Submit"),
+                  label: Text("Submit",style: TextStyle(color:Colors.white)),
                   onPressed: () async {
                     showDialog(
                       context: globalScaffoldKey.currentContext!,
@@ -623,12 +625,18 @@ class _ViewAntrianNgepokState extends State<ViewAntrianNgepok> {
                                 alert(globalScaffoldKey.currentContext!, 0,
                                     "DO Date tidak boleh kosong", "error");
                               } else {
-                                String method = prefs.getString("method")!;
+                                String method = prefs.getString("method").toString()??"";
+                                print("method");
+                                print(method);
                                 if (method == "new") {
+                                  print("nodonew");
+                                  print(nodo);
                                   await createAntrianNewDriver(dlodate, nodo);
-                                  getAntrianLast();
-                                  await UpdateReceiveLogDo();
+                                  //getAntrianLast();
+                                  //await UpdateReceiveLogDo();
                                 } else {
+                                  print("nodo");
+                                  print(nodo);
                                   await createAntrian(dlodate, nodo);
                                   getAntrianLast();
                                   await UpdateReceiveLogDo();
@@ -665,7 +673,7 @@ class _ViewAntrianNgepokState extends State<ViewAntrianNgepok> {
                   },
                   style: ElevatedButton.styleFrom(
                       elevation: 0.0,
-                      backgroundColor: Colors.blueAccent,
+                      backgroundColor: _softOrange,
                       padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                       textStyle:

@@ -479,7 +479,7 @@ class _FrmVerifikasiObpState extends State<FrmVerifikasiObp> {
                                   onPressed: () async {
                                     print('close data');
                                     Navigator.of(dialogContex).pop(false);
-                                    if(txtBpNBR.text=='' || txtBpNBR.text==null){
+                                    if(txtBpNBR.text==''){
                                       EasyLoading.showError("Back to close another data");
                                     }else{
                                       SaveObp(context);
