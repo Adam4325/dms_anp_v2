@@ -155,10 +155,11 @@ class _ViewDashboardState extends State<ViewDashboard>
   bool _isLoadingRunningInfo = false;
 
   String _normalizedStatusKaryawan() => statusKaryawanInfo.trim().toUpperCase();
-  bool _isRunningInfoAllowedRole() =>
-      _normalizedStatusKaryawan() == 'DRIVER' ||
-      _normalizedStatusKaryawan() == 'KARYAWAN';
-  String _runningInfoTypeForRole() => _normalizedStatusKaryawan();
+  bool _isRunningInfoAllowedRole() => true;
+  String _runningInfoTypeForRole() {
+    final role = _normalizedStatusKaryawan();
+    return (role == 'DRIVER' || role == 'KARYAWAN') ? role : 'ALL';
+  }
 
   Future<void> initUniqueIdentifierState() async {
     String? identifier;
@@ -1328,9 +1329,11 @@ class _ViewDashboardState extends State<ViewDashboard>
       final filteredType = _runningInfoTypeForRole();
       final items = decoded
           .whereType<Map>()
-          .where((e) =>
-              (e['intype'] ?? '').toString().trim().toUpperCase() ==
-              filteredType)
+          .where((e) {
+            if (filteredType == 'ALL') return true;
+            return (e['intype'] ?? '').toString().trim().toUpperCase() ==
+                filteredType;
+          })
           .map((e) => (e['teks_informasi'] ?? '').toString().trim())
           .where((text) => text.isNotEmpty)
           .toList();

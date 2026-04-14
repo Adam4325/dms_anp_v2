@@ -322,8 +322,8 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
       drvid = prefs.getString("drvid")!;
       prefs.setString("km_new", vhckm);
       prefs.setString("vhcid_last_antrian", vhcid);
-      locid = prefs.getString("locid")!;
-      String name = prefs.getString("name")!;
+      locid = prefs.getString("locid").toString() ?? "";
+      String name = prefs.getString("name").toString() ??"";
       var urlData =
           "${GlobalData.baseUrl}api/update_km_vehicle.jsp?method=update_vhc&vhcid=" +
               vhcid +
@@ -415,7 +415,7 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
   }
 
   void updateKMStandby(
-      String bujnumber, BuildContext context, String vhckm, int isBack) async {
+      String bujnumber, String vhckm, int isBack) async {
     String km = "";
     SharedPreferences prefs =
         await SharedPreferences.getInstance(); // SEMENTARA
@@ -445,57 +445,25 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
       var response =
           await http.get(myUri, headers: {"Accept": "application/json"});
 
+      final body = json.decode(response.body);
+      final nextStatusCode = body["status_code"]?.toString() ?? "";
+      final nextMessage = body["message"]?.toString() ?? "";
+
+      if (!mounted) return;
       setState(() {
-        status_code = json.decode(response.body)["status_code"];
-        message = json.decode(response.body)["message"];
-        if (status_code != null && status_code == "200") {
-          //prefs.remove("bujnumber");
-          // print(status_code);
-          // print(message);
-          // //SHOW ALERT SUCCESS
-          alert(context, 1, message, "Success");
-          Timer(Duration(seconds: 2), () {
-            // 5s over, navigate to a new page
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => ViewDashboard()));
-          });
-          //END ALERT SUCCESS
-          // Timer(Duration(seconds: 1), () {
-          //   // 5s over, navigate to a new page
-          //   showDialog(
-          //     context: context,
-          //     builder: (context) => new AlertDialog(
-          //       title: new Text('Information'),
-          //       content: new Text(message),
-          //       actions: <Widget>[
-          //         new ElevatedButton.icon(
-          //           icon: Icon(
-          //             Icons.close,
-          //             color: Colors.white,
-          //             size: 20.0,
-          //           ),
-          //           label: Text("Ok"),
-          //           onPressed: () {
-          //             Navigator.of(context).pop(false);
-          //             Navigator.pushReplacement(
-          //                 context,
-          //                 MaterialPageRoute(
-          //                     builder: (context) => ViewDashboard()));
-          //           },
-          //           style: ElevatedButton.styleFrom(
-          //               elevation: 0.0,
-          //               backgroundColor: Colors.blue,
-          //               padding:
-          //                   EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-          //               textStyle: TextStyle(
-          //                   fontSize: 10, fontWeight: FontWeight.bold)),
-          //         )
-          //       ],
-          //     ),
-          //   );
-          // });
-        }
+        status_code = nextStatusCode;
+        message = nextMessage;
       });
+
+      if (!mounted) return;
+      if (status_code == "200") {
+        alert(this.context, 1, message, "Success");
+        Timer(Duration(seconds: 2), () {
+          if (!mounted) return;
+          Navigator.pushReplacement(
+              this.context, MaterialPageRoute(builder: (context) => ViewDashboard()));
+        });
+      }
     }
   }
 
@@ -1233,8 +1201,7 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                             onPressed: () async {
                             SharedPreferences prefs =
                                 await SharedPreferences.getInstance();
-                            String vhcidNew = prefs.getString(
-                                "vhcidfromdo")!; //==null || prefs.getString("vhcidfromdo")==""?txtNopol.text:prefs.getString("vhcidfromdo");
+                            String vhcidNew = prefs.getString("vhcidfromdo").toString() ??""; //==null || prefs.getString("vhcidfromdo")==""?txtNopol.text:prefs.getString("vhcidfromdo");
                             String km_awal = txtKMOld.value.text.toString();
                             String km_new = txtKM.value.text.toString();
 
@@ -1325,7 +1292,6 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
                                         print('Close DO');
                                          updateKMStandby(
                                             prefs.getString("bujnumber")!,
-                                            context,
                                             txtKM.text,
                                             0);
                                       },

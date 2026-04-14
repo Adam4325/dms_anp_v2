@@ -410,76 +410,77 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(
+              insetPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
               title: Text("View PDF - $safePonbr"),
               contentPadding: EdgeInsets.fromLTRB(12, 12, 12, 8),
               content: SizedBox(
                 width: double.maxFinite,
+                height: MediaQuery.of(ctx).size.height * 0.72,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.max,
                   children: [
-                    SizedBox(
-                      height: 380,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: FutureBuilder<String>(
-                          future: pdfFuture,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return Center(
+                    Expanded(
+                      child: FutureBuilder<String>(
+                        future: pdfFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(
+                                      color: primaryOrange),
+                                  SizedBox(height: 8),
+                                  Text("Menyiapkan PDF..."),
+                                ],
+                              ),
+                            );
+                          }
+                          if (snapshot.hasError || !snapshot.hasData) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    CircularProgressIndicator(
-                                        color: primaryOrange),
+                                    Icon(Icons.picture_as_pdf_outlined,
+                                        size: 40, color: Colors.grey),
                                     SizedBox(height: 8),
-                                    Text("Menyiapkan PDF..."),
+                                    Text(
+                                      "PDF tidak dapat ditampilkan di dialog.",
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: 8),
+                                    ElevatedButton(
+                                      onPressed: () async {
+                                        final uri = Uri.parse(
+                                            _buildPoPrintReportUrl(
+                                                safePonbr));
+                                        if (await canLaunchUrl(uri)) {
+                                          await launchUrl(uri,
+                                              mode: LaunchMode
+                                                  .externalApplication);
+                                        }
+                                      },
+                                      child: Text("Buka di Browser"),
+                                    ),
                                   ],
                                 ),
-                              );
-                            }
-                            if (snapshot.hasError || !snapshot.hasData) {
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.picture_as_pdf_outlined,
-                                          size: 40, color: Colors.grey),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        "PDF tidak dapat ditampilkan di dialog.",
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      SizedBox(height: 8),
-                                      ElevatedButton(
-                                        onPressed: () async {
-                                          final uri = Uri.parse(
-                                              _buildPoPrintReportUrl(
-                                                  safePonbr));
-                                          if (await canLaunchUrl(uri)) {
-                                            await launchUrl(uri,
-                                                mode: LaunchMode
-                                                    .externalApplication);
-                                          }
-                                        },
-                                        child: Text("Buka di Browser"),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }
-                            return PDFView(
+                              ),
+                            );
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom:25),
+                            child: PDFView(
                               filePath: snapshot.data!,
                               enableSwipe: true,
                               swipeHorizontal: false,
-                              autoSpacing: true,
-                              pageFling: true,
-                            );
-                          },
-                        ),
+                              autoSpacing: false,
+                              pageFling: false,
+                            ),
+                          );
+                        },
                       ),
                     ),
                     SizedBox(height: 10),
@@ -514,15 +515,17 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                         label: Text(isSending ? "Sending..." : "Send to Email"),
                       ),
                     ),
+                    SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text("Close"),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: Text("Close"),
-                ),
-              ],
             );
           },
         );
@@ -647,6 +650,8 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
               indicatorColor: Colors.white,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white70,
+              isScrollable: true,
+              labelPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               onTap: (index) async {
                 if (index == 1) {
                   if (!EasyLoading.isShow) {
@@ -675,10 +680,34 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                 }
               },
               tabs: [
-                Tab(text: 'Outstanding'),
-                Tab(text: 'PO Appr < 5jt'),
-                Tab(text: 'PO Appr >= 5jt'),
-                Tab(text: 'PO Print'),
+                Tab(
+                  child: Text(
+                    'Outstanding',
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                  ),
+                ),
+                Tab(
+                  child: Text(
+                    'PO Approved\n< 5jt',
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                  ),
+                ),
+                Tab(
+                  child: Text(
+                    'PO Approved\n>= 5jt',
+                    textAlign: TextAlign.center,//
+                    maxLines: 2,
+                  ),
+                ),
+                Tab(
+                  child: Text(
+                    'PO Print',
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1075,7 +1104,7 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                     child: isLoadingApprovedGte5jt
                         ? Center(
                         child:
-                        CircularProgressIndicator(color: primaryOrange))
+                        CircularProgressIndicator(color: primaryOrange))//
                         : poApprovedListGte5jt.isEmpty
                         ? Center(
                         child: Text("Tidak ada data",
@@ -1342,8 +1371,12 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                 child: Text("Tidak ada data",
                                     style: TextStyle(color: Colors.grey)))
                             : ListView.builder(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
+                                padding: EdgeInsets.fromLTRB(
+                                  10,
+                                  4,
+                                  10,
+                                  28 + MediaQuery.of(context).padding.bottom,
+                                ),
                                 itemCount: poPrintList.length,
                                 itemBuilder: (context, index) {
                                   var po = poPrintList[index];

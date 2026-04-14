@@ -330,7 +330,7 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
         if (status_code != null && status_code == "200") {
           var _total = json.decode(response.body)["total"];
           total = _total;
-          print('total DO OPEN ${total}');
+          print('total DO OPEN ${total}');//
         }
       });
     }
@@ -350,7 +350,7 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
       locid = prefs.getString("locid")!;
       String name = prefs.getString("name")!;
       var urlData =
-          "${GlobalData.baseUrl}api/do_mixer/update_km_vehicle.jsp?method=update_vhc&vhcid=" +
+          "${GlobalData.baseUrl}api/do_mixer/update_km_vehicle_mixer.jsp?method=update_vhc&vhcid=" +
               vhcid +
               "&vhckm=" +
               vhckm +
@@ -455,7 +455,10 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
   }
 
   void updateKMStandby(
-      String bujnumber, BuildContext context, String vhckm, int isBack) async {
+      String bujnumber, String vhckm, int isBack) async {
+    if(!EasyLoading.isShow){
+      EasyLoading.show();
+    }
     String km = "";
     SharedPreferences prefs =
         await SharedPreferences.getInstance(); // SEMENTARA
@@ -469,7 +472,7 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
       locid = prefs.getString("locid")!;
       String name = prefs.getString("name")!;
       var urlData =
-          "${GlobalData.baseUrl}api/update_km_vehicle.jsp?method=update_vhc-standby&vhcid=" +
+          "${GlobalData.baseUrl}api/update_km_vehicle_mixer.jsp?method=update_vhc-standby&vhcid=" +
               _vhcid +
               "&vhckm=" +
               vhckm +
@@ -484,19 +487,31 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
       var response =
           await http.get(myUri, headers: {"Accept": "application/json"});
 
+      final body = json.decode(response.body);
+      final nextStatusCode = body["status_code"]?.toString() ?? "";
+      final nextMessage = body["message"]?.toString() ?? "";
+
+      if (!mounted) return;
       setState(() {
-        status_code = json.decode(response.body)["status_code"];
-        message = json.decode(response.body)["message"];
-        if (status_code != null && status_code == "200") {
-          // //SHOW ALERT SUCCESS
-          alert(context, 1, message, "Success");
-          Timer(Duration(seconds: 2), () {
-            // 5s over, navigate to a new page
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => ViewDashboard()));
-          });
-        }
+        status_code = nextStatusCode;
+        message = nextMessage;
       });
+
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
+
+      if (!mounted) return;
+      if (status_code == "200") {
+        alert(this.context, 1, message, "Success");
+        Timer(Duration(seconds: 2), () {
+          if (!mounted) return;
+          Navigator.pushReplacement(
+              this.context, MaterialPageRoute(builder: (context) => ViewDashboard()));
+        });
+      } else {
+        alert(this.context, 0, message, "error");
+      }
     }
   }
 
@@ -708,7 +723,7 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
             //backgroundColor: Colors.transparent,
             //elevation: 0.0,
             centerTitle: true,
-            title: Text('Form Set KM')),
+            title: Text('Form Set KM Mixer')),
         //title: Text('Form Set KM B 9575 YU')),//TEST
         body: Container(
           key: scafoldGlobal,
@@ -1460,8 +1475,8 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
                             onPressed: () async {
                               SharedPreferences prefs =
                                   await SharedPreferences.getInstance();
-                              String vhcidNew = prefs.getString(
-                                  "vhcidfromdo")!; //==null || prefs.getString("vhcidfromdo")==""?txtNopol.text:prefs.getString("vhcidfromdo");
+                              String vhcidNew = prefs.getString("vhcidfromdo").toString()??"";
+                              //==null || prefs.getString("vhcidfromdo")==""?txtNopol.text:prefs.getString("vhcidfromdo");
                               String km_awal = txtKMOld.value.text.toString();
                               String km_new = txtKM.value.text.toString();
 
@@ -1516,7 +1531,7 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
                                   context: context,
                                   builder: (context) => new AlertDialog(
                                     title: new Text('Information'),
-                                    content: new Text("Close DO?"),
+                                    content: new Text("Close DO ?"),
                                     actions: <Widget>[
                                       new ElevatedButton.icon(
                                         icon: Icon(
@@ -1548,14 +1563,14 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
                                         ),
                                         label: Text("Ok"),
                                         onPressed: () async {
-                                          //Navigator.of(context).pop(false);
+                                          if (!mounted) return;
+                                          Navigator.of(context).pop(false);
                                           globals.page_inspeksi = '';
                                           globals.p2hVhckm = 0;
-                                          prefs.setString(
-                                              "name_event", "stand_by");
+                                          prefs.setString("name_event", "stand_by");
                                           print('Close DO');
-                                          updateKMStandby(widget.bujnbr!,
-                                              context, txtKM.text, 0);
+                                          updateKMStandby(
+                                              widget.bujnbr!, txtKM.text, 0);
                                         },
                                         style: ElevatedButton.styleFrom(
                                             elevation: 0.0,
