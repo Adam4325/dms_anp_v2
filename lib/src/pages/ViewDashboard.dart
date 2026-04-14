@@ -158,7 +158,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   bool _isRunningInfoAllowedRole() => true;
   String _runningInfoTypeForRole() {
     final role = _normalizedStatusKaryawan();
-    return (role == 'DRIVER' || role == 'KARYAWAN') ? role : 'ALL';
+    return (role == 'DRIVER' || role == 'KARYAWAN') ? role : 'ALL';//
   }
 
   Future<void> initUniqueIdentifierState() async {
