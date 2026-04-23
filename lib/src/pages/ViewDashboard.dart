@@ -1330,9 +1330,10 @@ class _ViewDashboardState extends State<ViewDashboard>
       final items = decoded
           .whereType<Map>()
           .where((e) {
+            final itemType =
+                (e['intype'] ?? '').toString().trim().toUpperCase();
             if (filteredType == 'ALL') return true;
-            return (e['intype'] ?? '').toString().trim().toUpperCase() ==
-                filteredType;
+            return itemType == filteredType || itemType == 'ALL';
           })
           .map((e) => (e['teks_informasi'] ?? '').toString().trim())
           .where((text) => text.isNotEmpty)

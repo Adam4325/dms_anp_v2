@@ -285,21 +285,26 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
     }
   }
 
-  String _buildPoPrintReportUrl(String ponbr) {
-    final uri = Uri.parse('${GlobalData.baseUrlOri}reporting/report_it_po_mobile.jsp')//
+  String _buildPoPrintReportUrl(String ponbr,String cpyname) {
+    //final uri = Uri.parse('${GlobalData.baseUrlOri}reporting/report_it_po_mobile.jsp')//
+    final uri = Uri.parse('${GlobalData.baseUrl}api/po/report_it_po_mobile.jsp')//
         .replace(queryParameters: {
       'method': 'print-po-view-pdf',
-      'jasperFile': 'rpt_order_barang',
+      //'jasperFile': 'rpt_order_barang',
+      'jasperFile': 'rpt_order_barangap_DMS',
       'viewer': 'pdf',
       'fieldName': 'PONBR',
       'fieldValue':  ponbr,//ANPO26001086
       'viewName': 'vpoprintnew',
+      'cpyname': cpyname,
     });//
     return uri.toString();
   }
 
   Future<String> _downloadPoPrintPdfToTempFile(String ponbr) async {
-    final reportUrl = _buildPoPrintReportUrl(ponbr);
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String cpyname = prefs.getString('cpyname').toString()??"";
+    final reportUrl = _buildPoPrintReportUrl(ponbr,cpyname);
     print("PO Print PDF URL: $reportUrl");
     final uri = Uri.parse(reportUrl);
     final res = await http.get(uri);
@@ -454,9 +459,11 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                     SizedBox(height: 8),
                                     ElevatedButton(
                                       onPressed: () async {
+                                        SharedPreferences prefs = await SharedPreferences.getInstance();
+                                        String cpyname = prefs.getString('cpyname').toString() ??"";
                                         final uri = Uri.parse(
                                             _buildPoPrintReportUrl(
-                                                safePonbr));
+                                                safePonbr,cpyname));
                                         if (await canLaunchUrl(uri)) {
                                           await launchUrl(uri,
                                               mode: LaunchMode
