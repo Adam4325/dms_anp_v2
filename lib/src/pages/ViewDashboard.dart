@@ -71,6 +71,8 @@ import 'maintenance/ViewListWoMcByForeMan.dart';
 import 'marketing/ListOpenDOCemindo.dart';
 import 'marketing/ListOpenDoNC.dart';
 import 'mekanik/ListMekanikInspeksiV2.dart';
+import 'aduan/AduanMainPage.dart';
+import 'package:dms_anp/src/services/AduanService.dart';
 
 class ViewDashboard extends StatefulWidget {
   @override
@@ -138,6 +140,8 @@ class _ViewDashboardState extends State<ViewDashboard>
   List<dynamic> data_list_do = [];
   var status_unit = '';
   int points = 0;
+  int _aduanNotifCount = 0;
+  Timer? _aduanNotifTimer;
 
   // ✅ ADDED: Orange Soft Color Scheme
   static const Color primaryOrange = Color(0xFFFF8A50);
@@ -159,6 +163,49 @@ class _ViewDashboardState extends State<ViewDashboard>
   String _runningInfoTypeForRole() {
     final role = _normalizedStatusKaryawan();
     return (role == 'DRIVER' || role == 'KARYAWAN') ? role : 'ALL';//
+  }
+
+  bool _showAduanMenuItem() {
+    final s = _normalizedStatusKaryawan();
+    if (s == 'DRIVER' || s == 'KARYAWAN') {
+      return true;
+    }
+    return username == 'ADMIN' || getAkses('HR') || getAkses('HD');
+  }
+
+  bool _isAduanHandlerForNotif() {
+    return username == 'ADMIN' || getAkses('HR') || getAkses('HD');
+  }
+
+  void _startAduanNotifPoller() {
+    _aduanNotifTimer?.cancel();
+    if (!_isAduanHandlerForNotif()) {
+      return;
+    }
+    _refreshAduanNotifCount();
+    _aduanNotifTimer = Timer.periodic(
+        const Duration(seconds: 30), (_) => _refreshAduanNotifCount());
+  }
+
+  Future<void> _refreshAduanNotifCount() async {
+    if (!mounted || !_isAduanHandlerForNotif()) {
+      return;
+    }
+    final c = await AduanService.fetchUnreadNotifCount(username);
+    if (mounted) {
+      final prev = _aduanNotifCount;
+      setState(() {
+        _aduanNotifCount = c;
+      });
+      if (c > prev && prev >= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ada $c aduan terbuka menunggu tindakan'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> initUniqueIdentifierState() async {
@@ -304,6 +351,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       }
     });
     _fetchRunningInfo();
+    _startAduanNotifPoller();
   }
 
   void _setupMenuItems() {
@@ -661,6 +709,14 @@ class _ViewDashboardState extends State<ViewDashboard>
             idKey: 32,
             title: "Mst Data"));
       }
+    }
+
+    if (_showAduanMenuItem()) {
+      _anpServiceList.add(AnpService(
+          image: Icons.support_agent,
+          color: Colors.deepOrange,
+          idKey: 35,
+          title: "Aduan"));
     }
 
     // ✅ ADDED: Pisahkan menu untuk ADMIN/OP
@@ -1249,6 +1305,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     _isDialogShowing = false;
     _shownNotificationIds.clear();
     _notificationService.dispose();
+    _aduanNotifTimer?.cancel();
     super.dispose();
   }
 
@@ -1919,6 +1976,35 @@ class _ViewDashboardState extends State<ViewDashboard>
                         ),
                       ),
                     ),
+                  if (service.idKey == 35 &&
+                      _aduanNotifCount > 0 &&
+                      _isAduanHandlerForNotif())
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        constraints: BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 14,
+                        ),
+                        child: Text(
+                          _aduanNotifCount > 99
+                              ? '99+'
+                              : _aduanNotifCount.toString(),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -2069,10 +2155,40 @@ class _ViewDashboardState extends State<ViewDashboard>
                 color: (service.color ?? Colors.grey).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
-                service.image,
-                color: service.color,
-                size: 22,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    service.image,
+                    color: service.color,
+                    size: 22,
+                  ),
+                  if (service.idKey == 35 &&
+                      _aduanNotifCount > 0 &&
+                      _isAduanHandlerForNotif())
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _aduanNotifCount > 99
+                              ? '99+'
+                              : _aduanNotifCount.toString(),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             SizedBox(height: 8),
@@ -4348,6 +4464,18 @@ class _ViewDashboardState extends State<ViewDashboard>
       } else {
         _showAlert(globalScaffoldKey.currentContext!, 0,
             "Anda tidak punya akses", "error");
+      }
+    } else if (anpService.idKey == 35) {
+      if (_showAduanMenuItem()) {
+        await _refreshAduanNotifCount();
+        if (!mounted) {
+          return;
+        }
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => AduanMainPage()));
+      } else {
+        _showAlert(
+            globalScaffoldKey.currentContext!, 0, "Akses ditolak", "error");
       }
     } else {
       final ctx = globalScaffoldKey.currentContext!;

@@ -7,6 +7,9 @@ import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/maintenance/ViewListWoMCN.dart';
 import 'package:dms_anp/src/services/NotificationServices.dart';
 import 'package:dms_anp/src/services/PermissionService.dart';
+import 'package:dms_anp/src/services/FcmAduanService.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,11 +27,15 @@ class MyHttpOverrides extends HttpOverrides {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   HttpOverrides.global = new MyHttpOverrides();
   await DatabaseHelper.instance.database;
   runApp(MyApp());
   configLoading();
 }
+
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 void configLoading() {
   EasyLoading.instance
@@ -49,6 +56,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: appNavigatorKey,
       title: 'DMS ANP',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -98,6 +106,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
       print('🔍 DEBUG: Notification Permission: $notifPermission');
       print('🔍 DEBUG: Overlay Permission: $overlayPermission');
+      await FcmAduanService.instance.initialize(navigatorKey: appNavigatorKey);
+      await FcmAduanService.instance.syncTokenIfPossible();
 
       // Lanjutkan ke login check
       _checkLoginStatus();

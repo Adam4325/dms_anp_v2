@@ -1,0 +1,5 @@
+1. Jalankan dms_aduan_maxdb.sql di SAP MaxDB (sesuaikan tipe jika rilis membutuhkan sintaks beda).
+2. Isi DMS_ADUAN_STAFF_NOTIFY dengan username staf yang boleh tinjau/tutup aduan (HR/HD/ADMIN) — wajib agar isHandler & notifikasi bekerja.
+3. Salin aduan_api.jsp ke server webapp: trucking/mobile/api/aduan/aduan_api.jsp
+4. Tomcat: pakai javax.servlet (Tomcat 8/9). Tomcat 10+ pakai namespace jakarta.servlet — ganti import di aduan_api.jsp bila perlu.
+5. Uji: GET https://<host>/trucking/mobile/api/aduan/aduan_api.jsp?method=aduan-list-open&username=ADMIN

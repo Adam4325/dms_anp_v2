@@ -81,6 +81,7 @@ class _PoDetailState extends State<PoDetail> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     List<Map<String, dynamic>> payload = [];
     var userid = prefs.getString("name") ?? '';
+    print(userid);
     for (int i = 0; i < detailList.length; i++) {
       if(!qtyControllers[i].text.isEmpty){
         if(int.parse(qtyControllers[i].text)>0){
@@ -102,7 +103,13 @@ class _PoDetailState extends State<PoDetail> {
       }
 
     }
+    print("payload");
     print(payload);
+    if(payload.isEmpty){
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('QTY tidak boleh 0')));
+      return;
+    }
     try {
       EasyLoading.show(status: 'Updating...');
       var url = Uri.parse(GlobalData.baseUrl + "api/po/update_po_detail.jsp");
