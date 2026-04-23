@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dms_anp/src/Helper/Provider.dart';
+import 'package:dms_anp/firebase_options_manual.dart';
 import 'package:dms_anp/src/pages/aduan/AduanMainPage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -12,7 +13,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Required for handling background FCM callback in a separate isolate.
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: ManualFirebaseOptions.currentPlatform,
+  );
 }
 
 class FcmAduanService {

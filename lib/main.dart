@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/model/NotificationData.dart';
 import 'package:dms_anp/src/loginPage.dart';
+import 'package:dms_anp/firebase_options_manual.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/maintenance/ViewListWoMCN.dart';
 import 'package:dms_anp/src/services/NotificationServices.dart';
@@ -27,7 +28,9 @@ class MyHttpOverrides extends HttpOverrides {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: ManualFirebaseOptions.currentPlatform,
+  );
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   HttpOverrides.global = new MyHttpOverrides();
   await DatabaseHelper.instance.database;

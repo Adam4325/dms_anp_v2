@@ -45,10 +45,26 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
   List poPrintList = [];
   bool isLoadingPoPrint = true;
   String searchPoPrintQuery = '';
+  List outstandingPrList = [];
+  bool isLoadingOutstandingPr = true;
+  String searchOutstandingPrQuery = '';
+  List<Map<String, dynamic>> outstandingPrDetailList = [];
+
+  String _j(dynamic row, List<String> keys) {
+    if (row is! Map) return '';
+    for (final k in keys) {
+      final v = row[k];
+      if (v != null && v.toString().trim().isNotEmpty) {
+        return v.toString();
+      }
+    }
+    return '';
+  }
 
   @override
   void initState() {
     super.initState();
+    fetchOutstandingPrData('');
     fetchPoData('');
     fetchPoApprovedDataGte5jt('');
     fetchPoPrintData('');
@@ -101,6 +117,96 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
     }
   }
 
+  Future<void> fetchOutstandingPrData(String search) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var username = prefs.getString('name');
+    final hasAksesPO = globals.akses_pages != null &&
+        globals.akses_pages.where((x) => x == "PO" || username == "ADMIN").isNotEmpty;
+    if (hasAksesPO) {
+      setState(() {
+        isLoadingOutstandingPr = true;
+      });
+      try {
+        print('${GlobalData.baseUrl}api/po/list_header_oustanding_pr.jsp');
+        final url =
+            Uri.parse('${GlobalData.baseUrl}api/po/list_header_oustanding_pr.jsp')
+            .replace(queryParameters: {
+          if (search.trim().isNotEmpty) 'search': search.trim(),
+        });
+        print(url);
+        final res = await http.get(url);
+        if (res.statusCode == 200) {
+          final body = json.decode(res.body);
+          if (body is Map &&
+              (body['status']?.toString().toLowerCase() == 'success' ||
+                  body['status_code']?.toString() == '200')) {
+            setState(() {
+              outstandingPrList = body['data'] is List ? body['data'] : [];
+              isLoadingOutstandingPr = false;
+            });
+            return;
+          } else if (body is List) {
+            setState(() {
+              outstandingPrList = body;
+              isLoadingOutstandingPr = false;
+            });
+            return;
+          }
+        }
+      } catch (e) {
+        // Endpoint belum ada, fallback ke list kosong.
+      }
+    }
+    setState(() {
+      outstandingPrList = [];
+      isLoadingOutstandingPr = false;
+    });
+  }
+
+  Future<void> fetchOutstandingPrDetail(String pbnbr) async {
+    setState(() {
+      outstandingPrDetailList = [];
+    });
+    try {
+      final url = Uri.parse(
+              '${GlobalData.baseUrl}api/po/list_detail_outsanding_pr.jsp')//ponbr=ANPR26002728&method=getDetailPR
+          .replace(queryParameters: {
+        'method': 'getDetailPR',
+        'pbnbr': pbnbr,
+      });
+      print(url);
+      final res = await http.get(url);
+      if (res.statusCode == 200) {
+        final body = json.decode(res.body);
+        if (body is Map &&
+            (body['status']?.toString().toLowerCase() == 'success' ||
+                body['status_code']?.toString() == '200')) {
+          final data = body['data'];
+          if (data is List) {
+            setState(() {
+              outstandingPrDetailList = data
+                  .whereType<Map>()
+                  .map((e) => Map<String, dynamic>.from(e))
+                  .toList();
+            });
+            return;
+          }
+        } else if (body is List) {
+          setState(() {
+            outstandingPrDetailList = body
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList();
+          });
+          return;
+        }
+      }
+    } catch (_) {}
+    setState(() {
+      outstandingPrDetailList = [];
+    });
+  }
+
   Widget buildSearchField() {
     return Padding(
       padding: EdgeInsets.all(10.0),
@@ -121,6 +227,84 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
           searchQuery = val;
           fetchPoData(searchQuery);
         },
+      ),
+    );
+  }
+
+  Widget buildSearchFieldOutstandingPr() {
+    return Padding(
+      padding: EdgeInsets.all(10.0),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: "Cari PR Number / Warehouse / User",
+          hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
+          filled: true,
+          fillColor: lightOrange,
+          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          prefixIcon: Icon(Icons.search, color: primaryOrange),
+        ),
+        onChanged: (val) {
+          searchOutstandingPrQuery = val;
+          fetchOutstandingPrData(searchOutstandingPrQuery);
+        },
+      ),
+    );
+  }
+
+  Future<void> _showOutstandingPrDetailDialog(String pbnbr) async {
+    if (!EasyLoading.isShow) {
+      EasyLoading.show();
+    }
+    await fetchOutstandingPrDetail(pbnbr);
+    if (EasyLoading.isShow) {
+      EasyLoading.dismiss();
+    }
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Detail Outstanding PR'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: outstandingPrDetailList.isEmpty
+              ? Text('Tidak ada detail untuk $pbnbr')
+              : ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: outstandingPrDetailList.length,
+                  separatorBuilder: (_, __) => Divider(height: 14),
+                  itemBuilder: (context, idx) {
+                    final d = outstandingPrDetailList[idx];
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _kv('PBNBR', _j(d, ['pbnbr', 'PBNBR'])),
+                        _kv('PBLINENBR', _j(d, ['pblinenbr', 'PBLINENBR'])),
+                        _kv('ITDITEMID', _j(d, ['itditemid', 'ITDITEMID'])),
+                        _kv('PARTNAME', _j(d, ['partname', 'PARTNAME'])),
+                        _kv('MERK', _j(d, ['merk', 'MERK'])),
+                        _kv('GENUINENO', _j(d, ['genuineno', 'GENUINENO'])),
+                        _kv('IDTYPE', _j(d, ['idtype', 'IDTYPE'])),
+                        _kv('IDACCESS', _j(d, ['idaccess', 'IDACCESS'])),
+                        _kv('TYPEPO', _j(d, ['typepo', 'TYPEPO'])),
+                        _kv('TOWAREHOUSE', _j(d, ['towarehouse', 'TOWAREHOUSE'])),
+                        _kv('QTY', _j(d, ['qty', 'QTY'])),
+                        _kv('UOMID', _j(d, ['uomid', 'UOMID'])),
+                        _kv('PBNOTES', _j(d, ['pbnotes', 'PBNOTES'])),
+                      ],
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Tutup'),
+          )
+        ],
       ),
     );
   }
@@ -658,7 +842,7 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
       },
       child: DefaultTabController(
         key: globalScaffoldKey,
-        length: 4,
+        length: 5,
         child: Scaffold(
           backgroundColor: backgroundColor,
           appBar: AppBar(
@@ -671,7 +855,7 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                 _goBack(context);
               },
             ),
-            title: Text("Outstanding PO",
+            title: Text("PO",
                 style: TextStyle(fontWeight: FontWeight.bold)),
             bottom: TabBar(
               indicatorColor: Colors.white,
@@ -684,7 +868,7 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                   if (!EasyLoading.isShow) {
                     EasyLoading.show();
                   }
-                  await fetchPoApprovedDataLt5jt(searchApprovedQueryLt5jt);
+                  await fetchPoData(searchQuery);
                   if (EasyLoading.isShow) {
                     EasyLoading.dismiss();
                   }
@@ -692,11 +876,19 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                   if (!EasyLoading.isShow) {
                     EasyLoading.show();
                   }
-                  await fetchPoApprovedDataGte5jt(searchApprovedQueryGte5jt);
+                  await fetchPoApprovedDataLt5jt(searchApprovedQueryLt5jt);
                   if (EasyLoading.isShow) {
                     EasyLoading.dismiss();
                   }
                 } else if (index == 3) {
+                  if (!EasyLoading.isShow) {
+                    EasyLoading.show();
+                  }
+                  await fetchPoApprovedDataGte5jt(searchApprovedQueryGte5jt);
+                  if (EasyLoading.isShow) {
+                    EasyLoading.dismiss();
+                  }
+                } else if (index == 4) {
                   if (!EasyLoading.isShow) {
                     EasyLoading.show();
                   }
@@ -709,7 +901,14 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
               tabs: [
                 Tab(
                   child: Text(
-                    'Outstanding',
+                    'Outstanding PR',
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                  ),
+                ),
+                Tab(
+                  child: Text(
+                    'Outstanding PO',
                     textAlign: TextAlign.center,
                     maxLines: 2,
                   ),
@@ -740,6 +939,115 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
           ),
           body: TabBarView(
             children: [
+              Column(
+                children: <Widget>[
+                  buildSearchFieldOutstandingPr(),
+                  Expanded(
+                    child: isLoadingOutstandingPr
+                        ? Center(
+                            child: CircularProgressIndicator(color: primaryOrange))
+                        : outstandingPrList.isEmpty
+                            ? Center(
+                                child: Text("Tidak ada data",
+                                    style: TextStyle(color: Colors.grey)))
+                            : ListView.builder(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                itemCount: outstandingPrList.length,
+                                itemBuilder: (context, index) {
+                                  final pr = outstandingPrList[index];
+                                  return Container(
+                                    margin: EdgeInsets.symmetric(vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: cardColor,
+                                      borderRadius: BorderRadius.circular(14),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: shadowColor,
+                                          spreadRadius: 1,
+                                          blurRadius: 6,
+                                          offset: Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 10),
+                                      title: Text(
+                                        _j(pr, ['pbnbr', 'PBNBR']),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: darkOrange,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      subtitle: Padding(
+                                        padding: EdgeInsets.only(top: 4),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            _kv("PBDATE",
+                                                _j(pr, ['pbdate', 'PBDATE'])),
+                                            _kv("PBNBR",
+                                                _j(pr, ['pbnbr', 'PBNBR'])),
+                                            _kv("TYPEPO",
+                                                _j(pr, ['typepo', 'TYPEPO'])),
+                                            _kv(
+                                                "TOWAREHOUSE",
+                                                _j(pr, ['towarehouse', 'TOWAREHOUSE'])),
+                                            _kv("PBNOTES",
+                                                _j(pr, ['pbnotes', 'PBNOTES'])),
+                                            _kv(
+                                                "CREATED_USER",
+                                                _j(pr, ['created_user', 'CREATED_USER'])),
+                                            _kv(
+                                                "CREATED_DATETIME",
+                                                _j(pr, ['created_datetime', 'CREATED_DATETIME'])),
+                                            SizedBox(height: 8),
+                                            Row(
+                                              children: [
+                                                ElevatedButton(
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        accentOrange,
+                                                    foregroundColor:
+                                                        Colors.white,
+                                                    elevation: 0,
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            horizontal: 12,
+                                                            vertical: 8),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        6)),
+                                                  ),
+                                                  onPressed: () {
+                                                    _showOutstandingPrDetailDialog(
+                                                        _j(pr, ['pbnbr', 'PBNBR']));
+                                                  },
+                                                  child: Text("View Detail",
+                                                      style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.w500)),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                  ),
+                ],
+              ),
               Column(
                 children: <Widget>[
                   buildSearchField(),

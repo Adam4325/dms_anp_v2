@@ -157,6 +157,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   late final Animation<double> _shineAnimation;
   List<String> _runningInfoItems = [];
   bool _isLoadingRunningInfo = false;
+  Set<String> _aduanRoleUsers = <String>{};
 
   String _normalizedStatusKaryawan() => statusKaryawanInfo.trim().toUpperCase();
   bool _isRunningInfoAllowedRole() => true;
@@ -174,12 +175,32 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   bool _isAduanHandlerForNotif() {
-    return username == 'ADMIN' || getAkses('HR') || getAkses('HD');
+    final u = username.trim().toUpperCase();
+    if (u.isEmpty) {
+      return false;
+    }
+    // Notif handler wajib mengikuti role API.
+    return _aduanRoleUsers.contains(u);
+  }
+
+  Future<void> _refreshAduanRoleUsers() async {
+    final users = await AduanService.fetchRoleAksesNotifUsers();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _aduanRoleUsers = users;
+    });
   }
 
   void _startAduanNotifPoller() {
     _aduanNotifTimer?.cancel();
     if (!_isAduanHandlerForNotif()) {
+      if (mounted && _aduanNotifCount != 0) {
+        setState(() {
+          _aduanNotifCount = 0;
+        });
+      }
       return;
     }
     _refreshAduanNotifCount();
@@ -189,6 +210,11 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   Future<void> _refreshAduanNotifCount() async {
     if (!mounted || !_isAduanHandlerForNotif()) {
+      if (mounted && _aduanNotifCount != 0) {
+        setState(() {
+          _aduanNotifCount = 0;
+        });
+      }
       return;
     }
     final c = await AduanService.fetchUnreadNotifCount(username);
@@ -351,6 +377,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       }
     });
     _fetchRunningInfo();
+    await _refreshAduanRoleUsers();
     _startAduanNotifPoller();
   }
 

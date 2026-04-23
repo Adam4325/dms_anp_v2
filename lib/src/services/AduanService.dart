@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 class AduanService {
   static String get _base =>
       '${GlobalData.baseUrl}api/aduan/aduan_api.jsp';
+  static String get _roleAksesNotifBase =>
+      '${GlobalData.baseUrl}api/firebase/role_akses_notif.jsp';
 
   static int _statusCode(dynamic v) {
     if (v == null) {
@@ -60,6 +62,37 @@ class AduanService {
     });
     final res = await http.get(uri, headers: {'Accept': 'application/json'});
     return _parseList(res.body);
+  }
+
+  static Future<Set<String>> fetchRoleAksesNotifUsers() async {
+    try {
+      final uri = Uri.parse(_roleAksesNotifBase).replace(queryParameters: {
+        'method': 'getUserNotif',
+      });
+      final res = await http.get(uri, headers: {'Accept': 'application/json'});
+      if (res.statusCode != 200) {
+        return <String>{};
+      }
+      final j = json.decode(res.body);
+      if (j is! Map<String, dynamic>) {
+        return <String>{};
+      }
+      final status = (j['status'] ?? '').toString().toLowerCase();
+      if (status != 'success') {
+        return <String>{};
+      }
+      final data = j['data'];
+      if (data is! List) {
+        return <String>{};
+      }
+      return data
+          .whereType<Map>()
+          .map((e) => (e['username'] ?? '').toString().trim().toUpperCase())
+          .where((u) => u.isNotEmpty)
+          .toSet();
+    } catch (_) {
+      return <String>{};
+    }
   }
 
   static Future<List<AduanItem>> listMine({

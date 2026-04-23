@@ -1,5 +1,5 @@
 <%@ page contentType="application/json; charset=UTF-8" pageEncoding="UTF-8"
-%><%@ page import="java.sql.*,javax.servlet.http.*,javax.servlet.jsp.*,com.othree.common.Common,java.net.*,java.io.*"
+%><%@ page import="java.sql.*,javax.servlet.http.*,javax.servlet.jsp.*,com.othree.common.Common,java.net.*,java.io.*,java.util.regex.*,java.util.Base64,java.nio.charset.StandardCharsets,java.nio.file.Files,java.nio.file.Paths,java.security.*,java.security.spec.*"
 %><%
   /**
    * Salin ke: {webapp}/trucking/mobile/api/aduan/aduan_api.jsp
@@ -375,10 +375,113 @@
     out.print(jsonOk("[{\"unread\":" + c + "}]"));
   }
 
+  String parseJsonField(String json, String key) {
+    Pattern p = Pattern.compile("\"" + Pattern.quote(key) + "\"\\s*:\\s*\"(.*?)\"", Pattern.DOTALL);
+    Matcher m = p.matcher(json);
+    if (!m.find()) {
+      return "";
+    }
+    String v = m.group(1);
+    return v.replace("\\n", "\n").replace("\\\"", "\"").replace("\\\\", "\\");
+  }
+
+  String base64Url(byte[] data) {
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(data);
+  }
+
+  String buildServiceAccountJwt(String clientEmail, String privateKeyPem, String tokenUri) throws Exception {
+    long now = System.currentTimeMillis() / 1000L;
+    long exp = now + 3600L;
+    String headerJson = "{\"alg\":\"RS256\",\"typ\":\"JWT\"}";
+    String claimJson = "{"
+        + "\"iss\":\"" + esc(clientEmail) + "\","
+        + "\"scope\":\"https://www.googleapis.com/auth/firebase.messaging\","
+        + "\"aud\":\"" + esc(tokenUri) + "\","
+        + "\"iat\":" + now + ","
+        + "\"exp\":" + exp
+        + "}";
+    String header = base64Url(headerJson.getBytes(StandardCharsets.UTF_8));
+    String payload = base64Url(claimJson.getBytes(StandardCharsets.UTF_8));
+    String signingInput = header + "." + payload;
+
+    String cleanPem = privateKeyPem
+        .replace("-----BEGIN PRIVATE KEY-----", "")
+        .replace("-----END PRIVATE KEY-----", "")
+        .replaceAll("\\s", "");
+    byte[] keyBytes = Base64.getDecoder().decode(cleanPem);
+    PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
+    KeyFactory kf = KeyFactory.getInstance("RSA");
+    PrivateKey pk = kf.generatePrivate(spec);
+    Signature sig = Signature.getInstance("SHA256withRSA");
+    sig.initSign(pk);
+    sig.update(signingInput.getBytes(StandardCharsets.UTF_8));
+    String signature = base64Url(sig.sign());
+    return signingInput + "." + signature;
+  }
+
+  String getAccessTokenFromServiceAccount() {
+    HttpURLConnection conn = null;
+    try {
+      String saPath = nvl(Common.getProp("fcm.sa.path")).trim();
+      if (saPath.isEmpty()) {
+        return "";
+      }
+      String json = new String(Files.readAllBytes(Paths.get(saPath)), StandardCharsets.UTF_8);
+      String clientEmail = parseJsonField(json, "client_email");
+      String privateKey = parseJsonField(json, "private_key");
+      String tokenUri = parseJsonField(json, "token_uri");
+      if (clientEmail.isEmpty() || privateKey.isEmpty() || tokenUri.isEmpty()) {
+        return "";
+      }
+
+      String jwt = buildServiceAccountJwt(clientEmail, privateKey, tokenUri);
+      String form = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=" +
+          URLEncoder.encode(jwt, "UTF-8");
+
+      URL url = new URL(tokenUri);
+      conn = (HttpURLConnection) url.openConnection();
+      conn.setRequestMethod("POST");
+      conn.setDoOutput(true);
+      conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+      try (OutputStream os = conn.getOutputStream()) {
+        os.write(form.getBytes(StandardCharsets.UTF_8));
+      }
+
+      InputStream is = conn.getResponseCode() >= 400 ? conn.getErrorStream() : conn.getInputStream();
+      if (is == null) {
+        return "";
+      }
+      StringBuilder sb = new StringBuilder();
+      try (BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+          sb.append(line);
+        }
+      }
+      String body = sb.toString();
+      Matcher m = Pattern.compile("\"access_token\"\\s*:\\s*\"([^\"]+)\"").matcher(body);
+      if (m.find()) {
+        return m.group(1);
+      }
+      return "";
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return "";
+    } finally {
+      if (conn != null) {
+        conn.disconnect();
+      }
+    }
+  }
+
   void sendFcmAduanToHandlers(Connection con, int aduanId, String submitterUsername, String pesan) {
-    String key = nvl(Common.getProp("fcm.server.key")).trim();
-    if (key.isEmpty()) {
+    String accessToken = getAccessTokenFromServiceAccount();
+    if (accessToken.isEmpty()) {
       return;
+    }
+    String projectId = nvl(Common.getProp("fcm.project.id")).trim();
+    if (projectId.isEmpty()) {
+      projectId = "notif-driver";
     }
     String sql =
         "SELECT DISTINCT t.TOKEN " +
@@ -391,7 +494,7 @@
       while (rs.next()) {
         String token = nvl(rs.getString(1)).trim();
         if (!token.isEmpty()) {
-          pushLegacyFcm(key, token, aduanId, submitterUsername, pesan);
+          pushFcmV1(accessToken, projectId, token, aduanId, submitterUsername, pesan);
         }
       }
     } catch (Exception ex) {
@@ -399,44 +502,50 @@
     }
   }
 
-  void pushLegacyFcm(String serverKey, String token, int aduanId, String submitterUsername, String pesan) {
+  void pushFcmV1(String accessToken, String projectId, String token, int aduanId, String submitterUsername, String pesan) {
     HttpURLConnection conn = null;
     try {
-      URL url = new URL("https://fcm.googleapis.com/fcm/send");
+      URL url = new URL("https://fcm.googleapis.com/v1/projects/" + URLEncoder.encode(projectId, "UTF-8") + "/messages:send");
       conn = (HttpURLConnection) url.openConnection();
       conn.setRequestMethod("POST");
       conn.setDoOutput(true);
       conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-      conn.setRequestProperty("Authorization", "key=" + serverKey);
+      conn.setRequestProperty("Authorization", "Bearer " + accessToken);
+
       String safeBody = esc(pesan);
       if (safeBody.length() > 120) {
         safeBody = safeBody.substring(0, 120) + "...";
       }
-      String payload =
-          "{"
-              + "\"to\":\"" + esc(token) + "\","
-              + "\"priority\":\"high\","
-              + "\"notification\":{"
-                + "\"title\":\"Aduan Baru\","
-                + "\"body\":\"" + esc(submitterUsername) + ": " + safeBody + "\""
-              + "},"
-              + "\"data\":{"
-                + "\"type\":\"aduan\","
-                + "\"screen\":\"aduan\","
-                + "\"aduan_id\":\"" + aduanId + "\""
-              + "}"
-          + "}";
-      OutputStream os = conn.getOutputStream();
-      os.write(payload.getBytes("UTF-8"));
-      os.flush();
-      os.close();
+
+      String payload = "{"
+          + "\"message\":{"
+            + "\"token\":\"" + esc(token) + "\","
+            + "\"notification\":{"
+              + "\"title\":\"Aduan Baru\","
+              + "\"body\":\"" + esc(submitterUsername) + ": " + safeBody + "\""
+            + "},"
+            + "\"data\":{"
+              + "\"type\":\"aduan\","
+              + "\"screen\":\"aduan\","
+              + "\"aduan_id\":\"" + aduanId + "\""
+            + "},"
+            + "\"android\":{"
+              + "\"priority\":\"HIGH\""
+            + "}"
+          + "}"
+      + "}";
+
+      try (OutputStream os = conn.getOutputStream()) {
+        os.write(payload.getBytes(StandardCharsets.UTF_8));
+      }
+
       int code = conn.getResponseCode();
       if (code >= 400) {
         InputStream es = conn.getErrorStream();
         if (es != null) {
-          BufferedReader br = new BufferedReader(new InputStreamReader(es));
-          while (br.readLine() != null) { }
-          br.close();
+          try (BufferedReader br = new BufferedReader(new InputStreamReader(es, StandardCharsets.UTF_8))) {
+            while (br.readLine() != null) { }
+          }
         }
       }
     } catch (Exception ex) {

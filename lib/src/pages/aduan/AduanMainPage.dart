@@ -27,6 +27,7 @@ class _AduanMainPageState extends State<AduanMainPage>
 
   bool _canSubmit = false;
   bool _canHandle = false;
+  Set<String> _roleAksesNotifUsers = {};
 
   @override
   void initState() {
@@ -36,14 +37,27 @@ class _AduanMainPageState extends State<AduanMainPage>
 
   Future<void> _loadPrefs() async {
     final p = await SharedPreferences.getInstance();
+    final username = p.getString('username') ?? '';
+    final loginname = p.getString('loginname') ?? '';
+    final statusK = (p.getString('status_karyawan') ?? '').trim().toUpperCase();
+    final drvid = p.getString('drvid') ?? '';
+    final kryid = p.getString('kryid') ?? '';
+    final roleUsers = await AduanService.fetchRoleAksesNotifUsers();
+    final canHandle = _isHandlerFromApiOrFallback(
+      username: username,
+      loginname: loginname,
+      roleUsers: roleUsers,
+    );
+
     setState(() {
-      _username = p.getString('username') ?? '';
-      _loginname = p.getString('loginname') ?? '';
-      _statusK = (p.getString('status_karyawan') ?? '').trim().toUpperCase();
-      _drvid = p.getString('drvid') ?? '';
-      _kryid = p.getString('kryid') ?? '';
+      _username = username;
+      _loginname = loginname;
+      _statusK = statusK;
+      _drvid = drvid;
+      _kryid = kryid;
+      _roleAksesNotifUsers = roleUsers;
       _canSubmit = _statusK == 'DRIVER' || _statusK == 'KARYAWAN';
-      _canHandle = _isHandlerFromPrefs(p);
+      _canHandle = canHandle;
       _tabController?.dispose();
       _tabController = null;
       if (_canSubmit && _canHandle) {
@@ -53,18 +67,34 @@ class _AduanMainPageState extends State<AduanMainPage>
     if (_canSubmit) {
       _refreshMine();
     }
-    if (_canHandle) {
+    if (_canHandle && _roleAksesNotifUsers.isNotEmpty) {
       _refreshOpen();
     }
   }
 
-  bool _isHandlerFromPrefs(SharedPreferences p) {
-    final u = (p.getString('username') ?? '').trim();
-    if (u.toUpperCase() == 'ADMIN') {
+  bool _isHandlerFromApiOrFallback({
+    required String username,
+    required String loginname,
+    required Set<String> roleUsers,
+  }) {
+    // Jika data role dari API kosong, jangan ambil data tab Tinjau.
+    if (roleUsers.isEmpty) {
+      return false;
+    }
+
+    final u = username.trim().toUpperCase();
+    if (u.isEmpty) {
+      return false;
+    }
+
+    // Fallback sesuai pola akses di PoHeaderPage (ADMIN/ETIENNE/BUDI).
+    const localAllow = {'ADMIN', 'ETIENNE', 'BUDI'};
+    if (localAllow.contains(u) || loginname.trim().toUpperCase() == 'ADMIN') {
       return true;
     }
-    final akses = p.getStringList('akses_pages') ?? [];
-    return akses.contains('HR') || akses.contains('HD');
+
+    // Sumber utama akses tinjau/close aduan dari API role_akses_notif.jsp.
+    return roleUsers.contains(u);
   }
 
   @override
@@ -94,7 +124,7 @@ class _AduanMainPageState extends State<AduanMainPage>
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _loadingMine = false);
+        setState(() => _loadingMine = false);//
       }
     }
   }
@@ -127,6 +157,12 @@ class _AduanMainPageState extends State<AduanMainPage>
     if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Isi aduan terlebih dahulu')),
+      );
+      return;
+    }
+    if (text.length > 150) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Maksimal 150 karakter')),
       );
       return;
     }
@@ -196,6 +232,7 @@ class _AduanMainPageState extends State<AduanMainPage>
           TextField(
             controller: _pesanController,
             maxLines: 5,
+            maxLength: 150,
             decoration: const InputDecoration(
               labelText: 'Isi aduan',
               border: OutlineInputBorder(),
@@ -234,6 +271,17 @@ class _AduanMainPageState extends State<AduanMainPage>
   }
 
   Widget _buildStaffPanel() {
+    if (!_canHandle) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            'Akses Tinjau tidak tersedia untuk akun ini',
+            style: TextStyle(color: Colors.grey.shade600),
+          ),
+        ),
+      );
+    }
     if (_loadingOpen) {
       return const Center(child: CircularProgressIndicator());
     }
