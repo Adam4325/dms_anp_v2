@@ -192,6 +192,31 @@ class _AduanMainPageState extends State<AduanMainPage>
     _refreshMine();
   }
 
+  Future<void> _confirmSubmit() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Konfirmasi Submit'),
+        content: const Text(
+          'Pastikan aduan disampaikan sesuai fakta. Informasi yang tidak benar akan dikenakan sanksi sesuai ketentuan perusahaan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await _submit();
+    }
+  }
+
   Future<void> _confirmClose(AduanItem item) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -242,7 +267,7 @@ class _AduanMainPageState extends State<AduanMainPage>
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _submit,
+              onPressed: _confirmSubmit,
               child: const Text('Kirim aduan'),
             ),
           ),
