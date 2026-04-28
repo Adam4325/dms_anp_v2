@@ -421,7 +421,7 @@ class _ViewListWoMCNState extends State<ViewListWoMCN> {
       }
 
       var urlData =
-          "${GlobalData.baseUrlOri}api/create_geofence_area_p2h.jsp?method=list-geofence-area-v1";
+          "${GlobalData.baseUrlOri}api/p2h_driver/create_geofence_area_p2h.jsp?method=list-geofence-area-v1";
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);

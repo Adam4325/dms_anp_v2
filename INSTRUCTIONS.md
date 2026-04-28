@@ -161,6 +161,25 @@ class AppTheme {
 - **Technology**: Java 6 JSP
 - **Authentication**: Session-based (likely)
 
+### JSP API — query **SELECT** saja (read-only, JSON ke mobile)
+
+Untuk endpoint yang **hanya membaca data** (SELECT dari view/tabel), ikuti pola JSP yang sudah stabil di server (contoh: `list_detail_outsanding_pr.jsp` / PR detail):
+
+**Wajib (ringkas):**
+- `DbHandler db = new DbHandler();` lalu `try { ... } finally { db.close(); }`
+- Setelah koneksi: **`db.connectDefault();`**
+- Eksekusi baca: **`ResultSet rs = db.query(sql);`** lalu **`while (rs != null && rs.next()) { ... }`**
+- Susun baris sebagai **`Map<String, Object>`** / **`List<Map<String, Object>>`**, lalu **`Gson gson = new Gson();`** → **`out.print(gson.toJson(result));`**
+- Response sukses yang dipakai app: **`result.put("status", "success");`** dan **`result.put("data", dataList);`**. Jika error: **`status` = `"error"`**, **`message`**, **`data`** list kosong.
+- **`response.setContentType("application/json");`** (dan encoding UTF-8 jika perlu).
+- Parameter string yang dirangkai ke SQL: **`replace("'", "''")`** (minimal). Idealnya pakai **PreparedStatement** jika stack `DbHandler` mendukung.
+
+**Jangan untuk SELECT read-only:**
+- **`db.setAutoCommit(false)`** / **`commit()`** / **`rollback()`** — tidak diperlukan untuk baca saja dan di stack **SAP DBTech JDBC** sering memicu **`Object is closed`** bila digabung dengan pola `getQueryResult` / penutupan resource internal.
+- Jangan mengubah pola transaksi **INSERT/UPDATE** yang memang butuh transaksi; untuk itu lihat **`DBHANDLER.md`** (satu instance `DbHandler`, commit/rollback hanya untuk alur mutasi data).
+
+**Import `DbHandler`:** sesuaikan package di proyek server (umum: `com.othree.common.db.DbHandler`).
+
 ### API Service Updates
 Update `lib/src/Helper/AnpService.dart`:
 

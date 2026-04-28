@@ -75,6 +75,7 @@ class _FrmInventoryState extends State<FrmInventory> {
 
   String userid = "";
   String scanResult = '';
+  String ititemidOri = '';
   String selitdlinenbr = '';
   String selitem_size = '';
   String seltowarehouseid = '';
@@ -138,6 +139,7 @@ class _FrmInventoryState extends State<FrmInventory> {
   void reseTeks() {
     setState(() {
       txtItemID.text = "";
+      ititemidOri = "";
       txtQuantity.text = "1";
       txtUomID.text = "";
       txtType.text = "";
@@ -262,6 +264,15 @@ class _FrmInventoryState extends State<FrmInventory> {
           alert(ctx, 0, "Quantity (QTY) harus lebih dari 0", "error");
         }
       } else {
+        if (globals.inv_trx_type == 'IS-M') {
+          final isAllowed = await _isItemAllowedForIsm(ititemid);
+          if (!isAllowed) {
+            final ctx = globalScaffoldKey.currentContext ?? context;
+            alert(ctx, 2, "itemID tidak ditemukan", "warning");
+            return;
+          }
+        }
+
         EasyLoading.show();
         var encoded =
             Uri.encodeFull("${BASE_URL}api/inventory/create_inv_detail.jsp");
@@ -441,7 +452,7 @@ class _FrmInventoryState extends State<FrmInventory> {
         if (ctx != null) {
           alert(ctx, 0, "Quantity (QTY) tidak boleh kosong", "error");
         }
-      } else if (int.parse(idqty) <= 0) {
+      } else if (double.parse(idqty) <= 0) {
         final ctx = globalScaffoldKey.currentContext;
         if (ctx != null) {
           alert(ctx, 0, "Quantity (QTY) harus lebih dari 0", "error");
@@ -456,7 +467,8 @@ class _FrmInventoryState extends State<FrmInventory> {
           'method': 'update-inv-detail-v1',
           'itdinvtrannbr': itdinvtrannbr,
           'ititemid': ititemid,
-          'idqty': idqty,
+          'ititemidori': ititemidOri,
+          'idqty': idqty??"0.0",
           'uomid': uomid,
           'itdlinenbr': itdlinenbr,
           'username': username,
@@ -471,6 +483,7 @@ class _FrmInventoryState extends State<FrmInventory> {
           'real_qty_bekas': txtRealQtyBekas.text, // Field baru
           'kondisi_barang_bekas': txtKondisiBarangBekas, // Field baru
         };
+        print("UPDATE DATA");
         print(data);
         final response = await http.post(
           urlEncode,
@@ -522,7 +535,7 @@ class _FrmInventoryState extends State<FrmInventory> {
             Future.delayed(Duration(milliseconds: 1));
             final ctx = globalScaffoldKey.currentContext;
             if (ctx != null) {
-              alert(ctx, 0, "Gagal update ${message}", "error");
+              alert(ctx, 0, "Gagal update inventory ${message}", "error");
             }
           }
         } else {
@@ -544,7 +557,7 @@ class _FrmInventoryState extends State<FrmInventory> {
       }
       final ctx = globalScaffoldKey.currentContext;
       if (ctx != null) {
-        alert(ctx, 0, "Client, Gagal Menyimpan Data", "error");
+        alert(ctx, 0, "Client, Gagal Update Inventory Data", "error");
       }
       print(e.toString());
     }
@@ -563,6 +576,19 @@ class _FrmInventoryState extends State<FrmInventory> {
       return;
     }
 
+    if (globals.inv_trx_type == 'IS-M') {
+      print("globals.inv_trx_type");
+      print(globals.inv_trx_type);
+      final isAllowed = await _isItemAllowedForIsm(scanResult);
+      if (!isAllowed) {
+        if (mounted) {
+          final ctx = globalScaffoldKey.currentContext ?? context;
+          alert(ctx, 2, "itemID tidak ditemukan", "warning");
+        }
+        return;
+      }
+    }
+
     setState(() {
       this.scanResult = scanResult;
       txtItemID.text = scanResult;
@@ -574,12 +600,65 @@ class _FrmInventoryState extends State<FrmInventory> {
       if (itemID != null && itemID != '') {
         var url =
             "${BASE_URL}api/inventory/list_item_barcode_mobile.jsp?method=list-items-v1&trx_type=${type_transaction}&warehouseid=${globals.from_ware_house}&towarehouseid=${globals.inv_towarehouse}&vendor=${globals.inv_vendorid}&search=$itemID&is_barcode=1";
+        print("SCAN BARCODE");
         print(url);
         getItemBarcode(url, itemID);
       } else {
         final ctx = globalScaffoldKey.currentContext ?? context;
         alert(ctx, 0, "Item ID kosong", "error");
       }
+    }
+  }
+
+  Future<bool> _isItemAllowedForIsm(String itemId) async {
+    try {
+      // globals.inv_trx_type!,
+      // globals.inv_wonumber!,
+      // globals.inv_trx_number!,
+      // globals.from_ware_house!
+      //print(globals.inv_wonumber);
+      print(globals.inv_trx_number);
+      print(globals.from_ware_house);
+      var _inv_wonumber = globals.inv_wonumber ?? '';
+      final _inv_trx_number = globals.inv_trx_number ?? '';
+      final _from_ware_house = globals.from_ware_house ?? '';
+      if (_inv_trx_number.isEmpty || _from_ware_house.isEmpty) {
+
+        print("SCAN BARCODE wonumber.isEmpty");
+        return false;
+      }
+
+      final url =
+          "${BASE_URL}api/inventory/list_item_sr_katalog_ism_isw.jsp?method=list-items-v1&type=IS-M&wonumber=${Uri.encodeComponent(_inv_wonumber)}&invnumber=${Uri.encodeComponent(_inv_trx_number)}&warehouseid=${Uri.encodeComponent(_from_ware_house)}";
+     print("SCAN BARCODE");
+     print(url);
+      final myUri = Uri.parse(url);
+      final response =
+          await http.get(myUri, headers: {"Accept": "application/json"});
+      if (response.statusCode != 200) {
+        return false;
+      }
+
+      final body = jsonDecode(response.body);
+      if (body is! List) {
+        return false;
+      }
+
+      final target = itemId.trim().toUpperCase();
+      for (final row in body) {
+        if (row is Map) {
+          final map = row as Map;
+          final itemIdVal = (map['item_id'] ?? '').toString().trim().toUpperCase();
+          final itemId2Val = (map['item_id2'] ?? '').toString().trim().toUpperCase();
+          if (itemIdVal == target || itemId2Val == target) {
+            return true;
+          }
+        }
+      }
+      return false;
+    } catch (e) {
+      print("isItemAllowedForIsm error: $e");
+      return false;
     }
   }
 
@@ -668,6 +747,7 @@ class _FrmInventoryState extends State<FrmInventory> {
     // }
     txtInvNumber.text = globals.inv_trx_number ?? '';
     txtItemID.text = globals.inv_ititemid ?? '';
+    ititemidOri = globals.inv_ititemid ?? '';
     txtPartName.text = globals.inv_partname ?? '';
     if (globals.inv_method == "edit") {
       txtQuantity.text = globals.inv_idqty ?? '0';
@@ -905,7 +985,7 @@ class _FrmInventoryState extends State<FrmInventory> {
           color: Colors.white,
           size: 15.0,
         ),
-        label: Text("Update"),
+        label: Text("Update Inv.",style: TextStyle(color:Colors.white)),
         onPressed: () async {
           SharedPreferences prefs =
               await SharedPreferences.getInstance(); //SEMENTARA
@@ -913,7 +993,7 @@ class _FrmInventoryState extends State<FrmInventory> {
             context: context,
             builder: (context) => new AlertDialog(
               title: new Text('Information'),
-              content: new Text("Update Inventory?"),
+              content: new Text("Update data Inventory ?"),
               actions: <Widget>[
                 new ElevatedButton.icon(
                   icon: Icon(
@@ -949,8 +1029,10 @@ class _FrmInventoryState extends State<FrmInventory> {
                     SharedPreferences prefs =
                         await SharedPreferences.getInstance();
                     var username = prefs.getString("name") ?? "";
+                    print('globals.inv_method ${globals.inv_method}');
                     if (globals.inv_method == "edit") {
                       UpdateInventory(username);
+                      print('globals.inv_method 2 ${globals.inv_method}');
                     } else {
                       final ctx = globalScaffoldKey.currentContext;
                       if (ctx != null) {
@@ -1042,7 +1124,7 @@ class _FrmInventoryState extends State<FrmInventory> {
                         backgroundColor:
                             Colors.grey.shade500, // ✅ Gray for No/Cancel
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(8),//
                         ),
                         padding:
                             EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1226,7 +1308,7 @@ class _FrmInventoryState extends State<FrmInventory> {
                     color: Colors.white,
                     size: 15.0,
                   ),
-                  label: Text("Pilih"),
+                  label: Text("Pilih",style: TextStyle(color:Colors.white)),
                   onPressed: () async {
                     Navigator.of(context).pop(false);
                     //print(item);
@@ -1239,7 +1321,8 @@ class _FrmInventoryState extends State<FrmInventory> {
                     txtTypeAccess.text = item['accessories'];
                     txtUomID.text = item['uom_id'];
                     // txtSnTyre.text = item['part_name'];
-                    txtQuantity.text = '0'; //;item['quantity'];
+                    //txtQuantity.text = '0'; //;item['quantity'];
+                    txtQuantity.text =  item['quantity'];
                     txtRealQtyBekas.text = '0';
                     FocusScope.of(context).requestFocus(myFocusNode);
                   },
@@ -1262,7 +1345,7 @@ class _FrmInventoryState extends State<FrmInventory> {
                     color: Colors.white,
                     size: 15.0,
                   ),
-                  label: Text("Close"),
+                  label: Text("Close",style: TextStyle(color:Colors.white)),
                   onPressed: () async {
                     Navigator.of(context).pop(false);
                   },
@@ -1286,62 +1369,13 @@ class _FrmInventoryState extends State<FrmInventory> {
   }
 
   Widget listDataSearchItem(BuildContext context) {
-    return SingleChildScrollView(
-      //shrinkWrap: true,
-      padding: EdgeInsets.all(2.0),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          // Container(
-          //   margin: EdgeInsets.all(10.0),
-          //   child: TextField(
-          //     readOnly: false,
-          //     cursorColor: Colors.black,
-          //     style: TextStyle(color: Colors.grey.shade800),
-          //     controller: txtSearchPartname,
-          //     keyboardType: TextInputType.text,
-          //     decoration: new InputDecoration(
-          //         suffixIcon: IconButton(
-          //           icon: new Image.asset(
-          //             "assets/img/search.png",
-          //             width: 32.0,
-          //             height: 32.0,
-          //           ),
-          //           onPressed: () async {
-          //             if (txtSearchPartname.text != null &&
-          //                 txtSearchPartname.text != "") {
-          //               await getListDataItem(globals.inv_trx_type,globals.inv_wonumber,globals.inv_trx_number,globals.from_ware_house);
-          //             }
-          //           },
-          //         ),
-          //         fillColor: HexColor("FFF6F1BF"),
-          //         filled: true,
-          //         isDense: true,
-          //         labelText: "Partname",
-          //         contentPadding: EdgeInsets.all(5.0),
-          //         border: OutlineInputBorder(
-          //             borderRadius: BorderRadius.all(Radius.circular(25.0)))),
-          //   ),
-          // ),
-          Container(
-              height: MediaQuery.of(context)
-                  .size
-                  .height, // Change as per your requirement
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  padding: const EdgeInsets.all(2.0),
-                  itemCount: dataListItemSearch == null
-                      ? 0
-                      : dataListItemSearch.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return _buildDListDetailItem(
-                        dataListItemSearch[index], index);
-                  }))
-        ],
-      ),
+    return ListView.builder(
+      scrollDirection: Axis.vertical,
+      padding: const EdgeInsets.all(2.0),
+      itemCount: dataListItemSearch.length,
+      itemBuilder: (BuildContext context, int index) {
+        return _buildDListDetailItem(dataListItemSearch[index], index);
+      },
     );
   }
 
@@ -1398,24 +1432,50 @@ class _FrmInventoryState extends State<FrmInventory> {
                                         ),
                                         label: Text("View Opname",style: TextStyle(color:Colors.white)),
                                         onPressed: () async {
-                                          Navigator.of(context, rootNavigator: true).pop();
-                                          getListDataItem(
+                                          final parentContext = globalScaffoldKey.currentContext;
+                                          print('globals.inv_wonumber');
+                                          print(globals.inv_trx_type);
+                                          print(globals.inv_wonumber);
+                                          await getListDataItem(
                                               globals.inv_trx_type!,
                                               globals.inv_wonumber!,
                                               globals.inv_trx_number!,
                                               globals.from_ware_house!);
-                                          await Future.delayed(Duration(milliseconds: 1));
-                                          if (dataListItemSearch.length > 0) {
-                                            print('dataListItemSearch ${dataListItemSearch.length}');
-                                            print('Show dialog');
+                                          if (parentContext != null &&
+                                              dataListItemSearch.isNotEmpty) {
+                                            Navigator.of(context, rootNavigator: true).pop();
                                             showDialog(
-                                                context: globalScaffoldKey.currentContext!,
-                                                builder: (BuildContext context) {
-                                                  return AlertDialog(
-                                                    title: Text('List Detail Item'),
-                                                    content: listDataSearchItem(context),
-                                                  );
-                                                });
+                                              context: parentContext,
+                                              barrierDismissible: true,
+                                              builder: (BuildContext dialogContext) {
+                                                return Dialog(
+                                                  insetPadding: EdgeInsets.zero,
+                                                  child: SizedBox(
+                                                    width: MediaQuery.of(dialogContext).size.width,
+                                                    height: MediaQuery.of(dialogContext).size.height,
+                                                    child: SafeArea(
+                                                      child: Column(
+                                                        children: [
+                                                          ListTile(
+                                                            title: Text('List Detail Item'),
+                                                            trailing: IconButton(
+                                                              icon: Icon(Icons.close),
+                                                              onPressed: () {
+                                                                Navigator.of(dialogContext).pop();
+                                                              },
+                                                            ),
+                                                          ),
+                                                          Divider(height: 1),//
+                                                          Expanded(
+                                                            child: listDataSearchItem(dialogContext),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            );
                                           }
                                         },
                                         style: ElevatedButton.styleFrom(
@@ -1653,9 +1713,10 @@ class _FrmInventoryState extends State<FrmInventory> {
                   Container(
                       margin: EdgeInsets.all(10.0),
                       child: Row(children: <Widget>[
-                        Expanded(
-                          child: _buildButtonCreateOrUpdate(context),
-                        ),
+                        if (globals.inv_method != "edit")
+                          Expanded(
+                            child: _buildButtonCreateOrUpdate(context),
+                          ),
                         SizedBox(
                           width: globals.inv_method == "edit" ? 10 : 0,
                         ),

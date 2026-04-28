@@ -189,13 +189,16 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         if (lstItemID.length > 0) {
           print(lstItemID[0]['item_id']);
           setState(() {
+            print('lstItemID[0][type]');
+            print(lstItemID[0]['type']);
             txtTypeAccessories.text = lstItemID[0]['accessories'];
             txtMerk.text = lstItemID[0]['merk'];
             txtVHTID.text = lstItemID[0]['vhtid'];
             txtGenuinoNumber.text = lstItemID[0]['genuino_number'];
             txtItemSize.text = lstItemID[0]['item_size'];
             txtTypePO.text = lstItemID[0]['typepo'];
-            txtType.text = lstItemID[0]['idtype'];
+            //txtType.text = lstItemID[0]['idtype'];
+            txtType.text = lstItemID[0]['type'];
             txtCurrencyTypeID.text = lstItemID[0]['curyid'];
             txtQuantityOnHands.text = lstItemID[0]['qty_on_hand'];
             txtPartName.text = lstItemID[0]['part_name'];
@@ -264,7 +267,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
       var wh_merk = txtMerk.text;
       var wh_vhtid = txtVHTID.text;
       var wh_genuin_number = txtGenuinoNumber.text;
-      var wh_item_size = txtItemSize.text;
+      var wh_item_size = txtItemSize.text.toString() ?? "-";
       //var wh_qty_on_hands = txtQuantityOnHands.text;
       var wh_qty_on_hands =
           txtQuantityOnHands.text == null || txtQuantityOnHands.text == ""
@@ -613,7 +616,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
           "&warehouseid=${selWareHouseID}"
           "&search=$scanResult"
           "&is_barcode=1";
-      
+      print(url);
       getItemBarcode(url, scanResult);
     }
   }
@@ -644,7 +647,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
               txtPartName.text = (row['part_name'] ?? '').toString();
               txtItemSize.text = (row['item_size'] ?? '').toString();
               txtTypePO.text = (row['typepo'] ?? '').toString();
-              txtType.text = (row['idtype'] ?? '').toString();
+              txtType.text = (row['type'] ?? '').toString();
               txtCurrencyTypeID.text = (row['curyid'] ?? '').toString();
               selCuryID = (row['curyid'] ?? '').toString();
               txtQuantityOnHands.text = (row['quantity'] ?? '0').toString();
@@ -953,7 +956,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
           color: Colors.white,
           size: 15.0,
         ),
-        label: Text("Detail"),
+        label: Text("Detail",style: TextStyle(color:Colors.white)),
         onPressed: () async {
           Timer(Duration(seconds: 1), () {
             // 5s over, navigate to a new page
@@ -975,7 +978,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
           color: Colors.white,
           size: 15.0,
         ),
-        label: Text("Cancel"),
+        label: Text("Cancel",style: TextStyle(color:Colors.white)),
         onPressed: () async {
           reseTeks(false);
         },

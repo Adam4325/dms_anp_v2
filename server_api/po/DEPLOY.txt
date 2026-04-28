@@ -1,0 +1,8 @@
+1. Salin ke Tomcat webapp:
+   - trucking/mobile/api/po/po_receive_header.jsp
+   - trucking/mobile/api/po/po_receive_detail.jsp
+2. Pastikan gson.jar ada di WEB-INF/lib (sama seperti API lain yang pakai Gson).
+3. Jika error "DbHandler cannot be resolved": ubah baris import di kedua JSP ke package DbHandler yang benar di server Anda (mis. com.othree.db.DbHandler).
+4. Uji:
+   GET .../mobile/api/po/po_receive_header.jsp
+   GET .../mobile/api/po/po_receive_detail.jsp?itxinvtrannbr=...

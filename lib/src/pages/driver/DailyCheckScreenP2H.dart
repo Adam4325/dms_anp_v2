@@ -140,7 +140,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
     final jsonString = jsonEncode(data);
 
     final response = await http.post(
-      Uri.parse(GlobalData.baseUrl + 'api/create_form_inspeksi_newv3.jsp'),
+      Uri.parse(GlobalData.baseUrl + 'api/p2h_driver/create_form_inspeksi_newv3.jsp'),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -877,7 +877,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
       }
 
       var urlData =
-          "${GlobalData.baseUrlOri}api/create_geofence_area_p2h.jsp?method=list-geofence-area-v1";
+          "${GlobalData.baseUrlOri}api/p2h_driver/create_geofence_area_p2h.jsp?method=list-geofence-area-v1";
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);

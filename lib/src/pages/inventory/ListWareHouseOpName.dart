@@ -179,6 +179,40 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
     return list;
   }
 
+  Widget _kv(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.black87, fontSize: 12),
+            ),
+          ),
+          const SizedBox(
+            width: 10,
+            child: Text(
+              ":",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.black87, fontSize: 12),
+            ),
+          ),
+          Expanded(
+            flex: 5,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(color: Colors.black87, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget listItemBuilder(value, int index) {
     //print(value["drvid"]);
     return Card(
@@ -207,7 +241,7 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
                     style: TextStyle(
                         color: Colors.black, fontWeight: FontWeight.bold),
                   ),
-                  subtitle: Wrap(children: <Widget>[
+                  subtitle: Wrap(children: <Widget>[ //_kv('PBNBR', _j(d, ['pbnbr', 'PBNBR'])),
                     Text(
                         "\nITEM ID: ${value['wh_item_id']}"
                         "\nPART NAME: ${value['wh_part_name']}"

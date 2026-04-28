@@ -130,7 +130,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
 
   void fetchInspectionData() async {
     var urlBase =
-       GlobalData.baseUrl + 'api/master_data_inspeksi.jsp?method=list-inspeksi-v2&vhcid=${globals.p2hVhcid.toString()}';
+       GlobalData.baseUrl + 'api/p2h_driver/master_data_inspeksi.jsp?method=list-inspeksi-v2&vhcid=${globals.p2hVhcid.toString()}';
     final response = await http.get(Uri.parse(urlBase));
     print(urlBase);
     if (response.statusCode == 200) {
@@ -161,13 +161,13 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
 
       final response = await http.post(
         Uri.parse(
-            GlobalData.baseUrl +  'api/create_form_inspeksi_newv3.jsp'),//
+            GlobalData.baseUrl +  'api/p2h_driver/create_form_inspeksi_newv3.jsp'),//
         headers: {
           'Content-Type': 'application/json',
         },
         body: jsonString,
       );
-      print(GlobalData.baseUrl +  'api/create_form_inspeksi_newv3.jsp');
+      print(GlobalData.baseUrl +  'api/p2h_driver/create_form_inspeksi_newv3.jsp');
       _printLong("submitInspeksiP2H payload: $jsonString");
       _printLong("submitInspeksiP2H response: ${response.body}");
       if (response.statusCode == 200 && response.body.isNotEmpty) {
@@ -831,7 +831,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
       }
 
       var urlData =
-          "${GlobalData.baseUrlOri}api/create_geofence_area_p2h.jsp?method=list-geofence-area-v1";
+          "${GlobalData.baseUrl}api/p2h_driver/create_geofence_area_p2h.jsp?method=list-geofence-area-v1";
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);
@@ -1123,7 +1123,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
               },
             ),
           ),
-          title: Text('Form Inspeksi ${globals.p2hVhcid.toString()}',
+          title: Text('Form Inspeksi ${globals.p2hVhcid.toString()}',//DARI ANTRIAN DRIVER
               style: TextStyle(color: Colors.black)),
         ),
         body: inspections.isEmpty

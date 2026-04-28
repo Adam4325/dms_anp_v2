@@ -1,6 +1,7 @@
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/po/PoDetail.dart';
+import 'package:dms_anp/src/pages/po/PoReceiveDetailPage.dart';
 import 'package:flutter/material.dart';
 import 'package:dms_anp/src/pages/po/ViewDetailApproved.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -45,6 +46,9 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
   List poPrintList = [];
   bool isLoadingPoPrint = true;
   String searchPoPrintQuery = '';
+  List poReceiveList = [];
+  bool isLoadingPoReceive = false;
+  String searchPoReceiveQuery = '';
   List outstandingPrList = [];
   bool isLoadingOutstandingPr = true;
   String searchOutstandingPrQuery = '';
@@ -470,6 +474,66 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
     }
   }
 
+  Future<void> fetchPoReceiveHeader(String search) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var username = prefs.getString('name');
+    final hasAksesPO = globals.akses_pages != null &&
+        globals.akses_pages
+            .where((x) => x == "PO" || username == "ADMIN")
+            .isNotEmpty;
+    if (!hasAksesPO) {
+      setState(() {
+        poReceiveList = [];
+        isLoadingPoReceive = false;
+      });
+      return;
+    }
+    setState(() {
+      isLoadingPoReceive = true;
+    });
+    try {
+      final url =
+          Uri.parse('${GlobalData.baseUrl}api/po/po_receive_header.jsp')
+              .replace(queryParameters: {
+        if (search.trim().isNotEmpty) 'search': search.trim(),
+      });
+      final res = await http.get(url);
+      if (res.statusCode == 200) {
+        final body = json.decode(res.body);
+        if (body is Map &&
+            (body['status_code'] == 200 ||
+                body['status_code']?.toString() == '200')) {
+          final fetched = body['data'] is List ? body['data'] : [];
+          setState(() {
+            poReceiveList = fetched;
+            isLoadingPoReceive = false;
+          });
+          return;
+        }
+        if (body is Map && body['data'] is List) {
+          setState(() {
+            poReceiveList = body['data'];
+            isLoadingPoReceive = false;
+          });
+          return;
+        }
+        if (body is List) {
+          setState(() {
+            poReceiveList = body;
+            isLoadingPoReceive = false;
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    setState(() {
+      poReceiveList = [];
+      isLoadingPoReceive = false;
+    });
+  }
+
   String _buildPoPrintReportUrl(String ponbr, String cpyname) {
     final uri = Uri.parse(
             '${GlobalData.baseUrlOri}reporting/report_it_po_mobile.jsp') //
@@ -832,6 +896,30 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
     );
   }
 
+  Widget buildSearchFieldPoReceive() {
+    return Padding(
+      padding: EdgeInsets.all(10.0),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: "Cari trx / PO / vendor / nota",
+          hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
+          filled: true,
+          fillColor: lightOrange,
+          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          prefixIcon: Icon(Icons.search, color: primaryOrange),
+        ),
+        onChanged: (val) {
+          searchPoReceiveQuery = val;
+          fetchPoReceiveHeader(searchPoReceiveQuery);
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -842,7 +930,7 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
       },
       child: DefaultTabController(
         key: globalScaffoldKey,
-        length: 5,
+        length: 6,
         child: Scaffold(
           backgroundColor: backgroundColor,
           appBar: AppBar(
@@ -896,6 +984,14 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                   if (EasyLoading.isShow) {
                     EasyLoading.dismiss();
                   }
+                } else if (index == 5) {
+                  if (!EasyLoading.isShow) {
+                    EasyLoading.show();
+                  }
+                  await fetchPoReceiveHeader(searchPoReceiveQuery);
+                  if (EasyLoading.isShow) {
+                    EasyLoading.dismiss();
+                  }
                 }
               },
               tabs: [
@@ -930,6 +1026,13 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                 Tab(
                   child: Text(
                     'PO Print',
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                  ),
+                ),
+                Tab(
+                  child: Text(
+                    'PO Receive',
                     textAlign: TextAlign.center,
                     maxLines: 2,
                   ),
@@ -1799,6 +1902,134 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
                                                           ponbr: ponbr,
                                                           email: cpyemail),
                                                   child: Text("View PDF",
+                                                      style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.w500)),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                  ),
+                ],
+              ),
+              Column(
+                children: <Widget>[
+                  buildSearchFieldPoReceive(),
+                  Expanded(
+                    child: isLoadingPoReceive
+                        ? Center(
+                            child: CircularProgressIndicator(
+                                color: primaryOrange))
+                        : poReceiveList.isEmpty
+                            ? Center(
+                                child: Text("Tidak ada data",
+                                    style: TextStyle(color: Colors.grey)))
+                            : ListView.builder(
+                                padding: EdgeInsets.fromLTRB(
+                                  10,
+                                  4,
+                                  10,
+                                  28 + MediaQuery.of(context).padding.bottom,
+                                ),
+                                itemCount: poReceiveList.length,
+                                itemBuilder: (context, index) {
+                                  final row = poReceiveList[index];
+                                  final trx = _j(row,
+                                      ['itxinvtrannbr', 'ITXINVTRANNBR']);
+                                  final trxd = _j(row,
+                                      ['itxinvtrandate', 'ITXINVTRANDATE']);
+                                  final wh = _j(
+                                      row, ['towarehouse', 'TOWAREHOUSE']);
+                                  final nota = _j(
+                                      row, ['notanumber', 'NOTANUMBER']);
+                                  final pon =
+                                      _j(row, ['ponbr', 'PONBR']);
+                                  final vendor =
+                                      _j(row, ['vendor', 'VENDOR']);
+                                  final cu = _j(row,
+                                      ['created_user', 'CREATED_USER']);
+                                  return Container(
+                                    margin:
+                                        EdgeInsets.symmetric(vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: cardColor,
+                                      borderRadius: BorderRadius.circular(14),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: shadowColor,
+                                          spreadRadius: 1,
+                                          blurRadius: 6,
+                                          offset: Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 10),
+                                      title: Text(
+                                        trx.isNotEmpty ? trx : pon,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: darkOrange,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      subtitle: Padding(
+                                        padding: EdgeInsets.only(top: 4),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            _kv("Tanggal", trxd),
+                                            _kv("Warehouse", wh),
+                                            _kv("Nota", nota),
+                                            _kv("PO", pon),
+                                            _kv("Vendor", vendor),
+                                            _kv("User", cu),
+                                            SizedBox(height: 8),
+                                            Row(
+                                              children: [
+                                                ElevatedButton(
+                                                  style: ElevatedButton
+                                                      .styleFrom(
+                                                    backgroundColor:
+                                                        accentOrange,
+                                                    foregroundColor:
+                                                        Colors.white,
+                                                    elevation: 0,
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            horizontal: 12,
+                                                            vertical: 8),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6),
+                                                    ),
+                                                  ),
+                                                  onPressed: trx.isEmpty
+                                                      ? null
+                                                      : () {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (ctx) =>
+                                                                  PoReceiveDetailPage(
+                                                                itxinvtrannbr:
+                                                                    trx,
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                  child: Text("Detail",
                                                       style: TextStyle(
                                                           fontSize: 13,
                                                           fontWeight:
