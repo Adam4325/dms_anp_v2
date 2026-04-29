@@ -204,6 +204,7 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
         "merk": value['merk'],
         "sntyre": value['sntyre'],
         "idrealqty": value['idrealqty'],
+        "vhtid": value['vhtid'],
       });
     });
     return list;
@@ -316,6 +317,7 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
                     globals.inv_sntyre = value['sntyre'];
                     globals.inv_idrealqty = value['idrealqty'];
                     globals.inv_itdlinenbr = value['itdlinenbr'];
+                    globals.inv_vhtid = value['vhtid'];
                     globals.inv_method = "edit";
                     print(globals.inv_itdlinenbr);
                     var isIsm = widget.invTrxStatusBarang;

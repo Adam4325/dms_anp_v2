@@ -947,7 +947,9 @@ class _FrmInventoryState extends State<FrmInventory> {
           title: 'UOM ID',
           selectedValue: selUomID,
           placeholder: 'Pilih satu',
-          onChange: (selected) => setState(() => selUomID = selected.value!),
+          onChange: globals.inv_method == "edit"
+              ? null
+              : (selected) => setState(() => selUomID = selected.value!),
           choiceItems: S2Choice.listFrom<String, Map>(
               source: lstSelUomID,
               value: (index, item) => item['uomid'],

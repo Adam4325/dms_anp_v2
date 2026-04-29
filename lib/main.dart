@@ -186,7 +186,7 @@ class _MyHomePageState extends State<MyHomePage> {
         return AlertDialog(
           title: Row(
             children: [
-              Icon(Icons.notifications, color: Colors.blue),
+              Icon(Icons.notifications, color: Colors.blue),//
               SizedBox(width: 8),
               Text('Notifikasi Baru'),
             ],
