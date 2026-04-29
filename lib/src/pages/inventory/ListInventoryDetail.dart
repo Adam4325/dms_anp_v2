@@ -205,6 +205,8 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
         "sntyre": value['sntyre'],
         "idrealqty": value['idrealqty'],
         "vhtid": value['vhtid'],
+        "genuine_no": value['genuine_no'],
+        "genuineno": value['genuineno'],
       });
     });
     return list;
@@ -276,25 +278,6 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
             decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
             child: Container(
               child: Row(children: <Widget>[
-                // Expanded(
-                //     child: ElevatedButton.icon(
-                //   icon: Icon(
-                //     Icons.camera,
-                //     color: Colors.white,
-                //     size: 15.0,
-                //   ),
-                //   label: Text("Edit"),
-                //   onPressed: () {},
-                //   style: ElevatedButton.styleFrom(
-                //       elevation: 0.0,
-                //       backgroundColor: Colors.blue,
-                //       padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                //       textStyle:
-                //           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                // )),
-                // SizedBox(
-                //   width: 2,
-                // ),
                 Expanded(
                     child: ElevatedButton.icon(
                   icon: Icon(
@@ -318,10 +301,12 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
                     globals.inv_idrealqty = value['idrealqty'];
                     globals.inv_itdlinenbr = value['itdlinenbr'];
                     globals.inv_vhtid = value['vhtid'];
+                    globals.inv_genuine_no = value['genuine_no'];
                     globals.inv_method = "edit";
                     print(globals.inv_itdlinenbr);
                     var isIsm = widget.invTrxStatusBarang;
                     print('isIsm');
+                    print(value);
                     print(isIsm);
                     Navigator.pushReplacement(
                         context,

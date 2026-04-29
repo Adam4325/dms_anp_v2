@@ -943,28 +943,29 @@ class _FrmInventoryState extends State<FrmInventory> {
     if (globals.inv_method == "edit" || globals.inv_itdlinenbr != "") {
       return Container(
         margin: EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
-        child: SmartSelect<String?>.single(
-          title: 'UOM ID',
-          selectedValue: selUomID,
-          placeholder: 'Pilih satu',
-          onChange: globals.inv_method == "edit"
-              ? null
-              : (selected) => setState(() => selUomID = selected.value!),
-          choiceItems: S2Choice.listFrom<String, Map>(
-              source: lstSelUomID,
-              value: (index, item) => item['uomid'],
-              title: (index, item) => item['uomdescr']),
-          modalFilter: true,
-          modalFilterAuto: true,
-          modalConfirm: true,
-          modalType: S2ModalType.bottomSheet,
-          choiceStyle: S2ChoiceStyle(
-            titleStyle: TextStyle(color: Colors.grey.shade800),
-            color: primaryOrange.withOpacity(0.1),
-          ),
-          modalStyle: S2ModalStyle(
-            backgroundColor: cardColor,
-            elevation: 3,
+        child: IgnorePointer(
+          ignoring: globals.inv_method == "edit",//
+          child: SmartSelect<String?>.single(
+            title: 'UOM ID',
+            selectedValue: selUomID,
+            placeholder: 'Pilih satu',
+            onChange: (selected) => setState(() => selUomID = selected.value!),
+            choiceItems: S2Choice.listFrom<String, Map>(
+                source: lstSelUomID,
+                value: (index, item) => item['uomid'],
+                title: (index, item) => item['uomdescr']),
+            modalFilter: true,
+            modalFilterAuto: true,
+            modalConfirm: true,
+            modalType: S2ModalType.bottomSheet,
+            choiceStyle: S2ChoiceStyle(
+              titleStyle: TextStyle(color: Colors.grey.shade800),
+              color: primaryOrange.withOpacity(0.1),
+            ),
+            modalStyle: S2ModalStyle(
+              backgroundColor: cardColor,
+              elevation: 3,
+            ),
           ),
         ),
       );
