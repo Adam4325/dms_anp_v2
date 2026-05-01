@@ -409,6 +409,7 @@ class _FormStoringState extends State<FormStoring> {
 
     if (userLocation != null && listGeofence.isNotEmpty) {
       txtAddr = "";
+      print("Masuk: $userLocation");
       double latUser = userLocation!.latitude;
       double lonUser = userLocation!.longitude;
       txtLat.text = latUser.toString();
@@ -785,7 +786,7 @@ class _FormStoringState extends State<FormStoring> {
                                 context: context,
                                 builder: (context) => new AlertDialog(
                                   title: new Text('Information'),
-                                  content: new Text("Storing kendaraan ?"),
+                                  content: new Text("Storing kendaraan anda ?"),//
                                   actions: <Widget>[
                                     ElevatedButton.icon(
                                       icon: Icon(Icons.close, color: Colors.white, size: 18),
@@ -804,9 +805,15 @@ class _FormStoringState extends State<FormStoring> {
                                       icon: Icon(Icons.save, color: Colors.white, size: 18),
                                       label: Text("Submit", style: btnTextWhite),
                                       onPressed: () async {
+                                        await updatePosition("IN");
+
+                                        print("GlobalData.servicetype");
                                         print(GlobalData.servicetype);
+                                        print(txtLat.value.text);
                                         print(txtKM.value.text);
                                         print(vhcid);
+                                        print("GlobalData.servicetype 2");
+                                        //return;
                                         if (vhcid == "" || vhcid == null) {
                                           alert(
                                               globalScaffoldKey.currentContext!,
@@ -863,6 +870,7 @@ class _FormStoringState extends State<FormStoring> {
                                               "Aplikasi tidak mengijinkan Fake GPS",
                                               "error");
                                         } else {
+                                          print('submit ok');
                                           await saveService(
                                               vhcid,
                                               locid,
