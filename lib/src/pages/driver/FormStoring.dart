@@ -296,8 +296,8 @@ class _FormStoringState extends State<FormStoring> {
       var urlData =
           "${GlobalData.baseUrl}api/maintenance/req_service_driver_new.jsp?method=set-service-v2" +
               "&vhcid=${vhcid}&locid=${locid}&drvid=${drvid}&vhckm=${vhckm}&vhckm=${vhckm}"
-                  "&typereq=STORING&userid=${userid}&dlodate=&notes=${notes}&notelpon=${notelpon}&lat=${lat}&lon=${lon}&address=${address}&imeiid${imeiid}";
-
+                  "&typereq=STORING&userid=${userid}&dlodate=&notes=${notes}&notelpon=${notelpon}&lat=${lat}&lon=${lon}&address=${address}&imeiid=${imeiid}";
+      print(urlData);
       var encoded = Uri.encodeFull(urlData);
       Uri myUri = Uri.parse(encoded);
       print(myUri);
