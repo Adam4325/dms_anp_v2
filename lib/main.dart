@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:dms_anp/src/Helper/app_navigator_key.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/model/NotificationData.dart';
 import 'package:dms_anp/src/loginPage.dart';
@@ -16,6 +18,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'helpers/database_helper.dart';
+import 'package:dms_anp/src/widgets/user_inactivity_scope.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -37,8 +40,6 @@ void main() async {
   runApp(MyApp());
   configLoading();
 }
-
-final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 void configLoading() {
   EasyLoading.instance
@@ -65,7 +66,13 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: MyHomePage(),
-      builder: EasyLoading.init(),
+      builder: (context, child) {
+        final easyChild = EasyLoading.init()(context, child);
+        return UserInactivityScope(
+          idleDuration: const Duration(seconds: 30),
+          child: easyChild ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }
@@ -109,10 +116,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
       print('🔍 DEBUG: Notification Permission: $notifPermission');
       print('🔍 DEBUG: Overlay Permission: $overlayPermission');
-      await FcmAduanService.instance.initialize(navigatorKey: appNavigatorKey);
-      await FcmAduanService.instance.syncTokenIfPossible();
+      await FcmAduanService.instance
+          .initialize(navigatorKey: appNavigatorKey)
+          .timeout(
+            const Duration(seconds: 8),
+            onTimeout: () => print('⚠️ WARNING: FCM initialize timeout'),
+          );
 
-      // Lanjutkan ke login check
+      // Jangan blokir splash loading oleh sinkronisasi token.
+      unawaited(FcmAduanService.instance.syncTokenIfPossible());
+
+      // Lanjutkan ke login check secepat mungkin
       _checkLoginStatus();
     } catch (e) {
       print('❌ ERROR: Exception in _requestPermissions: $e');

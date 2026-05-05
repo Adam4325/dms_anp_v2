@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:dms_anp/src/pages/FrmCreateAntrianNewDriver.dart';
 import 'package:dms_anp/src/pages/FrmInspeksiVehicle.dart';
+import 'package:dms_anp/src/pages/ViewAntrianMixer.dart';
 import 'package:dms_anp/src/pages/ViewService.dart';
 import 'package:dms_anp/src/pages/maintenance/FrmWoStart.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -390,7 +391,7 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
             Timer(Duration(seconds: 1), () {
               // 5s over, navigate to a new page
               Navigator.pushReplacement(context,
-                  MaterialPageRoute(builder: (context) => ViewAntrian()));
+                  MaterialPageRoute(builder: (context) => ViewAntrianMixer()));
             });
           }
           //END ALERT SUCCESS
@@ -1350,28 +1351,6 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
                                                       ),
                                                     ),
                                                     SizedBox(width: 6),
-                                                    // Flexible(
-                                                    //   child: ElevatedButton.icon(
-                                                    //     icon: Icon(Icons.navigate_next, color: Colors.white, size: 14),
-                                                    //     label: Text("Ngepok", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 11)),
-                                                    //     onPressed: () {
-                                                    //       EasyLoading.show();
-                                                    //       userid = prefs.getString("name")!;
-                                                    //       Navigator.pushReplacement(
-                                                    //           context,
-                                                    //           MaterialPageRoute(
-                                                    //               builder: (context) => ViewAntrianNgepok()));
-                                                    //     },
-                                                    //     style: ElevatedButton.styleFrom(
-                                                    //       elevation: 0.0,
-                                                    //       backgroundColor: Colors.green,
-                                                    //       foregroundColor: Colors.white,
-                                                    //       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                                    //       minimumSize: Size(0, 36),
-                                                    //     ),
-                                                    //   ),
-                                                    // ),
-                                                    // SizedBox(width: 6),
                                                     Flexible(
                                                       child:
                                                           ElevatedButton.icon(
@@ -1405,6 +1384,7 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
                                                               txtKM.text;
                                                           globals.p2hVhcDriver =
                                                               "yes";
+                                                          globals.p2hVhcidIsMixer = "Mixer";
                                                           Navigator.pushReplacement(
                                                               context,
                                                               MaterialPageRoute(

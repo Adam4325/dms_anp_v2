@@ -44,6 +44,7 @@ String? rvhcOLips = "";
 
 String? p2hNumber = "";
 String? p2hVhcid = "";
+String? p2hVhcidIsMixer = "";
 String? inspeksi_name = "";
 double p2hVhckm = 0.0;
 String? p2hVhcdate = "";

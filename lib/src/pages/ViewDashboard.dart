@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:dms_anp/helpers/database_helper.dart';
 import 'package:dms_anp/src/Helper/AnpService.dart';
+import 'package:dms_anp/src/Helper/app_navigator_key.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/Helper/constant.dart';
 import 'package:dms_anp/src/loginPage.dart';
@@ -91,6 +92,9 @@ class _ViewDashboardState extends State<ViewDashboard>
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey globalScaffoldKey2 = GlobalKey<ScaffoldState>();
   Timer? timer;
+  Timer? _sessionActiveTimer;
+  static const int _sessionCheckIntervalSeconds = 30;
+  bool _sessionLogoutInProgress = false;
   String _identifier = '';
   List<AnpService> _anpServiceList = [];
 
@@ -379,6 +383,44 @@ class _ViewDashboardState extends State<ViewDashboard>
     _fetchRunningInfo();
     await _refreshAduanRoleUsers();
     _startAduanNotifPoller();
+    if (mounted) {
+      cekIsActiveUser();
+      _startSessionActivePoller();
+    }
+  }
+
+  void _startSessionActivePoller() {
+    _sessionActiveTimer?.cancel();
+    _sessionActiveTimer = Timer.periodic(
+      const Duration(seconds: _sessionCheckIntervalSeconds),
+      (_) => cekIsActiveUser(),
+    );
+  }
+
+  Future<void> _logoutInactiveSession() async {
+    if (_sessionLogoutInProgress) {
+      return;
+    }
+    _sessionLogoutInProgress = true;
+    _sessionActiveTimer?.cancel();
+    NotificationService().stopPolling();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+    } catch (e) {
+      print(e);
+    }
+    try {
+      final nav = appNavigatorKey.currentState;
+      if (nav != null) {
+        nav.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => LoginPage()),
+          (Route<dynamic> route) => false,
+        );
+      }
+    } finally {
+      _sessionLogoutInProgress = false;
+    }
   }
 
   void _setupMenuItems() {
@@ -1006,59 +1048,36 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   Future<String> cekIsActiveUser() async {
     try {
-      final JsonDecoder _decoder = new JsonDecoder();
       sharedPreferences = await SharedPreferences.getInstance();
+      final user = username.trim().isNotEmpty
+          ? username
+          : (sharedPreferences!.getString('username') ?? '');
+      if (user.isEmpty) {
+        return 'Successfull';
+      }
 
       Uri myUri = Uri.parse(
-          "${GlobalData.baseUrlProd}api/is_sign.jsp?method=is_sign&username=" +
-              username);
+          '${GlobalData.baseUrlProd}api/is_sign.jsp?method=is_sign&username=$user');
       print(myUri.toString());
-      var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
-      setState(() {
-        var result = _decoder.convert(response.body);
-        if (result['status_code'] == '200') {
-          if (result['is_active'].toString().toLowerCase() != 'act' &&
-              result['is_active'].toString().toLowerCase() != 'active') {
-            showMyDialog();
-          } else {
-            print(result['is_active']);
-          }
+      final response =
+          await http.get(myUri, headers: {'Accept': 'application/json'});
+      if (!mounted) {
+        return 'Successfull';
+      }
+      final JsonDecoder _decoder = JsonDecoder();
+      final result = _decoder.convert(response.body);
+      if (result['status_code'] == '200') {
+        final active = result['is_active'].toString().toLowerCase();
+        if (active != 'act' && active != 'active') {
+          await _logoutInactiveSession();
+        } else {
+          print(result['is_active']);
         }
-      });
+      }
     } catch (e) {
       print(e);
     }
-    return "Successfull";
-  }
-
-  void showMyDialog() {
-    final ctx = globalScaffoldKey.currentContext!;
-    if (ctx == null) return;
-    showDialog(
-      context: ctx,
-      builder: (context) => new AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(15.0))),
-        title: new Text('Authorize'),
-        content: new Text('Username is not active'),
-        actions: <Widget>[
-          new TextButton(
-            onPressed: () async {
-              SharedPreferences preferences =
-                  await SharedPreferences.getInstance();
-              await preferences.clear();
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
-                (Route<dynamic> route) => false,
-              );
-            },
-            child: new Text('Logout'),
-          ),
-        ],
-      ),
-    );
+    return 'Successfull';
   }
 
   Future<void> saveDriverTokenToFirebase(String tokens) async {
@@ -1303,7 +1322,6 @@ class _ViewDashboardState extends State<ViewDashboard>
 
     getDataPreference();
     GetAbsensiSummary();
-    cekIsActiveUser();
     GetCountStoring();
     initUniqueIdentifierState();
     _checkBiometric();
@@ -1333,6 +1351,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     _shownNotificationIds.clear();
     _notificationService.dispose();
     _aduanNotifTimer?.cancel();
+    _sessionActiveTimer?.cancel();
     super.dispose();
   }
 

@@ -82,6 +82,13 @@ class NotificationService {
     }
   }
 
+  /// Hentikan polling `notifikasi_driver.jsp` tanpa menutup stream (mis. saat idle logout).
+  void stopPolling() {
+    timer_data?.cancel();
+    timer_data = null;
+    print('🔍 DEBUG: Notification polling stopped');
+  }
+
   // ⭐ IMPROVED TIMER START
   void startNotificationTimer({int intervalSeconds = 30}) {
     print('🔍 DEBUG: Starting notification timer with ${intervalSeconds}s interval');
@@ -238,9 +245,7 @@ class NotificationService {
   void resetService() {
     print('🔍 DEBUG: Resetting notification service...');
 
-    // Stop timer
-    timer_data?.cancel();
-    timer_data = null;
+    stopPolling();
 
     // Close old controller if exists
     if (_notificationController != null && !_notificationController!.isClosed) {
@@ -320,9 +325,7 @@ class NotificationService {
   void dispose() {
     print('🔍 DEBUG: Disposing NotificationService...');
 
-    // Cancel timer
-    timer_data?.cancel();
-    timer_data = null;
+    stopPolling();
 
     // Close stream controller
     if (_notificationController != null && !_notificationController!.isClosed) {

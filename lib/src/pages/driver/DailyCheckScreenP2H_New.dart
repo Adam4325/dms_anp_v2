@@ -917,7 +917,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
 
         if (isValid == true) {}
       } else {
-        getListGeofenceArea(true);
+        await getListGeofenceArea(true);
       }
     } else {
       print('location');

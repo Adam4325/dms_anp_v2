@@ -115,6 +115,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
     getSession();
     _getLocation().then((position) {
       userLocation = position;
+      print("ada userLocation");
+      print(userLocation);
     });
     fetchInspectionData();
   }
@@ -135,12 +137,14 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
       EasyLoading.dismiss();
     }
   }
+
   var globalMessageErr = "";
   Future<bool> submitInspeksiP2H(Map<String, dynamic> data) async {
     final jsonString = jsonEncode(data);
 
     final response = await http.post(
-      Uri.parse(GlobalData.baseUrl + 'api/p2h_driver/create_form_inspeksi_newv3.jsp'),
+      Uri.parse(
+          GlobalData.baseUrl + 'api/p2h_driver/create_form_inspeksi_newv3.jsp'),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -157,8 +161,6 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
         final responseData = jsonDecode(response.body);
 
         if (responseData['status'] == 'success') {
-
-
           globals.page_inspeksi = "new_driver";
           globals.p2hVhcid = globals.p2hVhcid;
           globals.p2hVhclocid = globals.p2hVhclocid;
@@ -193,7 +195,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
             context: context,
             builder: (ctx) => AlertDialog(
               title: Text('Error'),
-              content: Text('Respon tidak valid dari server. ${responseData2["message"]}'),
+              content: Text(
+                  'Respon tidak valid dari server. ${responseData2["message"]}'),
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(ctx), child: Text('OK'))
@@ -224,6 +227,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
 
   void handleSubmit() async {
     // Cek apakah widget masih mounted
+    //await updatePosition("IN");
     if (!mounted) return;
     if (_isSubmitting) return;
 
@@ -262,7 +266,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
       return;
     }
 
-    if (txtAddr == null || txtAddr == "") {
+    if (txtAddr == null || txtAddr.trim().isEmpty) {
+      //await getListGeofenceArea(true);
       if (mounted) {
         alert(globalScaffoldKey.currentContext!, 2,
             "Coba lagi untuk melakukan submit P2H", "warning");
@@ -325,7 +330,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
           : kilometerController.text,
       "catatan": notesController.text,
       //"drvid":'8194-01.2025.06.09.84',//globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
-      "drvid": globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
+      "drvid":
+          globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
       "lon": lon,
       "lat": lat,
       "geoid": geo_id_area,
@@ -359,7 +365,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
               _isSubmitting = true;
             });
             _showSavingOverlay();
-            bool isSuccess = await submitInspeksiP2H(data);//1
+            bool isSuccess = await submitInspeksiP2H(data); //1
             _hideSavingOverlay();
             if (mounted) {
               setState(() {
@@ -394,8 +400,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
             } else {
               _hideSavingOverlay();
               if (mounted) {
-                alert(globalScaffoldKey.currentContext!, 0, "Failed membuat P2H ${globalMessageErr}",
-                    "error");
+                alert(globalScaffoldKey.currentContext!, 0,
+                    "Failed membuat P2H ${globalMessageErr}", "error");
               }
             }
           },
@@ -418,8 +424,8 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
       }
       if (!isSuccess) {
         if (mounted) {
-          alert(globalScaffoldKey.currentContext!, 0, "Gagal membuat P2H ${globalMessageErr}",
-              "error");
+          alert(globalScaffoldKey.currentContext!, 0,
+              "Gagal membuat P2H ${globalMessageErr}", "error");
         }
       } else {
         if (mounted) {
@@ -877,7 +883,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
       }
 
       var urlData =
-          "${GlobalData.baseUrlOri}api/p2h_driver/create_geofence_area_p2h.jsp?method=list-geofence-area-v1";
+          "${GlobalData.baseUrl}api/p2h_driver/create_geofence_area_p2h.jsp?method=list-geofence-area-v1";
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);
@@ -913,7 +919,20 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
     //print(androidID.toString());
     //print(userLocation);
     if (userLocation != null) {
-      //print(userLocation);
+      print('userLocation kosong');
+      _getLocation().then((position) {
+        userLocation = position;
+        print("ada userLocation");
+        print(userLocation?.latitude);
+        print(userLocation?.longitude);
+      });
+    }else{
+      print('userLocation tidak kosong');
+    }
+    //if (userLocation?.latitude != 0.0 && userLocation?.longitude!=0.0)  {
+    if (userLocation!=null)  {
+      print("listGeofence");
+      print(listGeofence);
       if (listGeofence.length > 0) {
         var radiusOld = 0.0;
         var geo_idOld = 0;
@@ -922,6 +941,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
         for (var i = 0; i < listGeofence.length; i++) {
           var a = listGeofence[i];
           var radius = double.parse(a['radius']);
+          print('radius ${radius}');
           var distanceBetweenPoints = SphericalUtil.computeDistanceBetween(
               LatLng(double.parse(a['lon']), double.parse(a['lat'])),
               LatLng(userLocation!.longitude, userLocation!.latitude));
@@ -930,6 +950,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
           //FOR DEV
           txtAddr = "";
           if (distanceBetweenPoints <= radius) {
+            print('dalam radisu');
             if (i == 0) {
               radiusOld = radius;
               geo_idOld = int.parse(a['geo_id']);
@@ -963,7 +984,7 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
 
         if (isValid == true) {}
       } else {
-        getListGeofenceArea(true);
+        await getListGeofenceArea(true);
       }
     } else {
       print('location');
@@ -1349,12 +1370,12 @@ class _DailyCheckScreenP2HState extends State<DailyCheckScreenP2H> {
                         onPressed: _isSubmitting
                             ? null
                             : () async {
-                          SharedPreferences prefs =
-                              await SharedPreferences.getInstance();
-                          print('prefs.getString("p2h_antrian")');
-                          print(prefs.getString("p2h_antrian"));
-                          handleSubmit();
-                          },
+                                SharedPreferences prefs =
+                                    await SharedPreferences.getInstance();
+                                print('prefs.getString("p2h_antrian")');
+                                print(prefs.getString("p2h_antrian"));
+                                handleSubmit();
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,

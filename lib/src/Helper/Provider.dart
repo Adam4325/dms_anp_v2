@@ -36,7 +36,7 @@ class GlobalData {
   // static final String baseUrlOri = "http://hen08xv0xw5.sn.mynetname.net:8080/trucking/";
   // static final String baseUrlOriIP = "http://hen08xv0xw5.sn.mynetname.net:8080/trucking/";
   // static final String baseUrlProd = "http://hen08xv0xw5.sn.mynetname.net:8080/trucking/mobile/";
-  // static final String baseUrlServlet = "http://hen08xv0xw5.sn.mynetname.net:8080/trucking/mobile/";
+  // static final String baseUrlServlebaseUrlProdt = "http://hen08xv0xw5.sn.mynetname.net:8080/trucking/mobile/";
 
   static final String baseUrl = "https://apps.tuluatas.com/trucking/mobile/";
   static final String baseUrlOri = "https://apps.tuluatas.com/trucking/";

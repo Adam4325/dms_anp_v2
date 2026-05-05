@@ -10,6 +10,7 @@ import 'package:dms_anp/src/flusbar.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/maintenance/ViewListWoMCN.dart';
 import 'package:dms_anp/src/services/FcmAduanService.dart';
+import 'package:dms_anp/src/widgets/user_inactivity_scope.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
 import 'package:local_auth/local_auth.dart';
@@ -158,7 +159,7 @@ class _LoginPageState extends State<LoginPage> {
     EasyLoading.show();
     try {
       final JsonDecoder _decoder = new JsonDecoder();
-      var endpointUrl = GlobalData.baseUrl + "api/authorize_v6.jsp";
+      var endpointUrl = GlobalData.baseUrl + "api/authorize_v7.jsp";
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String username = TxtUsername.text.trim();
@@ -310,6 +311,7 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('status_karyawan', status_karyawan);
           prefs.setString('kryid', kryid);
           print('IMMEIID $_identifier');
+          UserInactivityController.resetTimer();
 
           final imeiToSend = (prefs.getString('androidID') ?? _identifier);
           await _updateImeiOnServer(imeiid: imeiToSend, statusKaryawan: status_karyawan, drvid: drvid, kryid: kryid);

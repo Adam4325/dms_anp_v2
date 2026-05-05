@@ -111,7 +111,9 @@ class FcmAduanService {
     if (username.isEmpty) {
       return;
     }
-    final token = await _messaging.getToken();
+    final token = await _messaging
+        .getToken()
+        .timeout(const Duration(seconds: 8), onTimeout: () => null);
     if (token == null || token.isEmpty) {
       return;
     }
@@ -132,7 +134,9 @@ class FcmAduanService {
       'platform': 'android',
     });
     try {
-      await http.get(uri, headers: {'Accept': 'application/json'});
+      await http
+          .get(uri, headers: {'Accept': 'application/json'})
+          .timeout(const Duration(seconds: 8));
     } catch (_) {}
   }
 
