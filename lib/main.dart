@@ -69,8 +69,8 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         final easyChild = EasyLoading.init()(context, child);
         return UserInactivityScope(
-          idleDuration: const Duration(seconds: 30),
-          child: easyChild ?? const SizedBox.shrink(),
+          idleDuration: UserInactivityScope.defaultIdleDuration,
+          child: easyChild,//
         );
       },
     );

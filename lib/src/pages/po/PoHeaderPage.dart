@@ -318,10 +318,10 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
     var username = prefs.getString('name');
     final hasAksesPO = globals.akses_pages != null &&
         globals.akses_pages
-            .where((x) => (x == "PO" ||
+            .where((x) => (x == "PO" && (
                 username == "ADMIN" ||
                 username == "ETIENNE" ||
-                username == "BUDI"))
+                username == "BUDI")))
             .isNotEmpty;
     print('hasAksesPO Approved');
     print('username ${username}');

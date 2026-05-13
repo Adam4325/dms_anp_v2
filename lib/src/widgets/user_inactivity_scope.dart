@@ -29,10 +29,12 @@ class UserInactivityController {
 /// Logout otomatis setelah [idleDuration] tanpa sentuhan layar (idle lokal).
 /// Berbeda dari [is_sign.jsp]: selama server mengembalikan ACT, polling server tidak akan logout.
 class UserInactivityScope extends StatefulWidget {
+  static const Duration defaultIdleDuration = Duration(seconds: 90);
+
   const UserInactivityScope({
     super.key,
     required this.child,
-    this.idleDuration = const Duration(seconds: 30),
+    this.idleDuration = defaultIdleDuration,
   });
 
   final Widget child;

@@ -93,7 +93,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   GlobalKey globalScaffoldKey2 = GlobalKey<ScaffoldState>();
   Timer? timer;
   Timer? _sessionActiveTimer;
-  static const int _sessionCheckIntervalSeconds = 30;
+  static const int _sessionCheckIntervalSeconds = 90;
   bool _sessionLogoutInProgress = false;
   String _identifier = '';
   List<AnpService> _anpServiceList = [];
