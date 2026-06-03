@@ -7,6 +7,7 @@ import 'package:dms_anp/src/Helper/AnpService.dart';
 import 'package:dms_anp/src/Helper/app_navigator_key.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/Helper/constant.dart';
+import 'package:dms_anp/src/Helper/scanner_helper.dart';
 import 'package:dms_anp/src/loginPage.dart';
 import 'package:dms_anp/src/model/NotificationData.dart';
 import 'package:dms_anp/src/model/banner_anp.dart';
@@ -38,10 +39,12 @@ import 'package:dms_anp/src/pages/maintenance/ViewListWoMCN.dart';
 import 'package:dms_anp/src/pages/mekanik/DailyMekanikCheckScreenP2H.dart';
 import 'package:dms_anp/src/pages/pie_chart_sample2.dart';
 import 'package:dms_anp/src/pages/po/PoHeaderPage.dart';
+import 'package:dms_anp/src/pages/pb/PbHeaderPage.dart';
 import 'package:dms_anp/src/pages/tuker_point/RewardTabsPage.dart';
 import 'package:dms_anp/src/pages/vehicle/FrmRequestMovingUnits.dart';
 import 'package:dms_anp/src/pages/vehicle/ViewPhotoVehicle.dart';
 import 'package:dms_anp/src/services/NotificationServices.dart';
+import 'package:dms_anp/src/widgets/user_inactivity_scope.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -298,6 +301,201 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
   }
 
+  Future<int?> _saveQrAbsen({
+    required String empid,
+    required String qrData,
+    String? lon,
+    String? lat,
+    String? apiLokar,
+  }) async {
+    if (!globals.isApiLokarRUN) {
+      return 200;
+    }
+    final params = <String, String>{
+      'method': 'save_qr_absen',
+      'empid': empid,
+      'qr_data': qrData,
+    };
+    if (lon != null) params['lon'] = lon;
+    if (lat != null) params['lat'] = lat;
+    if (apiLokar != null) params['api_lokar'] = apiLokar;
+    final uri = Uri.parse(
+            '${GlobalData.baseUrlProd}api/absensi/qr_code_updated.jsp')
+        .replace(queryParameters: params);
+    print('save_qr_absen url: ${uri.toString()}');
+    final response = await http.get(uri);
+    if (response.statusCode != 200) {
+      return null;
+    }
+    final dynamic body = json.decode(response.body);
+    if (body is! Map) {
+      return null;
+    }
+    return _parseStatusCode(body['status_code']);
+  }
+
+  Future<({int? statusCode, bool isQrCode})?> _checkQrAbsen(String empid) async {
+    if (!globals.isApiLokarRUN) {
+      return (statusCode: 200, isQrCode: false);
+    }
+    final uri = Uri.parse(
+            '${GlobalData.baseUrlProd}api/absensi/qr_code_updated.jsp')
+        .replace(queryParameters: {
+      'method': 'check_qr_absen',
+      'empid': empid,
+    });
+    print('check_qr_absen url: ${uri.toString()}');
+    final response = await http.get(uri);
+    if (response.statusCode != 200) {
+      return null;
+    }
+    final dynamic body = json.decode(response.body);
+    if (body is! Map) {
+      return null;
+    }
+    return (
+      statusCode: _parseStatusCode(body['status_code']),
+      isQrCode: _parseBool(body['is_qr_code']),
+    );
+  }
+
+  Future<({int? statusCode, bool hasQrToday, String message})?> _checkQrToday({
+    required String empid,
+    String? lon,
+    String? lat,
+    String? apiLokar,
+  }) async {
+    final params = <String, String>{
+      'method': 'check_qr_today',
+      'empid': empid,
+    };
+    if (globals.isApiLokarRUN) {
+      if (lon != null) params['lon'] = lon;
+      if (lat != null) params['lat'] = lat;
+      if (apiLokar != null) params['api_lokar'] = apiLokar;
+    }
+    final uri = Uri.parse(
+            '${GlobalData.baseUrlProd}api/absensi/cek_absens_by_qr_code.jsp')
+        .replace(queryParameters: params);
+    print('check_qr_today url: ${uri.toString()}');
+    final response = await http.get(uri);
+    if (response.statusCode != 200) {
+      return null;
+    }
+    final dynamic body = json.decode(response.body);
+    if (body is! Map) {
+      return null;
+    }
+    return (
+      statusCode: _parseStatusCode(body['status_code']),
+      hasQrToday: _parseBool(body['has_qr_today']),
+      message: body['message']?.toString() ?? '',
+    );
+  }
+
+  int? _parseStatusCode(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is String) {
+      return int.tryParse(value);
+    }
+    return null;
+  }
+
+  bool _parseBool(dynamic value) {
+    if (value is bool) {
+      return value;
+    }
+    if (value is String) {
+      return value.toLowerCase() == 'true';//
+    }
+    if (value is num) {
+      return value != 0;
+    }
+    return false;
+  }
+
+  void _navigateToAttendanceDriver() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => FrmAttendanceDriver()),
+    );
+  }
+
+  Future<void> _openAttendanceDriverWithQrScan() async {
+    if (!mounted) return;
+
+    sharedPreferences ??= await SharedPreferences.getInstance();
+    final String drvid = sharedPreferences!.getString("drvid") ?? '';
+    if (drvid.isEmpty) {
+      final ctx = globalScaffoldKey.currentContext ?? context;
+      _showAlert(ctx, 0, "Data driver tidak ditemukan", "error");
+      return;
+    }
+
+    if (!globals.isApiLokarRUN) {
+      _navigateToAttendanceDriver();
+      return;
+    }
+
+    EasyLoading.show(status: 'Memeriksa QR Code...');
+    try {
+      final checkResult = await _checkQrAbsen(drvid);
+      if (!mounted) return;
+      EasyLoading.dismiss();
+
+      if (checkResult != null &&
+          checkResult.statusCode == 200 &&
+          checkResult.isQrCode) {
+        _navigateToAttendanceDriver();
+        return;
+      }
+
+      final String? qrData = await openQrScanner(context);
+      if (qrData == null || qrData.trim().isEmpty) {
+        final ctx = globalScaffoldKey.currentContext ?? context;
+        _showAlert(ctx, 0, "Scan QR Code wajib dilakukan", "error");
+        return;
+      }
+
+      EasyLoading.show(status: 'Menyimpan QR Code...');
+      final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
+      final lat = (gpsResult["latitude"] ?? 0).toString();
+      final lon = (gpsResult["longitude"] ?? 0).toString();
+      final apiLokar = sharedPreferences!.getString("api_lokar") ?? '';
+      final statusCode = await _saveQrAbsen(
+        empid: drvid,
+        qrData: qrData.trim(),
+        lon: lon,
+        lat: lat,
+        apiLokar: apiLokar,
+      );
+      if (!mounted) return;
+      EasyLoading.dismiss();
+
+      if (statusCode == 200) {
+        _navigateToAttendanceDriver();
+      } else {
+        final ctx = globalScaffoldKey.currentContext ?? context;
+        _showAlert(
+          ctx,
+          0,
+          statusCode == null
+              ? "Gagal menyimpan QR Code"
+              : "Gagal menyimpan QR Code (status: $statusCode)",
+          "error",
+        );
+      }
+    } catch (e) {
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
+      final ctx = globalScaffoldKey.currentContext ?? context;
+      _showAlert(ctx, 0, "Gagal memproses QR Code: $e", "error");
+    }
+  }
+
   Future scanQRCode() async {
     // TODO: Integrate mobile_scanner - qrscan deprecated
     String? cameraScanResult = null;
@@ -386,6 +584,9 @@ class _ViewDashboardState extends State<ViewDashboard>
     if (mounted) {
       cekIsActiveUser();
       _startSessionActivePoller();
+      // Sinkronkan durasi idle dari API + baseline sentuhan setelah prefs dashboard siap.
+      UserInactivityController.resetTimer();
+      UserInactivityController.reloadIdleDuration();
     }
   }
 
@@ -699,6 +900,23 @@ class _ViewDashboardState extends State<ViewDashboard>
               color: Colors.red,
               idKey: 25,
               title: "PO"));
+        }
+      }
+    }
+
+    if (loginname != "DRIVER") {
+      var isOKPb = globals.akses_pages == null
+          ? globals.akses_pages
+          : globals.akses_pages
+              .where((x) => (x == "PB" || username == "ADMIN"));
+      if (isOKPb != null) {
+        if (isOKPb.length > 0) {
+          _anpServiceList.add(AnpService(
+              image: Icons.receipt_long,
+              color: Colors.deepPurple,
+              idKey: 36,
+              title: "PR",
+              badgeNewSince: DateTime(2026, 6, 3)));
         }
       }
     }
@@ -1066,13 +1284,21 @@ class _ViewDashboardState extends State<ViewDashboard>
       }
       final JsonDecoder _decoder = JsonDecoder();
       final result = _decoder.convert(response.body);
-      if (result['status_code'] == '200') {
-        final active = result['is_active'].toString().toLowerCase();
-        if (active != 'act' && active != 'active') {
-          await _logoutInactiveSession();
-        } else {
-          print(result['is_active']);
-        }
+      if (result is! Map) {
+        return 'Successfull';
+      }
+      if (result['status_code']?.toString() != '200') {
+        return 'Successfull';
+      }
+      final rawActive = result['is_active'];
+      if (rawActive == null) {
+        return 'Successfull';
+      }
+      final active = rawActive.toString().toLowerCase();
+      if (active != 'act' && active != 'active') {
+        await _logoutInactiveSession();
+      } else {
+        print(result['is_active']);
       }
     } catch (e) {
       print(e);
@@ -1954,6 +2180,32 @@ class _ViewDashboardState extends State<ViewDashboard>
     );
   }
 
+  Widget _buildNewMenuBadge() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+      decoration: BoxDecoration(
+        color: Colors.green.shade600,
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 2,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Text(
+        'NEW',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 7,
+          fontWeight: FontWeight.bold,
+          height: 1.1,
+        ),
+      ),
+    );
+  }
+
   Widget _buildMenuCard(AnpService service) {
     // ✅ UPDATED: Special styling untuk menu "More"
     bool isMoreMenu = service.idKey == 999;
@@ -1990,12 +2242,19 @@ class _ViewDashboardState extends State<ViewDashboard>
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Stack(
+                clipBehavior: Clip.none,
                 children: [
                   Icon(
                     service.image,
                     color: service.color,
                     size: 22,
                   ),
+                  if (service.showNewBadge)
+                    Positioned(
+                      left: -8,
+                      top: -8,
+                      child: _buildNewMenuBadge(),
+                    ),
                   // ✅ ADDED: Badge untuk menu "More"
                   if (isMoreMenu && _additionalMenuList.isNotEmpty)
                     Positioned(
@@ -2209,6 +2468,12 @@ class _ViewDashboardState extends State<ViewDashboard>
                     color: service.color,
                     size: 22,
                   ),
+                  if (service.showNewBadge)
+                    Positioned(
+                      left: -8,
+                      top: -8,
+                      child: _buildNewMenuBadge(),
+                    ),
                   if (service.idKey == 35 &&
                       _aduanNotifCount > 0 &&
                       _isAduanHandlerForNotif())
@@ -3416,7 +3681,7 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   void _showAlert(
       BuildContext? ctx, int type, String message, String colorInfo) {
-    if (ctx != null) alert(ctx, type, message, colorInfo);
+    if (ctx != null) alert(ctx, type, message, colorInfo);//
   }
 
   void _navigateToWoMCN() {
@@ -3478,6 +3743,51 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
   }
 
+  int? _parseBujNumericId(String bujnbr) {
+    final digits = bujnbr.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) {
+      return null;
+    }
+    return int.tryParse(digits);
+  }
+
+  Future<bool> _sendLokarOrderPosition({
+    required String apiLokar,
+    required String requestCode,
+    required String bujnbr,
+    required String latitude,
+    required String longitude,
+  }) async {
+    if (apiLokar.trim().isEmpty) {
+      print('api_lokar kosong');
+      return false;
+    }
+    final doId = _parseBujNumericId(bujnbr);
+    if (doId == null) {
+      print('bujnbr tidak valid: $bujnbr');
+      return false;
+    }
+    final base = apiLokar.endsWith('/')
+        ? apiLokar.substring(0, apiLokar.length - 1)
+        : apiLokar;
+    final uri = Uri.parse('$base/integration-api/transporter/order/position');
+    final body = json.encode({
+      'request_code': requestCode,
+      'do_id': doId,
+      'latitude': latitude,
+      'longitude': longitude,
+    });
+    print('lokar position url: $uri');
+    print('lokar position body: $body');
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
+    print('lokar position response: ${response.statusCode} ${response.body}');
+    return response.statusCode >= 200 && response.statusCode < 300;
+  }
+
   void _handleScheduleActionMixer(dynamic item) async {
     //EasyLoading.show();
     var items = item['status_do_mixer'].toString() == "INLOADING"
@@ -3522,6 +3832,73 @@ class _ViewDashboardState extends State<ViewDashboard>
         return;
       }
       print(item['status_do_mixer']);
+
+      sharedPreferences ??= await SharedPreferences.getInstance();
+      final String drvid = sharedPreferences!.getString("drvid") ?? '';
+      if (drvid.isEmpty) {
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Data driver tidak ditemukan", "error");
+        return;
+      }
+
+      if (globals.isApiLokarRUN) {
+        EasyLoading.show(status: 'Memeriksa absensi QR...');
+        try {
+          final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
+          final latitude = gpsResult["latitude"] ?? 0;
+          final longitude = gpsResult["longitude"] ?? 0;
+          final apiLokar = sharedPreferences!.getString("api_lokar") ?? '';
+
+          final qrCheck = await _checkQrToday(
+            empid: drvid,
+            lon: longitude.toString(),
+            lat: latitude.toString(),
+            apiLokar: apiLokar,
+          );
+          if (!mounted) return;
+          EasyLoading.dismiss();
+
+          if (qrCheck == null ||
+              qrCheck.statusCode != 200 ||
+              !qrCheck.hasQrToday) {
+            final msg = qrCheck?.message.isNotEmpty == true
+                ? qrCheck!.message
+                : "QR absensi hari ini belum tersimpan. Silakan absen terlebih dahulu.";
+            alert(globalScaffoldKey.currentContext!, 0, msg, "error");
+            return;
+          }
+
+          if (item['status_do_mixer'].toString() == "INLOADING") {
+            EasyLoading.show(status: 'Mengirim posisi...');
+            final sent = await _sendLokarOrderPosition(
+              apiLokar: apiLokar,
+              requestCode: item['do_number'].toString(),
+              bujnbr: item['bujnbr'].toString(),
+              latitude: latitude.toString(),
+              longitude: longitude.toString(),
+            );
+            if (!mounted) return;
+            EasyLoading.dismiss();
+            if (!sent) {
+              alert(globalScaffoldKey.currentContext!, 0,
+                  "Gagal mengirim posisi ke Lokar", "error");
+              return;
+            }
+          }
+        } catch (e) {
+          if (EasyLoading.isShow) {
+            EasyLoading.dismiss();
+          }
+          alert(globalScaffoldKey.currentContext!, 0,
+              "Gagal memeriksa absensi QR: $e", "error");
+          return;
+        } finally {
+          if (EasyLoading.isShow) {
+            EasyLoading.dismiss();
+          }
+        }
+      }
+
       final confirm = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -3552,9 +3929,10 @@ class _ViewDashboardState extends State<ViewDashboard>
 
       var latitude = gpsResult["latitude"] ?? 0;
       var longitude = gpsResult["longitude"] ?? 0;
-
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      var api_lokar = prefs.getString("api_lokar");
       var baseURL = GlobalData.baseUrl +
-          "api/do_mixer/update_status_do_mixer.jsp?method=update-status-do-mixer&bujnbr=${item['bujnbr']}"
+          "api/do_mixer/update_status_do_mixerv2.jsp?method=update-status-do-mixer&api_lokar=${api_lokar}&do_number=${item['do_number']}&bujnbr=${item['bujnbr']}"
               "&status_do_mixer=${item['status_do_mixer']}&latitude=${latitude}&longitude=${longitude}&bujdestination=${item['bujdestination']}&userid=${loginname}";
       print(baseURL);
       var encoded = Uri.encodeFull(baseURL);
@@ -4089,6 +4467,25 @@ class _ViewDashboardState extends State<ViewDashboard>
         _showAlert(globalScaffoldKey.currentContext!, 0,
             "Anda tidak punya akses", "error");
       }
+    } else if (anpService.idKey == 36) {
+      if (loginname != "DRIVER") {
+        final hasAksesPB = globals.akses_pages != null &&
+            globals.akses_pages.where((x) => x == "IR").isNotEmpty;
+        if (hasAksesPB || username == "ADMIN") {
+          if (!EasyLoading.isShow) {
+            EasyLoading.show();
+          }
+          Timer(Duration(seconds: 1), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => PbHeaderPage()),
+            );
+          });
+        }
+      } else {
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
+      }
     } else if (anpService.idKey == 27) {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
@@ -4362,13 +4759,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       }
     } else if (anpService.idKey == 15) {
       if (loginname == "DRIVER") {
-        EasyLoading.show();
-        Timer(Duration(seconds: 1), () {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => FrmAttendanceDriver()),
-          );
-        });
+        await _openAttendanceDriverWithQrScan();
       } else {
         EasyLoading.show();
         Timer(Duration(seconds: 1), () {

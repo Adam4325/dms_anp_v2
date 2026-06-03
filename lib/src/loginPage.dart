@@ -259,6 +259,7 @@ class _LoginPageState extends State<LoginPage> {
           var status_karyawan = result["data"][0]["status_karyawan"];
           var kryid = result["data"][0]["kryid"];
           var login_type = result["data"][0]["login_type"];
+          var api_lokar = result["data"][0]["api_lokar"];
           await getAksesMenuForeMan(_identifier);
           if (loginname != null && loginname != "DRIVER") {
             if (akses_page != null) {
@@ -310,8 +311,10 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('login_type', login_type);
           prefs.setString('status_karyawan', status_karyawan);
           prefs.setString('kryid', kryid);
+          prefs.setString('api_lokar', api_lokar);
           print('IMMEIID $_identifier');
           UserInactivityController.resetTimer();
+          UserInactivityController.reloadIdleDuration();
 
           final imeiToSend = (prefs.getString('androidID') ?? _identifier);
           await _updateImeiOnServer(imeiid: imeiToSend, statusKaryawan: status_karyawan, drvid: drvid, kryid: kryid);

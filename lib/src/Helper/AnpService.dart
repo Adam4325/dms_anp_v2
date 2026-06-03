@@ -5,13 +5,24 @@ class AnpService {
   final Color? color;
   final String? title;
   final int? idKey;
+  /// Tanggal menu dirilis; badge NEW tampil selama [newBadgeVisibleDays] hari.
+  final DateTime? badgeNewSince;
 
   const AnpService({
     this.image,
     this.title,
     this.color,
     this.idKey,
+    this.badgeNewSince,
   });
+
+  static const int newBadgeVisibleDays = 30;
+
+  bool get showNewBadge {
+    if (badgeNewSince == null) return false;
+    final days = DateTime.now().difference(badgeNewSince!).inDays;
+    return days >= 0 && days < newBadgeVisibleDays;
+  }
 }
 
 /*

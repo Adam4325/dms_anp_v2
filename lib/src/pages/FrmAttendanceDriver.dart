@@ -673,6 +673,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
           centerTitle: true,
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
+            color: Colors.white,
             onPressed: _navigateBack,
           ),
           actions: [

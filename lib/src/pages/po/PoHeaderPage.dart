@@ -316,12 +316,17 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
   Future<void> fetchPoApprovedDataGte5jt(String search) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var username = prefs.getString('name');
+    // final hasAksesPO = globals.akses_pages != null &&
+    //     globals.akses_pages
+    //         .where((x) => (x == "PO" && (
+    //             username == "ADMIN" ||
+    //             username == "ETIENNE" ||
+    //             username == "BUDI")))
+    //         .isNotEmpty;
+
     final hasAksesPO = globals.akses_pages != null &&
         globals.akses_pages
-            .where((x) => (x == "PO" && (
-                username == "ADMIN" ||
-                username == "ETIENNE" ||
-                username == "BUDI")))
+            .where((x) => (x == "PO"))
             .isNotEmpty;
     print('hasAksesPO Approved');
     print('username ${username}');
@@ -331,7 +336,7 @@ class _PoHeaderPageState extends State<PoHeaderPage> {
       });
       try {
         var baseUrl = GlobalData.baseUrl +
-            'api/po/list_approved_po.jsp?method=list-po' +
+            'api/po/list_approved_po.jsp?method=list-po&userid=$username' +
             (search.isNotEmpty ? '&search=$search' : '');
         print(baseUrl);
         var url = Uri.parse(baseUrl);

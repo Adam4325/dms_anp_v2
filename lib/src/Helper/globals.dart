@@ -169,6 +169,9 @@ String? image_typr_truck_url = "";
 List<String?> akses_pages = [];
 String? pages_name = "";
 
+/// Aktifkan integrasi API Lokar (qr_code_updated.jsp, cek QR hari ini, posisi INLOADING).
+bool isApiLokarRUN = false;
+
 String? bpnbr = '';
 String? bpnbr_web_view = '';
 String? bpvhcid = '';
