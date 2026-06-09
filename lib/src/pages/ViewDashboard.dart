@@ -908,7 +908,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       var isOKPb = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages
-              .where((x) => (x == "PB" || username == "ADMIN"));
+              .where((x) => (x == "IR" || username == "ADMIN"));
       if (isOKPb != null) {
         if (isOKPb.length > 0) {
           _anpServiceList.add(AnpService(

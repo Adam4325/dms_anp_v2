@@ -273,8 +273,13 @@ class _LoginPageState extends State<LoginPage> {
                   arrAksesPage.add(dataAkses[i]);
                 }
               }
-              prefs.setStringList("akses_pages", arrAksesPage);
+              await prefs.setStringList("akses_pages", arrAksesPage);
             }
+          }
+
+          // Fingerprint: username kosong → pakai name/drvid dari API (sama seperti login manual)
+          if (username.isEmpty) {
+            username = (name ?? drvid ?? '').toString().trim();
           }
 
           print(drvid);
