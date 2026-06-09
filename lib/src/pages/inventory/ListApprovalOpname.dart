@@ -228,16 +228,18 @@ class _ListApprovalOpnameState extends State<ListApprovalOpname> {
         if (detailIds.isEmpty) return;
         SharedPreferences prefs = await SharedPreferences.getInstance();
         String username = prefs.getString("name") ?? "";
+        String imeiid = prefs.getString("androidID") ?? "";
         EasyLoading.show();
         try {
           int ok = 0;
           for (String id in detailIds) {
             final uri = Uri.parse(
-                "${GlobalData.baseUrl}api/inventory/approve_opname.jsp")//
+                "${GlobalData.baseUrl}api/inventory/approve_opnamev2.jsp")//
                 .replace(queryParameters: {
               "method": "approve-opname-detail",
               "id": id,
               "apv_user": username,
+              "imeiid": imeiid,
             });
             final res = await http.get(uri);
             if (res.statusCode == 200) {

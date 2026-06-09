@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:dms_anp/src/Helper/MasterDataPreloader.dart';
 import 'package:dms_anp/src/Helper/app_navigator_key.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/model/NotificationData.dart';
@@ -152,6 +153,7 @@ class _MyHomePageState extends State<MyHomePage> {
       } else {
         print('🔍 DEBUG: Login data found, setting up notifications...');
         _setupNotifications();
+        unawaited(MasterDataPreloader.preloadCommon());
         _navigateToMainApp();
       }
     } catch (e) {

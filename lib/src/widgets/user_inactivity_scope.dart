@@ -57,7 +57,7 @@ class UserInactivityController {
 ///
 /// `inactive` (keyboard, dialog sistem) **tidak** menggeser waktu sentuhan — supaya idle 50 dtk benar-benar 50 dtk.
 class UserInactivityScope extends StatefulWidget {
-  static const int fallbackIdleSeconds = 90;
+  static const int fallbackIdleSeconds = 160;
 
   static const Duration defaultIdleDuration = Duration(seconds: fallbackIdleSeconds);
 

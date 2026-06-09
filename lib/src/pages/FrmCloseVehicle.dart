@@ -312,6 +312,29 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
     }
   }
 
+  /// Cek apakah posisi user dalam radius [radiusMeters] dari [GlobalData.koordinat_tujuan].
+  /// Format koordinat: lat;lon atau lat,lon
+  bool _isWithinKoordinatTujuanRadius(double userLat, double userLon,
+      {double radiusMeters = 200}) {
+    final raw = GlobalData.koordinat_tujuan.trim();
+    if (raw.isEmpty) return false;
+
+    final parts = raw.contains(';') ? raw.split(';') : raw.split(',');
+    if (parts.length < 2) return false;
+
+    final destLat = double.tryParse(parts[0].trim());
+    final destLon = double.tryParse(parts[1].trim());
+    if (destLat == null || destLon == null) return false;
+
+    final distanceMeters = SphericalUtil.computeDistanceBetween(
+      LatLng(destLat, destLon),
+      LatLng(userLat, userLon),
+    );
+    print(
+        'koordinat_tujuan jarak: ${distanceMeters}m (max ${radiusMeters}m) dest=$destLat,$destLon user=$userLat,$userLon');
+    return distanceMeters <= radiusMeters;
+  }
+
   Future<String?> closeTujuanDo(
       //TIDAK DIPAKE
       String dlocustdonumber,
@@ -537,7 +560,7 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
     String locid = prefs.getString("locid")!;
     print(drvid);
     Uri myUri = Uri.parse(
-        "${GlobalData.baseUrl}api/list_do_single.jsp?method=list_do_driver&driverid=" +
+        "${GlobalData.baseUrl}api/do/list_do_single.jsp?method=list_do_driver&driverid=" +
             drvid.toString() +
             "&locid=" +
             locid.toString() +
@@ -619,6 +642,7 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
 
             GlobalData.frmGeoCodeAsal = items["dloorigin"];
             GlobalData.frmGeoCodeTujuan = items["dlodestination"];
+            GlobalData.koordinat_tujuan = items["koordinat_tujuan"];
 
             if (items["dlodetaildonumber"] == GlobalData.frmDloDoNumber) {
               GlobalData.frmDloDoNumber = items["dlodetaildonumber"];
@@ -725,7 +749,13 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
       messageTextStyle: TextStyle(
           color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
     );
-    return new Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+        _goBack(context);
+      },
+      child: Scaffold(
       key: globalScaffoldKey,
       backgroundColor: Colors.orange.shade400,
       appBar: AppBar(
@@ -735,10 +765,7 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             iconSize: 20.0,
-            onPressed: () {
-              final ctx = globalScaffoldKey.currentContext;
-              if (ctx != null) _goBack(ctx);
-            },
+            onPressed: () => _goBack(context),
           ),
           centerTitle: true,
           title: Text('Form DO DiTerima', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
@@ -764,6 +791,7 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -921,6 +949,8 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                           String lat = userLocation!.latitude.toString();
                           String lon = userLocation!.longitude.toString();
                           String speed = userLocation!.speed.toString();
+
+
                           if (lon.isEmpty && lat.isEmpty) {
                             if (ctx != null) alert(ctx, 0,
                                 "Coordinate/Lokasi tidak di temukan, silahkan aktifkan GPS nya terlebih dahulu",
@@ -929,6 +959,15 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                           }
                           bool? isAllowed =
                               await GetExceptionDO(GlobalData.frmDloDoNumber ?? '');
+
+                          if (GlobalData.koordinat_tujuan.trim().isNotEmpty) {
+                            if (_isWithinKoordinatTujuanRadius(
+                                userLocation!.latitude,
+                                userLocation!.longitude)) {
+                              isAllowed = true;
+                            }
+                          }
+
                           if (isAllowed == true) {
                               txtAddr = "OUTGEO";
                               print('NOT UPDATEPOSITION');

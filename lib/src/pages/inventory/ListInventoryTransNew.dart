@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dms_anp/src/Color/hex_color.dart';
+import 'package:dms_anp/src/Helper/MasterDataCache.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/flusbar.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
@@ -332,6 +333,12 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
     locid = prefs.getString("locid") ?? "";
   }
 
+  List<Map<String, dynamic>> _toMapList(List<dynamic> data) {
+    return data
+        .map((dynamic e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+  }
+
   var tabNomor = 0;
   void _handleTabSelection() {
     if (_tabController.indexIsChanging) {
@@ -396,8 +403,12 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
     }
   }
 
-  void _showModalListWo(BuildContext context) {
+  Future<void> _showModalListWo(BuildContext context) async {
     //selInvOrderNumber
+    await getListDataToWo();
+    if (!mounted) {
+      return;
+    }
     showModalBottomSheet<void>(
       context: context,
       builder: (context) {
@@ -443,7 +454,6 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
     getJSONDataTyre(false, '');
     getListDataFromWH();
     getListDataToWH();
-    getListDataToWo();
     getListDataToCustomer();
     getListDataLocid();
     getListDataVendorID();
@@ -624,22 +634,14 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
       var url =
           "${GlobalData.baseUrl}api/inventory/refference_master.jsp?method=list_fromwh";
 
-      var urlData = Uri.parse(url);
-      //var encoded = Uri.encodeFull(urlData);
-      print(urlData);
-      Uri myUri = urlData;
-      var response = await http.get(myUri,
-          headers: {"Accept": "application/json", "Connection": "Keep-Alive"});
-      if (response.statusCode == 200) {
-        setState(() {
-          lstFromWH = (jsonDecode(response.body) as List)
-              .map((dynamic e) => e as Map<String, dynamic>)
-              .toList();
-        });
-      } else {
-        alert(globalScaffoldKey.currentContext!, 0, "Gagal load data WH",
-            "error");
-      }
+      final data = await MasterDataCache.getJsonList(
+        cacheKey: "inventory:list_fromwh",
+        url: url,
+        headers: {"Accept": "application/json", "Connection": "Keep-Alive"},
+      );
+      setState(() {
+        lstFromWH = _toMapList(data);
+      });
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
@@ -660,22 +662,14 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
       var url =
           "${GlobalData.baseUrl}api/inventory/refference_master.jsp?method=list_towh";
 
-      var urlData = Uri.parse(url);
-      //var encoded = Uri.encodeFull(urlData);
-      print(urlData);
-      Uri myUri = urlData;
-      var response = await http.get(myUri,
-          headers: {"Accept": "application/json", "Connection": "Keep-Alive"});
-      if (response.statusCode == 200) {
-        setState(() {
-          lstToWH = (jsonDecode(response.body) as List)
-              .map((dynamic e) => e as Map<String, dynamic>)
-              .toList();
-        });
-      } else {
-        alert(globalScaffoldKey.currentContext!, 0, "Gagal load data To WH",
-            "error");
-      }
+      final data = await MasterDataCache.getJsonList(
+        cacheKey: "inventory:list_towh",
+        url: url,
+        headers: {"Accept": "application/json", "Connection": "Keep-Alive"},
+      );
+      setState(() {
+        lstToWH = _toMapList(data);
+      });
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
@@ -691,29 +685,24 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
 
   Future getListDataToWo() async {
     try {
+      if (lstInvOrderNumberTemp.isNotEmpty) {
+        return;
+      }
       EasyLoading.show();
 
       var url =
           "${GlobalData.baseUrl}api/inventory/refference_master.jsp?method=list_wo";
 
-      var urlData = Uri.parse(url);
-      //var encoded = Uri.encodeFull(urlData);
-      print(urlData);
-      Uri myUri = urlData;
-      var response = await http.get(myUri,
-          headers: {"Accept": "application/json", "Connection": "Keep-Alive"});
-      if (response.statusCode == 200) {
-        setState(() {
-          lstInvOrderNumber = (jsonDecode(response.body) as List)
-              .map((dynamic e) => e as Map<String, dynamic>)
-              .toList();
+      final data = await MasterDataCache.getJsonList(
+        cacheKey: "inventory:list_wo",
+        url: url,
+        headers: {"Accept": "application/json", "Connection": "Keep-Alive"},
+      );
+      setState(() {
+        lstInvOrderNumber = _toMapList(data);
 
-          lstInvOrderNumberTemp = lstInvOrderNumber;
-        });
-      } else {
-        alert(globalScaffoldKey.currentContext!, 0, "Gagal load data To WO",
-            "error");
-      }
+        lstInvOrderNumberTemp = lstInvOrderNumber;
+      });
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
@@ -808,23 +797,14 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
       var url =
           "${GlobalData.baseUrl}api/inventory/refference_master.jsp?method=list_bengkel";
 
-      var urlData = Uri.parse(url);
-      //var encoded = Uri.encodeFull(urlData);
-      print(urlData);
-      Uri myUri = urlData;
-      var response = await http.get(myUri,
-          headers: {"Accept": "application/json", "Connection": "Keep-Alive"});
-      print(response.statusCode);
-      if (response.statusCode == 200) {
-        setState(() {
-          lstInvLocid = (jsonDecode(response.body) as List)
-              .map((dynamic e) => e as Map<String, dynamic>)
-              .toList();
-        });
-      } else {
-        alert(globalScaffoldKey.currentContext!, 0, "Gagal load data locid",
-            "error");
-      }
+      final data = await MasterDataCache.getJsonList(
+        cacheKey: "inventory:list_bengkel",
+        url: url,
+        headers: {"Accept": "application/json", "Connection": "Keep-Alive"},
+      );
+      setState(() {
+        lstInvLocid = _toMapList(data);
+      });
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
@@ -1011,16 +991,19 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
 
   Future scanQRCodeWO() async {
     if (!mounted) return;
-    
+
     final String? scanResult = await openQrScanner(context);
-    
+
     if (scanResult == null || scanResult.isEmpty) {
       if (mounted) {
         alert(globalScaffoldKey.currentContext!, 0, "Scan WO Number gagal!", "error");
       }
       return;
     }
-    
+
+    await getListDataToWo();
+    if (!mounted) return;
+
     setState(() {
       var itemID = scanResult;
       if (itemID != null && itemID != '') {
@@ -1052,6 +1035,9 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
   }
 
   Future scanQRCodeWODev() async {
+    await getListDataToWo();
+    if (!mounted) return;
+
     setState(() {
       scanResult = "ANWO23013311";
 
@@ -1302,12 +1288,10 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
               labelText: "Work Order Number",
               controller: txtWoNumberID,
               readOnly: true,
-              onTap: (value) {
+              onTap: (value) async {
                 print('ontap ${readOnlyWo}');
                 if (IsScanWo == false) {
-                  setState(() {
-                    _showModalListWo(context);
-                  });
+                  await _showModalListWo(context);
                 }
               },
               suffixIcon: IconButton(
@@ -1471,7 +1455,7 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                     color: Colors.white,
                     size: 18.0,
                   ),
-                  label: Text("Cancel"),
+                  label: Text("Cancel",style: TextStyle(color: Colors.white),),
                   onPressed: () async {
                     resetTeksInvTrx();
                   },
@@ -1495,7 +1479,7 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                     color: Colors.white,
                     size: 18.0,
                   ),
-                  label: Text("Submit"),
+                  label: Text("Submit",style: TextStyle(color: Colors.white)),
                   onPressed: () async {
                     //alert(globalScaffoldKey.currentContext!,0,"Anda tidak dapat melakukan transaksi ini","error");
                     if (txtInvTrxDate.text == null ||

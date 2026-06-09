@@ -1,6 +1,7 @@
 
 import 'package:dio/dio.dart';
 import 'package:dms_anp/src/Color/hex_color.dart';
+import 'package:dms_anp/src/Helper/MasterDataCache.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
@@ -26,10 +27,48 @@ TextEditingController txtVehicleName = new TextEditingController();
 TextEditingController txtVHCID = new TextEditingController();
 TextEditingController txtVehicleIdList = new TextEditingController();
 
-class _BottomSheetContentVehicle extends StatelessWidget {
-  final Function(String) onVehicleSelected; // ✅ Callback function untuk update UI
+class _BottomSheetContentVehicle extends StatefulWidget {
+  final Function(String) onVehicleSelected;
 
-  _BottomSheetContentVehicle({required this.onVehicleSelected});
+  const _BottomSheetContentVehicle({required this.onVehicleSelected});
+
+  @override
+  State<_BottomSheetContentVehicle> createState() =>
+      _BottomSheetContentVehicleState();
+}
+
+class _BottomSheetContentVehicleState extends State<_BottomSheetContentVehicle> {
+  List<dynamic> _displayList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _displayList = List.from(dummySearchList2);
+    txtSearchVehicle.addListener(_applySearch);
+  }
+
+  @override
+  void dispose() {
+    txtSearchVehicle.removeListener(_applySearch);
+    super.dispose();
+  }
+
+  void _applySearch() {
+    final query = txtSearchVehicle.text.trim().toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _displayList = List.from(dummySearchList2);
+      } else if (query.length >= 3) {
+        _displayList = dummySearchList2.where((item) {
+          final vhcid = item['vhcid'].toString().toLowerCase();
+          return vhcid.contains(query);
+        }).toList();
+      } else {
+        _displayList = List.from(dummySearchList2);
+      }
+      listVehicleId = List.from(_displayList);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,18 +135,28 @@ class _BottomSheetContentVehicle extends StatelessWidget {
               child: TextField(
                 controller: txtSearchVehicle,
                 style: TextStyle(color: Colors.orange.shade800),
+                textInputAction: TextInputAction.search,
+                onSubmitted: (_) => _applySearch(),
                 decoration: InputDecoration(
                   labelText: "Cari Vehicle",
                   hintText: "Masukkan nama vehicle...",
-                  prefixIcon: Icon(Icons.search, color: Colors.orange.shade600),
+                  prefixIcon: IconButton(
+                    icon: Icon(Icons.search, color: Colors.orange.shade600),
+                    onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      _applySearch();
+                    },
+                  ),
                   labelStyle: TextStyle(color: Colors.orange.shade600),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide(color: Colors.orange.shade400, width: 2),
+                    borderSide:
+                        BorderSide(color: Colors.orange.shade400, width: 2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide(color: Colors.orange.shade200, width: 1),
+                    borderSide:
+                        BorderSide(color: Colors.orange.shade200, width: 1),
                   ),
                   filled: true,
                   fillColor: Colors.white,
@@ -118,7 +167,7 @@ class _BottomSheetContentVehicle extends StatelessWidget {
           Expanded(
             child: ListView.builder(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              itemCount: listVehicleId == null ? 0 : listVehicleId.length,
+              itemCount: _displayList.length,
               itemBuilder: (context, index) {
                 return Container(
                   margin: EdgeInsets.only(bottom: 12),
@@ -135,27 +184,27 @@ class _BottomSheetContentVehicle extends StatelessWidget {
                   ),
                   child: ListTile(
                     onTap: () async {
-                      // ✅ Update controllers
-                      String selectedVehicle = listVehicleId[index]['vhcid'].toString();
+                      String selectedVehicle =
+                          _displayList[index]['vhcid'].toString();
                       txtVehicleName.text = selectedVehicle;
                       txtVehicleIdList.text = selectedVehicle;
                       txtVHCID.text = selectedVehicle;
 
-                      // ✅ Close bottom sheet
                       Navigator.of(context).pop();
 
-                      // ✅ Callback ke parent untuk refresh UI
-                      if (onVehicleSelected != null) {
-                        onVehicleSelected(selectedVehicle);
-                      }
+                      widget.onVehicleSelected(selectedVehicle);
                     },
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     leading: Container(
                       width: 45,
                       height: 45,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Colors.orange.shade300, Colors.orange.shade400],
+                          colors: [
+                            Colors.orange.shade300,
+                            Colors.orange.shade400
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -166,7 +215,7 @@ class _BottomSheetContentVehicle extends StatelessWidget {
                       ),
                     ),
                     title: Text(
-                      "${listVehicleId[index]['vhcid']}",
+                      "${_displayList[index]['vhcid']}",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: Colors.orange.shade800,
@@ -211,6 +260,8 @@ class _FrmCreateAntrianNewDriverState extends State<FrmCreateAntrianNewDriver> {
 
   // ✅ Update method dengan callback untuk refresh UI
   void _showModalListVehicle(BuildContext context) {
+    txtSearchVehicle.clear();
+    listVehicleId = List.from(dummySearchList2);
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -229,11 +280,11 @@ class _FrmCreateAntrianNewDriverState extends State<FrmCreateAntrianNewDriver> {
   }
 
   Future getListSR() async {
-    Uri myUri = Uri.parse("${GlobalData.baseUrl}api/do/refference_master.jsp?method=list_typeservice");
-    print(myUri.toString());
-    var response = await http.get(myUri, headers: {"Accept": "application/json"});
-
-    dataSRType = json.decode(response.body);
+    dataSRType = await MasterDataCache.getJsonList(
+      cacheKey: "do:list_typeservice",
+      url:
+          "${GlobalData.baseUrl}api/do/refference_master.jsp?method=list_typeservice",
+    );
     print(dataSRType);
     if (dataSRType.length == 0 && dataSRType == []) {
       alert(globalScaffoldKey.currentContext!, 0, "Gagal Load data Type Service", "error");
@@ -345,42 +396,12 @@ class _FrmCreateAntrianNewDriverState extends State<FrmCreateAntrianNewDriver> {
     }
   }
 
-  void _searchVehicleName() {
-    List dummyListData2 = [];
-    if (txtSearchVehicle.text != "" && txtSearchVehicle.text != null) {
-      if (txtSearchVehicle.text.length >= 3) {
-        for (var i = 0; i < dummySearchList2.length; i++) {
-          var dtC = dummySearchList2[i]['vhcid'].toLowerCase().toString();
-          if (dtC.contains(txtSearchVehicle.text.toLowerCase().toString())) {
-            dummyListData2.add({
-              "vhcid": dummySearchList2[i]['vhcid'].toString(),
-              "vhcid": dummySearchList2[i]['vhcid']
-            });
-          }
-        }
-      }
-      if (dummyListData2.length > 0) {
-        if (mounted) {
-          setState(() {
-            listVehicleId = [];
-            listVehicleId = dummyListData2;
-          });
-        }
-      } else {
-        listVehicleId = [];
-        listVehicleId = dummySearchList2;
-      }
-      return;
-    }
-  }
-
   @override
   void initState() {
     setState(() {
       getSession();
     });
     getVehicleList();
-    txtSearchVehicle.addListener(_searchVehicleName);
     if (EasyLoading.isShow) {
       EasyLoading.dismiss();
     }

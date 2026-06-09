@@ -66,6 +66,7 @@ class GlobalData {
   static final String baseUrlAPICANVASE = "https://canvas.easygo-gps.co.id/";
   static String loginname = "";
   static String frmVhcid = "";
+  static String koordinat_tujuan = "";
   static String frmDrvId = "";
   static String frmDrvName = "";
   static String frmUserId = "";

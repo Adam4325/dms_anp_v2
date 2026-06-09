@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dms_anp/src/Helper/MasterDataPreloader.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/flusbar.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
@@ -324,6 +325,7 @@ class _LoginPageState extends State<LoginPage> {
           final imeiToSend = (prefs.getString('androidID') ?? _identifier);
           await _updateImeiOnServer(imeiid: imeiToSend, statusKaryawan: status_karyawan, drvid: drvid, kryid: kryid);
           await FcmAduanService.instance.syncTokenIfPossible();
+          unawaited(MasterDataPreloader.preloadCommon(forceRefresh: true));
 
           Timer(Duration(seconds: 1), () {
             EasyLoading.dismiss();
@@ -644,7 +646,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 30),
                   Text(
-                    "Version 3.0",
+                    "Version 3.7",
                     style: TextStyle(
                       color: textSecondary,
                       fontSize: 14,

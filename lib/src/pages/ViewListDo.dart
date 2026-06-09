@@ -46,7 +46,7 @@ class _ViewListDoState extends State<ViewListDo> {
     String locid = prefs.getString("locid")!;
     print(drvid);
     Uri myUri = Uri.parse(
-        "${GlobalData.baseUrl}api/list_do.jsp?method=list_do_driver&driverid=" +
+        "${GlobalData.baseUrl}api/do/list_do_new_driver.jsp?method=list_do_driver&driverid=" +
             drvid.toString() +
             "&locid=" +
             locid.toString());
@@ -343,6 +343,11 @@ class _ViewListDoState extends State<ViewListDo> {
                   Divider(
                     color: Colors.transparent,
                     height: 0,
+                  ),Text("KOORDINAT TUJUAN: ${value['koordinat_tujuan']}",
+                      style: TextStyle(color: Colors.black)),
+                  Divider(
+                    color: Colors.transparent,
+                    height: 0,
                   ),
                   Text("DESTINATION: ${value['dlodestination']}",
                       style: TextStyle(color: Colors.black)),
@@ -387,8 +392,8 @@ class _ViewListDoState extends State<ViewListDo> {
                                     "dlodestination", value['dlodestination']);
                                 prefs.setString("dlodetaildonumber",
                                     value['dlodetaildonumber']);
-                                prefs.setString(
-                                    "bujnumber", value['dlodonumber']);
+                                prefs.setString("bujnumber", value['dlodonumber']);
+                                prefs.setString("koordinat_tujuan", value['koordinat_tujuan']);
                                 print(prefs.getString("bujnumber"));
                                 print(value['dlodonumber']);
                                 prefs.remove("submit_bujnumber");

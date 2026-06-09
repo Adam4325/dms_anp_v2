@@ -1,4 +1,5 @@
 import 'package:dms_anp/src/Color/hex_color.dart';
+import 'package:dms_anp/src/Helper/MasterDataCache.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/vehicle/ViewListVehicleNew.dart';
@@ -111,13 +112,11 @@ class _ViewServiceState extends State<ViewService> {
   String drvid = "";
 
   Future getListSR() async {
-    Uri myUri = Uri.parse(
-        "${GlobalData.baseUrl}api/do/refference_master.jsp?method=list_typeservice");
-    print(myUri.toString());
-    var response =
-        await http.get(myUri, headers: {"Accept": "application/json"});
-
-    dataSRType = json.decode(response.body);
+    dataSRType = await MasterDataCache.getJsonList(
+      cacheKey: "do:list_typeservice",
+      url:
+          "${GlobalData.baseUrl}api/do/refference_master.jsp?method=list_typeservice",
+    );
     print(dataSRType);
     if (dataSRType.length == 0 && dataSRType == []) {
       alert(globalScaffoldKey.currentContext!, 0, "Gagal Load data Type Service",
