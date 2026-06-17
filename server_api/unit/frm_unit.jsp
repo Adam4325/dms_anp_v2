@@ -11,7 +11,7 @@
      * Deploy: {webapp}/trucking/mobile/api/unit/frm_unit.jsp
      *
      * GET method=list-row-unit&limit=10&offset=0&search=
-     * GET method=update-unit&vhcid=&locid=&drvid=&userid=&status=
+     * GET method=update-unit&vhcid=&locid=&drvid=&userid=&status=&vhckm=
      */
     request.setCharacterEncoding("UTF-8");
     Gson gson = new Gson();
@@ -72,6 +72,7 @@
             String drvid = esc(request.getParameter("drvid"));
             String userid = esc(request.getParameter("userid"));
             String status = esc(request.getParameter("status"));
+            String vhckm = esc(request.getParameter("vhckm"));
 
             if (vhcid.isEmpty()) {
                 throw new Exception("VHCID wajib diisi");
@@ -87,6 +88,9 @@
             String sql = "UPDATE TBLVEHICLE SET LOCID='" + locid + "', VHCDEFAULTDRIVER='" + drvid + "'";
             if (!status.isEmpty()) {
                 sql += ", STATUS='" + status + "'";
+            }
+            if (!vhckm.isEmpty()) {
+                sql += ", VHCKM='" + vhckm + "'";
             }
             sql += " WHERE VHCID='" + vhcid + "' AND CPYID='AN' AND VHCSTATUS='Active'";
             int updated = db.exec(sql);
@@ -104,6 +108,7 @@
             root.addProperty("drvid", drvid);
             root.addProperty("userid", userid);
             root.addProperty("unit_status", status);
+            root.addProperty("vhckm", vhckm);
             out.print(gson.toJson(root));
             return;
         }

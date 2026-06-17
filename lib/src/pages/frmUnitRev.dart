@@ -5,6 +5,7 @@ import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/flusbar.dart';
 import 'package:dms_anp/src/services/AduanService.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -94,10 +95,72 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
     return _statusRoleUsers.contains(u);
   }
 
+  String _normalizeKmValue(String raw) {
+    if (raw.isEmpty || raw == '-') return '';
+    return raw.trim();
+  }
+
   String _normalizeUnitStatus(String raw) {
     if (raw.isEmpty || raw == '-') return '';
     final upper = raw.trim().toUpperCase();
     return _unitStatusOptions.contains(upper) ? upper : '';
+  }
+
+  String _defaultUnitStatus(Map<String, dynamic> unit) {
+    final raw = _cell(unit, ['STATUS', 'status']);
+    final normalized = _normalizeUnitStatus(raw);
+    if (normalized.isNotEmpty) return normalized;
+    if (raw == '-' || raw.trim().isEmpty) return '';
+    return raw.trim().toUpperCase();
+  }
+
+  String _defaultUnitKm(Map<String, dynamic> unit) {
+    return _normalizeKmValue(_cell(unit, ['VHCKM', 'vhckm']));
+  }
+
+  String _resolveStatusParam({
+    required bool canEditRole,
+    required String selectedStatus,
+    required String defaultStatus,
+  }) {
+    if (canEditRole && selectedStatus.isNotEmpty) {
+      return selectedStatus;
+    }
+    return defaultStatus;
+  }
+
+  String _resolveKmParam({
+    required bool canEditRole,
+    required String inputKm,
+    required String defaultKm,
+  }) {
+    if (canEditRole && inputKm.trim().isNotEmpty) {
+      return inputKm.trim();
+    }
+    return defaultKm;
+  }
+
+  bool _validateKmInput({
+    required String inputKm,
+    required String previousKm,
+    required void Function(String message) onError,
+  }) {
+    final trimmed = inputKm.trim();
+    if (trimmed.isEmpty) {
+      onError('KM wajib diisi');
+      return false;
+    }
+    final newKm = int.tryParse(trimmed);
+    if (newKm == null) {
+      onError('KM harus berupa angka');
+      return false;
+    }
+    final prevKm = int.tryParse(previousKm) ?? 0;
+    if (newKm < prevKm) {
+      onError('KM tidak boleh lebih kecil dari KM sebelumnya ($prevKm)');
+      return false;
+    }
+    return true;
   }
 
   String _cell(Map<String, dynamic> row, List<String> keys) {
@@ -309,6 +372,7 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
     required String locid,
     required String drvid,
     required String status,
+    required String vhckm,
   }) async {
     await Future<void>.delayed(Duration.zero);
     if (!mounted) return;
@@ -323,6 +387,7 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
           'drvid': drvid,
           'userid': _username,
           'status': status,
+          'vhckm': vhckm,
         },
       );
       _logApiRequest('update-unit', uri);
@@ -487,6 +552,62 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
     );
   }
 
+  Widget _buildKmField({
+    required TextEditingController controller,
+    String? previousKm,
+    ValueChanged<String>? onChanged,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'KM',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: onChanged,
+            decoration: InputDecoration(
+              hintText: 'Masukkan KM',
+              isDense: true,
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: primaryOrange, width: 1.5),
+              ),
+            ),
+          ),
+          if (previousKm != null && previousKm.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                'Min. KM: $previousKm',
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStatusDropdown({
     required String value,
     required ValueChanged<String> onChanged,
@@ -547,10 +668,13 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
     if (selLoc == '-') selLoc = '';
     String selDrv = _cell(unit, ['VHCDEFAULTDRIVER', 'vhcdefaultdriver']);
     if (selDrv == '-') selDrv = '';
-    final canEditStatus = _canEditUnitStatus();
-    String selStatus = canEditStatus
-        ? _normalizeUnitStatus(_cell(unit, ['STATUS', 'status']))
-        : '';
+    final canEditRole = _canEditUnitStatus();
+    final defaultStatus = _defaultUnitStatus(unit);
+    final defaultKm = _defaultUnitKm(unit);
+    String selStatus = canEditRole ? defaultStatus : '';
+    final kmCtrl = TextEditingController(
+      text: canEditRole ? defaultKm : '',
+    );
 
     final locSearchCtrl = TextEditingController();
     final drvSearchCtrl = TextEditingController();
@@ -562,6 +686,9 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
     bool drvLoading = false;
     List<S2Choice<String>> locChoices = [];
     List<S2Choice<String>> drvChoices = [];
+    bool showSaveConfirm = false;
+    String pendingStatusParam = '';
+    String pendingKmParam = '';
 
     Future<void> loadLoc(
       StateSetter setDlg,
@@ -687,23 +814,38 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
                           children: [
                             _readOnlyField('Vehicle ID', vhcid),
                             const SizedBox(height: 8),
-                            if (canEditStatus)
+                            if (canEditRole)
                               _buildStatusDropdown(
                                 value: selStatus,
-                                onChanged: (v) => setDlg(() => selStatus = v),
+                                onChanged: (v) => setDlg(() {
+                                  selStatus = v;
+                                  showSaveConfirm = false;
+                                }),
                               )
                             else
                               _readOnlyField(
                                 'Status',
                                 _cell(unit, ['STATUS', 'status']),
                               ),
-                            _readOnlyField('KM', _cell(unit, ['VHCKM', 'vhckm'])),
+                            if (canEditRole)
+                              _buildKmField(
+                                controller: kmCtrl,
+                                previousKm: defaultKm,
+                                onChanged: (_) => setDlg(() {
+                                  showSaveConfirm = false;
+                                }),
+                              )
+                            else
+                              _readOnlyField('KM', _cell(unit, ['VHCKM', 'vhckm'])),
                             const SizedBox(height: 8),
                             _buildPagedSmartSelect(
                               label: 'Default Location',
                               value: selLoc,
                               choices: locChoices,
-                              onChanged: (v) => setDlg(() => selLoc = v),
+                              onChanged: (v) => setDlg(() {
+                                selLoc = v;
+                                showSaveConfirm = false;
+                              }),
                               onReload: () => loadLoc(setDlg, dlgCtx, reset: true),
                               onPrev: locOffset > 0
                                   ? () {
@@ -727,7 +869,10 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
                               label: 'Default Driver',
                               value: selDrv,
                               choices: drvChoices,
-                              onChanged: (v) => setDlg(() => selDrv = v),
+                              onChanged: (v) => setDlg(() {
+                                selDrv = v;
+                                showSaveConfirm = false;
+                              }),
                               onReload: () => loadDrv(setDlg, dlgCtx, reset: true),
                               onPrev: drvOffset > 0
                                   ? () {
@@ -747,6 +892,50 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
                               searchCtrl: drvSearchCtrl,
                               isLoading: drvLoading,
                             ),
+                            if (showSaveConfirm) ...[
+                              const SizedBox(height: 8),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: lightOrange,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: primaryOrange.withOpacity(0.35),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Konfirmasi Simpan',
+                                      style: TextStyle(
+                                        color: darkOrange,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'Simpan perubahan data unit ini?',
+                                      style: TextStyle(fontSize: 13),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text('Vehicle ID: $vhcid',
+                                        style: const TextStyle(fontSize: 13)),
+                                    Text('Location: $selLoc',
+                                        style: const TextStyle(fontSize: 13)),
+                                    Text('Driver: $selDrv',
+                                        style: const TextStyle(fontSize: 13)),
+                                    if (pendingStatusParam.isNotEmpty)
+                                      Text('Status: $pendingStatusParam',
+                                          style: const TextStyle(fontSize: 13)),
+                                    if (pendingKmParam.isNotEmpty)
+                                      Text('KM: $pendingKmParam',
+                                          style: const TextStyle(fontSize: 13)),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -754,121 +943,127 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
                     SafeArea(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => Navigator.pop(dlgCtx),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: darkOrange,
-                                  side: BorderSide(color: primaryOrange),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: const Text('Batal'),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () async {
-                                  if (selLoc.isEmpty) {
-                                    alert(context, 0, 'Default Location wajib dipilih', 'warning');
-                                    return;
-                                  }
-                                  if (selDrv.isEmpty) {
-                                    alert(context, 0, 'Default Driver wajib dipilih', 'warning');
-                                    return;
-                                  }
-
-                                  final confirm = await showDialog<bool>(
-                                    context: dlgCtx,
-                                    barrierDismissible: false,
-                                    builder: (ctx) => AlertDialog(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      title: Text(
-                                        'Konfirmasi Simpan',
-                                        style: TextStyle(
-                                          color: darkOrange,
-                                          fontWeight: FontWeight.bold,
+                        child: showSaveConfirm
+                            ? Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () => setDlg(() {
+                                        showSaveConfirm = false;
+                                      }),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.grey.shade700,
+                                        side: BorderSide(color: Colors.grey.shade400),
+                                        padding:
+                                            const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
                                         ),
                                       ),
-                                      content: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Simpan perubahan data unit ini?',
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Text('Vehicle ID: $vhcid',
-                                              style: const TextStyle(fontSize: 13)),
-                                          Text('Location: $selLoc',
-                                              style: const TextStyle(fontSize: 13)),
-                                          Text('Driver: $selDrv',
-                                              style: const TextStyle(fontSize: 13)),
-                                          if (canEditStatus && selStatus.isNotEmpty)
-                                            Text('Status: $selStatus',
-                                                style: const TextStyle(fontSize: 13)),
-                                        ],
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(ctx, false),
-                                          child: Text(
-                                            'No',
-                                            style: TextStyle(color: Colors.grey.shade700),
-                                          ),
-                                        ),
-                                        ElevatedButton(
-                                          onPressed: () => Navigator.pop(ctx, true),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: primaryOrange,
-                                            foregroundColor: Colors.white,
-                                          ),
-                                          child: const Text('Yes'),
-                                        ),
-                                      ],
+                                      child: const Text('No'),
                                     ),
-                                  );
-
-                                  if (confirm != true) {
-                                    return;
-                                  }
-
-                                  final statusParam = (canEditStatus && selStatus.isNotEmpty)
-                                      ? selStatus
-                                      : '';
-
-                                  if (dlgCtx.mounted) {
-                                    Navigator.pop(dlgCtx, {
-                                      'vhcid': vhcid,
-                                      'locid': selLoc,
-                                      'drvid': selDrv,
-                                      'status': statusParam,
-                                    });
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryOrange,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                ),
-                                child: const Text(
-                                  'Simpan',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(dlgCtx, {
+                                          'vhcid': vhcid,
+                                          'locid': selLoc,
+                                          'drvid': selDrv,
+                                          'status': pendingStatusParam,
+                                          'vhckm': pendingKmParam,
+                                        });
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: primaryOrange,
+                                        foregroundColor: Colors.white,
+                                        padding:
+                                            const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      child: const Text('Yes'),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () => Navigator.pop(dlgCtx),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: darkOrange,
+                                        side: BorderSide(color: primaryOrange),
+                                        padding:
+                                            const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      child: const Text('Batal'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        if (selLoc.isEmpty) {
+                                          alert(context, 0,
+                                              'Default Location wajib dipilih',
+                                              'warning');
+                                          return;
+                                        }
+                                        if (selDrv.isEmpty) {
+                                          alert(context, 0,
+                                              'Default Driver wajib dipilih',
+                                              'warning');
+                                          return;
+                                        }
+                                        if (canEditRole) {
+                                          if (!_validateKmInput(
+                                            inputKm: kmCtrl.text,
+                                            previousKm: defaultKm,
+                                            onError: (msg) =>
+                                                alert(context, 0, msg, 'warning'),
+                                          )) {
+                                            return;
+                                          }
+                                        }
+
+                                        setDlg(() {
+                                          pendingStatusParam = _resolveStatusParam(
+                                            canEditRole: canEditRole,
+                                            selectedStatus: selStatus,
+                                            defaultStatus: defaultStatus,
+                                          );
+                                          pendingKmParam = _resolveKmParam(
+                                            canEditRole: canEditRole,
+                                            inputKm: kmCtrl.text,
+                                            defaultKm: defaultKm,
+                                          );
+                                          showSaveConfirm = true;
+                                        });
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: primaryOrange,
+                                        foregroundColor: Colors.white,
+                                        padding:
+                                            const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Simpan',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ],
@@ -882,6 +1077,7 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
 
     locSearchCtrl.dispose();
     drvSearchCtrl.dispose();
+    kmCtrl.dispose();
 
     if (savePayload != null && mounted) {
       await _updateUnitAndRefresh(
@@ -889,6 +1085,7 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
         locid: savePayload['locid'] ?? '',
         drvid: savePayload['drvid'] ?? '',
         status: savePayload['status'] ?? '',
+        vhckm: savePayload['vhckm'] ?? '',
       );
     }
   }

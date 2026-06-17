@@ -137,9 +137,9 @@ class _DetailMenuState extends State<DetailMenu> {
     });
   }
 
-  bool _canAccessUnits() {
+  bool _canAccessUnits() {//
     final u = username.trim().toUpperCase();
-    return u == 'ADMIN' || u == 'BUDI';
+    return u == 'ADMIN' || u == 'ADI'|| u == 'DANI'|| u == 'DHONNY'|| u == 'HILMAN' || u == 'MAJID'|| u == 'NURIZKI'|| u == 'CS';
   }
 
   Widget _buildMenuCard({
