@@ -146,6 +146,10 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
     required void Function(String message) onError,
   }) {
     final trimmed = inputKm.trim();
+    final previous = previousKm.trim();
+    if (trimmed == previous) {
+      return true;
+    }
     if (trimmed.isEmpty) {
       onError('KM wajib diisi');
       return false;
@@ -155,7 +159,7 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
       onError('KM harus berupa angka');
       return false;
     }
-    final prevKm = int.tryParse(previousKm) ?? 0;
+    final prevKm = int.tryParse(previous) ?? 0;
     if (newKm < prevKm) {
       onError('KM tidak boleh lebih kecil dari KM sebelumnya ($prevKm)');
       return false;
@@ -397,7 +401,7 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
         if (EasyLoading.isShow) EasyLoading.dismiss();
         await _fetchUnits(resetOffset: true);
         if (mounted) {
-          alert(context, 0, 'Data unit berhasil diupdate', 'success');
+          alert(context, 1, 'Data unit berhasil diupdate', 'success');
         }
       } else {
         throw Exception(
@@ -943,8 +947,31 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
                     SafeArea(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: showSaveConfirm
-                            ? Row(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (showSaveConfirm) ...[
+                              Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: lightOrange,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: primaryOrange.withOpacity(0.45),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Simpan perubahan data unit ini?',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: darkOrange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              Row(
                                 children: [
                                   Expanded(
                                     child: OutlinedButton(
@@ -988,8 +1015,9 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
                                     ),
                                   ),
                                 ],
-                              )
-                            : Row(
+                              ),
+                            ] else
+                              Row(
                                 children: [
                                   Expanded(
                                     child: OutlinedButton(
@@ -1011,15 +1039,21 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
                                     child: ElevatedButton(
                                       onPressed: () {
                                         if (selLoc.isEmpty) {
-                                          alert(context, 0,
-                                              'Default Location wajib dipilih',
-                                              'warning');
+                                          alert(
+                                            context,
+                                            0,
+                                            'Default Location wajib dipilih',
+                                            'warning',
+                                          );
                                           return;
                                         }
                                         if (selDrv.isEmpty) {
-                                          alert(context, 0,
-                                              'Default Driver wajib dipilih',
-                                              'warning');
+                                          alert(
+                                            context,
+                                            0,
+                                            'Default Driver wajib dipilih',
+                                            'warning',
+                                          );
                                           return;
                                         }
                                         if (canEditRole) {
@@ -1064,6 +1098,8 @@ class _FrmUnitRevState extends State<FrmUnitRev> {
                                   ),
                                 ],
                               ),
+                          ],
+                        ),
                       ),
                     ),
                   ],

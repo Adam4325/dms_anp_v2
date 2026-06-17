@@ -28,7 +28,7 @@ void alert(BuildContext context, int alertType, String message, String colorInfo
     title: titleAlert,
     message: message,
     icon: Icon(
-      Icons.info_outline,
+      Icons.info_outline,//
       color: Colors.white,
     ),
     backgroundGradient:
