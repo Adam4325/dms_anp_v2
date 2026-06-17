@@ -124,6 +124,33 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
   List<Map<String, dynamic>> lstVheicleType = [];
   List<Map<String, dynamic>> lstRequestNumber = [];
   List<Map<String, dynamic>> lstRefferensi = [];
+  final List<S2Choice<String>> simTypeChoices = [
+    S2Choice<String>(value: 'B1', title: 'B1'),
+    S2Choice<String>(value: 'B1 UMUM', title: 'B1 UMUM'),
+    S2Choice<String>(value: 'BII', title: 'BII'),
+    S2Choice<String>(value: 'B II UMUM', title: 'B II UMUM'),
+  ];
+  final List<S2Choice<String>> ukuranBajuChoices = [
+    S2Choice<String>(value: 'M', title: 'M'),
+    S2Choice<String>(value: 'L', title: 'L'),
+    S2Choice<String>(value: 'XL', title: 'XL'),
+    S2Choice<String>(value: 'XXL', title: 'XXL'),
+    S2Choice<String>(value: 'XXXL', title: 'XXXL'),
+  ];
+  final List<S2Choice<String>> ukuranCelanaChoices = List.generate(
+    10,
+    (index) {
+      final value = (29 + index).toString();
+      return S2Choice<String>(value: value, title: value);
+    },
+  );
+  final List<S2Choice<String>> ukuranSepatuChoices = List.generate(
+    5,
+    (index) {
+      final value = (39 + index).toString();
+      return S2Choice<String>(value: value, title: value);
+    },
+  );
 
   // Orange Soft Theme Colors
   final Color primaryOrange = Color(0xFFFF8C69);      // Soft orange
@@ -1702,9 +1729,14 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
                         controller: txtNomorKTP,
                         keyboardType: TextInputType.number,
                       ),
-                      buildTextField(
-                        labelText: "Type SIM *",
-                        controller: txtSIMName,
+                      buildSmartSelect(
+                        title: 'Type SIM *',
+                        value: txtSIMName.text,
+                        onChange: (selected) {
+                          setState(() => txtSIMName.text = selected.value);
+                        },
+                        choices: simTypeChoices,
+                        modalFilter: false,
                       ),
                       buildTextField(
                         labelText: "Nomor SIM *",
@@ -1880,19 +1912,32 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
                         labelText: "Pendidikan",
                         controller: txtPendidikan,
                       ),
-                      buildTextField(
-                        labelText: "Ukuran Baju",
-                        controller: txtUkuranBaju,
+                      buildSmartSelect(
+                        title: 'Ukuran Baju',
+                        value: txtUkuranBaju.text,
+                        onChange: (selected) {
+                          setState(() => txtUkuranBaju.text = selected.value);
+                        },
+                        choices: ukuranBajuChoices,
+                        modalFilter: false,
                       ),
-                      buildTextField(
-                        labelText: "Ukuran Celana",
-                        controller: txtUkuranCelana,
-                        keyboardType: TextInputType.number,
+                      buildSmartSelect(
+                        title: 'Ukuran Celana',
+                        value: txtUkuranCelana.text,
+                        onChange: (selected) {
+                          setState(() => txtUkuranCelana.text = selected.value);
+                        },
+                        choices: ukuranCelanaChoices,
+                        modalFilter: false,
                       ),
-                      buildTextField(
-                        labelText: "Ukuran Sepatu",
-                        controller: txtUkuranSepatu,
-                        keyboardType: TextInputType.number,
+                      buildSmartSelect(
+                        title: 'Ukuran Sepatu',
+                        value: txtUkuranSepatu.text,
+                        onChange: (selected) {
+                          setState(() => txtUkuranSepatu.text = selected.value);
+                        },
+                        choices: ukuranSepatuChoices,
+                        modalFilter: false,
                       ),
                       buildSmartSelect(
                         title: 'Type Kendaraan',

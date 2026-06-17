@@ -7,6 +7,7 @@ import 'package:dms_anp/src/pages/FrmObp.dart';
 import 'package:dms_anp/src/pages/FrmObpDouble.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/ViewListObp.dart';
+import 'package:dms_anp/src/pages/frmUnitRev.dart';
 import 'package:dms_anp/src/pages/sub_menu_inventory.dart';
 import 'package:dms_anp/src/pages/sub_menu_maintenance.dart';
 import 'package:dms_anp/src/pages/sub_menuhrd.dart';
@@ -127,9 +128,18 @@ class _DetailMenuState extends State<DetailMenu> {
   }
 
   var username = "";
-  void getSession() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    username = prefs.getString("username")!;
+
+  Future<void> getSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      username = prefs.getString("username") ?? '';
+    });
+  }
+
+  bool _canAccessUnits() {
+    final u = username.trim().toUpperCase();
+    return u == 'ADMIN' || u == 'BUDI';
   }
 
   Widget _buildMenuCard({
@@ -263,6 +273,23 @@ class _DetailMenuState extends State<DetailMenu> {
     }
   }
 
+  Widget menuUnits(BuildContext context) {
+    if (!_canAccessUnits()) {
+      return Container();
+    }
+    return _buildMenuCard(
+      title: "Units",
+      icon: Icons.local_shipping,
+      iconColor: darkOrange,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const FrmUnitRev()),
+        );
+      },
+    );
+  }
+
   Widget buildMenu(BuildContext context) {
     return Container(
       margin: EdgeInsets.only(top: 5),
@@ -324,6 +351,7 @@ class _DetailMenuState extends State<DetailMenu> {
           menuFormObp(context),
           menuFormObpDouble(context),
           menuFormObpDetail(context),
+          menuUnits(context),
 
           SizedBox(height: 20),
         ],

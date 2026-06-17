@@ -1214,7 +1214,7 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
                       color: Colors.white,
                       size: 18.0,
                     ),
-                    label: Text("Edit"),
+                    label: Text("Edit",style:TextStyle(color: Colors.white),),
                     onPressed: () async {
                       showDialog(
                         context: globalScaffoldKey.currentContext!,
@@ -1328,7 +1328,7 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
   }
 
   Widget _sizeBoxApprove(BuildContext context) {
-    if (username == "ADI" || username == "MAJID") {
+    if (username == "ADI" || username == "MAJID" || username == "ADMIN" || username == "NURIZKI") {
       //if (!getAkses()) {
       return SizedBox(
         width: 12,
@@ -1340,7 +1340,7 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
 
   Widget buildButtonApprove(
       BuildContext context, String gtNumber, String vhcid, String locid) {
-    if (username == "ADI" || username == "MAJID") {
+    if (username == "ADI" || username == "MAJID" || username == "ADMIN" || username == "NURIZKI") {
       //if (!getAkses()) {
       return Expanded(
           child: ElevatedButton.icon(
@@ -1349,7 +1349,7 @@ class _FrmRequestMovingUnitsState extends State<FrmRequestMovingUnits>
               color: Colors.white,
               size: 18.0,
             ),
-            label: Text("Approve"),
+            label: Text("Approve",style: TextStyle(color: Colors.white),),
             onPressed: () async {
               showDialog(
                 context: globalScaffoldKey.currentContext!,

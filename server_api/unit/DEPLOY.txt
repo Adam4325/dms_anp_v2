@@ -1,0 +1,20 @@
+Deploy ke Tomcat trucking/mobile/api/units/
+
+- frm_unit.jsp       -> api/units/frm_unit.jsp
+- reff_location.jsp  -> api/units/reff_location.jsp  (alias lama: eff_location.jsp)
+- reff_driver.jsp    -> api/units/reff_driver.jsp
+
+Endpoints:
+  GET api/units/frm_unit.jsp?method=list-row-unit&limit=10&offset=0&search=
+  GET api/units/frm_unit.jsp?method=update-unit&vhcid=&locid=&drvid=&userid=&status=
+  (status kosong = tidak update STATUS di DB; isi CLOSE|ONGOING|SERVICE jika user punya role)
+  GET api/units/reff_location.jsp?method=list-location&limit=10&offset=0&search=
+  GET api/units/reff_driver.jsp?method=list-driver&limit=10&offset=0&search=
+
+Sesuaikan import DbHandler: com.othree.common.db.DbHandler
+
+PENTING: Jangan pakai db.getQueryResult() bersamaan dengan db.connectDefault() manual.
+Pakai db.query() + ResultSet + rs.close().
+
+Pagination: Sybase ASE — query penuh ORDER BY, skip/limit di Java (queryPagedRows).
+Jangan pakai LIMIT/OFFSET MySQL atau nested TOP (error -3008 saat offset>0).

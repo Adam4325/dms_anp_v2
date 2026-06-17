@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -101,7 +101,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   String _identifier = '';
   List<AnpService> _anpServiceList = [];
 
-  // âœ… ADDED: Variables untuk menu management
+  // ✅ ADDED: Variables untuk menu management
   List<AnpService> _mainMenuList = []; // Menu utama (max 8)
   List<AnpService> _additionalMenuList = []; // Menu tambahan
   static const int MAX_MAIN_MENU = 7; // 7 menu + 1 "More" = 8 total
@@ -150,7 +150,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   int _aduanNotifCount = 0;
   Timer? _aduanNotifTimer;
 
-  // âœ… ADDED: Orange Soft Color Scheme
+  // ✅ ADDED: Orange Soft Color Scheme
   static const Color primaryOrange = Color(0xFFFF8A50);
   static const Color lightOrange = Color(0xFFFFB085);
   static const Color paleOrange = Color(0xFFFFF0E6);
@@ -624,81 +624,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
   }
 
-
-  String _menuOrderPrefKey() =>
-      'dashboard_menu_order_${username.trim().toUpperCase()}';
-
-  bool _shouldSplitMenus() =>
-      (username == "ADMIN" || getAkses("OP")) &&
-      _anpServiceList.length > MAX_MAIN_MENU;
-
-  void _applySavedMenuOrder() {
-    final saved = sharedPreferences?.getStringList(_menuOrderPrefKey());
-    if (saved == null || saved.isEmpty) {
-      return;
-    }
-
-    final orderMap = <int, int>{};
-    for (var i = 0; i < saved.length; i++) {
-      final id = int.tryParse(saved[i]);
-      if (id != null) {
-        orderMap[id] = i;
-      }
-    }
-    if (orderMap.isEmpty) {
-      return;
-    }
-
-    final known = <AnpService>[];
-    final unknown = <AnpService>[];
-    for (final item in _anpServiceList) {
-      final id = item.idKey;
-      if (id != null && orderMap.containsKey(id)) {
-        known.add(item);
-      } else {
-        unknown.add(item);
-      }
-    }
-    known.sort((a, b) => orderMap[a.idKey!]!.compareTo(orderMap[b.idKey!]!));
-    _anpServiceList
-      ..clear()
-      ..addAll(known)
-      ..addAll(unknown);
-  }
-
-  Future<void> _saveMenuOrder(List<AnpService> ordered) async {
-    final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
-    final ids = ordered
-        .where((e) => e.idKey != null && e.idKey != 999)
-        .map((e) => e.idKey.toString())
-        .toList();
-    await prefs.setStringList(_menuOrderPrefKey(), ids);
-    sharedPreferences = prefs;
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _anpServiceList
-        ..clear()
-        ..addAll(ordered);
-      _organizeMenus();
-    });
-  }
-
-  Future<void> _resetMenuOrder() async {
-    final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
-    await prefs.remove(_menuOrderPrefKey());
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _anpServiceList.clear();
-      _setupMenuItemsWithoutOrder();
-      _organizeMenus();
-    });
-  }
-
-  void _setupMenuItemsWithoutOrder() {
+  void _setupMenuItems() {
     _anpServiceList.add(new AnpService(
         image: loginname == "DRIVER" ? Icons.location_on : Icons.location_on,
         color: AnpPalette.menuRide,
@@ -835,7 +761,7 @@ class _ViewDashboardState extends State<ViewDashboard>
               image: Icons.today_outlined,
               color: Colors.red,
               idKey: 14,
-              title: "Inventory"));
+              title: "Inventory")); //INI
         }
       }
     }
@@ -864,12 +790,18 @@ class _ViewDashboardState extends State<ViewDashboard>
           title: "Absen ADV"));
     }
 
+    // if (username == "ADMIN" || isMenuForeman == true) {
+    //
+    // }
+
     var isOK2 = globals.akses_pages == null
         ? globals.akses_pages
         : globals.akses_pages.where(
             (x) => (x == "IN" || username == "ADMIN" || isMenuForeman == true));
     if (isOK2 != null) {
       if (isOK2.length > 0) {
+        print("isMenuForeman");
+        print(isMenuForeman);
         _anpServiceList.add(new AnpService(
             image: Icons.inventory,
             color: Colors.green,
@@ -877,6 +809,14 @@ class _ViewDashboardState extends State<ViewDashboard>
             title: "Inv. Foreman"));
       }
     }
+
+    // if (isMenuForeman == true) {
+    //   _anpServiceList.add(new AnpService(
+    //       image: Icons.inventory,
+    //       color: Colors.green,
+    //       idKey: 27,
+    //       title: "Inv. Foreman"));
+    // }
 
     if (loginname != "DRIVER") {
       var isOK = globals.akses_pages == null
@@ -1065,16 +1005,12 @@ class _ViewDashboardState extends State<ViewDashboard>
           idKey: 35,
           title: "Aduan"));
     }
-  }
 
-  void _setupMenuItems() {
-    _anpServiceList.clear();
-    _setupMenuItemsWithoutOrder();
-    _applySavedMenuOrder();
+    // ✅ ADDED: Pisahkan menu untuk ADMIN/OP
     _organizeMenus();
   }
 
-  // âœ… ADDED: Function untuk memisahkan menu utama dan tambahan
+  // ✅ ADDED: Function untuk memisahkan menu utama dan tambahan
   void _organizeMenus() {
     _mainMenuList.clear();
     _additionalMenuList.clear();
@@ -1097,208 +1033,6 @@ class _ViewDashboardState extends State<ViewDashboard>
       // Jika bukan ADMIN/OP atau menu tidak lebih dari 7, tampilkan semua
       _mainMenuList = _anpServiceList;
     }
-  }
-
-  void _showMenuCustomizer() {
-    if (_anpServiceList.length < 2) {
-      return;
-    }
-
-    final editable = List<AnpService>.from(_anpServiceList);
-    final splitMenus = _shouldSplitMenus();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return DraggableScrollableSheet(
-              expand: false,
-              initialChildSize: 0.85,
-              minChildSize: 0.5,
-              maxChildSize: 0.95,
-              builder: (context, scrollController) {
-                return Column(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.fromLTRB(16, 16, 8, 12),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [primaryOrange, darkOrange],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(20)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.reorder, color: Colors.white),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Atur Menu',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () async {
-                                  await _resetMenuOrder();
-                                  if (sheetContext.mounted) {
-                                    Navigator.pop(sheetContext);
-                                  }
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(this.context)
-                                        .showSnackBar(
-                                      SnackBar(
-                                        content:
-                                            Text('Urutan menu direset ke default'),
-                                      ),
-                                    );
-                                  }
-                                },
-                                child: Text(
-                                  'Reset',
-                                  style: TextStyle(color: Colors.white70),
-                                ),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.close, color: Colors.white),
-                                onPressed: () => Navigator.pop(sheetContext),
-                              ),
-                            ],
-                          ),
-                          Padding(
-                            padding: EdgeInsets.only(top: 4),
-                            child: Text(
-                              splitMenus
-                                  ? 'Drag untuk ubah urutan. $MAX_MAIN_MENU menu pertama tampil di Menu Utama.'
-                                  : 'Drag untuk ubah urutan menu.',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: ReorderableListView.builder(
-                        scrollController: scrollController,
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        itemCount: editable.length,
-                        onReorder: (oldIndex, newIndex) {
-                          setModalState(() {
-                            if (newIndex > oldIndex) {
-                              newIndex -= 1;
-                            }
-                            final item = editable.removeAt(oldIndex);
-                            editable.insert(newIndex, item);
-                          });
-                        },
-                        itemBuilder: (context, index) {
-                          final service = editable[index];
-                          final isMainSlot =
-                              splitMenus && index < MAX_MAIN_MENU;
-                          return Card(
-                            key: ValueKey('menu_${service.idKey}'),
-                            margin: EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 4),
-                            child: ListTile(
-                              leading: Container(
-                                padding: EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: (service.color ?? Colors.grey)
-                                      .withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  service.image,
-                                  color: service.color,
-                                  size: 22,
-                                ),
-                              ),
-                              title: Text(
-                                service.title ?? '',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                              subtitle: splitMenus
-                                  ? Text(
-                                      isMainSlot
-                                          ? 'Menu Utama'
-                                          : 'Menu Tambahan',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: isMainSlot
-                                            ? darkOrange
-                                            : Colors.grey.shade600,
-                                      ),
-                                    )
-                                  : null,
-                              trailing: ReorderableDragStartListener(
-                                index: index,
-                                child: Icon(
-                                  Icons.drag_handle,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    SafeArea(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryOrange,
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            onPressed: () async {
-                              await _saveMenuOrder(editable);
-                              if (sheetContext.mounted) {
-                                Navigator.pop(sheetContext);
-                              }
-                              if (mounted) {
-                                ScaffoldMessenger.of(this.context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Urutan menu disimpan'),
-                                  ),
-                                );
-                              }
-                            },
-                            child: Text(
-                              'Simpan',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
-        );
-      },
-    );
   }
 
   void _setupBannerItems() {
@@ -1609,7 +1343,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   void _setupNotifications() {
-    print('ðŸ” DEBUG: Setting up notifications in ViewDashboard...');
+    print('🔍 DEBUG: Setting up notifications in ViewDashboard...');
     _notificationSubscription?.cancel();
     _dialogDebounceTimer?.cancel();
     _notificationService.resetService();
@@ -1617,7 +1351,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     _notificationSubscription = _notificationService.notificationStream.listen(
       (notifications) {
         print(
-            'ðŸ” DEBUG: Stream received ${notifications.length} notifications');
+            '🔍 DEBUG: Stream received ${notifications.length} notifications');
         setState(() {
           _notifications = notifications;
         });
@@ -1629,15 +1363,15 @@ class _ViewDashboardState extends State<ViewDashboard>
         }
       },
       onError: (error) {
-        print('âŒ ERROR: Stream error: $error');
+        print('❌ ERROR: Stream error: $error');
       },
       onDone: () {
-        print('ðŸ” DEBUG: Stream done');
+        print('🔍 DEBUG: Stream done');
       },
     );
 
     _notificationService.startNotificationTimer(intervalSeconds: 30);
-    print('ðŸ” DEBUG: Notification setup completed');
+    print('🔍 DEBUG: Notification setup completed');
   }
 
   void _showLatestNotification(List<NotificationData> notifications) {
@@ -1652,7 +1386,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
 
     if (newNotification != null) {
-      print('ðŸ” DEBUG: Showing new notification: ${newNotification.id}');
+      print('🔍 DEBUG: Showing new notification: ${newNotification.id}');
       _shownNotificationIds.add(newNotification.id);
       _showNotificationDialog(newNotification);
     }
@@ -1660,15 +1394,15 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   void _showNotificationDialog(NotificationData notification) {
     print(
-        'ðŸ” DEBUG: Attempting to show notification dialog for ID: ${notification.id}');
+        '🔍 DEBUG: Attempting to show notification dialog for ID: ${notification.id}');
 
     if (_isDialogShowing) {
-      print('âš ï¸ WARNING: Dialog already showing, skipping...');
+      print('⚠️ WARNING: Dialog already showing, skipping...');
       return;
     }
 
     if (!mounted || context == null) {
-      print('âŒ ERROR: Context not available for dialog');
+      print('❌ ERROR: Context not available for dialog');
       return;
     }
 
@@ -1768,19 +1502,19 @@ class _ViewDashboardState extends State<ViewDashboard>
         _isDialogShowing = false;
       });
 
-      print('âœ… SUCCESS: Dialog shown successfully');
+      print('✅ SUCCESS: Dialog shown successfully');
     } catch (e) {
-      print('âŒ ERROR: Failed to show dialog: $e');
+      print('❌ ERROR: Failed to show dialog: $e');
       _isDialogShowing = false;
     }
   }
 
   void _handleNotificationTap(NotificationData notification) async {
-    print('ðŸ” DEBUG: Handling notification tap for: ${notification.id}');
+    print('🔍 DEBUG: Handling notification tap for: ${notification.id}');
     try {
       await _notificationService.sendNotificationResponse(notification);
       _notificationService.removeNotification(notification.id);
-      print('âœ… SUCCESS: Notification handled successfully');
+      print('✅ SUCCESS: Notification handled successfully');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Notifikasi telah ditandai sebagai dibaca'),
@@ -1791,7 +1525,7 @@ class _ViewDashboardState extends State<ViewDashboard>
         ),
       );
     } catch (e) {
-      print('âŒ ERROR: Exception in _handleNotificationTap: $e');
+      print('❌ ERROR: Exception in _handleNotificationTap: $e');
     }
   }
 
@@ -1832,7 +1566,7 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   @override
   void dispose() {
-    print('ðŸ” DEBUG: ViewDashboard dispose called');
+    print('🔍 DEBUG: ViewDashboard dispose called');
     _notificationSubscription?.cancel();
     timer?.cancel();
     _runningTextTimer?.cancel();
@@ -1987,8 +1721,8 @@ class _ViewDashboardState extends State<ViewDashboard>
   String _buildRunningInfoText() {
     if (_runningInfoItems.isEmpty) return 'Tidak ada informasi terbaru';
 
-    final baseText = _runningInfoItems.join('     â€¢     ');
-    return '$baseText     â€¢     $baseText';
+    final baseText = _runningInfoItems.join('     •     ');
+    return '$baseText     •     $baseText';
   }
 
   void _showRunningInfoDialog() {
@@ -2172,7 +1906,7 @@ class _ViewDashboardState extends State<ViewDashboard>
           colors: [
             primaryOrange,
             accentOrange
-          ], // âœ… UPDATED: Orange soft gradient
+          ], // ✅ UPDATED: Orange soft gradient
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -2227,7 +1961,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                         fontSize: 12,
                       ),
                     ),
-                    // âœ… ADDED: Badge untuk ADMIN/OP
+                    // ✅ ADDED: Badge untuk ADMIN/OP
                     if (username == "ADMIN" || getAkses("OP")) ...[
                       SizedBox(width: 8),
                       Container(
@@ -2387,11 +2121,11 @@ class _ViewDashboardState extends State<ViewDashboard>
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color:
-                      primaryOrange.withOpacity(0.1), // âœ… UPDATED: Orange theme
+                      primaryOrange.withOpacity(0.1), // ✅ UPDATED: Orange theme
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.apps,
-                    color: primaryOrange, size: 20), // âœ… UPDATED: Orange theme
+                    color: primaryOrange, size: 20), // ✅ UPDATED: Orange theme
               ),
               SizedBox(width: 12),
               Text(
@@ -2403,16 +2137,6 @@ class _ViewDashboardState extends State<ViewDashboard>
                 ),
               ),
               Spacer(),
-              if (_anpServiceList.length > 1)
-                IconButton(
-                  tooltip: 'Atur Menu',
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints(),
-                  icon: Icon(Icons.edit, color: primaryOrange, size: 20),
-                  onPressed: _showMenuCustomizer,
-                ),
-              if (_anpServiceList.length > 1 && _additionalMenuList.isNotEmpty)
-                SizedBox(width: 4),
               // ✅ ADDED: Indicator untuk menu tambahan
               if (_additionalMenuList.isNotEmpty)
                 Container(
@@ -2483,7 +2207,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   Widget _buildMenuCard(AnpService service) {
-    // âœ… UPDATED: Special styling untuk menu "More"
+    // ✅ UPDATED: Special styling untuk menu "More"
     bool isMoreMenu = service.idKey == 999;
 
     return GestureDetector(
@@ -2531,7 +2255,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                       top: -8,
                       child: _buildNewMenuBadge(),
                     ),
-                  // âœ… ADDED: Badge untuk menu "More"
+                  // ✅ ADDED: Badge untuk menu "More"
                   if (isMoreMenu && _additionalMenuList.isNotEmpty)
                     Positioned(
                       right: -2,
@@ -2607,7 +2331,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     );
   }
 
-  // âœ… ADDED: Function untuk menampilkan menu tambahan
+  // ✅ ADDED: Function untuk menampilkan menu tambahan
   void _showMoreMenuModal() {
     showModalBottomSheet(
       context: context,
@@ -3154,11 +2878,11 @@ class _ViewDashboardState extends State<ViewDashboard>
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color:
-                      primaryOrange.withOpacity(0.1), // âœ… UPDATED: Orange theme
+                      primaryOrange.withOpacity(0.1), // ✅ UPDATED: Orange theme
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.info_outline,
-                    color: primaryOrange, size: 20), // âœ… UPDATED: Orange theme
+                    color: primaryOrange, size: 20), // ✅ UPDATED: Orange theme
               ),
               SizedBox(width: 12),
               Text(
@@ -3232,13 +2956,13 @@ class _ViewDashboardState extends State<ViewDashboard>
     return Column(
       children: [
         _buildInfoItem(Icons.directions_car, 'Status Unit/QR Pertamina',
-            status_unit, primaryOrange, // âœ… UPDATED: Orange theme
+            status_unit, primaryOrange, // ✅ UPDATED: Orange theme
             onTap: () => _navigateToPhotoUnits("STATUS_UNIT", vhcid_units)),
         _buildInfoItem(
             Icons.card_membership, 'SIM', '${fromSIM}-${toSIM}', Colors.green,
             onTap: () => _navigateToPhoto("SIM")),
         _buildInfoItem(Icons.assignment, 'STNK', '${fromSTNK}-${toSTNK}',
-            accentOrange, // âœ… UPDATED: Orange theme
+            accentOrange, // ✅ UPDATED: Orange theme
             onTap: () => _navigateToPhoto("STNK")),
         _buildInfoItem(
             Icons.confirmation_number, 'KIR', '${fromKir}-${toKir}', Colors.red,
@@ -3267,7 +2991,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       children: [
         if (loginname == "MECHANIC")
           _buildInfoItem(Icons.handyman, 'Outstanding Jobs', out_standing_jobs,
-              primaryOrange, // âœ… UPDATED: Orange theme
+              primaryOrange, // ✅ UPDATED: Orange theme
               onTap: () => _navigateToWoMCN()),
         _buildInfoItem(Icons.work, 'Storing', storing, primaryOrange,
             onTap: () => _navigateToListAbsensi('storing')),
@@ -3458,7 +3182,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                     decoration: BoxDecoration(
                       color: isActive
                           ? primaryOrange
-                              .withOpacity(0.1) // âœ… UPDATED: Orange theme
+                              .withOpacity(0.1) // ✅ UPDATED: Orange theme
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -3466,7 +3190,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                       isActive ? activeIcon : icon,
                       color: isActive
                           ? primaryOrange
-                          : Colors.grey.shade600, // âœ… UPDATED: Orange theme
+                          : Colors.grey.shade600, // ✅ UPDATED: Orange theme
                       size: 20,
                     ),
                   ),
@@ -3505,7 +3229,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                     fontSize: 9,
                     color: isActive
                         ? primaryOrange
-                        : Colors.grey.shade600, // âœ… UPDATED: Orange theme
+                        : Colors.grey.shade600, // ✅ UPDATED: Orange theme
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                   ),
                   maxLines: 1,
@@ -3546,7 +3270,7 @@ class _ViewDashboardState extends State<ViewDashboard>
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: primaryOrange, // âœ… UPDATED: Orange theme
+                color: primaryOrange, // ✅ UPDATED: Orange theme
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Row(
@@ -3601,12 +3325,12 @@ class _ViewDashboardState extends State<ViewDashboard>
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: primaryOrange.withOpacity(
-                                    0.1), // âœ… UPDATED: Orange theme
+                                    0.1), // ✅ UPDATED: Orange theme
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(Icons.notifications,
                                   color: primaryOrange,
-                                  size: 20), // âœ… UPDATED: Orange theme
+                                  size: 20), // ✅ UPDATED: Orange theme
                             ),
                             title: Text(
                               notification.note_verifikasi ?? 'No Title',
@@ -3658,7 +3382,7 @@ class _ViewDashboardState extends State<ViewDashboard>
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: Row(
             children: [
-              Icon(Icons.star, color: primaryOrange), // âœ… UPDATED: Orange theme
+              Icon(Icons.star, color: primaryOrange), // ✅ UPDATED: Orange theme
               SizedBox(width: 8),
               Text('Detail Points'),
             ],
@@ -3687,11 +3411,11 @@ class _ViewDashboardState extends State<ViewDashboard>
                         margin: EdgeInsets.only(bottom: 8),
                         decoration: BoxDecoration(
                           color: primaryOrange
-                              .withOpacity(0.1), // âœ… UPDATED: Orange theme
+                              .withOpacity(0.1), // ✅ UPDATED: Orange theme
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                               color: primaryOrange
-                                  .withOpacity(0.3)), // âœ… UPDATED: Orange theme
+                                  .withOpacity(0.3)), // ✅ UPDATED: Orange theme
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3746,12 +3470,12 @@ class _ViewDashboardState extends State<ViewDashboard>
                                   padding: EdgeInsets.all(4),
                                   decoration: BoxDecoration(
                                     color: primaryOrange.withOpacity(
-                                        0.2), // âœ… UPDATED: Orange theme
+                                        0.2), // ✅ UPDATED: Orange theme
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Icon(Icons.star,
                                       color: primaryOrange,
-                                      size: 16), // âœ… UPDATED: Orange theme
+                                      size: 16), // ✅ UPDATED: Orange theme
                                 ),
                                 SizedBox(width: 8),
                                 Text(
@@ -3759,7 +3483,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color:
-                                        darkOrange, // âœ… UPDATED: Orange theme
+                                        darkOrange, // ✅ UPDATED: Orange theme
                                   ),
                                 ),
                               ],
@@ -3789,7 +3513,7 @@ class _ViewDashboardState extends State<ViewDashboard>
             ElevatedButton(
               child: Text('Cek Reward'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: primaryOrange, // âœ… UPDATED: Orange theme
+                backgroundColor: primaryOrange, // ✅ UPDATED: Orange theme
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
@@ -4303,13 +4027,13 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   void _handleMenuTap(AnpService anpService) async {
-    // âœ… ADDED: Handle menu "More"
+    // ✅ ADDED: Handle menu "More"
     if (anpService.idKey == 999) {
       _showMoreMenuModal();
       return;
     }
 
-    // âœ… Original menu handling logic remains the same
+    // ✅ Original menu handling logic remains the same
 
     if (anpService.idKey == 1) {
       print("MAPS ${loginname}");
@@ -4318,9 +4042,9 @@ class _ViewDashboardState extends State<ViewDashboard>
         EasyLoading.show();
         //var tokenAuth =GlobalData.token_vts;// new GenerateTokenAuth();
         // var _tokens = await tokenAuth.GetTokenEasyGo("easygo".toString(), pr);
-        // print("ðŸ” Token result driver: ${_tokens}");
-        // print("ðŸ” Token length: ${_tokens?.length}");
-        // print("ðŸ” Token type: ${_tokens.runtimeType}");
+        // print("🔍 Token result driver: ${_tokens}");
+        // print("🔍 Token length: ${_tokens?.length}");
+        // print("🔍 Token type: ${_tokens.runtimeType}");
         var _tokens = GlobalData.token_vts;
         if (_tokens != "" && _tokens != null) {
           SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -4355,9 +4079,9 @@ class _ViewDashboardState extends State<ViewDashboard>
             //var tokenAuth = new GenerateTokenAuth();
             var _tokens = GlobalData.token_vts;
             // await tokenAuth.GetTokenEasyGo("easygo".toString(), pr);
-            // print("ðŸ” Token result: ${_tokens}");
-            // print("ðŸ” Token length: ${_tokens?.length}");
-            // print("ðŸ” Token type: ${_tokens.runtimeType}");
+            // print("🔍 Token result: ${_tokens}");
+            // print("🔍 Token length: ${_tokens?.length}");
+            // print("🔍 Token type: ${_tokens.runtimeType}");
             if (_tokens != "" && _tokens != null) {
               SharedPreferences prefs = await SharedPreferences.getInstance();
               prefs.setString("page", "dashboard");
@@ -4592,7 +4316,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
                         backgroundColor:
-                            primaryOrange, // âœ… UPDATED: Orange theme
+                            primaryOrange, // ✅ UPDATED: Orange theme
                         padding:
                             EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                         textStyle: TextStyle(
@@ -5202,7 +4926,7 @@ class _ViewDashboardState extends State<ViewDashboard>
             content: new Text("ON Progress"),
             actions: <Widget>[
               new TextButton(
-                // âœ… UPDATED: Use TextButton instead of FlatButton
+                // ✅ UPDATED: Use TextButton instead of FlatButton
                 onPressed: () async {
                   Navigator.of(context).pop(true);
                 },
@@ -5418,7 +5142,7 @@ class _ViewDashboardState extends State<ViewDashboard>
         _onWillPop();
       },
       child: Scaffold(
-        backgroundColor: paleOrange, // âœ… UPDATED: Orange soft background
+        backgroundColor: paleOrange, // ✅ UPDATED: Orange soft background
         key: globalScaffoldKey,
         body: Column(
           children: [

@@ -221,6 +221,9 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
     String status = "";
     try {
       EasyLoading.show();
+      setState(() {
+        dataListNewItem = [];
+      });
       var urlData =
           "${BASE_URL}api/inventory/list_warehouse_item_id.jsp?method=list-item-wh-v2&witwarehouseid=" +
               whid +
@@ -241,6 +244,8 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
               .map((dynamic e) => e as Map<String, dynamic>)
               .toList();
           print(dataListNewItem);
+        } else {
+          dataListNewItem = [];
         }
       });
       if (EasyLoading.isShow) {
@@ -252,6 +257,30 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
       }
     }
     return status;
+  }
+
+  Future<void> searchItemByPartName(BuildContext dialogContext) async {
+    final searchText = txtSearchPartname.text.trim();
+    if (searchText.isEmpty || selWareHouseID.isEmpty) {
+      alert(scafoldGlobal.currentContext!, 2,
+          "Warehouse dan partname tidak boleh kosong", "error");
+      return;
+    }
+
+    await getItemIDByPartName(searchText, selWareHouseID);
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.of(dialogContext).pop(false);
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('List Item'),
+            content: setupAlertDialoadContainerList(context),
+          );
+        });
   }
 
   void CreateStockOpname(String usr) async {
@@ -1122,7 +1151,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
     );
   }
 
-  Widget setupAlertDialoadContainer(BuildContext ctx) {
+  Widget setupAlertDialoadContainer(BuildContext dialogContext) {
     return SingleChildScrollView(
       //shrinkWrap: true,
       padding: EdgeInsets.all(2.0),
@@ -1132,11 +1161,13 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
           Container(
             margin: EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
             child: TextField(
-              readOnly: globals.wh_method != "edit" ? false : true,
+              readOnly: globals.wh_method != "edit" ? false : true,//
               cursorColor: Colors.black,
               style: TextStyle(color: Colors.grey.shade800),
               controller: txtSearchPartname,
               keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => searchItemByPartName(dialogContext),
               onChanged: (value) async {
                 if (value != null && value != '') {
                   if (value.length > 5) {
@@ -1154,24 +1185,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                   ),
                   onPressed: () async {
                     print('witwarehouseid ' + selWareHouseID);
-                    if ((txtSearchPartname.text != null &&
-                            txtSearchPartname.text != "") &&
-                        (selWareHouseID != null && selWareHouseID != "")) {
-                      await getItemIDByPartName(
-                          txtSearchPartname.text, selWareHouseID);
-                      Navigator.of(context).pop(false);
-                      showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: Text('List Item'),
-                              content: setupAlertDialoadContainerList(ctx),
-                            );
-                          });
-                    } else {
-                      alert(scafoldGlobal.currentContext!!, 2,
-                          "Warehouse dan partname tidak boleh kosong", "error");
-                    }
+                    await searchItemByPartName(dialogContext);
                   },
                 ),
                 fillColor: Colors.white,
@@ -1188,30 +1202,16 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
   }
 
   Widget setupAlertDialoadContainerList(BuildContext ctx) {
-    return SingleChildScrollView(
-      //shrinkWrap: true,
-      padding: EdgeInsets.all(2.0),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          Container(
-              height: MediaQuery.of(ctx)
-                  .size
-                  .height, // Change as per your requirement
-              width: MediaQuery.of(ctx).size.width,
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  padding: const EdgeInsets.all(2.0),
-                  itemCount:
-                      dataListNewItem == null ? 0 : dataListNewItem.length,
-                  itemBuilder: (ctx, int index) {
-                    return _buildDListNewItems(
-                        ctx, dataListNewItem[index], index);
-                  }))
-        ],
-      ),
+    return SizedBox(
+      height: MediaQuery.of(ctx).size.height * 0.65,
+      width: MediaQuery.of(ctx).size.width * 0.9,
+      child: ListView.builder(
+          scrollDirection: Axis.vertical,
+          padding: const EdgeInsets.all(2.0),
+          itemCount: dataListNewItem == null ? 0 : dataListNewItem.length,
+          itemBuilder: (ctx, int index) {
+            return _buildDListNewItems(ctx, dataListNewItem[index], index);
+          }),
     );
   }
 

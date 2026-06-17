@@ -37,6 +37,14 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
   bool _isSubmitting = false;
   bool _isLoadingDialogVisible = false;
 
+  void _releaseSubmitting() {
+    if (mounted) {
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
+  }
+
   void _showSavingOverlay() {
     if (!mounted || _isLoadingDialogVisible) return;
     _isLoadingDialogVisible = true;
@@ -193,7 +201,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
           }
         } catch (e) {
           print("JSON decode error: $e");
-          _submitErrorMessage = 'Respon tidak valid dari server.';
+          _submitErrorMessage = 'Respon tidak valid dari server.';//
           return false;
         }
       } else {
@@ -212,14 +220,30 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
     if (!mounted) return;
     if (_isSubmitting) return;
 
+    setState(() {
+      _isSubmitting = true;
+    });
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
     print("P2H 2");
 
-    String lat = userLocation!.latitude.toString() ?? "";
-    String lon = userLocation!.longitude.toString() ?? "";
-    String speed = userLocation!.speed.toString() ?? "";
+    if (userLocation == null) {
+      _releaseSubmitting();
+      if (mounted) {
+        alert(
+            context,
+            0,
+            "Coordinate/Lokasi tidak ditemukan, silakan aktifkan GPS terlebih dahulu",
+            "warning");
+      }
+      return;
+    }
+
+    String lat = userLocation!.latitude.toString();
+    String lon = userLocation!.longitude.toString();
 
     if (lat.isEmpty && lon.isEmpty) {
+      _releaseSubmitting();
       if (mounted) {
         alert(
             context,
@@ -233,12 +257,16 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
     await updatePosition("IN");
 
     // Cek apakah widget masih mounted sebelum validasi
-    if (!mounted) return;
+    if (!mounted) {
+      _releaseSubmitting();
+      return;
+    }
 
     if (txtAddr != null &&
         txtAddr.toString().isNotEmpty &&
         (txtAddr.toString().toUpperCase() == "OUTGEO" ||
             txtAddr.toString().toUpperCase() != "INGEO")) {
+      _releaseSubmitting();
       if (mounted) {
         alert(globalScaffoldKey.currentContext!, 0,
             "P2H tidak diijinkan, silakan ke Geofence/Area Pool", "warning");
@@ -247,6 +275,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
     }
 
     if (txtAddr == null || txtAddr == "") {
+      _releaseSubmitting();
       if (mounted) {
         alert(globalScaffoldKey.currentContext!, 2,
             "Coba lagi untuk melakukan submit P2H", "warning");
@@ -255,13 +284,13 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
     }
 
     var username = prefs.getString("name");
-    var _locid = prefs.getString("locid");
 
     // ✅ PERBAIKAN: Gunakan unique IDs untuk validasi
     final uniqueIds = inspections.map((e) => e['id']).toSet();
     final incomplete = uniqueIds.any((id) => selectedValues[id] == null);
 
     if (incomplete) {
+      _releaseSubmitting();
       if (mounted) {
         _showValidationDialog('Semua inspeksi wajib diisi (Ya atau Tidak).');
       }
@@ -308,8 +337,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
           ? prefs.getString("km_new")
           : kilometerController.text,
       "catatan": notesController.text,
-      //"drvid":'8194-01.2025.06.09.84',//globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
-      "drvid": globals.p2hVhcDriver == "yes" ? prefs.getString("drvid") ?? "" : "",
+      "drvid": prefs.getString("drvid") ?? "",
       "lon": lon,
       "lat": lat,
       "geoid": geo_id_area,
@@ -319,9 +347,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
           ? prefs.getString("vhcid_last_antrian")
           : prefs.getString("vhcidfromdo"))
           : globals.p2hVhcid.toString(),
-      "locid": globals.p2hVhcDriver == "yes"
-          ? _locid
-          : globals.p2hVhclocid.toString(),
+      "locid": prefs.getString("locid") ?? "",
       //"imeiid": "3d011a9d72e23c29",//prefs.getString("androidID"),
       "imeiid": prefs.getString("androidID"),
       "userid": username,
@@ -331,6 +357,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
     //return;
     // === Jika Driver: Tampilkan Dialog Konfirmasi Submit ===
     if (globals.p2hVhcDriver == "yes") {
+      _releaseSubmitting();
       if (mounted) {
         _showConfirmationDialog(
           "Inspeksi berhasil diisi di area $geofence_name. Lanjutkan ke proses Antrian?",
@@ -342,11 +369,7 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
             _showSavingOverlay();
             bool isSuccess = await submitInspeksiP2H(data);
             _hideSavingOverlay();
-            if (mounted) {
-              setState(() {
-                _isSubmitting = false;
-              });
-            }
+            _releaseSubmitting();
             if (isSuccess) {
               if (mounted) {
                 alert(globalScaffoldKey.currentContext!, 1,
@@ -376,17 +399,10 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
       }
     } else {
       // === Jika Bukan Driver: Langsung Submit dengan overlay ===
-      setState(() {
-        _isSubmitting = true;
-      });
       _showSavingOverlay();
       var isSuccess = await submitInspeksiP2H(data);
       _hideSavingOverlay();
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+      _releaseSubmitting();
       if (!isSuccess) {
         if (mounted) {
           alert(globalScaffoldKey.currentContext!, 0,
@@ -796,7 +812,12 @@ class _DailyCheckScreenP2H_NewState extends State<DailyCheckScreenP2H_New> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        onPressed: onConfirm,
+                        onPressed: _isSubmitting
+                            ? null
+                            : () {
+                                Navigator.of(context).pop();
+                                onConfirm();
+                              },
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
                           shape: RoundedRectangleBorder(

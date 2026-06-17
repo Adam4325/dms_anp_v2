@@ -88,7 +88,7 @@ class _AduanMainPageState extends State<AduanMainPage>
     }
 
     // Fallback sesuai pola akses di PoHeaderPage (ADMIN/ETIENNE/BUDI).
-    const localAllow = {'ADMIN', 'ETIENNE', 'BUDI'};
+    const localAllow = {'ADMIN', 'ETIENNE', 'BUDI','GUTINI','MAJID'};
     if (localAllow.contains(u) || loginname.trim().toUpperCase() == 'ADMIN') {
       return true;
     }
