@@ -22,7 +22,20 @@ class ViewListStoring extends StatefulWidget {
 class _ViewListStoringState extends State<ViewListStoring> {
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey globalScaffoldKey2 = GlobalKey<ScaffoldState>();
+  final TextEditingController _searchController = TextEditingController();
   var data = [];
+
+  List<dynamic> get _filteredData {
+    final keyword = _searchController.text.trim().toLowerCase();
+    if (keyword.isEmpty) return data;
+
+    return data.where((item) {
+      final reqnbr = item['reqnbr']?.toString().toLowerCase() ?? '';
+      final vhcid = item['vhcid']?.toString().toLowerCase() ?? '';
+      return reqnbr.contains(keyword) || vhcid.contains(keyword);
+    }).toList();
+  }
+
   _goBack(BuildContext context) {
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => ViewDashboard()));
@@ -100,49 +113,157 @@ class _ViewListStoringState extends State<ViewListStoring> {
   }
 
   Future<String> CloseData(String reqnbr, String vhcid, String status) async {
-    EasyLoading.show();
+    final reqnbrParam = reqnbr.trim();
+    final vhcidParam = vhcid.trim();
+    final statusParam = status.trim();
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String userid = prefs.getString("username")!;
-    var url = "";
-    setState(() {
-      url =
-          "${GlobalData.baseUrl}api/list_storing.jsp?method=close-data-storing&reqnbr=${reqnbr}&vhcid=${vhcid}&userid=${userid}&status=${status}";
-    });
-    Uri myUri = Uri.parse(url);
-    print(myUri.toString());
-    var response =
-        await http.get(myUri, headers: {"Accept": "application/json"});
+    String userid = (prefs.getString("username") ?? "").trim();
+    if (userid.isEmpty) {
+      userid = (prefs.getString("androidID") ?? "").trim();
+    }
+    if (userid.isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 0,
+          "USER ID / IMEI ID tidak boleh kosong", "warning");
+      return "Failed";
+    }
+    if (reqnbrParam.isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 0, "Req NBR tidak boleh kosong",
+          "warning");
+      return "Failed";
+    }
+    if (vhcidParam.isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 0, "VHCID tidak boleh kosong",
+          "warning");
+      return "Failed";
+    }
+    if (statusParam.isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 0, "Status tidak boleh kosong",
+          "warning");
+      return "Failed";
+    }
 
-    setState(() {
-      // Get the JSON data
+    EasyLoading.show();
+    try {
+      
+      Uri myUri = Uri.parse("${GlobalData.baseUrl}api/list_storing.jsp").replace(
+        queryParameters: {
+          "method": "close-data-storing",
+          "reqnbr": reqnbrParam,
+          "vhcid": vhcidParam,
+          "userid": userid,
+          "status": statusParam,
+        },
+      );
+      print(myUri.toString());
+      var response = await http
+          .get(myUri, headers: {"Accept": "application/json"})
+          .timeout(Duration(seconds: 30));
+
+      print("CloseData HTTP ${response.statusCode}");//
+      print("CloseData body: ${response.body}");
+
+      if (response.statusCode != 200) {
+        alert(globalScaffoldKey.currentContext!, 0,
+            "SERVER ERROR (${response.statusCode})", "Failed");
+        return "Failed";
+      }
+
       var jsonData = json.decode(response.body);
       print(jsonData);
       print(jsonData['status_code']);
-      if (int.parse(jsonData['status_code']) == 200) {
+      var statusCode = int.tryParse(jsonData['status_code'].toString()) ?? 500;
+      if (statusCode == 200) {
         alert(globalScaffoldKey.currentContext!, 1, jsonData['message'],
             "Success");
-        getJSONData();
+        await getJSONData();
       } else {
         alert(
             globalScaffoldKey.currentContext!, 0, jsonData['message'], "Failed");
       }
-    });
-    if (EasyLoading.isShow) {
-      EasyLoading.dismiss();
+    } catch (e) {
+      print("CloseData error: $e");
+      alert(globalScaffoldKey.currentContext!, 0, "Client, ${e}", "error");
+    } finally {
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
     }
     return "Successfull";
   }
 
   Widget _buildListView(BuildContext context) {
-    return RefreshIndicator(
-        onRefresh: getJSONData,
-        child: ListView.builder(
-            padding: const EdgeInsets.all(16.0),
-            itemCount: data == null ? 0 : data.length,
-            itemBuilder: (context, index) {
-              //_controllers[index] = new TextEditingController();
-              return _buildDMSMenu(data[index], index);
-            }));
+    final filteredData = _filteredData;
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Cari Req NBR / VHCID',
+              prefixIcon: Icon(Icons.search, color: Colors.deepOrangeAccent),
+              suffixIcon: _searchController.text.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: Icon(Icons.clear, color: Colors.grey),
+                      onPressed: () {
+                        setState(() {
+                          _searchController.clear();
+                        });
+                      },
+                    ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    BorderSide(color: Colors.deepOrangeAccent, width: 1.5),
+              ),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: getJSONData,
+            child: filteredData.isEmpty
+                ? ListView(
+                    padding: const EdgeInsets.all(16.0),
+                    children: [
+                      SizedBox(height: 80),
+                      Center(
+                        child: Text(
+                          _searchController.text.trim().isEmpty
+                              ? 'Tidak ada data'
+                              : 'Data tidak ditemukan',
+                          style: TextStyle(color: Colors.grey.shade700),
+                        ),
+                      ),
+                    ],
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: filteredData.length,
+                    itemBuilder: (context, index) {
+                      //_controllers[index] = new TextEditingController();
+                      return _buildDMSMenu(filteredData[index], index);
+                    },
+                  ),
+          ),
+        ),
+      ],
+    );
   }
 
   _launchURL(String url) async {
@@ -415,6 +536,7 @@ class _ViewListStoringState extends State<ViewListStoring> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     super.dispose();
   }
 }

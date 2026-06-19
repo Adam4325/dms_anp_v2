@@ -23,6 +23,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:camera/camera.dart';
 
+import '../../helpers/DeveloperModeGuard.dart';
 import '../../helpers/GpsSecurityChecker.dart';
 import 'PageMessageResponse.dart';
 
@@ -890,6 +891,10 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
                           print(GlobalData.frmDloDoNumber);
 
                           final ctx = globalScaffoldKey.currentContext;
+                          if (await DeveloperModeGuard
+                              .blockIfDeveloperModeEnabled(ctx ?? context)) {
+                            return;
+                          }
                           if (userLocation == null) {
                             if (ctx != null) alert(ctx, 0,
                                 "Lokasi belum tersedia. Silahkan aktifkan GPS dan tunggu sebentar.",

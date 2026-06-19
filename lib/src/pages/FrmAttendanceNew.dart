@@ -20,6 +20,8 @@ import 'dart:convert';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../helpers/DeveloperModeGuard.dart';
+
 class FrmAttendanceNew extends StatefulWidget {
   @override
   FrmAttendanceNewState createState() => FrmAttendanceNewState();
@@ -269,6 +271,10 @@ class FrmAttendanceNewState extends State<FrmAttendanceNew> {
   Future<String> saveAttendance(String inorout, int geo_id, String geo_nm,
       String employeeid, String lat, String lon) async {
     try {
+      if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+        return "";
+      }
+
       SharedPreferences prefs = await SharedPreferences.getInstance();
       var user_id = prefs.getString("name");
       if (androidID.isEmpty) {
@@ -367,6 +373,10 @@ class FrmAttendanceNewState extends State<FrmAttendanceNew> {
   }
 
   Future updatePosition(String inorout) async {
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+      return;
+    }
+
     print(androidID.toString());
     print(userLocation);
     if (userLocation != null) {

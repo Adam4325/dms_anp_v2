@@ -19,6 +19,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trust_location/trust_location.dart';
 
+import '../../helpers/DeveloperModeGuard.dart';
 import '../../helpers/GpsSecurityChecker.dart';
 
 // Constants
@@ -395,6 +396,10 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
   }
 
   Future<void> _processAttendance(String type) async {
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+      return;
+    }
+
     // Show loading
     EasyLoading.show(status: 'Getting location...');
 

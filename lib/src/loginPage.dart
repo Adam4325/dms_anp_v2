@@ -160,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
     EasyLoading.show();
     try {
       final JsonDecoder _decoder = new JsonDecoder();
-      var endpointUrl = GlobalData.baseUrl + "api/authorize_v7.jsp";
+      var endpointUrl = GlobalData.baseUrl + "api/authorize_v8.jsp";
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String username = TxtUsername.text.trim();
@@ -646,7 +646,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 30),
                   Text(
-                    "Version 3.7",
+                    "Version 3.8",
                     style: TextStyle(
                       color: textSecondary,
                       fontSize: 14,

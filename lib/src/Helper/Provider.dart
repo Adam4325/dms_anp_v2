@@ -84,4 +84,5 @@ class GlobalData {
   static String mcn_id2 = "";
   static String foreman_mcn_id = "";
   static String vehicle_mcn_id = "";
+  static bool checkDeveloperMode = true;
 }
