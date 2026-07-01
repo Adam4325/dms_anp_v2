@@ -173,7 +173,7 @@ class _LoginPageState extends State<LoginPage> {
           EasyLoading.dismiss();
           final ctx = globalScaffoldKey.currentContext;
           if (ctx != null) {
-            alert(ctx, 0, "IMEI/Device ID tidak tersedia. Pastikan permission telah diberikan.", "error");
+            alert(ctx, 0, "IMEIID/Device ID tidak tersedia. Pastikan permission telah diberikan.", "error");
           }
           return;
         }
@@ -261,6 +261,8 @@ class _LoginPageState extends State<LoginPage> {
           var kryid = result["data"][0]["kryid"];
           var login_type = result["data"][0]["login_type"];
           var api_lokar = result["data"][0]["api_lokar"];
+          var lokar_client_id = result["data"][0]["lokar_client_id"];
+          var lokar_api_token = result["data"][0]["lokar_api_token"];
           await getAksesMenuForeMan(_identifier);
           if (loginname != null && loginname != "DRIVER") {
             if (akses_page != null) {
@@ -317,7 +319,9 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('login_type', login_type);
           prefs.setString('status_karyawan', status_karyawan);
           prefs.setString('kryid', kryid);
-          prefs.setString('api_lokar', api_lokar);
+          prefs.setString('api_lokar', api_lokar ?? '');
+          prefs.setString('lokar_client_id', (lokar_client_id ?? '').toString());
+          prefs.setString('lokar_api_token', (lokar_api_token ?? '').toString());
           print('IMMEIID $_identifier');
           UserInactivityController.resetTimer();
           UserInactivityController.reloadIdleDuration();
@@ -646,11 +650,11 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 30),
                   Text(
-                    "Version 3.8",
+                    "Version 3.9",
                     style: TextStyle(
                       color: textSecondary,
                       fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w500,//
                     ),
                   ),
                   SizedBox(height: 20),

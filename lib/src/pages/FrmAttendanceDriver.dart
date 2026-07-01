@@ -1,9 +1,10 @@
-
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:dms_anp/src/Helper/Provider.dart';
+import 'package:dms_anp/src/Helper/attendance_qr_codec.dart';
+import 'package:dms_anp/src/Helper/scanner_helper.dart';
 import 'package:dms_anp/src/flusbar.dart';
 import 'package:dms_anp/src/pages/FrmRequestAttendance.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
@@ -24,7 +25,8 @@ import '../../helpers/GpsSecurityChecker.dart';
 
 // Constants
 class AttendanceConstants {
-  static const String noImageBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAANlBMVEXu7u64uLjx8fHt7e21tbXQ0NC9vb3ExMTm5ubj4+O5ubnIyMjq6urf39/MzMzBwcHU1NTZ2dmQfkM8AAAE2klEQVR4nO2Y2bLrKAxFwxCPePr/n21JYBvnJLeruq5zHnqtl3gAzEZCEnk8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgK3jv62t/eXN98KbZtfOncd8O6C/8dwH/yjOO4RH26zh05XnaxiiMa/fao5fHzzLLGKfyNCxxrZfnubfZSf28SM/hOYXSvmIJf1PTlWcc1vPaNVmQn9oY3TC4GBt5ffl+H90++yRasyzfNxdJaYlLqu79ZgM656Ib9RuhdRX3KnTD5I/rrND3w/n1V2NUCifp7ENW4Nx4SvKbDDBVnVZXDyh9wlI/WdSPblIpqlxMLwpN4LC07WKrvl56nArFFV3MRk+j2+2vhFGGbQ+vDfoVsVQrI9rnRIwqbHfme23oYln9XaHNb5mS90m89TL1WmHw8rLsvq6RYfqzja3MYdNJb5ute/hHty6z9lAbxi9FmtMRd4W9zqe3r/pOZ1LHkMqGyexgzaZYN/Orjbrfe5W/9OUumfCs8EZhB9l/8mSKQi8e57Z9drr+w3uFfWNLoa3U6m7OzcTj9Lm4QTai38wPyhjFH0+FNzpopdA5XeFd4T5vIy21v10UbtbTdqldNftCiEWjxJohxxo/a48Xe9Veep86RVWpsy3doTBplDhWVs0T67B4Klyj2DdqlJiyJ+S5iySN/21+lcNmCUhn1g9npBl/pNy/rtD2Wpt2hTrd8VhYC5hvFQbx5sHikLYZzlAj3hs3v+6b2aJQHq8bLMGPdbaIp7/cpjBNOofZnwrj/Krw3C2HQvXfeZGXXq6iNiubV7Ul02nbW7erpM1QxOqGveTD5gs21Hwt81s/K/RvFHYakKTSm72s0KCTz72S+qf8yk9zKrSQ0jUWZHeFuWQb7rdhdjNJ8e5QaF6aq5X5k5dKu2bq5E6SQxwf41582XPZbFPp2JWwGbQwaNvhUPi9SKNespweo5GmKirbM05cFJpT95Lr4jTGYdMcWDKHDPNc1/VZfEGK7GOLShHRVArv1XZV2DeHQh9zjAjFsfYgeVUYVMmSVOfYaHsznbwPsfjfMd4lW3S/o1AivEaboWT8I1pqA1fvykdlwxxyOyvQ5nyxmmm1RnCldtdYo8G5yY4efkuhYpWWXecZ5apt1ZnW2/BQmHJRqjW37TcNqDJ1+RlKCNEBteTVqk3q3Dzgr3mpcBTZSc9uwyaVdzfr9Md350MLJJoe7GD0yMeLNpkvtF1v6Dh9Kdtkb/YSVfTZa6S5vfJWVaoh5VhaPNbtVojLNV/tCjWQaDzSvGe77Kndw3zmRU1CFpXD0x254We2uP2Mf2ZcEVaut3ieTpv+usK7QjWQvRmzG5ueSQPTMaCGr2iL9zwH1HPU43oCvvmMH8+aYj2upyaWkDh3Ly5UFKZFlt6bsvKHxaRFzJqLMiMfIM2gYWuyRhnWTqOaQr5zxl+l8j1yn38eVbDvVz17b+HHFunkqC5G6CR5r1bqhGXLL/TJLL2mo8+kYzxsE+QB223Kmy7MbcWdZ/z6b78Qfvyb+KGHPzrq1H78QfjaNtSv86e+92/in/i0sKF+9SfvCrnp3WdcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+B/xD/alJ5yRngQVAAAAAElFTkSuQmCC';
+  static const String noImageBase64 =
+      'iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAANlBMVEXu7u64uLjx8fHt7e21tbXQ0NC9vb3ExMTm5ubj4+O5ubnIyMjq6urf39/MzMzBwcHU1NTZ2dmQfkM8AAAE2klEQVR4nO2Y2bLrKAxFwxCPePr/n21JYBvnJLeruq5zHnqtl3gAzEZCEnk8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgK3jv62t/eXN98KbZtfOncd8O6C/8dwH/yjOO4RH26zh05XnaxiiMa/fao5fHzzLLGKfyNCxxrZfnubfZSf28SM/hOYXSvmIJf1PTlWcc1vPaNVmQn9oY3TC4GBt5ffl+H90++yRasyzfNxdJaYlLqu79ZgM656Ib9RuhdRX3KnTD5I/rrND3w/n1V2NUCifp7ENW4Nx4SvKbDDBVnVZXDyh9wlI/WdSPblIpqlxMLwpN4LC07WKrvl56nArFFV3MRk+j2+2vhFGGbQ+vDfoVsVQrI9rnRIwqbHfme23oYln9XaHNb5mS90m89TL1WmHw8rLsvq6RYfqzja3MYdNJb5ute/hHty6z9lAbxi9FmtMRd4W9zqe3r/pOZ1LHkMqGyexgzaZYN/Orjbrfe5W/9OUumfCs8EZhB9l/8mSKQi8e57Z9drr+w3uFfWNLoa3U6m7OzcTj9Lm4QTai38wPyhjFH0+FNzpopdA5XeFd4T5vIy21v10UbtbTdqldNftCiEWjxJohxxo/a48Xe9Veep86RVWpsy3doTBplDhWVs0T67B4Klyj2DdqlJiyJ+S5iySN/21+lcNmCUhn1g9npBl/pNy/rtD2Wpt2hTrd8VhYC5hvFQbx5sHikLYZzlAj3hs3v+6b2aJQHq8bLMGPdbaIp7/cpjBNOofZnwrj/Krw3C2HQvXfeZGXXq6iNiubV7Ul02nbW7erpM1QxOqGveTD5gs21Hwt81s/K/RvFHYakKTSm72s0KCTz72S+qf8yk9zKrSQ0jUWZHeFuWQb7rdhdjNJ8e5QaF6aq5X5k5dKu2bq5E6SQxwf41582XPZbFPp2JWwGbQwaNvhUPi9SKNespweo5GmKirbM05cFJpT95Lr4jTGYdMcWDKHDPNc1/VZfEGK7GOLShHRVArv1XZV2DeHQh9zjAjFsfYgeVUYVMmSVOfYaHsznbwPsfjfMd4lW3S/o1AivEaboWT8I1pqA1fvykdlwxxyOyvQ5nyxmmm1RnCldtdYo8G5yY4efkuhYpWWXecZ5apt1ZnW2/BQmHJRqjW37TcNqDJ1+RlKCNEBteTVqk3q3Dzgr3mpcBTZSc9uwyaVdzfr9Md350MLJJoe7GD0yMeLNpkvtF1v6Dh9Kdtkb/YSVfTZa6S5vfJWVaoh5VhaPNbtVojLNV/tCjWQaDzSvGe77Kndw3zmRU1CFpXD0x254We2uP2Mf2ZcEVaut3ieTpv+usK7QjWQvRmzG5ueSQPTMaCGr2iL9zwH1HPU43oCvvmMH8+aYj2upyaWkDh3Ly5UFKZFlt6bsvKHxaRFzJqLMiMfIM2gYWuyRhnWTqOaQr5zxl+l8j1yn38eVbDvVz17b+HHFunkqC5G6CR5r1bqhGXLL/TJLL2mo8+kYzxsE+QB223Kmy7MbcWdZ/z6b78Qfvyb+KGHPzrq1H78QfjaNtSv86e+92/in/i0sKF+9SfvCrnp3WdcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+B/xD/alJ5yRngQVAAAAAElFTkSuQmCC';
   static const int defaultGeoId = 99999;
   static const int headOfficeGeoId = 23;
 }
@@ -83,6 +85,13 @@ class GeofenceArea {
 }
 
 class FrmAttendanceDriver extends StatefulWidget {
+  FrmAttendanceDriver({
+    Key? key,
+    this.requireAttendanceQr = true,
+  }) : super(key: key);
+
+  final bool requireAttendanceQr;
+
   @override
   FrmAttendanceDriverState createState() => FrmAttendanceDriverState();
 }
@@ -112,6 +121,11 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
   // Dropdown
   String selectedShift = 'no shift';
   List<String> shiftOptions = ['no shift', 'shift'];
+
+  // QR attendance
+  String _attendanceQrRawData = "";
+  AttendanceQrPayload? _attendanceQrPayload;
+  String _attendanceQrActionType = "";
 
   // Controllers
   TextEditingController addressController = TextEditingController();
@@ -158,13 +172,13 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
     }
   }
 
-
-
   Future<void> _getCurrentLocation() async {
     try {
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best,
-      );
+      Position? position = await Geolocator.getLastKnownPosition();
+      position ??= await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 10),
+      ).timeout(Duration(seconds: 12));
 
       // try {
       //   isMockLocation = await TrustLocation.isMockLocation;
@@ -184,6 +198,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       setState(() {
         userLocation = position;
       });
+    } on TimeoutException {
+      print("Getting location timeout");
     } catch (e) {
       print("Error getting location: $e");
     }
@@ -199,18 +215,19 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         return;
       }
 
-      String url = "${GlobalData.baseUrlOri}mobile/api/absensi/create_geofence_area_driver.jsp"
+      String url =
+          "${GlobalData.baseUrlOri}mobile/api/absensi/create_geofence_area_driver.jsp"
           "?method=list-geofence-area-v1&drvid=$driverId";
 
-      final response = await http.get(
-          Uri.parse(url),
-          headers: {"Accept": "application/json"}
-      ).timeout(Duration(seconds: 15));
+      final response = await http.get(Uri.parse(url), headers: {
+        "Accept": "application/json"
+      }).timeout(Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         List<dynamic> jsonList = json.decode(response.body);
         setState(() {
-          geofenceAreas = jsonList.map((json) => GeofenceArea.fromJson(json)).toList();
+          geofenceAreas =
+              jsonList.map((json) => GeofenceArea.fromJson(json)).toList();
         });
         print("Loaded ${geofenceAreas.length} geofence areas");
       } else {
@@ -230,13 +247,13 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         return;
       }
 
-      String url = "${GlobalData.baseUrlOri}mobile/api/absensi/get_info_absensi.jsp"
+      String url =
+          "${GlobalData.baseUrlOri}mobile/api/absensi/get_info_absensi.jsp"
           "?method=list-info-absensi&imeiid=$androidID";
 
-      final response = await http.get(
-          Uri.parse(url),
-          headers: {"Accept": "application/json"}
-      ).timeout(Duration(seconds: 15));
+      final response = await http.get(Uri.parse(url), headers: {
+        "Accept": "application/json"
+      }).timeout(Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         List<dynamic> jsonList = json.decode(response.body);
@@ -262,10 +279,10 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
   // Network connectivity check
   Future<bool> _checkConnectivity() async {
     try {
-      final response = await http.get(
-          Uri.parse('https://www.google.com'),
-          headers: {"Accept": "application/json"}
-      ).timeout(Duration(seconds: 5));
+      final response = await http.get(Uri.parse('https://www.google.com'),
+          headers: {
+            "Accept": "application/json"
+          }).timeout(Duration(seconds: 5));
       return response.statusCode == 200;
     } catch (e) {
       return false;
@@ -297,14 +314,17 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
   }
 
   // Distance calculation utility
-  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+  double _calculateDistance(
+      double lat1, double lon1, double lat2, double lon2) {
     const double earthRadius = 6371000; // Earth radius in meters
     double dLat = _toRadians(lat2 - lat1);
     double dLon = _toRadians(lon2 - lon1);
 
     double a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_toRadians(lat1)) * cos(_toRadians(lat2)) *
-            sin(dLon / 2) * sin(dLon / 2);
+        cos(_toRadians(lat1)) *
+            cos(_toRadians(lat2)) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
 
     double c = 2 * atan2(sqrt(a), sqrt(1 - a));
     return earthRadius * c;
@@ -316,7 +336,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final pickedFile = await _picker.pickImage(source: source, imageQuality: 50);
+      final pickedFile =
+          await _picker.pickImage(source: source, imageQuality: 50);
 
       if (pickedFile != null) {
         File imageFile = File(pickedFile.path);
@@ -376,7 +397,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
     );
   }
 
-  Future<String> _getAddressFromCoordinates(double latitude, double longitude) async {
+  Future<String> _getAddressFromCoordinates(
+      double latitude, double longitude) async {
     try {
       String url = "https://nominatim.openstreetmap.org/reverse"
           "?format=json&lat=$latitude&lon=$longitude&zoom=18&addressdetails=1";
@@ -400,14 +422,21 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       return;
     }
 
-    // Show loading
-    EasyLoading.show(status: 'Getting location...');
+    if (widget.requireAttendanceQr &&
+        await _scanAttendanceQrForAction(type) == null) {
+      return;
+    }
 
     try {
       if (userLocation == null) {
+        EasyLoading.show(status: 'Getting location...');
         await _getCurrentLocation();
+        if (EasyLoading.isShow) {
+          await EasyLoading.dismiss();
+        }
         if (userLocation == null) {
-          _showError("Unable to get current location. Please check GPS settings.");
+          _showError(
+              "Unable to get current location. Please check GPS settings.");
           return;
         }
       }
@@ -418,8 +447,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       if (selectedGeofence.geoId == 0) {
         EasyLoading.show(status: 'Getting address...');
         address = await _getAddressFromCoordinates(
-            userLocation!.latitude,
-            userLocation!.longitude
+          userLocation!.latitude,
+          userLocation!.longitude,
         );
         addressController.text = address;
 
@@ -431,6 +460,10 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         addressController.text = selectedGeofence.name;
       }
 
+      if (EasyLoading.isShow) {
+        await EasyLoading.dismiss();
+        await Future.delayed(Duration(milliseconds: 150));
+      }
       _showAttendanceConfirmation(type, selectedGeofence, address);
     } catch (e) {
       _showError("Error processing attendance: $e");
@@ -439,6 +472,52 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         EasyLoading.dismiss();
       }
     }
+  }
+
+  Future<AttendanceQrPayload?> _scanAttendanceQrForAction(String type) async {
+    final qrData = await openQrScanner(context);
+    if (qrData == null || qrData.trim().isEmpty) {
+      final actionLabel = type == "IN" ? "Check IN" : "Check OUT";
+      _showError("Scan QR Code wajib sebelum $actionLabel");
+      return null;
+    }
+
+    EasyLoading.show(status: 'Validasi QR Code...');
+    final result = await AttendanceQrCodec.validate(qrData);
+    if (EasyLoading.isShow) {
+      EasyLoading.dismiss();
+    }
+
+    if (!result.valid || result.payload == null) {
+      _showError(result.message.isNotEmpty
+          ? result.message
+          : "QR Code attendance tidak valid");
+      return null;
+    }
+
+    if (result.expired || result.payload!.isExpired) {
+      _showError("QR Code sudah expired, minta ADMIN/OP refresh QR baru");
+      return null;
+    }
+
+    setState(() {
+      _attendanceQrRawData = qrData.trim();
+      _attendanceQrPayload = result.payload;
+      _attendanceQrActionType = type;
+    });
+    return result.payload;
+  }
+
+  bool _hasValidQrForSubmit(String type) {
+    if (!widget.requireAttendanceQr) {
+      return true;
+    }
+
+    final payload = _attendanceQrPayload;
+    return payload != null &&
+        _attendanceQrRawData.isNotEmpty &&
+        _attendanceQrActionType == type &&
+        !payload.isExpired;
   }
 
   GeofenceArea _findNearestGeofence() {
@@ -469,7 +548,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
     return nearestGeofence;
   }
 
-  void _showAttendanceConfirmation(String type, GeofenceArea geofence, String address) {
+  void _showAttendanceConfirmation(
+      String type, GeofenceArea geofence, String address) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -504,7 +584,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
     );
   }
 
-  Future<void> _submitAttendance(String type, GeofenceArea geofence, String address) async {
+  Future<void> _submitAttendance(
+      String type, GeofenceArea geofence, String address) async {
     // Tidak blokir submit di client (TrustLocation sering false positive).
     // is_mock dikirim ke server. Server: pakai is_mock hanya sebagai SALAH SATU sinyal,
     // jangan reject HANYA karena is_mock=='1' (gabungkan dengan geofence/pola/lokasi).
@@ -512,21 +593,27 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
     EasyLoading.show(status: 'Submitting attendance...');
 
     try {
-
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String userId = prefs.getString("name") ?? "";
       isMockLocation = false;
-      var result = await GpsSecurityChecker.checkGpsSecurity();
+      await GpsSecurityChecker.checkGpsSecurity();
       // Jangan blokir di client karena fake GPS (banyak false positive).
       // Validation
       if (!_validateAttendanceData(userId)) {
         return;
       }
 
-      String url = "${GlobalData.baseUrlOri}mobile/api/absensi/check_in_out_geofence_driver.jsp";
+      if (!_hasValidQrForSubmit(type)) {
+        _showError("QR Code expired atau belum discan, silakan scan ulang");
+        return;
+      }
+
+      String url =
+          "${GlobalData.baseUrlOri}mobile/api/absensi/check_in_out_geofence_driver.jsp";
 
       Map<String, String> data = {
-        'method': type == "IN" ? "checkin-attendance-v3" : "checkout-attendance-v3",
+        'method':
+            type == "IN" ? "checkin-attendance-v3" : "checkout-attendance-v3",
         'imeiid': androidID,
         'shift': selectedShift,
         'geo_id': geofence.geoId.toString(),
@@ -539,15 +626,29 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         'truslon': trustLongitude,
         'address': address,
         'userid': userId.toUpperCase(),
-        'company': 'AN'
+        'company': 'AN',
       };
 
-      final response = await http.post(
-        Uri.parse(url),
-        body: data,
-        headers: {"Content-Type": "application/x-www-form-urlencoded"},
-        encoding: Encoding.getByName('utf-8'),
-      ).timeout(Duration(seconds: 30));
+      final qrPayload = _attendanceQrPayload;
+      if (widget.requireAttendanceQr && qrPayload != null) {
+        data.addAll({
+          'qr_data': _attendanceQrRawData,
+          'qr_issuer': qrPayload.issuer,
+          'qr_role': qrPayload.role,
+          'qr_issued_at': qrPayload.issuedAt.toIso8601String(),
+          'qr_expires_at': qrPayload.expiresAt.toIso8601String(),
+          'qr_nonce': qrPayload.nonce,
+        });
+      }
+
+      final response = await http
+          .post(
+            Uri.parse(url),
+            body: data,
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            encoding: Encoding.getByName('utf-8'),
+          )
+          .timeout(Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         Map<String, dynamic> result = json.decode(response.body);
@@ -643,8 +744,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
 
   void _shareImeiLink() {
     Share.share(
-        'https://apps.tuluatas.com/trucking/master/update_imei_driver.jsp?imeiid=$androidID'
-    );
+        'https://apps.tuluatas.com/trucking/master/update_imei_driver.jsp?imeiid=$androidID');
   }
 
   void _navigateToRequestAttendance() {
@@ -674,7 +774,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         backgroundColor: const Color(0xFFFFF4E6), // soft orange background
         appBar: AppBar(
           backgroundColor: const Color(0xFFFF8C69), // soft orange appBar
-          title: Text('Driver Attendance',style: TextStyle(color:Colors.white)),
+          title:
+              Text('Driver Attendance', style: TextStyle(color: Colors.white)),
           centerTitle: true,
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
@@ -783,7 +884,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
           children: [
             Icon(Icons.camera_alt, size: 50, color: Colors.grey.shade600),
             SizedBox(height: 8),
-            Text("Tap to add photo", style: TextStyle(color: Colors.grey.shade600)),
+            Text("Tap to add photo",
+                style: TextStyle(color: Colors.grey.shade600)),
           ],
         ),
       );
@@ -865,7 +967,10 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
               SizedBox(width: 8),
               Text(
                 "Location Available",
-                style: TextStyle(color: Colors.green.shade700, fontSize: 12, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                    color: Colors.green.shade700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -888,8 +993,9 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
   }
 
   Widget _buildAttendanceSection() {
-    bool canCheckIn =true;// attendanceInfo.timeIn.isEmpty;
-    bool canCheckOut =true;// attendanceInfo.timeIn.isNotEmpty && attendanceInfo.timeOut.isEmpty;
+    bool canCheckIn = true; // attendanceInfo.timeIn.isEmpty;
+    bool canCheckOut =
+        true; // attendanceInfo.timeIn.isNotEmpty && attendanceInfo.timeOut.isEmpty;
 
     return Card(
       elevation: 4,

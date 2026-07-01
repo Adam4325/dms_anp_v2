@@ -6,8 +6,8 @@ import 'package:dms_anp/helpers/database_helper.dart';
 import 'package:dms_anp/src/Helper/AnpService.dart';
 import 'package:dms_anp/src/Helper/app_navigator_key.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
+import 'package:dms_anp/src/Helper/attendance_qr_codec.dart';
 import 'package:dms_anp/src/Helper/constant.dart';
-import 'package:dms_anp/src/Helper/scanner_helper.dart';
 import 'package:dms_anp/src/loginPage.dart';
 import 'package:dms_anp/src/model/NotificationData.dart';
 import 'package:dms_anp/src/model/banner_anp.dart';
@@ -51,7 +51,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:progress_dialog_null_safe/progress_dialog_null_safe.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 // qrscan deprecated - using mobile_scanner; scan stubbed until integrated
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
@@ -156,7 +158,8 @@ class _ViewDashboardState extends State<ViewDashboard>
   static const Color paleOrange = Color(0xFFFFF0E6);
   static const Color darkOrange = Color(0xFFE65100);
   static const Color accentOrange = Color(0xFFFF7043);
-  static final String _informasiApiUrl = GlobalData.baseUrl + 'api/informasi.jsp?method=informasi-driver-v1';
+  static final String _informasiApiUrl =
+      GlobalData.baseUrl + 'api/informasi.jsp?method=informasi-driver-v1';
 
   final ScrollController _runningTextScrollController = ScrollController();
   Timer? _runningTextTimer;
@@ -170,7 +173,242 @@ class _ViewDashboardState extends State<ViewDashboard>
   bool _isRunningInfoAllowedRole() => true;
   String _runningInfoTypeForRole() {
     final role = _normalizedStatusKaryawan();
-    return (role == 'DRIVER' || role == 'KARYAWAN') ? role : 'ALL';//
+    return (role == 'DRIVER' || role == 'KARYAWAN') ? role : 'ALL'; //
+  }
+
+  bool _canManageAttendanceQr() => username == "ADMIN" || getAkses("OP");
+
+  String _attendanceQrRole() => username == "ADMIN" ? "ADMIN" : "OP";
+
+  bool _isDriverStatusUnitClose() {
+    for (var i = data.length - 1; i >= 0; i--) {
+      final item = data[i];
+      if (item is Map && item['name'] == 'status_unit') {
+        return (item['status']?.toString() ?? '').trim().toUpperCase() ==
+            'CLOSE';
+      }
+    }
+
+    return status_unit.trim().toUpperCase().endsWith('CLOSE');
+  }
+
+  Future<bool> _shouldRequireAttendanceQr() async {
+    await cekDetailInfo("status_unit");
+    return _isDriverStatusUnitClose();
+  }
+
+  Future<AttendanceQrResult> _createAttendanceQrData() {
+    final issuer = username.trim().isNotEmpty ? username : firstName;
+    return AttendanceQrCodec.create(
+      issuer: issuer,
+      role: _attendanceQrRole(),
+    );
+  }
+
+  int _remainingQrSeconds(DateTime expiresAt) {
+    final remaining = expiresAt.difference(DateTime.now().toUtc()).inSeconds;
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  Future<void> _showAttendanceQrSheet() async {
+    if (!_canManageAttendanceQr()) {
+      _showAlert(globalScaffoldKey.currentContext ?? context, 0,
+          "Anda tidak punya akses", "error");
+      return;
+    }
+
+    EasyLoading.show(status: 'Generate QR Code...');
+    final initialQr = await _createAttendanceQrData();
+    if (EasyLoading.isShow) {
+      EasyLoading.dismiss();
+    }
+    if (!initialQr.success ||
+        initialQr.qrData.isEmpty ||
+        initialQr.payload == null) {
+      _showAlert(
+        globalScaffoldKey.currentContext ?? context,
+        0,
+        initialQr.message.isNotEmpty
+            ? initialQr.message
+            : "Gagal generate QR Code",
+        "error",
+      );
+      return;
+    }
+
+    String qrData = initialQr.qrData;
+    DateTime expiresAt = initialQr.payload!.expiresAt;
+    int remainingSeconds = _remainingQrSeconds(expiresAt);
+    Timer? countdownTimer;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            countdownTimer ??= Timer.periodic(Duration(seconds: 1), (_) {
+              final nextRemaining = _remainingQrSeconds(expiresAt);
+              setSheetState(() {
+                remainingSeconds = nextRemaining;
+              });
+            });
+
+            final isExpired = remainingSeconds <= 0;
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 18, 20, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: primaryOrange.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(Icons.qr_code_2,
+                              color: primaryOrange, size: 28),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "QR Attendance",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                "Scan code untuk driver attendance",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 18),
+                    Container(
+                      padding: EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isExpired
+                            ? Colors.grey.shade100
+                            : primaryOrange.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: isExpired
+                              ? Colors.grey.shade300
+                              : primaryOrange.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Opacity(
+                        opacity: isExpired ? 0.35 : 1,
+                        child: QrImageView(
+                          data: qrData,
+                          version: QrVersions.auto,
+                          size: 240,
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 14),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isExpired
+                            ? Colors.red.withValues(alpha: 0.1)
+                            : Colors.green.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        isExpired
+                            ? "Expired - refresh QR Code"
+                            : "Expired dalam ${remainingSeconds}s",
+                        style: TextStyle(
+                          color: isExpired ? Colors.red : Colors.green,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: Icon(Icons.refresh, color: Colors.white),
+                        label: Text(
+                          "Refresh QR Code",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        onPressed: () async {
+                          EasyLoading.show(status: 'Refresh QR Code...');
+                          final nextQr = await _createAttendanceQrData();
+                          if (EasyLoading.isShow) {
+                            EasyLoading.dismiss();
+                          }
+                          if (!nextQr.success ||
+                              nextQr.qrData.isEmpty ||
+                              nextQr.payload == null) {
+                            _showAlert(
+                              globalScaffoldKey.currentContext ?? context,
+                              0,
+                              nextQr.message.isNotEmpty
+                                  ? nextQr.message
+                                  : "Gagal refresh QR Code",
+                              "error",
+                            );
+                            return;
+                          }
+                          setSheetState(() {
+                            qrData = nextQr.qrData;
+                            expiresAt = nextQr.payload!.expiresAt;
+                            remainingSeconds =
+                                _remainingQrSeconds(nextQr.payload!.expiresAt);
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryOrange,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    countdownTimer?.cancel();
   }
 
   bool _showAduanMenuItem() {
@@ -292,71 +530,13 @@ class _ViewDashboardState extends State<ViewDashboard>
       final response = await http.get(uri);
       if (response.statusCode == 200) {
         // Optional: log response
-        print('update-imeiid response: ${response.body}');//
+        print('update-imeiid response: ${response.body}'); //
       } else {
         print('update-imeiid error status: ${response.statusCode}');
       }
     } catch (e) {
       print('update-imeiid exception: $e');
     }
-  }
-
-  Future<int?> _saveQrAbsen({
-    required String empid,
-    required String qrData,
-    String? lon,
-    String? lat,
-    String? apiLokar,
-  }) async {
-    if (!globals.isApiLokarRUN) {
-      return 200;
-    }
-    final params = <String, String>{
-      'method': 'save_qr_absen',
-      'empid': empid,
-      'qr_data': qrData,
-    };
-    if (lon != null) params['lon'] = lon;
-    if (lat != null) params['lat'] = lat;
-    if (apiLokar != null) params['api_lokar'] = apiLokar;
-    final uri = Uri.parse(
-            '${GlobalData.baseUrlProd}api/absensi/qr_code_updated.jsp')
-        .replace(queryParameters: params);
-    print('save_qr_absen url: ${uri.toString()}');
-    final response = await http.get(uri);
-    if (response.statusCode != 200) {
-      return null;
-    }
-    final dynamic body = json.decode(response.body);
-    if (body is! Map) {
-      return null;
-    }
-    return _parseStatusCode(body['status_code']);
-  }
-
-  Future<({int? statusCode, bool isQrCode})?> _checkQrAbsen(String empid) async {
-    if (!globals.isApiLokarRUN) {
-      return (statusCode: 200, isQrCode: false);
-    }
-    final uri = Uri.parse(
-            '${GlobalData.baseUrlProd}api/absensi/qr_code_updated.jsp')
-        .replace(queryParameters: {
-      'method': 'check_qr_absen',
-      'empid': empid,
-    });
-    print('check_qr_absen url: ${uri.toString()}');
-    final response = await http.get(uri);
-    if (response.statusCode != 200) {
-      return null;
-    }
-    final dynamic body = json.decode(response.body);
-    if (body is! Map) {
-      return null;
-    }
-    return (
-      statusCode: _parseStatusCode(body['status_code']),
-      isQrCode: _parseBool(body['is_qr_code']),
-    );
   }
 
   Future<({int? statusCode, bool hasQrToday, String message})?> _checkQrToday({
@@ -408,7 +588,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       return value;
     }
     if (value is String) {
-      return value.toLowerCase() == 'true';//
+      return value.toLowerCase() == 'true'; //
     }
     if (value is num) {
       return value != 0;
@@ -416,10 +596,14 @@ class _ViewDashboardState extends State<ViewDashboard>
     return false;
   }
 
-  void _navigateToAttendanceDriver() {
+  void _navigateToAttendanceDriver({bool requireAttendanceQr = true}) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => FrmAttendanceDriver()),
+      MaterialPageRoute(
+        builder: (context) => FrmAttendanceDriver(
+          requireAttendanceQr: requireAttendanceQr,
+        ),
+      ),
     );
   }
 
@@ -434,66 +618,8 @@ class _ViewDashboardState extends State<ViewDashboard>
       return;
     }
 
-    if (!globals.isApiLokarRUN) {
-      _navigateToAttendanceDriver();
-      return;
-    }
-
-    EasyLoading.show(status: 'Memeriksa QR Code...');
-    try {
-      final checkResult = await _checkQrAbsen(drvid);
-      if (!mounted) return;
-      EasyLoading.dismiss();
-
-      if (checkResult != null &&
-          checkResult.statusCode == 200 &&
-          checkResult.isQrCode) {
-        _navigateToAttendanceDriver();
-        return;
-      }
-
-      final String? qrData = await openQrScanner(context);
-      if (qrData == null || qrData.trim().isEmpty) {
-        final ctx = globalScaffoldKey.currentContext ?? context;
-        _showAlert(ctx, 0, "Scan QR Code wajib dilakukan", "error");
-        return;
-      }
-
-      EasyLoading.show(status: 'Menyimpan QR Code...');
-      final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
-      final lat = (gpsResult["latitude"] ?? 0).toString();
-      final lon = (gpsResult["longitude"] ?? 0).toString();
-      final apiLokar = sharedPreferences!.getString("api_lokar") ?? '';
-      final statusCode = await _saveQrAbsen(
-        empid: drvid,
-        qrData: qrData.trim(),
-        lon: lon,
-        lat: lat,
-        apiLokar: apiLokar,
-      );
-      if (!mounted) return;
-      EasyLoading.dismiss();
-
-      if (statusCode == 200) {
-        _navigateToAttendanceDriver();
-      } else {
-        final ctx = globalScaffoldKey.currentContext ?? context;
-        _showAlert(
-          ctx,
-          0,
-          statusCode == null
-              ? "Gagal menyimpan QR Code"
-              : "Gagal menyimpan QR Code (status: $statusCode)",
-          "error",
-        );
-      }
-    } catch (e) {
-      if (EasyLoading.isShow) {
-        EasyLoading.dismiss();
-      }
-      final ctx = globalScaffoldKey.currentContext ?? context;
-      _showAlert(ctx, 0, "Gagal memproses QR Code: $e", "error");
-    }
+    final requireAttendanceQr = await _shouldRequireAttendanceQr();
+    _navigateToAttendanceDriver(requireAttendanceQr: requireAttendanceQr);
   }
 
   Future scanQRCode() async {
@@ -544,7 +670,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       loginname = sharedPreferences!.getString("loginname") ?? '';
       statusKaryawanInfo =
           sharedPreferences!.getString("status_karyawan") ?? '';
-      login_type = sharedPreferences!.getString("login_type") ?? '';//
+      login_type = sharedPreferences!.getString("login_type") ?? ''; //
 
       ismixer = sharedPreferences!.getString("ismixer") ?? 'false';
 
@@ -623,7 +749,6 @@ class _ViewDashboardState extends State<ViewDashboard>
       _sessionLogoutInProgress = false;
     }
   }
-
 
   String _menuOrderPrefKey() =>
       'dashboard_menu_order_${username.trim().toUpperCase()}';
@@ -881,8 +1006,8 @@ class _ViewDashboardState extends State<ViewDashboard>
     if (loginname != "DRIVER") {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
-          : globals.akses_pages.where((x) =>
-              (x == "TI" || username == "ADMIN"));
+          : globals.akses_pages
+              .where((x) => (x == "TI" || username == "ADMIN"));
       if (isOK != null) {
         if (isOK.length > 0) {
           _anpServiceList.add(new AnpService(
@@ -1162,8 +1287,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                                     ScaffoldMessenger.of(this.context)
                                         .showSnackBar(
                                       SnackBar(
-                                        content:
-                                            Text('Urutan menu direset ke default'),
+                                        content: Text(
+                                            'Urutan menu direset ke default'),
                                       ),
                                     );
                                   }
@@ -1913,7 +2038,8 @@ class _ViewDashboardState extends State<ViewDashboard>
     try {
       final response = await http.get(Uri.parse(_informasiApiUrl));
       if (response.statusCode != 200) {
-        throw Exception('Gagal mengambil data informasi (${response.statusCode})');
+        throw Exception(
+            'Gagal mengambil data informasi (${response.statusCode})');
       }
 
       final decoded = json.decode(response.body);
@@ -2138,7 +2264,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                               Positioned(
                                 top: 0,
                                 bottom: 0,
-                                left: constraints.maxWidth * _shineAnimation.value,
+                                left: constraints.maxWidth *
+                                    _shineAnimation.value,
                                 width: constraints.maxWidth * 0.5,
                                 child: Transform(
                                   alignment: Alignment.center,
@@ -2386,12 +2513,13 @@ class _ViewDashboardState extends State<ViewDashboard>
               Container(
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color:
-                      primaryOrange.withOpacity(0.1), // âœ… UPDATED: Orange theme
+                  color: primaryOrange
+                      .withOpacity(0.1), // âœ… UPDATED: Orange theme
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.apps,
-                    color: primaryOrange, size: 20), // âœ… UPDATED: Orange theme
+                    color: primaryOrange,
+                    size: 20), // âœ… UPDATED: Orange theme
               ),
               SizedBox(width: 12),
               Text(
@@ -2564,7 +2692,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                       right: -2,
                       top: -2,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(8),
@@ -3153,12 +3282,13 @@ class _ViewDashboardState extends State<ViewDashboard>
               Container(
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color:
-                      primaryOrange.withOpacity(0.1), // âœ… UPDATED: Orange theme
+                  color: primaryOrange
+                      .withOpacity(0.1), // âœ… UPDATED: Orange theme
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.info_outline,
-                    color: primaryOrange, size: 20), // âœ… UPDATED: Orange theme
+                    color: primaryOrange,
+                    size: 20), // âœ… UPDATED: Orange theme
               ),
               SizedBox(width: 12),
               Text(
@@ -3363,6 +3493,7 @@ class _ViewDashboardState extends State<ViewDashboard>
               index: 0,
               badge: countNotif,
             ),
+            if (_canManageAttendanceQr()) _buildAttendanceQrNavItem(),
             _buildBottomNavItem(
               icon: Icons.pin_drop_outlined,
               activeIcon: Icons.pin_drop,
@@ -3376,6 +3507,50 @@ class _ViewDashboardState extends State<ViewDashboard>
               index: 2,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttendanceQrNavItem() {
+    return Flexible(
+      child: GestureDetector(
+        onTap: _showAttendanceQrSheet,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.qr_code_scanner,
+                  color: Colors.grey.shade600,
+                  size: 20,
+                ),
+              ),
+              SizedBox(height: 2),
+              Flexible(
+                child: Text(
+                  "QRATT",
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.normal,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,//
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -3658,7 +3833,8 @@ class _ViewDashboardState extends State<ViewDashboard>
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: Row(
             children: [
-              Icon(Icons.star, color: primaryOrange), // âœ… UPDATED: Orange theme
+              Icon(Icons.star,
+                  color: primaryOrange), // âœ… UPDATED: Orange theme
               SizedBox(width: 8),
               Text('Detail Points'),
             ],
@@ -3690,8 +3866,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                               .withOpacity(0.1), // âœ… UPDATED: Orange theme
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: primaryOrange
-                                  .withOpacity(0.3)), // âœ… UPDATED: Orange theme
+                              color: primaryOrange.withOpacity(
+                                  0.3)), // âœ… UPDATED: Orange theme
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3820,79 +3996,76 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   Future<bool> _onWillPop() async {
     return (await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        titlePadding: EdgeInsets.fromLTRB(24, 24, 24, 10),
-        contentPadding: EdgeInsets.fromLTRB(24, 10, 24, 20),
-        actionsPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-
-        title: Row(
-          children: [
-            Icon(Icons.logout, color: Color(0xFFFF8C42)),
-            SizedBox(width: 10),
-            Text(
-              'Keluar Aplikasi',
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            titlePadding: EdgeInsets.fromLTRB(24, 24, 24, 10),
+            contentPadding: EdgeInsets.fromLTRB(24, 10, 24, 20),
+            actionsPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            title: Row(
+              children: [
+                Icon(Icons.logout, color: Color(0xFFFF8C42)),
+                SizedBox(width: 10),
+                Text(
+                  'Keluar Aplikasi',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'Apakah Anda yakin ingin keluar dari aplikasi?',
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+                fontSize: 14,
+                color: Colors.black54,
               ),
             ),
-          ],
-        ),
-
-        content: Text(
-          'Apakah Anda yakin ingin keluar dari aplikasi?',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.black54,
-          ),
-        ),
-
-        actions: [
-          // Tombol Tidak
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.grey,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+            actions: [
+              // Tombol Tidak
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text('Tidak'),
               ),
-            ),
-            child: Text('Tidak'),
-          ),
 
-          // Tombol Ya
-          ElevatedButton(
-            onPressed: () async {
-              SharedPreferences preferences =
-              await SharedPreferences.getInstance();
-              await preferences.clear();
+              // Tombol Ya
+              ElevatedButton(
+                onPressed: () async {
+                  SharedPreferences preferences =
+                      await SharedPreferences.getInstance();
+                  await preferences.clear();
 
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
                     (Route<dynamic> route) => false,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFFF8C42), // Orange soft
-              elevation: 2,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFFFF8C42), // Orange soft
+                  elevation: 2,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Ya',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-            ),
-            child: Text(
-              'Ya',
-              style: TextStyle(color: Colors.white),
-            ),
+            ],
           ),
-        ],
-      ),
-    )) ??
+        )) ??
         false;
   }
 
@@ -3906,9 +4079,9 @@ class _ViewDashboardState extends State<ViewDashboard>
             content: Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text('Tidak',style: TextStyle(color: Colors.black38))
-              ),
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child:
+                      Text('Tidak', style: TextStyle(color: Colors.black38))),
               ElevatedButton(
                 onPressed: () async {
                   SharedPreferences preferences =
@@ -3925,7 +4098,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                 ),
-                child: Text('Ya',style: TextStyle(color: Colors.white)),
+                child: Text('Ya', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -3957,7 +4130,7 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   void _showAlert(
       BuildContext? ctx, int type, String message, String colorInfo) {
-    if (ctx != null) alert(ctx, type, message, colorInfo);//
+    if (ctx != null) alert(ctx, type, message, colorInfo); //
   }
 
   void _navigateToWoMCN() {
@@ -4019,34 +4192,152 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
   }
 
-  int? _parseBujNumericId(String bujnbr) {
-    final digits = bujnbr.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.isEmpty) {
-      return null;
+  String _logkarBaseUrl(String apiLokar) {
+    final trimmed = apiLokar.trim();
+    if (trimmed.isEmpty) {
+      return trimmed;
     }
-    return int.tryParse(digits);
+    return trimmed.endsWith('/')
+        ? trimmed.substring(0, trimmed.length - 1)
+        : trimmed;
   }
 
-  Future<bool> _sendLokarOrderPosition({
+  int? _parseDoIdFromJson(dynamic body) {
+    if (body == null) {
+      return null;
+    }
+    if (body is int) {
+      return body > 0 ? body : null;
+    }
+    if (body is num) {
+      final value = body.toInt();
+      return value > 0 ? value : null;
+    }
+    if (body is String) {
+      return int.tryParse(body.trim());
+    }
+    if (body is Map) {
+      final direct = _parseDoIdFromJson(body['do_id']);
+      if (direct != null && direct > 0) {
+        return direct;
+      }
+      return _parseDoIdFromJson(body['data']);
+    }
+    return null;
+  }
+
+  String _buildLogkarRequestCode(String clientId, String apiToken) {
+    final raw = '#$clientId#$apiToken#';
+    return sha256.convert(utf8.encode(raw)).toString();
+  }
+
+  Future<int?> _getLogkarDoId({
     required String apiLokar,
-    required String requestCode,
-    required String bujnbr,
+    required String clientId,
+    required String apiToken,
+    required String doNo,
+  }) async {
+    if (doNo.trim().isEmpty) {
+      print('logkar do_no kosong');
+      return null;
+    }
+    final base = _logkarBaseUrl(apiLokar);
+    if (base.isEmpty) {
+      return null;
+    }
+    final requestCode = _buildLogkarRequestCode(clientId, apiToken);
+    final uri = Uri.parse('$base/orders/do/get');
+    final body = json.encode({
+      'do_no': doNo,
+      'request_code': requestCode,
+    });
+    print('logkar get do_id url: $uri');
+    print('logkar get do_id body: $body');
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': apiToken,
+      },
+      body: body,
+    );
+    print('logkar get do_id response: ${response.statusCode} ${response.body}');
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return null;
+    }
+    try {
+      final dynamic decoded = json.decode(response.body);
+      final doId = _parseDoIdFromJson(decoded);
+      if (doId == null || doId <= 0) {
+        print('logkar do_id tidak ditemukan untuk do_no: $doNo');
+      }
+      return doId;
+    } catch (e) {
+      print('logkar parse do_id error: $e');
+      return null;
+    }
+  }
+
+  String _parseLogkarResponseMessage(String body) {
+    if (body.trim().isEmpty) {
+      return '';
+    }
+    try {
+      final dynamic decoded = json.decode(body);
+      if (decoded is Map) {
+        final status = decoded['status']?.toString() ?? '';
+        final data = decoded['data']?.toString() ?? '';
+        final code = decoded['code']?.toString() ?? '';
+        final accessTime = decoded['accessTime']?.toString() ?? '';
+        final parts = <String>[];
+        if (status.isNotEmpty) parts.add('Status: $status');
+        if (data.isNotEmpty) parts.add('Data: $data');
+        if (code.isNotEmpty) parts.add('Code: $code');
+        if (accessTime.isNotEmpty) parts.add('Waktu: $accessTime');
+        if (parts.isNotEmpty) {
+          return parts.join('\n');
+        }
+      }
+    } catch (_) {}
+    return body;
+  }
+
+  Future<({bool ok, String message})> _sendLokarOrderPosition({
+    required String apiLokar,
+    required String clientId,
+    required String apiToken,
+    required String no_do,
     required String latitude,
     required String longitude,
   }) async {
     if (apiLokar.trim().isEmpty) {
-      print('api_lokar kosong');
-      return false;
+      return (ok: false, message: 'URL API Logkar kosong.');
     }
-    final doId = _parseBujNumericId(bujnbr);
-    if (doId == null) {
-      print('bujnbr tidak valid: $bujnbr');
-      return false;
+    if (clientId.trim().isEmpty || apiToken.trim().isEmpty) {
+      return (
+        ok: false,
+        message: 'Client ID atau API Token Logkar belum tersedia. Silakan login ulang.',
+      );
     }
-    final base = apiLokar.endsWith('/')
-        ? apiLokar.substring(0, apiLokar.length - 1)
-        : apiLokar;
-    final uri = Uri.parse('$base/integration-api/transporter/order/position');
+    if (no_do.trim().isEmpty) {
+      return (ok: false, message: 'Nomor DO kosong.');
+    }
+    final doId = await _getLogkarDoId(
+      apiLokar: apiLokar,
+      clientId: clientId,
+      apiToken: apiToken,
+      doNo: no_do,
+    );
+    if (doId == null || doId <= 0) {
+      return (
+        ok: false,
+        message:
+            'do_id Logkar tidak ditemukan untuk DO:\n$no_do\n\nPastikan DO sudah terdaftar di Logkar.',
+      );
+    }
+    final base = _logkarBaseUrl(apiLokar);
+    final uri = Uri.parse('$base/transporter/order/position');
+    final requestCode = _buildLogkarRequestCode(clientId, apiToken);
     final body = json.encode({
       'request_code': requestCode,
       'do_id': doId,
@@ -4055,13 +4346,68 @@ class _ViewDashboardState extends State<ViewDashboard>
     });
     print('lokar position url: $uri');
     print('lokar position body: $body');
-    final response = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: body,
+    try {
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': apiToken,
+        },
+        body: body,
+      );
+      print('lokar position response: ${response.statusCode} ${response.body}');
+      final detail = _parseLogkarResponseMessage(response.body);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return (
+          ok: true,
+          message:
+              'Posisi berhasil dikirim ke Logkar.\n\nDO: $no_do\ndo_id: $doId\nLat: $latitude\nLon: $longitude${detail.isNotEmpty ? '\n\n$detail' : ''}',
+        );
+      }
+      return (
+        ok: false,
+        message:
+            'Gagal mengirim posisi ke Logkar.\n\nDO: $no_do\ndo_id: $doId\nHTTP: ${response.statusCode}${detail.isNotEmpty ? '\n\n$detail' : ''}',
+      );
+    } catch (e) {
+      return (
+        ok: false,
+        message:
+            'Gagal mengirim posisi ke Logkar.\n\nDO: $no_do\ndo_id: $doId\nError: $e',
+      );
+    }
+  }
+
+  Future<void> _showLogkarPositionDialog({
+    required bool success,
+    required String message,
+  }) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Row(
+          children: [
+            Icon(
+              success ? Icons.check_circle_outline : Icons.error_outline,
+              color: success ? Colors.green : Colors.red,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(success ? 'Logkar Position' : 'Logkar Position Gagal'),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(child: Text(message)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
-    print('lokar position response: ${response.statusCode} ${response.body}');
-    return response.statusCode >= 200 && response.statusCode < 300;
   }
 
   void _handleScheduleActionMixer(dynamic item) async {
@@ -4124,6 +4470,10 @@ class _ViewDashboardState extends State<ViewDashboard>
           final latitude = gpsResult["latitude"] ?? 0;
           final longitude = gpsResult["longitude"] ?? 0;
           final apiLokar = sharedPreferences!.getString("api_lokar") ?? '';
+          final lokarClientId =
+              sharedPreferences!.getString("lokar_client_id") ?? '';
+          final lokarApiToken =
+              sharedPreferences!.getString("lokar_api_token") ?? '';
 
           final qrCheck = await _checkQrToday(
             empid: drvid,
@@ -4146,18 +4496,21 @@ class _ViewDashboardState extends State<ViewDashboard>
 
           if (item['status_do_mixer'].toString() == "INLOADING") {
             EasyLoading.show(status: 'Mengirim posisi...');
-            final sent = await _sendLokarOrderPosition(
+            final logkarResult = await _sendLokarOrderPosition(
               apiLokar: apiLokar,
-              requestCode: item['do_number'].toString(),
-              bujnbr: item['bujnbr'].toString(),
+              clientId: lokarClientId,
+              apiToken: lokarApiToken,
+              no_do: item['do_number'].toString(),
               latitude: latitude.toString(),
               longitude: longitude.toString(),
             );
             if (!mounted) return;
             EasyLoading.dismiss();
-            if (!sent) {
-              alert(globalScaffoldKey.currentContext!, 0,
-                  "Gagal mengirim posisi ke Lokar", "error");
+            await _showLogkarPositionDialog(
+              success: logkarResult.ok,
+              message: logkarResult.message,
+            );
+            if (!logkarResult.ok) {
               return;
             }
           }
@@ -4724,11 +5077,10 @@ class _ViewDashboardState extends State<ViewDashboard>
       }
     } else if (anpService.idKey == 25) {
       if (loginname != "DRIVER") {
-
         final hasAksesPO = globals.akses_pages != null &&
             globals.akses_pages.where((x) => x == "PO").isNotEmpty;
         if (hasAksesPO || username == "ADMIN") {
-        //if ((hasAksesPO && username == "ADMIN") || (hasAksesPO && username == "ADMIN")) {
+          //if ((hasAksesPO && username == "ADMIN") || (hasAksesPO && username == "ADMIN")) {
           if (!EasyLoading.isShow) {
             EasyLoading.show();
           }
@@ -4804,8 +5156,8 @@ class _ViewDashboardState extends State<ViewDashboard>
         var isOK = globals.akses_pages == null
             ? globals.akses_pages
             : globals.akses_pages
-            .where((x) => (x == "HD" || username == "ADMIN"));
-        if(isOK.length>0){
+                .where((x) => (x == "HD" || username == "ADMIN"));
+        if (isOK.length > 0) {
           Timer(Duration(seconds: 1), () {
             Navigator.pushReplacement(
               context,
@@ -4815,7 +5167,6 @@ class _ViewDashboardState extends State<ViewDashboard>
             );
           });
         }
-
       } else {
         _showAlert(globalScaffoldKey.currentContext!, 0,
             "Anda tidak punya akses", "error");
@@ -5041,7 +5392,8 @@ class _ViewDashboardState extends State<ViewDashboard>
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => FrmAttendance()),//KARYAWAN///
+            MaterialPageRoute(
+                builder: (context) => FrmAttendance()), //KARYAWAN///
           );
         });
       }
