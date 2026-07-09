@@ -14,6 +14,7 @@ import 'package:dms_anp/src/services/PermissionService.dart';
 import 'package:dms_anp/src/services/FcmAduanService.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:dms_anp/src/services/logkar_position_background_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -38,6 +39,7 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   HttpOverrides.global = new MyHttpOverrides();
   await DatabaseHelper.instance.database;
+  await LogkarPositionBackgroundService.initialize();
   runApp(MyApp());
   configLoading();
 }

@@ -59,6 +59,8 @@ import 'package:http/http.dart' as http;
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:unique_identifier/unique_identifier.dart';
 import '../../helpers/GpsSecurityChecker.dart';
+import '../../helpers/sim_phone_guard.dart';
+import 'package:dms_anp/src/services/logkar_position_background_service.dart';
 
 import '../flusbar.dart';
 import 'FrmAttendanceDriver.dart';
@@ -615,6 +617,10 @@ class _ViewDashboardState extends State<ViewDashboard>
     if (drvid.isEmpty) {
       final ctx = globalScaffoldKey.currentContext ?? context;
       _showAlert(ctx, 0, "Data driver tidak ditemukan", "error");
+      return;
+    }
+
+    if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
       return;
     }
 
@@ -4427,11 +4433,19 @@ class _ViewDashboardState extends State<ViewDashboard>
                             : "Close DO";
     try {
       if (items.toString() == "OUTUNLOADING") {
+        final logkarNoDo = item['do_number']?.toString() ?? '';
+        if (logkarNoDo.isNotEmpty) {
+          sharedPreferences ??= await SharedPreferences.getInstance();
+          await sharedPreferences!
+              .setString('logkar_mixer_no_do', logkarNoDo);
+        }
         GetVhcidDo();
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => ViewListDoMixer()),
+            MaterialPageRoute(
+              builder: (context) => ViewListDoMixer(logkarNoDo: logkarNoDo),
+            ),
           );
         });
         return;
@@ -5388,6 +5402,9 @@ class _ViewDashboardState extends State<ViewDashboard>
       if (loginname == "DRIVER") {
         await _openAttendanceDriverWithQrScan();
       } else {
+        if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+          return;
+        }
         EasyLoading.show();
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
@@ -5672,8 +5689,12 @@ class _ViewDashboardState extends State<ViewDashboard>
           authenticated ? "Authorized success" : "Failed to authenticate";
       print(authorized);
     });
-    Timer(Duration(seconds: 1), () {
+    Timer(Duration(seconds: 1), () async {
       if (authorized == "Authorized success") {
+        if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+          return;
+        }
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => FrmAttendance()),
@@ -5735,6 +5756,27 @@ class _ViewDashboardState extends State<ViewDashboard>
     });
   }
 
+  void _syncLogkarMixerTracking() async {
+    sharedPreferences ??= await SharedPreferences.getInstance();
+    final mixerLoginType =
+        sharedPreferences!.getString('login_type') ?? login_type;
+    if (mixerLoginType != 'MIXER' || !globals.isApiLokarRUN) {
+      await LogkarPositionBackgroundService.stop();
+      return;
+    }
+    await sharedPreferences!
+        .setBool('is_api_lokar_run', globals.isApiLokarRUN);
+    if (data_list_do.isNotEmpty) {
+      final noDo = data_list_do.first['do_number']?.toString() ?? '';
+      if (noDo.isNotEmpty) {
+        await sharedPreferences!.setString('logkar_mixer_no_do', noDo);
+      }
+    } else {
+      await sharedPreferences!.remove('logkar_mixer_no_do');
+    }
+    await LogkarPositionBackgroundService.syncTrackingState();
+  }
+
   void GetListDo() async {
     try {
       final JsonDecoder _decoder = new JsonDecoder();
@@ -5752,6 +5794,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       setState(() {
         if (response.statusCode == 200) {
           data_list_do = json.decode(response.body);
+          _syncLogkarMixerTracking();
         }
         print("data_list_do");
         print(data_list_do);

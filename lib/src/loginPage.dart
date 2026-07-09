@@ -160,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
     EasyLoading.show();
     try {
       final JsonDecoder _decoder = new JsonDecoder();
-      var endpointUrl = GlobalData.baseUrl + "api/authorize_v8.jsp";
+      var endpointUrl = GlobalData.baseUrl + "api/authorize_v9.jsp";
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String username = TxtUsername.text.trim();
@@ -257,6 +257,7 @@ class _LoginPageState extends State<LoginPage> {
           var cpyid = result["data"][0]["cpyid"];
           var cpyname = result["data"][0]["cpyname"];
           var ismixer = result["data"][0]["ismixer"];
+          var phone = result["data"][0]["phone"]??"";
           var status_karyawan = result["data"][0]["status_karyawan"];
           var kryid = result["data"][0]["kryid"];
           var login_type = result["data"][0]["login_type"];
@@ -316,6 +317,7 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('cpyid', cpyid);
           prefs.setString('cpyname', cpyname);
           prefs.setString('ismixer', ismixer);
+          prefs.setString('phone', phone);
           prefs.setString('login_type', login_type);
           prefs.setString('status_karyawan', status_karyawan);
           prefs.setString('kryid', kryid);

@@ -17,8 +17,7 @@ import 'dart:convert';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
-
+import '../../helpers/sim_phone_guard.dart';
 class FrmAttendance extends StatefulWidget {
   @override
   FrmAttendanceState createState() => FrmAttendanceState();
@@ -349,6 +348,10 @@ class FrmAttendanceState extends State<FrmAttendance> {
   }
 
   Future updatePosition(String inorout) async {
+    if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+      return;
+    }
+
     print(androidID.toString());
     print("userLocation ${userLocation}");
 

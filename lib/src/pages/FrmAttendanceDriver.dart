@@ -22,6 +22,7 @@ import 'package:trust_location/trust_location.dart';
 
 import '../../helpers/DeveloperModeGuard.dart';
 import '../../helpers/GpsSecurityChecker.dart';
+import '../../helpers/sim_phone_guard.dart';
 
 // Constants
 class AttendanceConstants {
@@ -419,6 +420,10 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
 
   Future<void> _processAttendance(String type) async {
     if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+      return;
+    }
+
+    if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
       return;
     }
 

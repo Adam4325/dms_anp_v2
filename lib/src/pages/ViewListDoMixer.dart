@@ -1,6 +1,7 @@
 import 'package:dms_anp/src/Color/hex_color.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
-import 'package:dms_anp/src/pages/FrmCloseVehicle.dart';
+import 'package:dms_anp/src/Helper/globals.dart' as globals;
+import 'package:dms_anp/src/Helper/logkar_api_service.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -10,18 +11,24 @@ import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
 import 'package:maps_toolkit/maps_toolkit.dart';
 import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../helpers/GpsSecurityChecker.dart';
 import '../flusbar.dart';
 import 'FrmCloseVehicleMixer.dart';
 
 class ViewListDoMixer extends StatefulWidget {
+  final String? logkarNoDo;
+
+  const ViewListDoMixer({super.key, this.logkarNoDo});
+
   @override
   _ViewListDoMixerState createState() => _ViewListDoMixerState();
 }
 
-class _ViewListDoMixerState extends State<ViewListDoMixer> {//
+class _ViewListDoMixerState extends State<ViewListDoMixer> {
   GlobalKey globalScaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey globalScaffoldKey2 = GlobalKey<ScaffoldState>();
   List data = [];
@@ -38,6 +45,7 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
   String androidID = "";
   List listGeofence = [];
   String address = "";
+  final ImagePicker _imagePicker = ImagePicker();
 
   Future<String> getJSONData() async {
     EasyLoading.show();
@@ -55,7 +63,6 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
         await http.get(myUri, headers: {"Accept": "application/json"});
 
     setState(() {
-      // Get the JSON data
       final raw = json.decode(response.body)["data"];
       data = raw != null && raw is List ? raw : [];
       print(data);
@@ -68,6 +75,177 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
       EasyLoading.dismiss();
     }
     return "Successfull";
+  }
+
+  Future<String?> _resolveLogkarNoDo() async {
+    if (widget.logkarNoDo != null && widget.logkarNoDo!.trim().isNotEmpty) {
+      return widget.logkarNoDo!.trim();
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('logkar_mixer_no_do')?.trim() ?? '';
+    return saved.isEmpty ? null : saved;
+  }
+
+  Future<void> _showLogkarDialog({
+    required bool success,
+    required String title,
+    required String message,
+  }) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Row(
+          children: [
+            Icon(
+              success ? Icons.check_circle_outline : Icons.error_outline,
+              color: success ? Colors.green : Colors.red,
+            ),
+            const SizedBox(width: 8),
+            Expanded(child: Text(title)),
+          ],
+        ),
+        content: SingleChildScrollView(child: Text(message)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> _capturePhotoCameraOnly() async {
+    final photo = await _imagePicker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 80,
+    );
+    return photo?.path;
+  }
+
+  Future<void> _handleDoDiterima(dynamic value) async {
+    final logkarNoDo = await _resolveLogkarNoDo();
+    if (globals.isApiLokarRUN) {
+      if (logkarNoDo == null || logkarNoDo.isEmpty) {
+        alert(globalScaffoldKey.currentContext!, 0,
+            'Nomor DO Logkar tidak ditemukan. Ulangi dari OUTUNLOADING.', 'error');
+        return;
+      }
+
+      final photoPath = await _capturePhotoCameraOnly();
+      if (photoPath == null || photoPath.isEmpty) {
+        alert(globalScaffoldKey.currentContext!, 0,
+            'Foto wajib diambil dari kamera.', 'error');
+        return;
+      }
+
+      final creds = await LogkarApiService.loadCredentials();
+      if (creds == null) {
+        alert(globalScaffoldKey.currentContext!, 0,
+            'Credential Logkar belum tersedia. Silakan login ulang.', 'error');
+        return;
+      }
+
+      EasyLoading.show(status: 'Mengirim dokumen ke Logkar...');
+      try {
+        final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
+        final latitude = gpsResult['latitude']?.toString() ?? '0';
+        final longitude = gpsResult['longitude']?.toString() ?? '0';
+
+        final uploadResult = await LogkarApiService.uploadDocument(
+          apiLokar: creds.apiLokar,
+          clientId: creds.clientId,
+          apiToken: creds.apiToken,
+          doNo: logkarNoDo,
+          filePath: photoPath,
+        );
+        if (!uploadResult.ok) {
+          if (EasyLoading.isShow) EasyLoading.dismiss();
+          await _showLogkarDialog(
+            success: false,
+            title: 'Upload Logkar Gagal',
+            message: uploadResult.message,
+          );
+          return;
+        }
+
+        EasyLoading.show(status: 'Mengirim status 99 ke Logkar...');
+        final statusResult = await LogkarApiService.sendOrderStatus(
+          apiLokar: creds.apiLokar,
+          clientId: creds.clientId,
+          apiToken: creds.apiToken,
+          doNo: logkarNoDo,
+          latitude: latitude,
+          longitude: longitude,
+          status: 99,
+        );
+        if (!statusResult.ok) {
+          if (EasyLoading.isShow) EasyLoading.dismiss();
+          await _showLogkarDialog(
+            success: false,
+            title: 'Status Logkar Gagal',
+            message: statusResult.message,
+          );
+          return;
+        }
+
+        await _showLogkarDialog(
+          success: true,
+          title: 'Logkar Berhasil',
+          message:
+              '${uploadResult.message}\n\n${statusResult.message}',
+        );
+      } catch (e) {
+        if (EasyLoading.isShow) EasyLoading.dismiss();
+        alert(globalScaffoldKey.currentContext!, 0,
+            'Gagal proses Logkar: $e', 'error');
+        return;
+      } finally {
+        if (EasyLoading.isShow) EasyLoading.dismiss();
+      }
+    }
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    EasyLoading.show(status: 'Menyimpan DO diterima...');
+    final no_do =
+        await CreateDoDiTerima(value['driverid'], value['dlodetaildonumber']);
+    if (EasyLoading.isShow) EasyLoading.dismiss();
+
+    GlobalData.frmDloDoNumber = value['dlodetaildonumber'];
+    GlobalData.frmBujDoNumber = value['dlodonumber'];
+    GlobalData.frmVhcid = value['vhcid'];
+    GlobalData.frmDrvId = value['driverid'];
+    GlobalData.frmUserId = prefs.getString("name").toString();
+    GlobalData.frmLocid = value['locid'];
+    print(value);
+    if (no_do != null && no_do != "") {
+      setState(() {
+        prefs.setString("vhcid_new", value['vhcid']);
+        prefs.setString("drvid_new", value['driverid']);
+        prefs.setString("dloorigin", value['dloorigin']);
+        prefs.setString("dlodestination", value['dlodestination']);
+        prefs.setString("dlodetaildonumber", value['dlodetaildonumber']);
+        prefs.setString("bujnumber", value['dlodonumber']);
+        print(prefs.getString("bujnumber"));
+        print(value['dlodonumber']);
+        prefs.remove("submit_bujnumber");
+      });
+      showDialog(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          });
+      Timer(Duration(seconds: 1), () {
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => FrmCloseVehicleMixer()));
+      });
+    }
   }
 
   _goBack(BuildContext context) {
@@ -98,13 +276,14 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
                 _goBack(context);
               },
             ),
-            centerTitle: true,//
-            title: Text('Form List DO Mixer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+            centerTitle: true,
+            title: Text('Form List DO Mixer',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w600))),
         body: new Container(
           key: globalScaffoldKey2,
           margin: const EdgeInsets.only(top: 5.0),
           constraints: new BoxConstraints.expand(),
-          //color: new Color(0xFF736AB7),
           color: HexColor("#ffffff"),
           child: new Stack(
             children: <Widget>[
@@ -123,7 +302,6 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
             padding: const EdgeInsets.all(16.0),
             itemCount: data.length,
             itemBuilder: (context, index) {
-              //_controllers[index] = new TextEditingController();
               return _buildDMSMenuDO(context, data[index], index);
             }));
   }
@@ -146,7 +324,6 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
               LatLng(userLocation.longitude, userLocation.latitude));
           print(
               'distanceBetweenPoints ${distanceBetweenPoints} meter ${distanceBetweenPoints / 1000} KM');
-          //if (distanceBetweenPoints >= radius) { //FOR DEV
           if (distanceBetweenPoints <= radius) {
             if (i == 0) {
               radiusOld = radius;
@@ -196,23 +373,17 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
     print(_permissionGranted);
     print(_serviceEnabled);
     if (_permissionGranted != PermissionStatus.granted || !_serviceEnabled) {
-      ///asks permission and enable location dialogs
-
       _permissionGranted = await location.requestPermission();
       _serviceEnabled = await location.requestService();
     } else {
-      ///Do something here
       print('null location');
     }
 
     location.onLocationChanged.listen((LocationData cLoc) {
       currentLocation = cLoc;
       _isisMock = currentLocation.isMock!;
-      //print("currentLocation.latitude ${currentLocation.latitude}");
-      //print("currentLocation.longitude ${currentLocation.longitude}");
       _lat = currentLocation.latitude ?? 0;
       _lon = currentLocation.longitude ?? 0;
-      //print('change location');
     });
   }
 
@@ -232,9 +403,7 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
       if (response.statusCode == 200) {
         setState(() {
           listGeofence = [];
-          listGeofence = (jsonDecode(response.body) as List)
-              //.map((dynamic e) => e as Map<String, dynamic>)
-              .toList();
+          listGeofence = (jsonDecode(response.body) as List).toList();
         });
       } else {
         alert(globalScaffoldKey.currentContext!, 0, "Gagal load data geofence",
@@ -293,7 +462,6 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
   }
 
   Widget _buildDMSMenuDO(BuildContext context, dynamic value, int index) {
-    //print(value["drvid"]);
     return Card(
       elevation: 8.0,
       margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
@@ -363,52 +531,12 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
                       children: <Widget>[
                         new ElevatedButton.icon(
                           icon: Icon(
-                            Icons.save,
+                            Icons.camera_alt,
                             color: Colors.white,
                             size: 24.0,
                           ),
                           label: Text("DO DiTerima"),
-                          onPressed: () async {
-                            SharedPreferences prefs =
-                                await SharedPreferences.getInstance();
-                            var no_do = await CreateDoDiTerima(value['driverid'], value['dlodetaildonumber']);//value['dlodetaildonumber']
-                            GlobalData.frmDloDoNumber = value['dlodetaildonumber'];
-                            GlobalData.frmBujDoNumber = value['dlodonumber'];
-                            GlobalData.frmVhcid = value['vhcid'];
-                            GlobalData.frmDrvId = value['driverid'];
-                            GlobalData.frmUserId = prefs.getString("name").toString();
-                            GlobalData.frmLocid = value['locid'];
-                            print(value);
-                            //var no_do="CG/LB7/DUM-ANP/04/25/1067013";
-                            if (no_do != null && no_do != "") {
-                              setState(() {
-                                prefs.setString("vhcid_new", value['vhcid']);
-                                prefs.setString("drvid_new", value['driverid']);
-                                prefs.setString("dloorigin", value['dloorigin']);
-                                prefs.setString("dlodestination", value['dlodestination']);
-                                prefs.setString("dlodetaildonumber",value['dlodetaildonumber']);
-                                prefs.setString("bujnumber", value['dlodonumber']);
-                                print(prefs.getString("bujnumber"));
-                                print(value['dlodonumber']);
-                                prefs.remove("submit_bujnumber");
-                              });
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext dialogContext) {
-                                    return Center(
-                                      child: CircularProgressIndicator(),
-                                    );
-                                  });
-                              Timer(Duration(seconds: 1), () {
-                                // 5s over, navigate to a new page
-                                Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            FrmCloseVehicleMixer()));
-                              });
-                            }
-                          },
+                          onPressed: () => _handleDoDiterima(value),
                           style: ElevatedButton.styleFrom(
                               elevation: 0.0,
                               backgroundColor: Colors.orange.shade400,
@@ -416,7 +544,9 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
                               padding: EdgeInsets.symmetric(
                                   horizontal: 5, vertical: 5),
                               textStyle: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
                         ),
                       ]),
                 ],
@@ -430,13 +560,11 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {//
 
   @override
   void initState() {
+    super.initState();
     this.getJSONData();
     if (EasyLoading.isShow) {
       EasyLoading.dismiss();
     }
-    super.initState();
-    //EasyLoading.init();
-    //configLoading();
   }
 
   @override
