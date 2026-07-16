@@ -100,6 +100,9 @@ Prefs: `logkar_mixer_no_do` (dihapus setelah close DO sukses).
 
 **Background Send Position (doc 1.1):** `LogkarPositionBackgroundService` kirim `/transporter/order/position` tiap 1 menit (foreground service). Saat tracking aktif (`shouldBlockAutoLogout()`), **auto-logout idle** (`UserInactivityScope`) dan **session inactive logout** (`ViewDashboard._logoutInactiveSession`) **jangan dijalankan** — agar `prefs.clear()` tidak mematikan service.
 
+**Status order 99 (doc 1.0):** sebelum `POST /transporter/status/order`, app ambil qty dari ANP:
+`api/do_mixer/get_buj_qty_logkar.jsp?method=get-buj-qty-logkar-v1&do_no=...` → `goods.loading_qty` / `goods.reduce_qty` (= `BUJITEMQTY` dari `tblbuj_mix` ONGOING).
+
 ## Backend singkat
 
 - Style dokumentasi tim: **Java 6 JSP** (legacy); NetBeans build properties: `javac` 1.8 — tulis JSP tetap gaya lama (`DbHandler`, string SQL, Gson JSON).

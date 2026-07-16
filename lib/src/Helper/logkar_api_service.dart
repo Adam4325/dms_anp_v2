@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -407,6 +408,52 @@ class LogkarApiService {
     }
   }
 
+  /// Ambil loading_qty / reduce_qty dari ANP (tblbuj_mix via JSP).
+  static Future<({num loadingQty, num reduceQty})> fetchBujQtyForLogkar(
+      String doNo) async {
+    if (doNo.trim().isEmpty) {
+      return (loadingQty: 0, reduceQty: 0);
+    }
+    try {
+      final uri =
+          Uri.parse('${GlobalData.baseUrl}api/do_mixer/get_buj_qty_logkar.jsp')
+              .replace(queryParameters: <String, String>{
+        'method': 'get-buj-qty-logkar-v1',
+        'do_no': doNo.trim(),
+      });
+      print('LOGKAR fetchBujQty URL: $uri');
+      final response = await http.get(
+        uri,
+        headers: {'Accept': 'application/json'},
+      );
+      print('LOGKAR fetchBujQty HTTP ${response.statusCode}: ${response.body}');
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return (loadingQty: 0, reduceQty: 0);
+      }
+      final dynamic decoded = json.decode(response.body);
+      if (decoded is! Map) {
+        return (loadingQty: 0, reduceQty: 0);
+      }
+      num loading = _toNum(decoded['loading_qty']);
+      num reduce = _toNum(decoded['reduce_qty']);
+      final data = decoded['data'];
+      if (data is Map) {
+        if (loading == 0) loading = _toNum(data['loading_qty']);
+        if (reduce == 0) reduce = _toNum(data['reduce_qty']);
+      }
+      return (loadingQty: loading, reduceQty: reduce);
+    } catch (e) {
+      print('LOGKAR fetchBujQty error: $e');
+      return (loadingQty: 0, reduceQty: 0);
+    }
+  }
+
+  static num _toNum(dynamic value) {
+    if (value == null) return 0;
+    if (value is num) return value;
+    return num.tryParse(value.toString().trim()) ?? 0;
+  }
+
   static Future<({bool ok, String message})> sendOrderStatus({
     required String apiLokar,
     required String clientId,
@@ -415,6 +462,8 @@ class LogkarApiService {
     required String latitude,
     required String longitude,
     required int status,
+    num? loadingQty,
+    num? reduceQty,
   }) async {
     if (doNo.trim().isEmpty) {
       return (ok: false, message: 'Nomor DO kosong.');
@@ -432,22 +481,40 @@ class LogkarApiService {
             'do_id Logkar tidak ditemukan untuk DO:\n$doNo\n\nPastikan DO sudah terdaftar di Logkar.',
       );
     }
+
+    num loadQty = loadingQty ?? 0;
+    num redQty = reduceQty ?? 0;
+    if (loadingQty == null || reduceQty == null) {
+      final qty = await fetchBujQtyForLogkar(doNo);
+      if (loadingQty == null) loadQty = qty.loadingQty;
+      if (reduceQty == null) redQty = qty.reduceQty;
+    }
+
     final base = logkarBaseUrl(apiLokar);
     final uri = Uri.parse('$base/transporter/status/order');
     final requestCode = buildRequestCode(clientId, apiToken);
-    final body = json.encode({
+    final bodyMap = <String, dynamic>{
       'request_code': requestCode,
       'do_id': doId,
       'latitude': latitude,
       'longitude': longitude,
       'status': status,
       'goods': {
-        'loading_qty': 0,
-        'reduce_qty': 0,
+        'loading_qty': loadQty,
+        'reduce_qty': redQty,
         'origin': {'bruto': 0, 'netto': 0, 'tara': 0},
         'destination': {'bruto': 0, 'netto': 0, 'tara': 0},
       },
-    });
+    };
+    final body = json.encode(bodyMap);
+
+    print('========== LOGKAR STATUS ORDER (Postman) ==========');
+    print('URL: $uri');
+    print('Authorization: $apiToken');
+    print('Body: $body');
+    print('loading_qty=$loadQty reduce_qty=$redQty');
+    print('===================================================');
+
     try {
       final response = await http.post(
         uri,
@@ -457,12 +524,13 @@ class LogkarApiService {
         },
         body: body,
       );
+      print('LOGKAR status order HTTP ${response.statusCode}: ${response.body}');
       final detail = parseResponseMessage(response.body);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return (
           ok: true,
           message:
-              'Status order $status berhasil dikirim ke Logkar.\n\nDO: $doNo\ndo_id: $doId${detail.isNotEmpty ? '\n\n$detail' : ''}',
+              'Status order $status berhasil dikirim ke Logkar.\n\nDO: $doNo\ndo_id: $doId\nloading_qty: $loadQty\nreduce_qty: $redQty${detail.isNotEmpty ? '\n\n$detail' : ''}',
         );
       }
       return (
