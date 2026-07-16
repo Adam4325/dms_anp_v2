@@ -1179,7 +1179,480 @@ class _FrmInventoryState extends State<FrmInventory> {
   }
 
   List<Map<String, dynamic>> dataListItemSearch = [];
+  List<Map<String, dynamic>> dataListBarcodeSearch = [];
   TextEditingController txtSearchPartname = new TextEditingController();
+
+  /// API baru khusus Search By Name (bukan barcode).
+  /// trucking: web/mobile/api/inventory/list_item_search_mobile.jsp
+  String _buildListItemSearchUrl(String search) {
+    final uri = Uri.parse('${BASE_URL}api/inventory/list_item_search_mobile.jsp')
+        .replace(queryParameters: {
+      'method': 'search-items-by-name-v1',
+      'trx_type': type_transaction,
+      'warehouseid': (globals.from_ware_house ?? '').toString(),
+      'towarehouseid': (globals.inv_towarehouse ?? '').toString(),
+      'vendor': (globals.inv_vendorid ?? '').toString(),
+      'search': search,
+    });
+    return uri.toString();
+  }
+
+  void _applyBarcodeItem(Map item) {
+    final itemId = (item['item_id'] ?? '').toString();
+    setState(() {
+      txtItemID.text = itemId;
+      txtPartName.text = (item['part_name'] ?? '').toString();
+      txtQuantity.text = '1';
+      selUomID = (item['uom_id'] ?? '').toString();
+      txtUnitCost.text = (item['cost'] ?? '0').toString();
+      txtType.text = (item['type'] ?? '').toString();
+      txtTypeAccess.text = (item['accessories'] ?? '').toString();
+      txtMerk.text = (item['merk'] ?? '').toString();
+      txtUomID.text = (item['uom_id'] ?? '').toString();
+      txtGenuineNo.text = (item['genuine_no'] ?? '').toString();
+      txtVHTID.text = (item['vhtid'] ?? '').toString();
+      selitem_size = (item['item_size'] ?? '').toString();
+      selitdlinenbr = (item['itdlinenbr'] ?? '').toString();
+      seltowarehouseid = (item['towarehouse'] ?? '').toString();
+      selvendorid = (item['vendorid'] ?? '').toString();
+      selunitpricce = (item['cost'] ?? '0').toString();
+    });
+    myFocusNode.requestFocus();
+  }
+
+  Future<void> getListItemBarcodeBySearch(String search) async {
+    try {
+      EasyLoading.show();
+      setState(() {
+        dataListBarcodeSearch = [];
+      });
+      final url = _buildListItemSearchUrl(search);
+      print('search item by name: $url');
+      final response =
+          await http.get(Uri.parse(url), headers: {"Accept": "application/json"});
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body is List && body.isNotEmpty) {
+          setState(() {
+            dataListBarcodeSearch = body
+                .map((dynamic e) => e as Map<String, dynamic>)
+                .toList();
+          });
+        } else {
+          setState(() {
+            dataListBarcodeSearch = [];
+          });
+          final ctx = globalScaffoldKey.currentContext;
+          if (ctx != null) {
+            alert(ctx, 2, "Data inventory tidak ditemukan", "warning");
+          }
+        }
+      } else {
+        final ctx = globalScaffoldKey.currentContext;
+        if (ctx != null) {
+          alert(ctx, 0, "Gagal load data item", "error");
+        }
+      }
+    } catch (e) {
+      final ctx = globalScaffoldKey.currentContext;
+      if (ctx != null) {
+        alert(ctx, 0, "Client, Load data item", "error");
+      }
+      print(e.toString());
+    } finally {
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
+    }
+  }
+
+  /// Tunggu overlay benar-benar hilang sebelum aksi berikutnya.
+  Future<void> _waitDialogDisposed() async {
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await WidgetsBinding.instance.endOfFrame;
+  }
+
+  /// Tombol solid berwarna (bukan transparan / bordered). Pakai di list/dialog action.
+  Widget _solidActionButton({
+    required IconData icon,
+    required String label,
+    required Color bgColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 16),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Confirm Scan / Search — PageRoute + GestureDetector (tanpa Material button).
+  Future<void> _showItemIdChoiceDialog() async {
+    if (!mounted) {
+      return;
+    }
+    final String? choice =
+        await Navigator.of(context, rootNavigator: true).push<String>(
+      PageRouteBuilder<String>(
+        opaque: false,
+        barrierDismissible: true,
+        barrierColor: Colors.black54,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        pageBuilder: (routeCtx, animation, secondaryAnimation) {
+          return SafeArea(
+            child: Center(
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 340),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Information',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text('Filter by name or Scan item ID?'),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _solidActionButton(
+                                icon: Icons.qr_code_scanner,
+                                label: 'Scan QRCode',
+                                bgColor: primaryOrange,
+                                onTap: () {
+                                  Navigator.of(routeCtx).pop('scan');
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _solidActionButton(
+                                icon: Icons.search,
+                                label: 'Search By Name',
+                                bgColor: accentOrange,//
+                                onTap: () {
+                                  Navigator.of(routeCtx).pop('search');
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    await _waitDialogDisposed();
+    if (!mounted || choice == null || choice == '') {
+      return;
+    }
+
+    if (choice == 'scan') {
+      await scanQRCode();
+      return;
+    }
+
+    if (choice == 'search') {
+      txtSearchPartname.text = '';
+      await Navigator.of(context, rootNavigator: true).push(
+        PageRouteBuilder(
+          opaque: false,
+          barrierDismissible: true,
+          barrierColor: Colors.black54,
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+          pageBuilder: (routeCtx, animation, secondaryAnimation) {
+            return SafeArea(
+              child: Center(
+                child: Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 360),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  'Search Item',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => Navigator.of(routeCtx).pop(),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Icon(Icons.close),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          setupAlertSearchItemContainer(routeCtx),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
+  }
+
+  Future<void> searchItemByPartNameInv(BuildContext dialogContext) async {
+    final searchText = txtSearchPartname.text.trim();
+    if (searchText.isEmpty) {
+      if (mounted) {
+        alert(context, 2, "Part name / Item ID tidak boleh kosong", "error");
+      }
+      return;
+    }
+    final warehouse = (globals.from_ware_house ?? '').toString();
+    if (warehouse.isEmpty && type_transaction != 'IR-P') {
+      if (mounted) {
+        alert(context, 2, "Warehouse tidak boleh kosong", "error");
+      }
+      return;
+    }
+
+    await getListItemBarcodeBySearch(searchText);
+    if (!mounted) {
+      return;
+    }
+    if (dataListBarcodeSearch.isEmpty) {
+      return;
+    }
+
+    if (dialogContext.mounted) {
+      Navigator.of(dialogContext).pop();
+    }
+    await _waitDialogDisposed();
+    if (!mounted) {
+      return;
+    }
+
+    final mq = MediaQueryData.fromView(
+        WidgetsBinding.instance.platformDispatcher.views.first);
+    await Navigator.of(context, rootNavigator: true).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierDismissible: true,
+        barrierColor: Colors.black54,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        pageBuilder: (routeCtx, animation, secondaryAnimation) {
+          return SafeArea(
+            child: Center(
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                child: SizedBox(
+                  height: mq.size.height * 0.7,
+                  width: mq.size.width * 0.92,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 4, 0),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'List Item 2',
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => Navigator.of(routeCtx).pop(),
+                              child: const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Icon(Icons.close),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      Expanded(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(2.0),
+                          itemCount: dataListBarcodeSearch.length,
+                          itemBuilder: (listCtx, int index) {
+                            return _buildDListBarcodeSearchItem(
+                                routeCtx, dataListBarcodeSearch[index], index);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget setupAlertSearchItemContainer(BuildContext dialogContext) {
+    return Padding(
+      padding: const EdgeInsets.all(2.0),
+      child: TextField(
+        cursorColor: Colors.black,
+        style: TextStyle(color: Colors.grey.shade800),
+        controller: txtSearchPartname,
+        keyboardType: TextInputType.text,
+        textInputAction: TextInputAction.search,
+        onSubmitted: (_) => searchItemByPartNameInv(dialogContext),
+        decoration: InputDecoration(
+          suffixIcon: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              searchItemByPartNameInv(dialogContext);
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset(
+                "assets/img/search.png",
+                width: 28.0,
+                height: 28.0,
+              ),
+            ),
+          ),
+          fillColor: Colors.white,
+          filled: true,
+          labelText: 'Search',
+          isDense: true,
+          contentPadding: const EdgeInsets.all(8.0),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDListBarcodeSearchItem(
+      BuildContext routeCtx, dynamic item, int index) {
+    return Card(
+      elevation: 4.0,
+      margin: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
+      child: Column(
+        children: <Widget>[
+          ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+            title: Text(
+              "Item ID : ${item['item_id']}",
+              style:
+                  const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              "Partname : ${item['part_name']}\n"
+              "Type : ${item['type']} | Merk : ${item['merk']}\n"
+              "UOM: ${item['uom_id']}",
+              style: const TextStyle(color: Colors.black),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: _solidActionButton(
+                    icon: Icons.edit,
+                    label: 'Pilih',
+                    bgColor: primaryOrange,
+                    onTap: () async {
+                      final selected = Map<String, dynamic>.from(item as Map);
+                      if (routeCtx.mounted) {
+                        Navigator.of(routeCtx).pop();
+                      }
+                      await _waitDialogDisposed();
+                      if (!mounted) {
+                        return;
+                      }
+                      _applyBarcodeItem(selected);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _solidActionButton(
+                    icon: Icons.close,
+                    label: 'Close',
+                    bgColor: Colors.grey.shade600,
+                    onTap: () {
+                      if (routeCtx.mounted) {
+                        Navigator.of(routeCtx).pop();
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future getListDataItem(String type, String wonumber, String invnumber,
       String warehouseid) async {
     try {
@@ -1331,7 +1804,7 @@ class _FrmInventoryState extends State<FrmInventory> {
                   },
                   style: ElevatedButton.styleFrom(
                       elevation: 2.0,
-                      backgroundColor: primaryOrange, // ✅ Orange for Pilih
+                      backgroundColor: primaryOrange, //// ✅ Orange for Pilih
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -1360,7 +1833,7 @@ class _FrmInventoryState extends State<FrmInventory> {
                       ),
                       padding:
                           EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      textStyle:
+                      textStyle: 
                           TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 )),
               ]),
@@ -1407,18 +1880,20 @@ class _FrmInventoryState extends State<FrmInventory> {
                     labelText: 'Item ID',
                     controller: txtItemID,
                     readOnly: true,
-                    suffixIcon: IconButton(
-                      icon: new Image.asset(
-                        "assets/img/qrcode.png",
-                        width: 32.0,
-                        height: 32.0,
-                      ),
-                      onPressed: () {
-                        if (globals.inv_trx_type == 'IS-M' ||
-                            globals.inv_trx_type == 'IR-W') {
+                    suffixIcon: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () async {
+                        // Unfocus dulu agar InkWell/focus system tidak akses MediaQuery saat dispose
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        await Future<void>.delayed(const Duration(milliseconds: 16));
+                        if (!mounted) {
+                          return;
+                        }
+                        if (globals.inv_trx_type == 'IS-M') {
                           showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (BuildContext context) => new AlertDialog(
+                            context: context,
+                            useRootNavigator: true,
+                            builder: (BuildContext dialogCtx) => new AlertDialog(
                               title: new Text('Information'),
                               content:
                                   new Text("View Opname/ Item By Scan Code"),
@@ -1435,7 +1910,7 @@ class _FrmInventoryState extends State<FrmInventory> {
                                         ),
                                         label: Text("View Opname",style: TextStyle(color:Colors.white)),
                                         onPressed: () async {
-                                          final parentContext = globalScaffoldKey.currentContext;
+                                          final parentContext = context;
                                           print('globals.inv_wonumber');
                                           print(globals.inv_trx_type);
                                           print(globals.inv_wonumber);
@@ -1444,18 +1919,31 @@ class _FrmInventoryState extends State<FrmInventory> {
                                               globals.inv_wonumber!,
                                               globals.inv_trx_number!,
                                               globals.from_ware_house!);
-                                          if (parentContext != null &&
-                                              dataListItemSearch.isNotEmpty) {
-                                            Navigator.of(context, rootNavigator: true).pop();
+                                          if (!mounted) {
+                                            return;
+                                          }
+                                          if (dataListItemSearch.isNotEmpty) {
+                                            if (dialogCtx.mounted) {
+                                              Navigator.of(dialogCtx,
+                                                      rootNavigator: true)
+                                                  .pop();
+                                            }
+                                            await _waitDialogDisposed();
+                                            if (!mounted) {
+                                              return;
+                                            }
                                             showDialog(
                                               context: parentContext,
+                                              useRootNavigator: true,
                                               barrierDismissible: true,
-                                              builder: (BuildContext dialogContext) {
+                                              builder: (BuildContext listDialogContext) {
+                                                final size = MediaQuery.sizeOf(
+                                                    listDialogContext);
                                                 return Dialog(
                                                   insetPadding: EdgeInsets.zero,
                                                   child: SizedBox(
-                                                    width: MediaQuery.of(dialogContext).size.width,
-                                                    height: MediaQuery.of(dialogContext).size.height,
+                                                    width: size.width,
+                                                    height: size.height,
                                                     child: SafeArea(
                                                       child: Column(
                                                         children: [
@@ -1464,13 +1952,13 @@ class _FrmInventoryState extends State<FrmInventory> {
                                                             trailing: IconButton(
                                                               icon: Icon(Icons.close),
                                                               onPressed: () {
-                                                                Navigator.of(dialogContext).pop();
+                                                                Navigator.of(listDialogContext).pop();
                                                               },
                                                             ),
                                                           ),
                                                           Divider(height: 1),//
                                                           Expanded(
-                                                            child: listDataSearchItem(dialogContext),
+                                                            child: listDataSearchItem(listDialogContext),
                                                           ),
                                                         ],
                                                       ),
@@ -1501,8 +1989,16 @@ class _FrmInventoryState extends State<FrmInventory> {
                                         ),
                                         label: Text("Scan Barcode",style: TextStyle(color:Colors.white)),
                                         onPressed: () async {
-                                          Navigator.of(context, rootNavigator: true).pop();//
-                                          scanQRCode();
+                                          if (dialogCtx.mounted) {
+                                            Navigator.of(dialogCtx,
+                                                    rootNavigator: true)
+                                                .pop();
+                                          }
+                                          await _waitDialogDisposed();
+                                          if (!mounted) {
+                                            return;
+                                          }
+                                          await scanQRCode();
                                         },
                                         style: ElevatedButton.styleFrom(
                                             elevation: 2.0,
@@ -1520,11 +2016,19 @@ class _FrmInventoryState extends State<FrmInventory> {
                             ),
                           );
                         } else {
-                          scanQRCode();
+                          await _showItemIdChoiceDialog();
                         }
 
                         //scanQRCodeDev();
                       },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Image.asset(
+                          "assets/img/qrcode.png",
+                          width: 32.0,
+                          height: 32.0,
+                        ),
+                      ),
                     ),
                     onTap: (String p1) {},
                     onChanged: (String p1) {},

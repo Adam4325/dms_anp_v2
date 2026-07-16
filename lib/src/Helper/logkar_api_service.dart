@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LogkarApiService {
@@ -33,14 +34,52 @@ class LogkarApiService {
       return value > 0 ? value : null;
     }
     if (body is String) {
-      return int.tryParse(body.trim());
+      final parsed = int.tryParse(body.trim());
+      if (parsed != null && parsed > 0) {
+        return parsed;
+      }
+      return null;
+    }
+    // Response Logkar kadang: "data": [ { "do_id": 59106, ... } ]
+    if (body is List) {
+      for (final item in body) {
+        final parsed = parseDoIdFromJson(item);
+        if (parsed != null && parsed > 0) {
+          return parsed;
+        }
+      }
+      return null;
     }
     if (body is Map) {
-      final direct = parseDoIdFromJson(body['do_id']);
-      if (direct != null && direct > 0) {
-        return direct;
+      // Prioritas: do_id di root / di dalam data (object atau array).
+      final candidates = <dynamic>[
+        body['do_id'],
+        body['doId'],
+        body['id'],
+      ];
+      final data = body['data'];
+      if (data is Map) {
+        candidates.add(data['do_id']);
+        candidates.add(data['doId']);
+        candidates.add(data['id']);
+      } else if (data is List && data.isNotEmpty) {
+        final first = data.first;
+        if (first is Map) {
+          candidates.add(first['do_id']);
+          candidates.add(first['doId']);
+          candidates.add(first['id']);
+        }
+        candidates.add(data);
       }
-      return parseDoIdFromJson(body['data']);
+      for (final c in candidates) {
+        final parsed = parseDoIdFromJson(c);
+        if (parsed != null && parsed > 0) {
+          return parsed;
+        }
+      }
+      if (data != null) {
+        return parseDoIdFromJson(data);
+      }
     }
     return null;
   }
@@ -84,41 +123,141 @@ class LogkarApiService {
     return (apiLokar: apiLokar, clientId: clientId, apiToken: apiToken);
   }
 
-  static Future<int?> getLogkarDoId({
+  /// Hasil lookup do_id + debug Postman/raw response.
+  static Future<({
+    int? doId,
+    int httpStatus,
+    String rawBody,
+    String debugInfo,
+  })> getLogkarDoIdDetailed({
     required String apiLokar,
     required String clientId,
     required String apiToken,
     required String doNo,
   }) async {
     if (doNo.trim().isEmpty) {
-      return null;
+      return (
+        doId: null,
+        httpStatus: 0,
+        rawBody: '',
+        debugInfo: 'do_no kosong',
+      );
     }
     final base = logkarBaseUrl(apiLokar);
     if (base.isEmpty) {
-      return null;
+      return (
+        doId: null,
+        httpStatus: 0,
+        rawBody: '',
+        debugInfo: 'api_lokar kosong',
+      );
     }
     final requestCode = buildRequestCode(clientId, apiToken);
     final uri = Uri.parse('$base/orders/do/get');
-    final response = await http.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': apiToken,
-      },
-      body: json.encode({
-        'do_no': doNo,
-        'request_code': requestCode,
-      }),
-    );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      return null;
-    }
+    final bodyMap = <String, dynamic>{
+      'do_no': doNo.trim(),
+      'request_code': requestCode,
+    };
+    final bodyJson = json.encode(bodyMap);
+
+    print('========== LOGKAR GET DO_ID (Postman) ==========');
+    print('METHOD      : POST');
+    print('URL         : $uri');
+    print('Header Authorization (API Token): $apiToken');
+    print('Header Content-Type: application/json');
+    print('Body JSON   : $bodyJson');
+    print('client_id   : $clientId');
+    print('do_no       : ${doNo.trim()}');
+    print('request_code: $requestCode');
+    print('api_lokar   : $apiLokar');
+    print('================================================');
+
     try {
-      final dynamic decoded = json.decode(response.body);
-      return parseDoIdFromJson(decoded);
-    } catch (_) {
-      return null;
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': apiToken,
+        },
+        body: bodyJson,
+      );
+
+      print('LOGKAR getDoId HTTP status: ${response.statusCode}');
+      print('LOGKAR getDoId response body: ${response.body}');
+
+      int? doId;
+      String apiHint = '';
+      try {
+        final dynamic decoded = json.decode(response.body);
+        doId = parseDoIdFromJson(decoded);
+        if (decoded is Map) {
+          final st = decoded['status']?.toString() ?? '';
+          final data = decoded['data'];
+          final code = decoded['code']?.toString() ?? '';
+          apiHint =
+              'status=$st code=$code data=${data is Map ? data['do_id'] : data}';
+        }
+      } catch (e) {
+        apiHint = 'parse error: $e';
+      }
+
+      print('LOGKAR getDoId parsed do_id: $doId ($apiHint)');
+
+      final debug = StringBuffer()
+        ..writeln('POST $uri')
+        ..writeln('Authorization: $apiToken')
+        ..writeln('Body: $bodyJson')
+        ..writeln('HTTP: ${response.statusCode}')
+        ..writeln('Response: ${response.body}')
+        ..writeln('Parsed do_id: $doId');
+
+      return (
+        doId: doId,
+        httpStatus: response.statusCode,
+        rawBody: response.body,
+        debugInfo: debug.toString(),
+      );
+    } catch (e) {
+      print('LOGKAR getDoId exception: $e');
+      return (
+        doId: null,
+        httpStatus: 0,
+        rawBody: '',
+        debugInfo: 'Exception: $e\nPOST $uri\nBody: $bodyJson',
+      );
     }
+  }
+
+  static Future<int?> getLogkarDoId({
+    required String apiLokar,
+    required String clientId,
+    required String apiToken,
+    required String doNo,
+  }) async {
+    final result = await getLogkarDoIdDetailed(
+      apiLokar: apiLokar,
+      clientId: clientId,
+      apiToken: apiToken,
+      doNo: doNo,
+    );
+    return result.doId;
+  }
+
+  /// Pastikan file siap upload ke Logkar: ekstensi .jpg + nama jelas.
+  static Future<({String path, String filename})> _prepareJpegForUpload(
+    String filePath,
+    String doNo,
+  ) async {
+    final src = File(filePath);
+    final bytes = await src.readAsBytes();
+    final safeDo = doNo.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
+    final filename =
+        'DOIMG_${safeDo}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final outPath = '${Directory.systemTemp.path}/$filename';
+    final out = File(outPath);
+    await out.writeAsBytes(bytes, flush: true);
+    print('LOGKAR prepare upload: src=$filePath -> $outPath (${bytes.length} bytes)');
+    return (path: outPath, filename: filename);
   }
 
   static Future<({bool ok, String message})> uploadDocument({
@@ -131,30 +270,58 @@ class LogkarApiService {
     if (!File(filePath).existsSync()) {
       return (ok: false, message: 'File foto tidak ditemukan.');
     }
-    final doId = await getLogkarDoId(
+    final lookup = await getLogkarDoIdDetailed(
       apiLokar: apiLokar,
       clientId: clientId,
       apiToken: apiToken,
       doNo: doNo,
     );
+    final doId = lookup.doId;
     if (doId == null || doId <= 0) {
+      print('========== LOGKAR UPLOAD DOCS GAGAL (do_id null) ==========');
+      print(lookup.debugInfo);
+      print('===========================================================');
       return (
         ok: false,
-        message: 'do_id Logkar tidak ditemukan untuk DO: $doNo',
+        message:
+            'do_id Logkar tidak ditemukan untuk DO: $doNo\n\n'
+            'Pastikan do_no di Postman SAMA PERSIS dengan app.\n\n'
+            '${lookup.debugInfo}',
       );
     }
     final base = logkarBaseUrl(apiLokar);
     final uri = Uri.parse('$base/transporter/upload/docs');
     final requestCode = buildRequestCode(clientId, apiToken);
+    final prepared = await _prepareJpegForUpload(filePath, doNo);
+
+    print('========== LOGKAR UPLOAD DOCS (Postman) ==========');
+    print('METHOD      : POST multipart/form-data');
+    print('URL         : $uri');
+    print('Header Authorization: $apiToken');
+    print('Form field request_code: $requestCode');
+    print('Form field do_id: $doId');
+    print('Form file media: ${prepared.path}');
+    print('Form filename: ${prepared.filename}');
+    print('Content-Type: image/jpeg');
+    print('do_no: $doNo');
+    print('==================================================');
+
     final request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = apiToken
       ..fields['request_code'] = requestCode
       ..fields['do_id'] = doId.toString()
-      ..files.add(await http.MultipartFile.fromPath('media', filePath));
+      ..files.add(await http.MultipartFile.fromPath(
+        'media',
+        prepared.path,
+        filename: prepared.filename,
+        contentType: MediaType('image', 'jpeg'),
+      ));
 
     try {
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);
+      print('LOGKAR upload HTTP status: ${response.statusCode}');
+      print('LOGKAR upload response body: ${response.body}');
       final detail = parseResponseMessage(response.body);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return (

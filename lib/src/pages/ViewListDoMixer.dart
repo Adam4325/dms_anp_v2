@@ -1,7 +1,5 @@
 import 'package:dms_anp/src/Color/hex_color.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
-import 'package:dms_anp/src/Helper/globals.dart' as globals;
-import 'package:dms_anp/src/Helper/logkar_api_service.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -11,11 +9,9 @@ import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
 import 'package:maps_toolkit/maps_toolkit.dart';
 import 'dart:convert';
-import 'package:image_picker/image_picker.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../helpers/GpsSecurityChecker.dart';
 import '../flusbar.dart';
 import 'FrmCloseVehicleMixer.dart';
 
@@ -45,7 +41,12 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {
   String androidID = "";
   List listGeofence = [];
   String address = "";
-  final ImagePicker _imagePicker = ImagePicker();
+
+  // Orange Soft Theme
+  final Color primaryOrange = Color(0xFFFF8C69);
+  final Color lightOrange = Color(0xFFFFF4E6);
+  final Color accentOrange = Color(0xFFFFB347);
+  final Color darkOrange = Color(0xFFE07B39);
 
   Future<String> getJSONData() async {
     EasyLoading.show();
@@ -77,137 +78,124 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {
     return "Successfull";
   }
 
-  Future<String?> _resolveLogkarNoDo() async {
-    if (widget.logkarNoDo != null && widget.logkarNoDo!.trim().isNotEmpty) {
-      return widget.logkarNoDo!.trim();
-    }
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString('logkar_mixer_no_do')?.trim() ?? '';
-    return saved.isEmpty ? null : saved;
-  }
-
-  Future<void> _showLogkarDialog({
-    required bool success,
-    required String title,
-    required String message,
+  Future<void> _showCreateDoSuccessDialog({
+    String noDo = "",
+    String doNumber = "",
   }) async {
     if (!mounted) return;
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: Row(
-          children: [
-            Icon(
-              success ? Icons.check_circle_outline : Icons.error_outline,
-              color: success ? Colors.green : Colors.red,
+    final ctx = globalScaffoldKey.currentContext ?? context;
+    await showDialog(
+      context: ctx,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 22, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: lightOrange,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: primaryOrange, width: 1.5),
+                  ),
+                  child: Icon(Icons.check_circle, color: primaryOrange, size: 36),
+                ),
+                SizedBox(height: 14),
+                Text(
+                  'Information',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: darkOrange,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Create DO Diterima Berhasil',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: lightOrange,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: accentOrange.withOpacity(0.5)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'DO Number: ${doNumber.isNotEmpty ? doNumber : '-'}',
+                        style: TextStyle(
+                          color: Colors.grey.shade800,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'No DO Diterima: ${noDo.isNotEmpty ? noDo : '-'}',
+                        style: TextStyle(
+                          color: Colors.grey.shade800,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(dialogCtx).pop(),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 2,
+                      backgroundColor: primaryOrange,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'OK',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Expanded(child: Text(title)),
-          ],
-        ),
-        content: SingleChildScrollView(child: Text(message)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
           ),
-        ],
-      ),
+        );
+      },
     );
-  }
-
-  Future<String?> _capturePhotoCameraOnly() async {
-    final photo = await _imagePicker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 80,
-    );
-    return photo?.path;
   }
 
   Future<void> _handleDoDiterima(dynamic value) async {
-    final logkarNoDo = await _resolveLogkarNoDo();
-    if (globals.isApiLokarRUN) {
-      if (logkarNoDo == null || logkarNoDo.isEmpty) {
-        alert(globalScaffoldKey.currentContext!, 0,
-            'Nomor DO Logkar tidak ditemukan. Ulangi dari OUTUNLOADING.', 'error');
-        return;
-      }
-
-      final photoPath = await _capturePhotoCameraOnly();
-      if (photoPath == null || photoPath.isEmpty) {
-        alert(globalScaffoldKey.currentContext!, 0,
-            'Foto wajib diambil dari kamera.', 'error');
-        return;
-      }
-
-      final creds = await LogkarApiService.loadCredentials();
-      if (creds == null) {
-        alert(globalScaffoldKey.currentContext!, 0,
-            'Credential Logkar belum tersedia. Silakan login ulang.', 'error');
-        return;
-      }
-
-      EasyLoading.show(status: 'Mengirim dokumen ke Logkar...');
-      try {
-        final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
-        final latitude = gpsResult['latitude']?.toString() ?? '0';
-        final longitude = gpsResult['longitude']?.toString() ?? '0';
-
-        final uploadResult = await LogkarApiService.uploadDocument(
-          apiLokar: creds.apiLokar,
-          clientId: creds.clientId,
-          apiToken: creds.apiToken,
-          doNo: logkarNoDo,
-          filePath: photoPath,
-        );
-        if (!uploadResult.ok) {
-          if (EasyLoading.isShow) EasyLoading.dismiss();
-          await _showLogkarDialog(
-            success: false,
-            title: 'Upload Logkar Gagal',
-            message: uploadResult.message,
-          );
-          return;
-        }
-
-        EasyLoading.show(status: 'Mengirim status 99 ke Logkar...');
-        final statusResult = await LogkarApiService.sendOrderStatus(
-          apiLokar: creds.apiLokar,
-          clientId: creds.clientId,
-          apiToken: creds.apiToken,
-          doNo: logkarNoDo,
-          latitude: latitude,
-          longitude: longitude,
-          status: 99,
-        );
-        if (!statusResult.ok) {
-          if (EasyLoading.isShow) EasyLoading.dismiss();
-          await _showLogkarDialog(
-            success: false,
-            title: 'Status Logkar Gagal',
-            message: statusResult.message,
-          );
-          return;
-        }
-
-        await _showLogkarDialog(
-          success: true,
-          title: 'Logkar Berhasil',
-          message:
-              '${uploadResult.message}\n\n${statusResult.message}',
-        );
-      } catch (e) {
-        if (EasyLoading.isShow) EasyLoading.dismiss();
-        alert(globalScaffoldKey.currentContext!, 0,
-            'Gagal proses Logkar: $e', 'error');
-        return;
-      } finally {
-        if (EasyLoading.isShow) EasyLoading.dismiss();
-      }
+    // Upload dokumen Logkar dilakukan di FrmCloseVehicleMixer saat Submit.
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (widget.logkarNoDo != null && widget.logkarNoDo!.trim().isNotEmpty) {
+      await prefs.setString('logkar_mixer_no_do', widget.logkarNoDo!.trim());
     }
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     EasyLoading.show(status: 'Menyimpan DO diterima...');
     final no_do =
         await CreateDoDiTerima(value['driverid'], value['dlodetaildonumber']);
@@ -232,19 +220,19 @@ class _ViewListDoMixerState extends State<ViewListDoMixer> {
         print(value['dlodonumber']);
         prefs.remove("submit_bujnumber");
       });
-      showDialog(
-          context: context,
-          builder: (BuildContext dialogContext) {
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          });
-      Timer(Duration(seconds: 1), () {
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => FrmCloseVehicleMixer()));
-      });
+
+      await _showCreateDoSuccessDialog(
+        noDo: no_do.toString(),
+        doNumber: value['dlodonumber'] != null
+            ? value['dlodonumber'].toString()
+            : '',
+      );
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => FrmCloseVehicleMixer()),
+      );
     }
   }
 

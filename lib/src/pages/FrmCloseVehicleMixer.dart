@@ -4,6 +4,8 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
+import 'package:dms_anp/src/Helper/globals.dart' as globals;
+import 'package:dms_anp/src/Helper/logkar_api_service.dart';
 import 'package:dms_anp/src/Theme/app_theme.dart';
 import 'package:dms_anp/src/custom_loader.dart';
 import 'package:dms_anp/src/flusbar.dart';
@@ -47,6 +49,7 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
 
   File? _image;
   String filePathImage = "";
+  String filePathDisk = "";
   CameraController? controller;
   List? cameras;
   int? selectedCameraIdx;
@@ -82,6 +85,20 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
   List listGeofence = [];
   List listGeofenceAllowed = [];
   String txtAddr = "";
+
+  // Orange Soft Theme
+  final Color primaryOrange = Color(0xFFFF8C69);
+  final Color lightOrange = Color(0xFFFFF4E6);
+  final Color accentOrange = Color(0xFFFFB347);
+  final Color darkOrange = Color(0xFFE07B39);
+  final Color backgroundColor = Color(0xFFFFFAF5);
+  final Color cardColor = Color(0xFFFFF8F0);
+  final Color shadowColor = Color(0x20FF8C69);
+
+  String logkarPhotoStatus = ""; // BERHASIL | GAGAL | DILEWATI
+  String logkarPhotoMessage = "";
+  String logkarStatus99Message = "";
+
   Future updatePosition(String inorout) async {
     //print(androidID.toString());
     //print(userLocation);
@@ -672,16 +689,330 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
 
   Future getImage() async {
     final pickedFile =
-        await picker.pickImage(source: ImageSource.camera, imageQuality: 50);
+        await picker.pickImage(source: ImageSource.camera, imageQuality: 70);
     if (pickedFile != null) {
+      // Simpan ulang sebagai .jpg agar Logkar terima (hindari unsupported file type).
+      final bytes = await File(pickedFile.path).readAsBytes();
+      final jpgPath =
+          '${Directory.systemTemp.path}/capture_mixer_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final jpgFile = File(jpgPath);
+      await jpgFile.writeAsBytes(bytes, flush: true);
       setState(() {
-        _image = File(pickedFile.path);
-        List<int> imageBytes = _image!.readAsBytesSync();
-        filePathImage = base64UrlEncode(imageBytes);
+        _image = jpgFile;
+        filePathDisk = jpgPath;
+        filePathImage = base64UrlEncode(bytes);
       });
-      //print(filePathImage);
     } else {
       print('No image selected.');
+    }
+  }
+
+  Future<String> _resolveLogkarNoDo() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    // Hanya pakai nomor DO mixer untuk Logkar (bukan dlodetaildonumber).
+    final saved = prefs.getString('logkar_mixer_no_do');
+    if (saved != null && saved.trim().isNotEmpty) {
+      print('LOGKAR resolve do_no from prefs logkar_mixer_no_do=$saved');
+      return saved.trim();
+    }
+    final fromMaps = prefs.getString('do_maps');
+    if (fromMaps != null && fromMaps.trim().isNotEmpty) {
+      print('LOGKAR resolve do_no from prefs do_maps=$fromMaps');
+      return fromMaps.trim();
+    }
+    print('LOGKAR resolve do_no: kosong (jangan pakai frmDloDoNumber/dlodetail)');
+    return "";
+  }
+
+  Future<void> _dismissEasyLoading() async {
+    try {
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss(animation: false);
+      }
+    } catch (_) {}
+    await Future.delayed(Duration(milliseconds: 50));
+  }
+
+  Future<void> _showThemedInfoDialog({
+    bool success = true,
+    String title = "Information",
+    String message = "",
+    String okLabel = "OK",
+    Function? onOk,
+  }) async {
+    await _dismissEasyLoading();
+    if (!mounted) return;
+    final ctx = globalScaffoldKey.currentContext ?? context;
+    await showDialog(
+      context: ctx,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (dialogCtx) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 22, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: success ? lightOrange : Color(0xFFFFEBEE),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: success ? primaryOrange : Colors.red.shade400,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Icon(
+                    success ? Icons.check_circle : Icons.error_outline,
+                    color: success ? primaryOrange : Colors.red.shade400,
+                    size: 36,
+                  ),
+                ),
+                SizedBox(height: 14),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: success ? darkOrange : Colors.red.shade700,
+                  ),
+                ),
+                SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  constraints: BoxConstraints(maxHeight: 280),
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: success ? lightOrange : Color(0xFFFFEBEE),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: success
+                          ? accentOrange.withOpacity(0.5)
+                          : Colors.red.shade200,
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    child: Text(
+                      message,
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        color: Colors.grey.shade800,
+                        fontSize: 13,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(dialogCtx, rootNavigator: true).pop();
+                      if (onOk != null) {
+                        onOk();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      elevation: 2,
+                      backgroundColor:
+                          success ? primaryOrange : Colors.red.shade400,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      okLabel,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showLogkarDialog({
+    bool success = false,
+    String title = "",
+    String message = "",
+  }) async {
+    print('LOGKAR DIALOG => success=$success title=$title');
+    await _showThemedInfoDialog(
+      success: success,
+      title: title,
+      message: message,
+    );
+  }
+
+  /// Upload dokumen + status 99 ke Logkar saat Submit Close DO.
+  /// Return true = lanjut closeDo; false = stop.
+  Future<bool> _uploadDocumentToLogkar(String lat, String lon) async {
+    logkarPhotoStatus = "";
+    logkarPhotoMessage = "";
+    logkarStatus99Message = "";
+
+    // Form Close Mixer: selalu proses upload foto ke Logkar (jangan silent skip).
+    final logkarNoDo = await _resolveLogkarNoDo();
+    print('LOGKAR upload start, noDo=$logkarNoDo, isApiLokarRUN=${globals.isApiLokarRUN}');
+
+    if (!globals.isApiLokarRUN) {
+      logkarPhotoStatus = "DILEWATI";
+      logkarPhotoMessage =
+          "Upload Foto ke Logkar tidak dijalankan karena flag isApiLokarRUN = false.";
+      await _showLogkarDialog(
+        success: false,
+        title: 'Upload Foto ke Logkar Dilewati',
+        message: logkarPhotoMessage,
+      );
+      // Tetap lanjut Close DO lokal, tapi info sudah ditampilkan.
+      return true;
+    }
+
+    if (logkarNoDo == "") {
+      logkarPhotoStatus = "GAGAL";
+      logkarPhotoMessage =
+          "Nomor DO Logkar tidak ditemukan. Ulangi dari OUTUNLOADING.";
+      await _dismissEasyLoading();
+      await _showLogkarDialog(
+        success: false,
+        title: 'Upload Foto ke Logkar Gagal',
+        message: logkarPhotoMessage,
+      );
+      return false;
+    }
+
+    String photoPath = filePathDisk;
+    if (photoPath == "" && _image != null) {
+      photoPath = _image!.path;
+    }
+    if (photoPath == "" || !File(photoPath).existsSync()) {
+      logkarPhotoStatus = "GAGAL";
+      logkarPhotoMessage =
+          "Foto wajib diambil dari kamera (Capture) sebelum Submit ke Logkar.";
+      await _dismissEasyLoading();
+      await _showLogkarDialog(
+        success: false,
+        title: 'Upload Foto ke Logkar Gagal',
+        message: logkarPhotoMessage,
+      );
+      return false;
+    }
+
+    final creds = await LogkarApiService.loadCredentials();
+    if (creds == null) {
+      logkarPhotoStatus = "GAGAL";
+      logkarPhotoMessage =
+          "Credential Logkar belum tersedia. Silakan login ulang.";
+      await _dismissEasyLoading();
+      await _showLogkarDialog(
+        success: false,
+        title: 'Upload Foto ke Logkar Gagal',
+        message: logkarPhotoMessage,
+      );
+      return false;
+    }
+
+    EasyLoading.show(status: 'Mengirim foto dokumen ke Logkar...');
+    try {
+      final uploadResult = await LogkarApiService.uploadDocument(
+        apiLokar: creds.apiLokar,
+        clientId: creds.clientId,
+        apiToken: creds.apiToken,
+        doNo: logkarNoDo,
+        filePath: photoPath,
+      );
+
+      await _dismissEasyLoading();
+      print('LOGKAR upload result ok=${uploadResult.ok} msg=${uploadResult.message}');
+
+      if (!uploadResult.ok) {
+        logkarPhotoStatus = "GAGAL";
+        logkarPhotoMessage = uploadResult.message.isNotEmpty
+            ? uploadResult.message
+            : 'Gagal mengirim foto dokumen ke API Logkar.';
+        await _showLogkarDialog(
+          success: false,
+          title: 'Upload Foto ke Logkar Gagal',
+          message: logkarPhotoMessage,
+        );
+        return false;
+      }
+
+      logkarPhotoStatus = "BERHASIL";
+      logkarPhotoMessage = uploadResult.message.isNotEmpty
+          ? uploadResult.message
+          : 'Foto dokumen berhasil dikirim ke API Logkar.\nDO: $logkarNoDo';
+
+      await _showLogkarDialog(
+        success: true,
+        title: 'Upload Foto ke Logkar Berhasil',
+        message: logkarPhotoMessage,
+      );
+
+      EasyLoading.show(status: 'Mengirim status 99 ke Logkar...');
+      final statusResult = await LogkarApiService.sendOrderStatus(
+        apiLokar: creds.apiLokar,
+        clientId: creds.clientId,
+        apiToken: creds.apiToken,
+        doNo: logkarNoDo,
+        latitude: lat,
+        longitude: lon,
+        status: 99,
+      );
+
+      await _dismissEasyLoading();
+      print('LOGKAR status99 ok=${statusResult.ok} msg=${statusResult.message}');
+
+      if (!statusResult.ok) {
+        logkarStatus99Message = statusResult.message.isNotEmpty
+            ? statusResult.message
+            : 'Gagal mengirim status 99 ke API Logkar.';
+        await _showLogkarDialog(
+          success: false,
+          title: 'Status Logkar Gagal',
+          message: logkarStatus99Message,
+        );
+        return false;
+      }
+
+      logkarStatus99Message = statusResult.message.isNotEmpty
+          ? statusResult.message
+          : 'Status 99 berhasil dikirim ke API Logkar.\nDO: $logkarNoDo';
+
+      await _showLogkarDialog(
+        success: true,
+        title: 'Status Logkar Berhasil',
+        message: logkarStatus99Message,
+      );
+      return true;
+    } catch (e) {
+      logkarPhotoStatus = "GAGAL";
+      logkarPhotoMessage = 'Gagal proses Logkar: $e';
+      await _dismissEasyLoading();
+      await _showLogkarDialog(
+        success: false,
+        title: 'Upload Foto ke Logkar Gagal',
+        message: logkarPhotoMessage,
+      );
+      return false;
+    } finally {
+      await _dismissEasyLoading();
     }
   }
 
@@ -706,10 +1037,11 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
     );
     return new Scaffold(
       key: globalScaffoldKey,
-      backgroundColor: Colors.orange.shade400,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-          backgroundColor: Colors.orange.shade400,
+          backgroundColor: primaryOrange,
           foregroundColor: Colors.white,
+          elevation: 0,
           iconTheme: IconThemeData(color: Colors.white),
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
@@ -720,26 +1052,45 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
             },
           ),
           centerTitle: true,
-          title: Text('Form DO DiTerima Mixer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+          title: Text('Form DO DiTerima Mixer',
+              style: TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.w600))),
       body: Container(
         key: globalScaffoldKey2,
-        constraints: BoxConstraints.expand(),
-        color: HexColor("#f0eff4"),
-        child: Stack(
+        color: backgroundColor,
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(14, 14, 14, 24),
           children: <Widget>[
             _getViewImage(context),
-            _getContent(context),
+            SizedBox(height: 12),
             Container(
-              margin: EdgeInsets.only(top: 270),
-              padding: EdgeInsets.fromLTRB(20.0, 165.0, 10.0, 0.0),
-              child: Text(
-                  "Untuk melakukan transaksi ini, hanya boleh di lakukan di tempat tujuan",
-                  style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    color: Colors.redAccent,
-                    fontSize: 12, // Set your desired font size
-                  )),
-            )
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Color(0xFFFFEBEE),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, color: Colors.redAccent, size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Transaksi Close DO hanya boleh dilakukan di tempat tujuan.",
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: Colors.redAccent,
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 12),
+            _getContent(context),
           ],
         ),
       ),
@@ -747,146 +1098,288 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
   }
 
   Widget _getViewImage(BuildContext context) {
-    if (filePathImage == null || filePathImage == '') {
-      // filePathImage =
-      //     imageDo != "" && imageDo != null ? imageDo : noImageImageBase64;
-      filePathImage = "";
-    } else {
-      filePathImage =
-          imageDo != "" && imageDo != null ? imageDo : filePathImage;
-    }
-    if (filePathImage == null || filePathImage == '') {
-      //print("BASE64 ${prefs.getString('imageDo')}");
-      Uint8List bytes = base64Decode(filePathImage);
-      return InkWell(
-          onTap: () async {
-            print('tap');
-          },
-          child: Container(
-              padding: EdgeInsets.fromLTRB(10.0, 0.0, 10.0, 0.0),
-              margin: new EdgeInsets.only(top: 0.0),
-              height: 150,
-              width: double.infinity,
-              child: Card(
-                clipBehavior: Clip.antiAlias,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0)),
+    final bool hasPhoto =
+        filePathImage != null && filePathImage.toString().isNotEmpty;
+
+    Widget photoChild;
+    if (!hasPhoto) {
+      photoChild = Container(
+        height: 220,
+        width: double.infinity,
+        color: lightOrange,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(14),
+              decoration: BoxDecoration(
                 color: Colors.white,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Container(
-                      color: Colors.amber,
-                      width: 10,
-                    ),
-                    SizedBox(
-                      width: 10.0,
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          print('testing');
-//                                  setState(() {
-//                                    _localVehicleSelected =
-//                                        vdata[index]["pr"].toString();
-//                                  });
-//
-//                                  doSomething(vdata[index]["pr"].toString());
-                        },
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            //new Row(
-                            // mainAxisSize: MainAxisSize.max,
-
-                            //children: <Widget>[
-                            new Text(
-                              'No Picture',
-                            ),
-
-                            //style: Theme.of(context).textTheme.body2
-                            //],
-                            //),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )));
+                shape: BoxShape.circle,
+                border: Border.all(color: accentOrange, width: 1.5),
+              ),
+              child: Icon(Icons.photo_camera_outlined,
+                  color: primaryOrange, size: 36),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Belum ada foto',
+              style: TextStyle(
+                color: darkOrange,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Tekan Capture untuk ambil gambar',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            ),
+          ],
+        ),
+      );
     } else {
-      //print("BASE64 ${prefs.getString('imageDo')}");
       Uint8List bytes = base64Decode(filePathImage);
-      return InkWell(
-          onTap: () async {
-            if (filePathImage != null && filePathImage != "") {
-              //SharedPreferences prefsImage = await SharedPreferences.getInstance();
-              setState(() {
-                prefs!.setString("imageDO", filePathImage);
-                Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (context) => ViewImageDo()));
-              });
-            }
-          },
-          child: Container(
-            padding: EdgeInsets.fromLTRB(10.0, 0.0, 10.0, 0.0),
-            margin: new EdgeInsets.only(top: 0.0),
-            width: double.infinity,
-            child: Card(
-                semanticContainer: true,
-                clipBehavior: Clip.antiAliasWithSaveLayer,
-                elevation: 14.0,
-                shadowColor: Color(0x802196F3),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-                child: new Image.memory(bytes, fit: BoxFit.cover, height: 250)),
-          ));
+      photoChild = GestureDetector(
+        onTap: () async {
+          if (filePathImage != null && filePathImage != "") {
+            setState(() {
+              prefs!.setString("imageDO", filePathImage);
+              Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (context) => ViewImageDo()));
+            });
+          }
+        },
+        child: Image.memory(//
+          bytes,
+          fit: BoxFit.cover,
+          height: 240,
+          width: double.infinity,
+        ),
+      );
     }
+
+    return Card(
+      elevation: 4,
+      color: cardColor,
+      shadowColor: shadowColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              border: Border(bottom: BorderSide(color: accentOrange.withOpacity(0.35))),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.image_outlined, color: primaryOrange, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Foto DO Diterima',
+                  style: TextStyle(
+                    color: darkOrange,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                Spacer(),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: hasPhoto ? primaryOrange : Colors.grey.shade400,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    hasPhoto ? 'Sudah Capture' : 'Kosong',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          photoChild,
+        ],
+      ),
+    );
+  }
+
+  Widget _solidFormButton({
+    IconData? icon,
+    String label = "",
+    Color? bgColor,
+    VoidCallback? onPressed,
+  }) {
+    return Expanded(
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon ?? Icons.check, color: Colors.white, size: 18),
+        label: Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          elevation: 2,
+          backgroundColor: bgColor ?? primaryOrange,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 78,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Text(': ', style: TextStyle(color: Colors.grey.shade600)),
+          Expanded(
+            child: Text(
+              value.isNotEmpty ? value : '-',
+              style: TextStyle(
+                color: Colors.grey.shade900,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _getContent(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(top: 100),
-      padding: EdgeInsets.fromLTRB(10.0, 165.0, 10.0, 0.0),
-      child: ListView(
+    return Card(
+      elevation: 4,
+      color: cardColor,
+      shadowColor: shadowColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Container(
-            child: Card(
-              elevation: 14.0,
-              shadowColor: Color(0x802196F3),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15.0)),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: <Widget>[
-                  ListTile(
-                    title: Text("${GlobalData.frmVhcid}\n${GlobalData.frmDloDoNumber}"),
-                    subtitle: Text("${GlobalData.frmUserId}"),
+            padding: EdgeInsets.fromLTRB(14, 14, 14, 12),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              border: Border(
+                  bottom: BorderSide(color: accentOrange.withOpacity(0.35))),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: primaryOrange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  ButtonBar(
-                    children: <Widget>[
-                      FloatingActionButton.extended(
-                        heroTag:UniqueKey(),// 'btn1',
-                        backgroundColor: Colors.orange.shade400,
-                        foregroundColor: Colors.white,
-                        onPressed: () async {
-                          try {
-                            await getImage();
-                          } catch (e) {
-                            print('Capture error: $e');
-                            final ctx = globalScaffoldKey.currentContext;
-                            if (ctx != null) alert(ctx, 0, "Gagal capture foto. Pastikan izin kamera aktif.", "error");
-                          }
-                        },
-                        icon: Icon(Icons.camera, color: Colors.white),
-                        label: Text('Capture', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  child: Icon(Icons.local_shipping_outlined,
+                      color: primaryOrange),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Detail DO',
+                        style: TextStyle(
+                          color: darkOrange,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
                       ),
-                      FloatingActionButton.extended(
-                        heroTag: UniqueKey(),//'btn2',
-                        backgroundColor: Colors.orange.shade400,
-                        foregroundColor: Colors.white,
-                        onPressed: () async {
+                      SizedBox(height: 2),
+                      Text(
+                        'Capture foto lalu Submit untuk Close DO',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(14, 14, 14, 8),
+            child: Column(
+              children: [
+                _infoRow('Nopol', '${GlobalData.frmVhcid ?? ''}'),
+                _infoRow('DO Number', '${GlobalData.frmDloDoNumber ?? ''}'),
+                _infoRow('BUJ', '${GlobalData.frmBujDoNumber ?? ''}'),
+                _infoRow('User', '${GlobalData.frmUserId ?? ''}'),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(14, 4, 14, 16),
+            child: Row(
+              children: <Widget>[
+                _solidFormButton(
+                  icon: Icons.camera_alt,
+                  label: 'Capture',
+                  bgColor: accentOrange,
+                  onPressed: () async {
+                    try {
+                      await getImage();
+                    } catch (e) {
+                      print('Capture error: $e');
+                      final ctx = globalScaffoldKey.currentContext;
+                      if (ctx != null) {
+                        alert(ctx, 0,
+                            "Gagal capture foto. Pastikan izin kamera aktif.",
+                            "error");
+                      }
+                    }
+                  },
+                ),
+                SizedBox(width: 10),
+                _solidFormButton(
+                  icon: Icons.save,
+                  label: 'Submit',
+                  bgColor: primaryOrange,
+                  onPressed: () async {
+                    await _onSubmitPressed();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onSubmitPressed() async {
                           print('DO NUMBER');
                           print(GlobalData.frmDloDoNumber);
 
@@ -937,19 +1430,81 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
                               print('CLOSE DO');
                               await showDialog(
                                 context: ctx,
-                                builder: (context) => new AlertDialog(
-                                  title: new Text('Information'),
-                                  content: new Text(
-                                      'Close DO BUJNUMBER: ${GlobalData.frmBujDoNumber}'),
-                                  actions: <Widget>[
-                                    // ignore: deprecated_member_use
-                                    new TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(false),
-                                      child: new Text('No'),
-                                    ),
-                                    new TextButton(
-                                      onPressed: () async {
+                                barrierDismissible: false,
+                                builder: (confirmCtx) => Dialog(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18)),
+                                  child: Padding(
+                                    padding: EdgeInsets.fromLTRB(20, 22, 20, 16),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 64,
+                                          height: 64,
+                                          decoration: BoxDecoration(
+                                            color: lightOrange,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                                color: primaryOrange, width: 1.5),
+                                          ),
+                                          child: Icon(Icons.help_outline,
+                                              color: primaryOrange, size: 34),
+                                        ),
+                                        SizedBox(height: 12),
+                                        Text(
+                                          'Konfirmasi Close DO',
+                                          style: TextStyle(
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.w700,
+                                            color: darkOrange,
+                                          ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        Container(
+                                          width: double.infinity,
+                                          padding: EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: lightOrange,
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: Text(
+                                            'Close DO BUJNUMBER:\n${GlobalData.frmBujDoNumber}',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: Colors.grey.shade800,
+                                              fontSize: 13,
+                                              height: 1.35,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 16),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: OutlinedButton(
+                                                onPressed: () =>
+                                                    Navigator.of(confirmCtx)
+                                                        .pop(false),
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: darkOrange,
+                                                  side: BorderSide(
+                                                      color: accentOrange),
+                                                  padding: EdgeInsets.symmetric(
+                                                      vertical: 12),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(10),
+                                                  ),
+                                                ),
+                                                child: Text('Tidak'),
+                                              ),
+                                            ),
+                                            SizedBox(width: 10),
+                                            Expanded(
+                                              child: ElevatedButton(
+                                                onPressed: () async {
                                         SharedPreferences prefs2 =
                                             await SharedPreferences
                                                 .getInstance();
@@ -957,7 +1512,7 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
                                         final dialogCtx = globalScaffoldKey.currentContext;
                                         // Cek keamanan GPS sebelum submit close DO
                                         if (dialogCtx == null) {
-                                          Navigator.of(context).pop(false);
+                                          Navigator.of(confirmCtx).pop(false);
                                         } else {
                                           var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
                                           if (gpsResult["isFake"] == true) {
@@ -968,19 +1523,41 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
                                           if (GlobalData.frmDloDoNumber ==
                                                   null ||
                                               GlobalData.frmDloDoNumber == "") {
-                                            Navigator.of(dialogCtx).pop(false);
+                                            Navigator.of(confirmCtx).pop(false);
                                             alert(dialogCtx, 0,
                                                 "DLOCUSTDONUMBER tidak boleh kosong",
                                                 "error");
                                           } else if (filePathImage == null ||
                                               filePathImage.isEmpty) {
-                                            Navigator.of(dialogCtx).pop(false);
+                                            Navigator.of(confirmCtx).pop(false);
                                             alert(dialogCtx, 0,
                                                 "Photo tidak boleh kosong",
                                                 "error");
                                           } else {
-                                            Navigator.of(dialogCtx).pop(false);
+                                            Navigator.of(confirmCtx).pop(false);
                                             print('Close Do test');
+
+                                            // Tunggu dialog konfirmasi tertutup dulu biar dialog Logkar tampil.
+                                            await Future.delayed(
+                                                Duration(milliseconds: 150));
+                                            await WidgetsBinding
+                                                .instance.endOfFrame;
+
+                                            // Upload dokumen Logkar dulu (jika aktif), baru close DO.
+                                            final logkarOk =
+                                                await _uploadDocumentToLogkar(
+                                                    lat, lon);
+                                            if (!logkarOk) {
+                                              if (EasyLoading.isShow) {
+                                                EasyLoading.dismiss();
+                                              }
+                                              pr?.hide();
+                                              return;
+                                            }
+
+                                            EasyLoading.show(
+                                                status:
+                                                    'Menyimpan Close DO...');
                                             var scode = await closeDo(
                                                 GlobalData.frmBujDoNumber,
                                                 GlobalData.frmDloDoNumber,
@@ -992,12 +1569,16 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
                                                 lon,
                                                 GlobalData.frmGeoCodeTujuan,
                                                 filePathImage);
+                                            if (EasyLoading.isShow) {
+                                              EasyLoading.dismiss();
+                                            }
                                             //var scode = "100";
 
                                             if (scode != null &&
                                                 scode == "200") {
                                               prefs2.setString(
                                                   "submit_bujnumber", "ok");
+                                              prefs2.remove('logkar_mixer_no_do');
                                               print("SCODE : " + scode);
                                               SharedPreferences resPreps =
                                                   await SharedPreferences
@@ -1012,71 +1593,78 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
                                               await UpdateReceiveLogDo(
                                                   GlobalData.frmDrvId,
                                                   GlobalData.frmVhcid);
-                                              // alert(
-                                              //     context,
-                                              //     0,
-                                              //     GlobalData.responseMessage,
-                                              //     "success");
 
-                                              //SHOW ALERT SUCCESS
+                                              //SHOW ALERT SUCCESS + info Logkar
                                               final showCtx = globalScaffoldKey.currentContext;
+                                              final closeMsg = GlobalData
+                                                          .responseMessage !=
+                                                      null
+                                                  ? GlobalData.responseMessage
+                                                      .toString()
+                                                  : 'Close DO berhasil disimpan.';
+                                              final logkarInfo = logkarPhotoStatus
+                                                      .isNotEmpty
+                                                  ? '\n\n———\nUpload Foto ke Logkar: $logkarPhotoStatus'
+                                                      '${logkarPhotoMessage.isNotEmpty ? '\n$logkarPhotoMessage' : ''}'
+                                                      '${logkarStatus99Message.isNotEmpty ? '\n\nStatus 99 Logkar:\n$logkarStatus99Message' : ''}'
+                                                  : '\n\n———\nUpload Foto ke Logkar: tidak ada status';
                                               if (showCtx != null) {
-                                                await showDialog(
-                                                  context: showCtx,
-                                                  builder: (ctx) =>
-                                                      new AlertDialog(
-                                                    title:
-                                                        new Text('Information'),
-                                                    content: new Text(
-                                                        "${GlobalData.responseMessage}"),
-                                                    actions: <Widget>[
-                                                      new TextButton(
-                                                        onPressed: () async {
-                                                          Navigator.pushReplacement(
-                                                              ctx,
-                                                              MaterialPageRoute(
-                                                                  builder:
-                                                                      (context) =>
-                                                                          ViewDashboard()));
-                                                        },
-                                                        child: new Text('Ok'),
+                                                await _showThemedInfoDialog(
+                                                  success: true,
+                                                  title: 'Close DO Berhasil',
+                                                  message: '$closeMsg$logkarInfo',
+                                                  onOk: () {
+                                                    Navigator.pushReplacement(
+                                                      showCtx,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            ViewDashboard(),
                                                       ),
-                                                    ],
-                                                  ),
+                                                    );
+                                                  },
                                                 );
                                               }
                                               //END ALERT SUCCESS
                                               pr?.hide();
                                             } else {
-                                              if (dialogCtx != null) alert(
-                                                  dialogCtx,
-                                                  0,
-                                                  "${GlobalData.responseMessage},FAILED FOR CLOSED DO",
-                                                  "error");
+                                              await _showThemedInfoDialog(
+                                                success: false,
+                                                title: 'Close DO Gagal',
+                                                message:
+                                                    "${GlobalData.responseMessage}, FAILED FOR CLOSED DO"
+                                                    "${logkarPhotoStatus.isNotEmpty ? '\n\nUpload Foto ke Logkar: $logkarPhotoStatus' : ''}",
+                                              );
                                               pr?.hide();
                                             }
                                           }
                                         }
-                                      },
-                                      child: new Text('Yes'),
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  elevation: 2,
+                                                  backgroundColor: primaryOrange,
+                                                  foregroundColor: Colors.white,
+                                                  padding: EdgeInsets.symmetric(
+                                                      vertical: 12),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(10),
+                                                  ),
+                                                ),
+                                                child: Text('Ya',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w600)),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
                               );
                             }
-                        },
-                        icon: Icon(Icons.save, color: Colors.white),
-                        label: Text('Submit', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget LoadListMenu(BuildContext context) {

@@ -1,4 +1,7 @@
 ---
-alwaysApply: false
+description: Aturan coding Flutter DMS ANP
+alwaysApply: true
 ---
-jangan rubah fungsi apapun, sdk jangan di rubah, jangan pake (nullsafety,require, tanda !),
+jangan rubah fungsi apapun, sdk jangan di rubah, jangan pake (nullsafety,require, tanda !).
+
+Backend API = project sibling `trucking` di `web/mobile/api/` (URL `/trucking/mobile/api/`). Overview: `.cursor/project-overview.md`. Query URL pakai Uri.replace(queryParameters).

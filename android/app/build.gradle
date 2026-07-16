@@ -47,8 +47,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
         coreLibraryDesugaringEnabled true
     }
 }
@@ -65,7 +65,11 @@ dependencies {
     implementation 'androidx.multidex:multidex:2.0.1'                   // Multidex support
 }
 
-// Tekan peringatan dari dependency (google_mlkit_commons, trust_location, dll.)
+// Tekan noise compile dari dependency / API legacy
 tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs += ["-Xlint:-unchecked", "-Xlint:-deprecation"]
+    options.compilerArgs += [
+            "-Xlint:-unchecked",
+            "-Xlint:-deprecation",
+            "-Xlint:-options"
+    ]
 }

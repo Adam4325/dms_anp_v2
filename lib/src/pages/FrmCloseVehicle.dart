@@ -82,6 +82,15 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
   List listGeofence = [];
   List listGeofenceAllowed = [];
   String txtAddr = "";
+
+  // Orange Soft Theme (sama FrmCloseVehicleMixer — tanpa Logkar)
+  final Color primaryOrange = Color(0xFFFF8C69);
+  final Color lightOrange = Color(0xFFFFF4E6);
+  final Color accentOrange = Color(0xFFFFB347);
+  final Color darkOrange = Color(0xFFE07B39);
+  final Color backgroundColor = Color(0xFFFFFAF5);
+  final Color cardColor = Color(0xFFFFF8F0);
+  final Color shadowColor = Color(0x20FF8C69);
   Future updatePosition(String inorout) async {
     //print(androidID.toString());
     //print(userLocation);
@@ -725,10 +734,132 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
         List<int> imageBytes = _image!.readAsBytesSync();
         filePathImage = base64UrlEncode(imageBytes);
       });
-      //print(filePathImage);
     } else {
       print('No image selected.');
     }
+  }
+
+  Future<void> _dismissEasyLoading() async {
+    try {
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss(animation: false);
+      }
+    } catch (_) {}
+    await Future.delayed(Duration(milliseconds: 50));
+  }
+
+  Future<void> _showThemedInfoDialog({
+    bool success = true,
+    String title = "Information",
+    String message = "",
+    String okLabel = "OK",
+    Function? onOk,
+  }) async {
+    await _dismissEasyLoading();
+    if (!mounted) return;
+    final ctx = globalScaffoldKey.currentContext ?? context;
+    await showDialog(
+      context: ctx,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (dialogCtx) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 22, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: success ? lightOrange : Color(0xFFFFEBEE),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: success ? primaryOrange : Colors.red.shade400,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Icon(
+                    success ? Icons.check_circle : Icons.error_outline,
+                    color: success ? primaryOrange : Colors.red.shade400,
+                    size: 36,
+                  ),
+                ),
+                SizedBox(height: 14),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: success ? darkOrange : Colors.red.shade700,
+                  ),
+                ),
+                SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  constraints: BoxConstraints(maxHeight: 280),
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: success ? lightOrange : Color(0xFFFFEBEE),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: success
+                          ? accentOrange.withOpacity(0.5)
+                          : Colors.red.shade200,
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    child: Text(
+                      message,
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        color: Colors.grey.shade800,
+                        fontSize: 13,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(dialogCtx, rootNavigator: true).pop();
+                      if (onOk != null) {
+                        onOk();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      elevation: 2,
+                      backgroundColor:
+                          success ? primaryOrange : Colors.red.shade400,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      okLabel,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   ProgressDialog? pr;
@@ -757,388 +888,600 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
         _goBack(context);
       },
       child: Scaffold(
-      key: globalScaffoldKey,
-      backgroundColor: Colors.orange.shade400,
-      appBar: AppBar(
-          backgroundColor: Colors.orange.shade400,
-          foregroundColor: Colors.white,
-          iconTheme: IconThemeData(color: Colors.white),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            iconSize: 20.0,
-            onPressed: () => _goBack(context),
-          ),
-          centerTitle: true,
-          title: Text('Form DO DiTerima', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
-      body: Container(
-        key: globalScaffoldKey2,
-        constraints: BoxConstraints.expand(),
-        color: HexColor("#f0eff4"),
-        child: Stack(
-          children: <Widget>[
-            _getViewImage(context),
-            _getContent(context),
-            Container(
-              margin: EdgeInsets.only(top: 270),
-              padding: EdgeInsets.fromLTRB(20.0, 165.0, 10.0, 0.0),
-              child: Text(
-                  "Untuk melakukan transaksi ini, hanya boleh di lakukan di tempat tujuan",
-                  style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    color: Colors.redAccent,
-                    fontSize: 12, // Set your desired font size
-                  )),
-            )
-          ],
-        ),
-      ),
-    ),
-    );
-  }
-
-  Widget _getViewImage(BuildContext context) {
-    if (filePathImage == null || filePathImage == '') {
-      // filePathImage =
-      //     imageDo != "" && imageDo != null ? imageDo : noImageImageBase64;
-      filePathImage = "";
-    } else {
-      filePathImage =
-          imageDo != "" && imageDo != null ? imageDo : filePathImage;
-    }
-    if (filePathImage == null || filePathImage == '') {
-      //print("BASE64 ${prefs.getString('imageDo')}");
-      Uint8List bytes = base64Decode(filePathImage);
-      return InkWell(
-          onTap: () async {
-            print('tap');
-          },
-          child: Container(
-              padding: EdgeInsets.fromLTRB(10.0, 0.0, 10.0, 0.0),
-              margin: new EdgeInsets.only(top: 0.0),
-              height: 150,
-              width: double.infinity,
-              child: Card(
-                clipBehavior: Clip.antiAlias,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0)),
-                color: Colors.white,
+        key: globalScaffoldKey,
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+            backgroundColor: primaryOrange,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            iconTheme: IconThemeData(color: Colors.white),
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back),
+              iconSize: 20.0,
+              onPressed: () => _goBack(context),
+            ),
+            centerTitle: true,
+            title: Text('Form DO DiTerima',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w600))),
+        body: Container(
+          key: globalScaffoldKey2,
+          color: backgroundColor,
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(14, 14, 14, 24),
+            children: <Widget>[
+              _getViewImage(context),
+              SizedBox(height: 12),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Color(0xFFFFEBEE),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Container(
-                      color: Colors.amber,
-                      width: 10,
-                    ),
-                    SizedBox(
-                      width: 10.0,
-                    ),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.redAccent, size: 20),
+                    SizedBox(width: 8),
                     Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          print('testing');
-//                                  setState(() {
-//                                    _localVehicleSelected =
-//                                        vdata[index]["pr"].toString();
-//                                  });
-//
-//                                  doSomething(vdata[index]["pr"].toString());
-                        },
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            //new Row(
-                            // mainAxisSize: MainAxisSize.max,
-
-                            //children: <Widget>[
-                            new Text(
-                              'No Picture',
-                            ),
-
-                            //style: Theme.of(context).textTheme.body2
-                            //],
-                            //),
-                          ],
+                      child: Text(
+                        "Transaksi Close DO hanya boleh dilakukan di tempat tujuan.",
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: Colors.redAccent,
+                          fontSize: 12,
+                          height: 1.35,
                         ),
                       ),
                     ),
                   ],
                 ),
-              )));
-    } else {
-      //print("BASE64 ${prefs.getString('imageDo')}");
-      Uint8List bytes = base64Decode(filePathImage);
-      return InkWell(
-          onTap: () async {
-            if (filePathImage != null && filePathImage != "") {
-              //SharedPreferences prefsImage = await SharedPreferences.getInstance();
-              setState(() {
-                prefs!.setString("imageDO", filePathImage);
-                Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (context) => ViewImageDo()));
-              });
-            }
-          },
-          child: Container(
-            padding: EdgeInsets.fromLTRB(10.0, 0.0, 10.0, 0.0),
-            margin: new EdgeInsets.only(top: 0.0),
-            width: double.infinity,
-            child: Card(
-                semanticContainer: true,
-                clipBehavior: Clip.antiAliasWithSaveLayer,
-                elevation: 14.0,
-                shadowColor: Color(0x802196F3),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-                child: new Image.memory(bytes, fit: BoxFit.cover, height: 250)),
-          ));
-    }
+              ),
+              SizedBox(height: 12),
+              _getContent(context),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  Widget _getContent(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(top: 100),
-      padding: EdgeInsets.fromLTRB(10.0, 165.0, 10.0, 0.0),
-      child: ListView(
-        children: <Widget>[
+  Widget _getViewImage(BuildContext context) {
+    final bool hasPhoto =
+        filePathImage != null && filePathImage.toString().isNotEmpty;
+
+    Widget photoChild;
+    if (!hasPhoto) {
+      photoChild = Container(
+        height: 220,
+        width: double.infinity,
+        color: lightOrange,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: accentOrange, width: 1.5),
+              ),
+              child: Icon(Icons.photo_camera_outlined,
+                  color: primaryOrange, size: 36),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Belum ada foto',
+              style: TextStyle(
+                color: darkOrange,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Tekan Capture untuk ambil gambar',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    } else {
+      Uint8List bytes = base64Decode(filePathImage);
+      photoChild = GestureDetector(
+        onTap: () async {
+          if (filePathImage != null && filePathImage != "") {
+            setState(() {
+              prefs!.setString("imageDO", filePathImage);
+              Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (context) => ViewImageDo()));
+            });
+          }
+        },
+        child: Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          height: 240,
+          width: double.infinity,
+        ),
+      );
+    }
+
+    return Card(
+      elevation: 4,
+      color: cardColor,
+      shadowColor: shadowColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           Container(
-            child: Card(
-              elevation: 14.0,
-              shadowColor: Color(0x802196F3),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15.0)),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: <Widget>[
-                  ListTile(
-                    title: Text("${GlobalData.frmVhcid}\n${GlobalData.frmDloDoNumber}"),
-                    subtitle: Text("${GlobalData.frmUserId}"),
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              border: Border(
+                  bottom: BorderSide(color: accentOrange.withOpacity(0.35))),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.image_outlined, color: primaryOrange, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Foto DO Diterima',
+                  style: TextStyle(
+                    color: darkOrange,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
                   ),
-                  ButtonBar(
-                    children: <Widget>[
-                      FloatingActionButton.extended(
-                        heroTag:UniqueKey(),// 'btn1',
-                        backgroundColor: Colors.orange.shade400,
-                        foregroundColor: Colors.white,
-                        onPressed: () async {
-                          try {
-                            await getImage();
-                          } catch (e) {
-                            print('Capture error: $e');
-                            final ctx = globalScaffoldKey.currentContext;
-                            if (ctx != null) alert(ctx, 0, "Gagal capture foto. Pastikan izin kamera aktif.", "error");
-                          }
-                        },
-                        icon: Icon(Icons.camera, color: Colors.white),
-                        label: Text('Capture', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                      ),
-                      FloatingActionButton.extended(
-                        heroTag: UniqueKey(),//'btn2',
-                        backgroundColor: Colors.orange.shade400,
-                        foregroundColor: Colors.white,
-                        onPressed: () async {
-                          print('DO NUMBER');
-                          print(GlobalData.frmDloDoNumber);
-
-                          final ctx = globalScaffoldKey.currentContext;
-                          if (await DeveloperModeGuard
-                              .blockIfDeveloperModeEnabled(ctx ?? context)) {
-                            return;
-                          }
-                          if (userLocation == null) {
-                            if (ctx != null) alert(ctx, 0,
-                                "Lokasi belum tersedia. Silahkan aktifkan GPS dan tunggu sebentar.",
-                                "warning");
-                            return;
-                          }
-                          String lat = userLocation!.latitude.toString();
-                          String lon = userLocation!.longitude.toString();
-                          String speed = userLocation!.speed.toString();
-
-
-                          if (lon.isEmpty && lat.isEmpty) {
-                            if (ctx != null) alert(ctx, 0,
-                                "Coordinate/Lokasi tidak di temukan, silahkan aktifkan GPS nya terlebih dahulu",
-                                "warning");
-                            return;
-                          }
-                          bool? isAllowed =
-                              await GetExceptionDO(GlobalData.frmDloDoNumber ?? '');
-
-                          if (GlobalData.koordinat_tujuan.trim().isNotEmpty) {
-                            if (_isWithinKoordinatTujuanRadius(
-                                userLocation!.latitude,
-                                userLocation!.longitude)) {
-                              isAllowed = true;
-                            }
-                          }
-
-                          if (isAllowed == true) {
-                              txtAddr = "OUTGEO";
-                              print('NOT UPDATEPOSITION');
-                            } else {
-                              txtAddr = "";
-                              await updatePosition("IN");
-                              print('UPDATEPOSITION');
-                            }
-                            if (txtAddr != null &&
-                                txtAddr.toString() != "" &&
-                                txtAddr.toString().toUpperCase() == "INGEO") {
-                              if (ctx != null) alert(ctx, 0,
-                                  "Close DO tidak di ijinkan, silahkan ke tempat tujuan di diterima",
-                                  "warning");
-                            } else if (txtAddr == null || txtAddr == "") {
-                              if (ctx != null) alert(ctx, 0,
-                                  "Coba lagi untuk melakukan submit",
-                                  "warning");
-                            } else if (ctx == null) {
-                              return;
-                            } else {
-                              //CLOSE DO
-                              print('CLOSE DO');
-                              await showDialog(
-                                context: ctx,
-                                builder: (context) => new AlertDialog(
-                                  title: new Text('Information'),
-                                  content: new Text(
-                                      'Close DO BUJNUMBER: ${GlobalData.frmBujDoNumber}'),
-                                  actions: <Widget>[
-                                    // ignore: deprecated_member_use
-                                    new TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(false),
-                                      child: new Text('No'),
-                                    ),
-                                    new TextButton(
-                                      onPressed: () async {
-                                        SharedPreferences prefs2 =
-                                            await SharedPreferences
-                                                .getInstance();
-                                        prefs2.setString("vhcid_last_antrian", "");
-                                        final dialogCtx = globalScaffoldKey.currentContext;
-                                        // Cek keamanan GPS sebelum submit close DO
-                                        if (dialogCtx == null) {
-                                          Navigator.of(context).pop(false);
-                                        } else {
-                                          var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
-                                          if (gpsResult["isFake"] == true) {
-                                            final fakeReason = gpsResult["reason"] ?? "";
-                                            alert(dialogCtx, 0, "FAKE GPS terdeteksi: $fakeReason", "error");
-                                            return;
-                                          }
-                                          if (GlobalData.frmDloDoNumber == null || GlobalData.frmDloDoNumber == "") {
-                                            Navigator.of(dialogCtx).pop(false);
-                                            alert(dialogCtx, 0,
-                                                "DLOCUSTDONUMBER tidak boleh kosong",
-                                                "error");
-                                          } else if (filePathImage == null ||
-                                              filePathImage.isEmpty) {
-                                            Navigator.of(dialogCtx).pop(false);
-                                            alert(dialogCtx, 0,
-                                                "Photo tidak boleh kosong",
-                                                "error");
-                                          } else {
-                                            Navigator.of(dialogCtx).pop(false);
-                                            print('Close Do test');
-                                            var scode = await closeDo(
-                                                GlobalData.frmBujDoNumber,
-                                                GlobalData.frmDloDoNumber,
-                                                GlobalData.frmVhcid,
-                                                GlobalData.frmDrvId,
-                                                GlobalData.frmUserId,
-                                                GlobalData.frmLocid,
-                                                lat,
-                                                lon,
-                                                GlobalData.frmGeoCodeTujuan,
-                                                filePathImage);
-                                            //var scode = "100";
-
-                                            if (scode != null &&
-                                                scode == "200") {
-                                              prefs2.setString(
-                                                  "submit_bujnumber", "ok");
-                                              print("SCODE : " + scode);
-                                              SharedPreferences resPreps =
-                                                  await SharedPreferences
-                                                      .getInstance();
-                                              resPreps.setString("route_pages",
-                                                  "view_list_do");
-                                              resPreps.setString(
-                                                  "route_pages_message",
-                                                  GlobalData.responseMessage);
-                                              resPreps.setString("vhcidfromdo",
-                                                  GlobalData.frmVhcid);
-                                              await UpdateReceiveLogDo(
-                                                  GlobalData.frmDrvId,
-                                                  GlobalData.frmVhcid);
-                                              // alert(
-                                              //     context,
-                                              //     0,
-                                              //     GlobalData.responseMessage,
-                                              //     "success");
-
-                                              //SHOW ALERT SUCCESS
-                                              if(EasyLoading.isShow){
-                                                EasyLoading.dismiss();
-                                              }
-                                              final showCtx = globalScaffoldKey.currentContext;
-                                              if (showCtx != null) {
-                                                await showDialog(
-                                                  context: showCtx,
-                                                  builder: (ctx) =>
-                                                      new AlertDialog(
-                                                    title:
-                                                        new Text('Information'),
-                                                    content: new Text(
-                                                        "${GlobalData.responseMessage}"),
-                                                    actions: <Widget>[
-                                                      new TextButton(
-                                                        onPressed: () async {
-                                                          Navigator.pushReplacement(
-                                                              ctx,
-                                                              MaterialPageRoute(
-                                                                  builder:
-                                                                      (context) =>
-                                                                          ViewDashboard()));
-                                                        },
-                                                        child: new Text('Ok'),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              }
-                                              //END ALERT SUCCESS
-                                              pr?.hide();
-                                            } else {
-                                              if (dialogCtx != null) alert(
-                                                  dialogCtx,
-                                                  0,
-                                                  "${GlobalData.responseMessage},FAILED FOR CLOSED DO",
-                                                  "error");
-                                              pr?.hide();
-                                            }
-                                          }
-                                        }
-                                      },
-                                      child: new Text('Yes'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-                        },
-                        icon: Icon(Icons.save, color: Colors.white),
-                        label: Text('Submit', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                      ),
-                    ],
+                ),
+                Spacer(),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: hasPhoto ? primaryOrange : Colors.grey.shade400,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                ],
+                  child: Text(
+                    hasPhoto ? 'Sudah Capture' : 'Kosong',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          photoChild,
+        ],
+      ),
+    );
+  }
+
+  Widget _solidFormButton({
+    IconData? icon,
+    String label = "",
+    Color? bgColor,
+    VoidCallback? onPressed,
+  }) {
+    return Expanded(
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon ?? Icons.check, color: Colors.white, size: 18),
+        label: Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          elevation: 2,
+          backgroundColor: bgColor ?? primaryOrange,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 78,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Text(': ', style: TextStyle(color: Colors.grey.shade600)),
+          Expanded(
+            child: Text(
+              value.isNotEmpty ? value : '-',
+              style: TextStyle(
+                color: Colors.grey.shade900,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _getContent(BuildContext context) {
+    return Card(
+      elevation: 4,
+      color: cardColor,
+      shadowColor: shadowColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Container(
+            padding: EdgeInsets.fromLTRB(14, 14, 14, 12),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              border: Border(
+                  bottom: BorderSide(color: accentOrange.withOpacity(0.35))),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: primaryOrange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.local_shipping_outlined,
+                      color: primaryOrange),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Detail DO',
+                        style: TextStyle(
+                          color: darkOrange,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Capture foto lalu Submit untuk Close DO',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(14, 14, 14, 8),
+            child: Column(
+              children: [
+                _infoRow('Nopol', '${GlobalData.frmVhcid ?? ''}'),
+                _infoRow('DO Number', '${GlobalData.frmDloDoNumber ?? ''}'),
+                _infoRow('BUJ', '${GlobalData.frmBujDoNumber ?? ''}'),
+                _infoRow('User', '${GlobalData.frmUserId ?? ''}'),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(14, 4, 14, 16),
+            child: Row(
+              children: <Widget>[
+                _solidFormButton(
+                  icon: Icons.camera_alt,
+                  label: 'Capture',
+                  bgColor: accentOrange,
+                  onPressed: () async {
+                    try {
+                      await getImage();
+                    } catch (e) {
+                      print('Capture error: $e');
+                      final ctx = globalScaffoldKey.currentContext;
+                      if (ctx != null) {
+                        alert(ctx, 0,
+                            "Gagal capture foto. Pastikan izin kamera aktif.",
+                            "error");
+                      }
+                    }
+                  },
+                ),
+                SizedBox(width: 10),
+                _solidFormButton(
+                  icon: Icons.save,
+                  label: 'Submit',
+                  bgColor: primaryOrange,
+                  onPressed: () async {
+                    await _onSubmitPressed();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onSubmitPressed() async {
+    print('DO NUMBER');
+    print(GlobalData.frmDloDoNumber);
+
+    final ctx = globalScaffoldKey.currentContext;
+    if (await DeveloperModeGuard
+        .blockIfDeveloperModeEnabled(ctx ?? context)) {
+      return;
+    }
+    if (userLocation == null) {
+      if (ctx != null) {
+        alert(ctx, 0,
+            "Lokasi belum tersedia. Silahkan aktifkan GPS dan tunggu sebentar.",
+            "warning");
+      }
+      return;
+    }
+    String lat = userLocation!.latitude.toString();
+    String lon = userLocation!.longitude.toString();
+    String speed = userLocation!.speed.toString();
+
+    if (lon.isEmpty && lat.isEmpty) {
+      if (ctx != null) {
+        alert(ctx, 0,
+            "Coordinate/Lokasi tidak di temukan, silahkan aktifkan GPS nya terlebih dahulu",
+            "warning");
+      }
+      return;
+    }
+    bool? isAllowed =
+        await GetExceptionDO(GlobalData.frmDloDoNumber ?? '');
+
+    if (GlobalData.koordinat_tujuan.trim().isNotEmpty) {
+      if (_isWithinKoordinatTujuanRadius(
+          userLocation!.latitude, userLocation!.longitude)) {
+        isAllowed = true;
+      }
+    }
+
+    if (isAllowed == true) {
+      txtAddr = "OUTGEO";
+      print('NOT UPDATEPOSITION');
+    } else {
+      txtAddr = "";
+      await updatePosition("IN");
+      print('UPDATEPOSITION');
+    }
+    if (txtAddr != null &&
+        txtAddr.toString() != "" &&
+        txtAddr.toString().toUpperCase() == "INGEO") {
+      if (ctx != null) {
+        alert(ctx, 0,
+            "Close DO tidak di ijinkan, silahkan ke tempat tujuan di diterima",
+            "warning");
+      }
+    } else if (txtAddr == null || txtAddr == "") {
+      if (ctx != null) {
+        alert(ctx, 0, "Coba lagi untuk melakukan submit", "warning");
+      }
+    } else if (ctx == null) {
+      return;
+    } else {
+      print('CLOSE DO');
+      await showDialog(
+        context: ctx,
+        barrierDismissible: false,
+        builder: (confirmCtx) => Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 22, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: lightOrange,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: primaryOrange, width: 1.5),
+                  ),
+                  child: Icon(Icons.help_outline,
+                      color: primaryOrange, size: 34),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Konfirmasi Close DO',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: darkOrange,
+                  ),
+                ),
+                SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: lightOrange,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Close DO BUJNUMBER:\n${GlobalData.frmBujDoNumber}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: 13,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () =>
+                            Navigator.of(confirmCtx).pop(false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: darkOrange,
+                          side: BorderSide(color: accentOrange),
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text('Tidak'),
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          SharedPreferences prefs2 =
+                              await SharedPreferences.getInstance();
+                          prefs2.setString("vhcid_last_antrian", "");
+                          final dialogCtx =
+                              globalScaffoldKey.currentContext;
+                          if (dialogCtx == null) {
+                            Navigator.of(confirmCtx).pop(false);
+                          } else {
+                            var gpsResult =
+                                await GpsSecurityChecker.checkGpsSecurity();
+                            if (gpsResult["isFake"] == true) {
+                              final fakeReason = gpsResult["reason"] ?? "";
+                              alert(dialogCtx, 0,
+                                  "FAKE GPS terdeteksi: $fakeReason",
+                                  "error");
+                              return;
+                            }
+                            if (GlobalData.frmDloDoNumber == null ||
+                                GlobalData.frmDloDoNumber == "") {
+                              Navigator.of(confirmCtx).pop(false);
+                              alert(dialogCtx, 0,
+                                  "DLOCUSTDONUMBER tidak boleh kosong",
+                                  "error");
+                            } else if (filePathImage == null ||
+                                filePathImage.isEmpty) {
+                              Navigator.of(confirmCtx).pop(false);
+                              alert(dialogCtx, 0, "Photo tidak boleh kosong",
+                                  "error");
+                            } else {
+                              Navigator.of(confirmCtx).pop(false);
+                              print('Close Do test');
+                              EasyLoading.show(
+                                  status: 'Menyimpan Close DO...');
+                              var scode = await closeDo(
+                                  GlobalData.frmBujDoNumber,
+                                  GlobalData.frmDloDoNumber,
+                                  GlobalData.frmVhcid,
+                                  GlobalData.frmDrvId,
+                                  GlobalData.frmUserId,
+                                  GlobalData.frmLocid,
+                                  lat,
+                                  lon,
+                                  GlobalData.frmGeoCodeTujuan,
+                                  filePathImage);
+                              if (EasyLoading.isShow) {
+                                EasyLoading.dismiss();
+                              }
+
+                              if (scode != null && scode == "200") {
+                                prefs2.setString("submit_bujnumber", "ok");
+                                print("SCODE : " + scode);
+                                SharedPreferences resPreps =
+                                    await SharedPreferences.getInstance();
+                                resPreps.setString(
+                                    "route_pages", "view_list_do");
+                                resPreps.setString("route_pages_message",
+                                    GlobalData.responseMessage);
+                                resPreps.setString(
+                                    "vhcidfromdo", GlobalData.frmVhcid);
+                                await UpdateReceiveLogDo(
+                                    GlobalData.frmDrvId, GlobalData.frmVhcid);
+
+                                final showCtx =
+                                    globalScaffoldKey.currentContext;
+                                if (showCtx != null) {
+                                  await _showThemedInfoDialog(
+                                    success: true,
+                                    title: 'Close DO Berhasil',
+                                    message: GlobalData.responseMessage != null
+                                        ? GlobalData.responseMessage.toString()
+                                        : 'Close DO berhasil disimpan.',
+                                    onOk: () {
+                                      Navigator.pushReplacement(
+                                        showCtx,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ViewDashboard(),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }
+                                pr?.hide();
+                              } else {
+                                await _showThemedInfoDialog(
+                                  success: false,
+                                  title: 'Close DO Gagal',
+                                  message:
+                                      "${GlobalData.responseMessage}, FAILED FOR CLOSED DO",
+                                );
+                                pr?.hide();
+                              }
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 2,
+                          backgroundColor: primaryOrange,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text('Ya',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
   }
 
   Widget LoadListMenu(BuildContext context) {

@@ -1,12 +1,9 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/flusbar.dart';
-import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/inventory/FrmInventory.dart';
-import 'package:dms_anp/src/pages/inventory/ListInventoryTrans.dart';
 import 'package:dms_anp/src/pages/inventory/ListInventoryTransNew.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -18,34 +15,41 @@ import 'package:dms_anp/src/widgets/simple_paginator.dart';
 class ListInventoryDetail extends StatefulWidget {
   final String tabName;
   final String invTrxStatusBarang;
-  const ListInventoryDetail({Key? key, required this.tabName,required this.invTrxStatusBarang}) : super(key: key);
+  const ListInventoryDetail(
+      {Key? key, required this.tabName, required this.invTrxStatusBarang})
+      : super(key: key);
   @override
   _ListInventoryDetailState createState() => _ListInventoryDetailState();
 }
 
 class _ListInventoryDetailState extends State<ListInventoryDetail> {
-
   GlobalKey<PaginatorState> paginatorGlobalKey = GlobalKey();
   String _searchText = "";
-  final TextEditingController _filter = new TextEditingController();
+  final TextEditingController _txtSearch = TextEditingController();
 
-  // _goBack(BuildContext context) {
-  //   Navigator.pushReplacement(
-  //       context, MaterialPageRoute(builder: (context) => ListInventoryTrans()));
-  // }
+  final Color primaryOrange = Color(0xFFFF8C69);
+  final Color accentOrange = Color(0xFFFFB347);
+  final Color backgroundColor = Color(0xFFFFFAF5);
+  final Color cardColor = Color(0xFFFFF8F0);
+  final Color shadowColor = Color(0x20FF8C69);
+
+  Icon customIcon = const Icon(Icons.search, color: Colors.white);
+  Widget customSearchBar = const Text('List Inventory Detail');
 
   _goBack(BuildContext context) {
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => ListInventoryTransNew(tabName: '',)));
+    Navigator.pushReplacement(context,
+        MaterialPageRoute(builder: (context) => ListInventoryTransNew(tabName: '',)));
   }
 
-  TextEditingController _txtSearch = new TextEditingController();
-  Icon customIcon = const Icon(Icons.search);
-  Widget customSearchBar = const Text('List Inventory');
+  void _reloadList() {
+    paginatorGlobalKey.currentState?.changeState(
+      pageLoadFuture: sendDriverDataRequest,
+      resetState: true,
+    );
+  }
 
   @override
   void initState() {
-
     super.initState();
     _txtSearch.text = "";
   }
@@ -53,72 +57,62 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (bool didPop, dynamic result) {
-          if (didPop) return;
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => ListInventoryTransNew(tabName: '',)));
-        },
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+        _goBack(context);
+      },
       child: Scaffold(
+        backgroundColor: backgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.deepOrange, // ✅ Orange background
-          foregroundColor: Colors.white, // ✅ White text/icons
+          backgroundColor: primaryOrange,
+          foregroundColor: Colors.white,
+          elevation: 3,
+          shadowColor: shadowColor,
           automaticallyImplyLeading: false,
           title: customSearchBar,
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
-            iconSize: 20.0,
-            onPressed: () {
-              _goBack(context);
-            },
+            onPressed: () => _goBack(context),
           ),
           actions: <Widget>[
             IconButton(
               icon: customIcon,
               onPressed: () {
                 setState(() {
-                  print(customIcon.icon == Icons.search);
                   if (customIcon.icon == Icons.search) {
-                    customIcon = const Icon(Icons.cancel);
+                    customIcon = const Icon(Icons.cancel, color: Colors.white);
                     customSearchBar = ListTile(
                       onTap: () async {
-                        if (_txtSearch.text == null || _txtSearch.text == "") {
-                          return;
-                        } else {
-                          _searchText = _txtSearch.text;
-                          paginatorGlobalKey.currentState!.changeState(
-                              pageLoadFuture: sendDriverDataRequest,
-                              resetState: true);
-                        }
+                        if (_txtSearch.text.isEmpty) return;
+                        _searchText = _txtSearch.text;
+                        _reloadList();
                       },
-                      leading: Icon(
-                        Icons.search,
-                        color: Colors.white,
-                        size: 28,
-                      ),
+                      leading: Icon(Icons.search, color: Colors.white, size: 28),
                       title: TextField(
                         controller: _txtSearch,
                         decoration: InputDecoration(
-                          hintText: 'Cari part name/ ID Inventory...',
+                          hintText: 'Cari part name / Item ID...',
                           hintStyle: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
+                            color: Colors.white70,
+                            fontSize: 16,
                             fontStyle: FontStyle.italic,
                           ),
                           border: InputBorder.none,
                         ),
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
+                        style: TextStyle(color: Colors.white),
+                        onSubmitted: (_) {
+                          _searchText = _txtSearch.text;
+                          _reloadList();
+                        },
                       ),
                     );
                   } else {
-                    setState(() {
-                      _searchText = "";
-                      _txtSearch.text = "";
-                    });
-                    customIcon = const Icon(Icons.search);
-                    customSearchBar = const Text('List Inventory');
+                    _searchText = "";
+                    _txtSearch.text = "";
+                    customIcon = const Icon(Icons.search, color: Colors.white);
+                    customSearchBar = const Text('List Inventory Detail');
+                    _reloadList();
                   }
                 });
               },
@@ -138,17 +132,18 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
           scrollPhysics: const BouncingScrollPhysics(),
         ),
         floatingActionButton: FloatingActionButton(
+          backgroundColor: accentOrange,
+          foregroundColor: Colors.white,
           onPressed: () {
             setState(() {
               _searchText = "";
               _txtSearch.text = "";
             });
-            paginatorGlobalKey.currentState?.changeState(
-                pageLoadFuture: sendDriverDataRequest, resetState: true);
+            _reloadList();//
           },
           child: Icon(Icons.refresh),
         ),
-      )
+      ),
     );
   }
 
@@ -156,15 +151,19 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
     var number = globals.inv_trx_number;
     var type = globals.inv_trx_type;
     var from = globals.from_ware_house;
-    print(number);
     try {
-      String url = Uri.encodeFull(
-          '${GlobalData.baseUrl}api/inventory/list_inventory_detail.jsp?method=list-inventory-detail-v1&number=$number&type=$type&from=$from&page=$page&search=' +
-              _searchText);
-      Uri myUri = Uri.parse(url);
-      print(myUri);
-      http.Response response = await http.get(myUri);
-      print('${response.body}');
+      final uri = Uri.parse(
+              '${GlobalData.baseUrl}api/inventory/list_inventory_detail.jsp')
+          .replace(queryParameters: {
+        'method': 'list-inventory-detail-v1',
+        'number': number ?? '',
+        'type': type ?? '',
+        'from': from ?? '',
+        'page': page.toString(),
+        'search': _searchText,
+      });
+      print(uri);
+      http.Response response = await http.get(uri);
       return DriverDataModel.fromResponse(response);
     } catch (e) {
       if (e is IOException) {
@@ -180,19 +179,10 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
 
   List<Map<String, dynamic>> listItemsGetter(DriverDataModel driverData) {
     List<Map<String, dynamic>> list = [];
-    print('listItemsGetter');
     driverData.driverdatas.forEach((value) {
-      String ititemid = value['ititemid'].toString() == null ||
-              value['ititemid'].toString() == 'null'
-          ? ""
-          : value['ititemid'];
-      String partname = value['partname'].toString() == null ||
-              value['partname'].toString() == 'null'
-          ? ""
-          : value['partname'];
       list.add({
-        "ititemid": ititemid,
-        "partname": partname,
+        "ititemid": (value['ititemid'] ?? '').toString(),
+        "partname": (value['partname'] ?? '').toString(),
         "idqty": value['idqty'],
         "uomid": value['uomid'],
         "itdunitcost": value['itdunitcost'],
@@ -212,139 +202,167 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
     return list;
   }
 
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 72,
+            child: Text(label,
+                style: TextStyle(color: Colors.grey.shade700, fontSize: 12)),
+          ),
+          Expanded(
+            child: Text(value,
+                style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  ButtonStyle _orangeBtnStyle({Color? bg}) {
+    return ElevatedButton.styleFrom(
+      elevation: 2,
+      backgroundColor: bg ?? primaryOrange,
+      foregroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+    );
+  }
+
   Widget listItemBuilder(value, int index) {
-    //print(value["drvid"]);
     return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+      elevation: 4,
+      color: cardColor,
+      shadowColor: shadowColor,
+      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Container(
-            width: MediaQuery.of(context).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                  leading: Container(
-                    padding: EdgeInsets.only(right: 12.0),
-                    decoration: new BoxDecoration(
-                        border: new Border(
-                            right: new BorderSide(
-                                width: 1.0, color: Colors.black45))),
-                    child: Icon(Icons.settings_applications, color: Colors.black),
+            padding: EdgeInsets.fromLTRB(14, 14, 14, 10),
+            decoration: BoxDecoration(
+              color: Color(0xFFFFF4E6),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: primaryOrange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  title: Text(
-                    "ItemID: ${value['ititemid']}",
-                    style: TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.bold),
+                  child: Icon(Icons.inventory_2_outlined, color: primaryOrange),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        value['ititemid'] ?? '-',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        value['partname'] ?? '-',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ],
                   ),
-                  subtitle: Wrap(children: <Widget>[
-                    Text("Partname: ${value['partname']}",
-                        style: TextStyle(color: Colors.black)),
-                    Divider(
-                      color: Colors.transparent,
-                      height: 0,
-                    ),
-                    Text("Qty: ${value['idqty']}",
-                        style: TextStyle(color: Colors.black)),
-                    Divider(
-                      color: Colors.transparent,
-                      height: 0,
-                    ),
-                    Text("Uom: ${value['uomid']}",
-                        style: TextStyle(color: Colors.black)),
-                    Divider(
-                      color: Colors.transparent,
-                      height: 0,
-                    ),
-                    Text("Type: ${value['idtype']}",
-                        style: TextStyle(color: Colors.black)),
-                    Divider(
-                      color: Colors.transparent,
-                      height: 0,
-                    ),
-                    Text("Merk: ${value['merk']}",
-                        style: TextStyle(color: Colors.black)),
-                  ]),
-                  // trailing: Icon(Icons.keyboard_arrow_right,
-                  //     color: Colors.black, size: 30.0)
-              ),
+                ),
+              ],
             ),
           ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
+          Padding(
+            padding: EdgeInsets.fromLTRB(14, 8, 14, 4),
+            child: Column(
+              children: [
+                _infoRow('Qty', '${value['idqty'] ?? '-'}'),
+                _infoRow('UOM', '${value['uomid'] ?? '-'}'),
+                _infoRow('Type', '${value['idtype'] ?? '-'}'),
+                _infoRow('Merk', '${value['merk'] ?? '-'}'),
+                _infoRow('Trx No', '${value['itdinvtrannbr'] ?? '-'}'),
+                _infoRow('Line', '${value['itdlinenbr'] ?? '-'}'),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(10, 4, 10, 12),
+            child: Row(
+              children: [
                 Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Select Item",style: TextStyle(color:Colors.white),),
-                  onPressed: () async {
-                    globals.inv_ititemid = value['ititemid'];
-                    globals.inv_partname = value['partname'];
-                    globals.inv_idqty = value['idqty'];
-                    globals.inv_uomid = value['uomid'];
-                    globals.inv_itdunitcost = value['itdunitcost'];
-                    globals.inv_idtextcost = value['idtextcost'];
-                    globals.inv_itdinvtrannbr = value['itdinvtrannbr'];
-                    globals.inv_idtype = value['idtype'];
-                    globals.inv_idaccess = value['idaccess'];
-                    globals.inv_merk = value['merk'];
-                    globals.inv_sntyre = value['sntyre'];
-                    globals.inv_idrealqty = value['idrealqty'];
-                    globals.inv_itdlinenbr = value['itdlinenbr'];
-                    globals.inv_vhtid = value['vhtid'];
-                    globals.inv_genuine_no = value['genuine_no'];
-                    globals.inv_method = "edit";
-                    print(globals.inv_itdlinenbr);
-                    var isIsm = widget.invTrxStatusBarang;
-                    print('isIsm');
-                    print(value);
-                    print(isIsm);
-                    Navigator.pushReplacement(
+                  child: ElevatedButton.icon(
+                    icon: Icon(Icons.edit_outlined, size: 15),
+                    label: Text('Select', style: TextStyle(fontSize: 11)),
+                    onPressed: () {
+                      globals.inv_ititemid = value['ititemid'];
+                      globals.inv_partname = value['partname'];
+                      globals.inv_idqty = value['idqty'];
+                      globals.inv_uomid = value['uomid'];
+                      globals.inv_itdunitcost = value['itdunitcost'];
+                      globals.inv_idtextcost = value['idtextcost'];
+                      globals.inv_itdinvtrannbr = value['itdinvtrannbr'];
+                      globals.inv_idtype = value['idtype'];
+                      globals.inv_idaccess = value['idaccess'];
+                      globals.inv_merk = value['merk'];
+                      globals.inv_sntyre = value['sntyre'];
+                      globals.inv_idrealqty = value['idrealqty'];
+                      globals.inv_itdlinenbr = value['itdlinenbr'];
+                      globals.inv_vhtid = value['vhtid'];
+                      globals.inv_genuine_no = value['genuine_no'];
+                      globals.inv_method = "edit";
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => FrmInventory(invTrxStatusBarang: isIsm)));
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.blueAccent,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                )),
-                SizedBox(width: 8),
+                          builder: (context) => FrmInventory(
+                            invTrxStatusBarang: widget.invTrxStatusBarang,
+                          ),
+                        ),
+                      );
+                    },
+                    style: _orangeBtnStyle(bg: accentOrange),
+                  ),
+                ),
+                SizedBox(width: 6),
                 Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.delete,
-                    color: Colors.white,
-                    size: 15.0,
+                  child: ElevatedButton.icon(
+                    icon: Icon(Icons.delete_outline, size: 15),
+                    label: Text('Delete', style: TextStyle(fontSize: 11)),
+                    onPressed: () async {
+                      await _deleteInventoryDetail(value);
+                    },
+                    style: _orangeBtnStyle(bg: Color(0xFFE07B39)),
                   ),
-                  label: Text(
-                    "Delete Item",
-                    style: TextStyle(color: Colors.white),
+                ),
+                SizedBox(width: 6),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: Icon(Icons.close, size: 15),
+                    label: Text('Close', style: TextStyle(fontSize: 11)),
+                    onPressed: () async {
+                      await _closeInventoryDetail(value);
+                    },
+                    style: _orangeBtnStyle(bg: Colors.grey.shade600),
                   ),
-                  onPressed: () async {
-                    await _deleteInventoryDetail(value);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.redAccent,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                )),
-              ]),
+                ),
+              ],
             ),
           ),
         ],
@@ -356,7 +374,7 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
     return Container(
       alignment: Alignment.center,
       height: 160.0,
-      child: CircularProgressIndicator(),
+      child: CircularProgressIndicator(color: primaryOrange),
     );
   }
 
@@ -369,8 +387,9 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
           padding: const EdgeInsets.all(16.0),
           child: Text(driverDatas?.errorMessage ?? "Something went wrong."),
         ),
-        TextButton(
+        ElevatedButton(
           onPressed: retry,
+          style: _orangeBtnStyle(),
           child: Text('Retry'),
         )
       ],
@@ -379,7 +398,18 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
 
   Widget emptyListWidgetMaker(dynamic data) {
     return Center(
-      child: Text('Tidak ada data dalam list'),
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox_outlined, size: 48, color: accentOrange),
+            SizedBox(height: 12),
+            Text('Tidak ada data dalam list',
+                style: TextStyle(color: Colors.grey.shade700)),
+          ],
+        ),
+      ),
     );
   }
 
@@ -394,19 +424,20 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
   Future<void> _deleteInventoryDetail(Map<String, dynamic> value) async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Konfirmasi"),
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Text('Konfirmasi Hapus'),
         content: Text(
-            "Hapus item ${value['itdinvtrannbr']} - ${value['ititemid']} - ${value['partname']} dari detail inventory?"),
+            'Hapus item ${value['itdinvtrannbr']} - ${value['ititemid']} - ${value['partname']} dari detail inventory?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text("Batal"),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Batal', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),//
-            child: Text("Hapus", style: TextStyle(color: Colors.white)),
+            onPressed: () => Navigator.pop(ctx, true),
+            style: _orangeBtnStyle(bg: Color(0xFFE07B39)),
+            child: Text('Hapus'),
           ),
         ],
       ),
@@ -415,7 +446,7 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
     if (confirmed != true) return;
 
     try {
-      _showDeleteLoader();
+      _showLoader();
       final prefs = await SharedPreferences.getInstance();
       final userId =
           prefs.getString("name") ?? prefs.getString("loginname") ?? "";
@@ -424,67 +455,138 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
       final ititemid = (value['ititemid'] ?? '').toString();
 
       if (itdinvtrannbr.isEmpty || itdlinenbr.isEmpty) {
-        _hideDeleteLoader();
+        _hideLoader();
         alert(context, 0, "Data item tidak valid untuk dihapus", "error");
         return;
       }
 
-      final encoded = Uri.encodeFull(
+      final uri = Uri.parse(
           "${GlobalData.baseUrl}api/inventory/delete_inv_detail.jsp");
-      final uri = Uri.parse(encoded);
-      final payload = {
-        'method': 'delete-item-detail',
-        'id': itdlinenbr,
-        'itdinvtrannbr': itdinvtrannbr,
-        'itemid': ititemid,
-        'userid': userId,
-      };
-
       final response = await http.post(
         uri,
-        body: payload,
+        body: {
+          'method': 'delete-item-detail',
+          'id': itdlinenbr,
+          'itdinvtrannbr': itdinvtrannbr,
+          'itemid': ititemid,
+          'userid': userId,
+        },
         headers: {"Content-Type": "application/x-www-form-urlencoded"},
         encoding: Encoding.getByName('utf-8'),
       );
 
+      _hideLoader();
+
       if (response.statusCode != 200) {
-        _hideDeleteLoader();
-        alert(context, 0, "Gagal menghapus item (${response.statusCode})", "error");
+        alert(context, 0, "Gagal menghapus item (${response.statusCode})",
+            "error");
         return;
       }
 
       final decoded = json.decode(response.body);
       final status = decoded['status']?.toString().toLowerCase() ?? '';
       final message = decoded['message']?.toString() ?? 'Item gagal dihapus';
-      _hideDeleteLoader();
 
       if (status == 'success') {
-        alert(context, 2, message, "success");
-        paginatorGlobalKey.currentState?.changeState(
-          pageLoadFuture: sendDriverDataRequest,
-          resetState: true,
-        );
+        alert(context, 1, message, "success");
+        _reloadList();
       } else {
         alert(context, 0, message, "error");
       }
     } catch (e) {
+      _hideLoader();
       alert(context, 0, "Client, gagal menghapus item", "error");
       print(e.toString());
-      _hideDeleteLoader();
     }
   }
 
-  void _showDeleteLoader() {
+  Future<void> _closeInventoryDetail(Map<String, dynamic> value) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Text('Konfirmasi Close'),
+        content: Text(
+            'Close item ${value['itdinvtrannbr']} - ${value['ititemid']}?\nItem tidak akan tampil lagi di list.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Batal', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: _orangeBtnStyle(),
+            child: Text('Close'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      _showLoader();
+      final prefs = await SharedPreferences.getInstance();
+      final userId =
+          prefs.getString("name") ?? prefs.getString("loginname") ?? "";
+      final itdinvtrannbr = (value['itdinvtrannbr'] ?? '').toString();
+      final itdlinenbr = (value['itdlinenbr'] ?? '').toString();
+
+      if (itdinvtrannbr.isEmpty || itdlinenbr.isEmpty) {
+        _hideLoader();
+        alert(context, 0, "Data item tidak valid untuk di-close", "error");
+        return;
+      }
+
+      final uri = Uri.parse(
+          "${GlobalData.baseUrl}api/inventory/close_inv_detail_param.jsp");
+      final response = await http.post(
+        uri,
+        body: {
+          'method': 'close-item-detail',
+          'itdinvtrannbr': itdinvtrannbr,
+          'itdlinenbr': itdlinenbr,
+          'userid': userId,
+        },
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        encoding: Encoding.getByName('utf-8'),
+      );
+
+      _hideLoader();
+
+      if (response.statusCode != 200) {
+        alert(context, 0, "Gagal close item (${response.statusCode})", "error");
+        return;
+      }
+
+      final decoded = json.decode(response.body);
+      final status = decoded['status']?.toString().toLowerCase() ?? '';
+      final message = decoded['message']?.toString() ?? 'Close item gagal';
+
+      if (status == 'success') {
+        alert(context, 1, message, "success");
+        _reloadList();
+      } else {
+        alert(context, 0, message, "error");
+      }
+    } catch (e) {
+      _hideLoader();
+      alert(context, 0, "Client, gagal close item", "error");
+      print(e.toString());
+    }
+  }
+
+  void _showLoader() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => Center(
-        child: CircularProgressIndicator(),
+        child: CircularProgressIndicator(color: primaryOrange),
       ),
     );
   }
 
-  void _hideDeleteLoader() {
+  void _hideLoader() {
     if (!mounted) return;
     if (Navigator.canPop(context)) {
       Navigator.pop(context);

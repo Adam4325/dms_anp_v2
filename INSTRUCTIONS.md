@@ -567,11 +567,19 @@ TextField(
   ),
 )
 
-// ❌ JANGAN - Button tanpa styling
+// ❌ JANGAN - Button tanpa styling / transparan
 ElevatedButton(
   onPressed: () {},
   child: Text("Button"),  // Plain button tanpa theme
 )
+
+// ❌ JANGAN - Tombol aksi text-only (Pilih/Close/Scan) tanpa background
+GestureDetector(
+  onTap: onTap,
+  child: Text('Pilih', style: TextStyle(color: primaryOrange)),
+)
+// ✅ Pakai solid fill (primaryOrange) atau bordered (lightOrange + border)
+// Lihat STYLE_GUIDE.md dan .cursor/project-overview.md → UI Button
 ```
 
 **KESIMPULAN**: Pattern TextField dan Button di `RegistrasiNewDriver.dart` sudah SANGAT BAIK dan SESUAI dengan guidelines. Gunakan pattern ini sebagai STANDARD untuk semua TextField dan Button di aplikasi.

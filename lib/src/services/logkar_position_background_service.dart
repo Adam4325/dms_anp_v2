@@ -77,6 +77,28 @@ class LogkarPositionBackgroundService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_prefsRunningKey, false);
   }
+
+  /// True jika mixer sedang (harus) kirim posisi Logkar — auto-logout jangan dijalankan.
+  static Future<bool> shouldBlockAutoLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    final loginType = prefs.getString('login_type') ?? '';
+    final noDo = prefs.getString('logkar_mixer_no_do')?.trim() ?? '';
+    final flagRun = prefs.getBool('is_api_lokar_run') ?? globals.isApiLokarRUN;
+    if (loginType != 'MIXER' || noDo.isEmpty || !flagRun) {
+      return false;
+    }
+    // Prefs running ATAU service masih hidup ATAU syarat track terpenuhi.
+    if (prefs.getBool(_prefsRunningKey) == true) {
+      return true;
+    }
+    try {
+      final service = FlutterBackgroundService();
+      if (await service.isRunning()) {
+        return true;
+      }
+    } catch (_) {}
+    return await _shouldTrack();
+  }
 }
 
 @pragma('vm:entry-point')

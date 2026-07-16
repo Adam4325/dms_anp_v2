@@ -34,7 +34,10 @@ import io.flutter.embedding.android.FlutterFragmentActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MainActivity extends FlutterFragmentActivity {
     private static final String DEVELOPER_MODE_CHANNEL = "dms_anp/developer_mode";
@@ -65,6 +68,8 @@ public class MainActivity extends FlutterFragmentActivity {
         ).setMethodCallHandler((call, result) -> {
             if ("getSim1PhoneNumber".equals(call.method)) {
                 result.success(getSim1PhoneNumber());
+            } else if ("getAllSimPhoneNumbers".equals(call.method)) {
+                result.success(getAllSimPhoneNumbers());
             } else {
                 result.notImplemented();
             }
@@ -83,18 +88,51 @@ public class MainActivity extends FlutterFragmentActivity {
         return true;
     }
 
-    private String getSim1PhoneNumber() {
+    private void addPhoneIfPresent(Set<String> phones, String raw) {
+        if (raw == null) {
+            return;
+        }
+        String trimmed = raw.trim();
+        if (!trimmed.isEmpty()) {
+            phones.add(trimmed);
+        }
+    }
+
+    /**
+     * Fallback nomor per subscription.
+     * getLine1Number() deprecated sejak API 33; dipakai hanya jika getNumber() kosong.
+     */
+    @SuppressWarnings("deprecation")
+    private String readLine1ForSubscription(TelephonyManager telephonyManager, int subscriptionId) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            TelephonyManager slotManager =
+                    telephonyManager.createForSubscriptionId(subscriptionId);
+            if (slotManager != null) {
+                return slotManager.getLine1Number();
+            }
+        }
+        return telephonyManager.getLine1Number();
+    }
+
+    @SuppressWarnings("deprecation")
+    private String readDefaultLine1Number(TelephonyManager telephonyManager) {
+        return telephonyManager.getLine1Number();
+    }
+
+    /** Semua nomor MSISDN yang terbaca dari SIM aktif (slot manapun). */
+    private List<String> getAllSimPhoneNumbers() {
+        List<String> empty = new ArrayList<>();
         if (!hasPhonePermission()) {
-            return null;
+            return empty;
         }
 
         TelephonyManager telephonyManager =
                 (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         if (telephonyManager == null) {
-            return null;
+            return empty;
         }
 
-        String phoneNumber = null;
+        Set<String> phones = new LinkedHashSet<>();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             SubscriptionManager subscriptionManager =
@@ -102,36 +140,33 @@ public class MainActivity extends FlutterFragmentActivity {
             if (subscriptionManager != null) {
                 List<SubscriptionInfo> subscriptions =
                         subscriptionManager.getActiveSubscriptionInfoList();
-                if (subscriptions != null && !subscriptions.isEmpty()) {
-                    SubscriptionInfo sim1 = null;
+                if (subscriptions != null) {
                     for (SubscriptionInfo info : subscriptions) {
-                        if (info.getSimSlotIndex() == 0) {
-                            sim1 = info;
-                            break;
+                        if (info == null) {
+                            continue;
                         }
-                    }
-                    if (sim1 == null) {
-                        sim1 = subscriptions.get(0);
-                    }
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        TelephonyManager slotManager =
-                                telephonyManager.createForSubscriptionId(sim1.getSubscriptionId());
-                        phoneNumber = slotManager.getLine1Number();
-                    } else {
-                        phoneNumber = telephonyManager.getLine1Number();
+                        // API 33+: SubscriptionInfo.getNumber() (pengganti getLine1Number)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            addPhoneIfPresent(phones, info.getNumber());
+                        }
+                        addPhoneIfPresent(
+                                phones,
+                                readLine1ForSubscription(
+                                        telephonyManager, info.getSubscriptionId()));
                     }
                 }
             }
         }
 
-        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-            phoneNumber = telephonyManager.getLine1Number();
-        }
+        addPhoneIfPresent(phones, readDefaultLine1Number(telephonyManager));
+        return new ArrayList<>(phones);
+    }
 
-        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+    private String getSim1PhoneNumber() {
+        List<String> all = getAllSimPhoneNumbers();
+        if (all.isEmpty()) {
             return null;
         }
-        return phoneNumber.trim();
+        return all.get(0);
     }
 }

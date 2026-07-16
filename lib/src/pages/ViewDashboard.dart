@@ -734,6 +734,12 @@ class _ViewDashboardState extends State<ViewDashboard>
     if (_sessionLogoutInProgress) {
       return;
     }
+    // Mixer sedang kirim posisi Logkar: jangan logout otomatis (prefs.clear akan matikan service).
+    if (await LogkarPositionBackgroundService.shouldBlockAutoLogout()) {
+      print(
+          'cekIsActiveUser: skip auto logout (Logkar mixer position tracking aktif)');
+      return;
+    }
     _sessionLogoutInProgress = true;
     _sessionActiveTimer?.cancel();
     NotificationService().stopPolling();
@@ -4566,7 +4572,12 @@ class _ViewDashboardState extends State<ViewDashboard>
         return;
       }
 
+      EasyLoading.show(status: 'Memproses update status DO mixer...');//
+
       var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
+      if (!mounted) {
+        return;
+      }
       // var latitude = -6.453855; //gpsResult["latitude"] ?? 0;
       // var longitude = 106.8677426; //gpsResult["longitude"] ?? 0;
 
@@ -4582,6 +4593,9 @@ class _ViewDashboardState extends State<ViewDashboard>
       Uri myUri = Uri.parse(encoded);
       var response =
           await http.get(myUri, headers: {"Accept": "application/json"});
+      if (!mounted) {
+        return;
+      }
 
       if (response.statusCode == 200) {
         var result = json.decode(response.body);

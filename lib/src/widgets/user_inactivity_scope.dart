@@ -6,6 +6,7 @@ import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/Helper/app_navigator_key.dart';
 import 'package:dms_anp/src/loginPage.dart';
 import 'package:dms_anp/src/services/NotificationServices.dart';
+import 'package:dms_anp/src/services/logkar_position_background_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -253,8 +254,14 @@ class _UserInactivityScopeState extends State<UserInactivityScope>
       final elapsedSec =
           (DateTime.now().millisecondsSinceEpoch - bgMs) / 1000.0;
       if (elapsedSec >= limitSec) {
-        await _onIdleTimeout();
-        return;
+        // Mixer sedang kirim posisi Logkar: jangan logout otomatis.
+        if (await LogkarPositionBackgroundService.shouldBlockAutoLogout()) {
+          debugPrint(
+              'UserInactivityScope: skip background logout (Logkar tracking aktif)');
+        } else {
+          await _onIdleTimeout();
+          return;
+        }
       }
     }
 
@@ -330,6 +337,15 @@ class _UserInactivityScopeState extends State<UserInactivityScope>
       return;
     }
     if (!await _hasLoginSession()) {
+      return;
+    }
+    // Jangan logout otomatis saat background kirim posisi Logkar aktif.
+    if (await LogkarPositionBackgroundService.shouldBlockAutoLogout()) {
+      debugPrint(
+          'UserInactivityScope: skip idle logout (Logkar tracking aktif)');
+      _bumpLastActive();
+      await _persistLastActiveAt();
+      _scheduleIdleFromPrefs();
       return;
     }
     _logoutInProgress = true;
