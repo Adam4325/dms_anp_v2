@@ -60,6 +60,7 @@ import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:unique_identifier/unique_identifier.dart';
 import '../../helpers/GpsSecurityChecker.dart';
 import '../../helpers/sim_phone_guard.dart';
+import 'package:dms_anp/src/Helper/scanner_helper.dart';
 import 'package:dms_anp/src/services/logkar_position_background_service.dart';
 
 import '../flusbar.dart';
@@ -541,6 +542,65 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
   }
 
+  Future<int?> _saveQrAbsen({
+    required String empid,
+    required String qrData,
+    String? lon,
+    String? lat,
+    String? apiLokar,
+  }) async {
+    if (!globals.isApiLokarRUN) {
+      return 200;
+    }
+    final params = <String, String>{
+      'method': 'save_qr_absen',
+      'empid': empid,
+      'qr_data': qrData,
+    };
+    if (lon != null) params['lon'] = lon;
+    if (lat != null) params['lat'] = lat;
+    if (apiLokar != null) params['api_lokar'] = apiLokar;
+    final uri =
+        Uri.parse('${GlobalData.baseUrlProd}api/absensi/qr_code_updated.jsp')
+            .replace(queryParameters: params);
+    print('save_qr_absen url: ${uri.toString()}');
+    final response = await http.get(uri);
+    if (response.statusCode != 200) {
+      return null;
+    }
+    final dynamic body = json.decode(response.body);
+    if (body is! Map) {
+      return null;
+    }
+    return _parseStatusCode(body['status_code']);
+  }
+
+  Future<({int? statusCode, bool isQrCode})?> _checkQrAbsen(
+      String empid) async {
+    if (!globals.isApiLokarRUN) {
+      return (statusCode: 200, isQrCode: false);
+    }
+    final uri =
+        Uri.parse('${GlobalData.baseUrlProd}api/absensi/qr_code_updated.jsp')
+            .replace(queryParameters: {
+      'method': 'check_qr_absen',
+      'empid': empid,
+    });
+    print('check_qr_absen url: ${uri.toString()}');
+    final response = await http.get(uri);
+    if (response.statusCode != 200) {
+      return null;
+    }
+    final dynamic body = json.decode(response.body);
+    if (body is! Map) {
+      return null;
+    }
+    return (
+      statusCode: _parseStatusCode(body['status_code']),
+      isQrCode: _parseBool(body['is_qr_code']),
+    );
+  }
+
   Future<({int? statusCode, bool hasQrToday, String message})?> _checkQrToday({
     required String empid,
     String? lon,
@@ -609,6 +669,16 @@ class _ViewDashboardState extends State<ViewDashboard>
     );
   }
 
+  Future<void> _goToAttendanceDriverIfSimValid() async {
+    if (!mounted) return;
+    if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+      return;
+    }
+    final requireAttendanceQr = await _shouldRequireAttendanceQr();
+    if (!mounted) return;
+    _navigateToAttendanceDriver(requireAttendanceQr: requireAttendanceQr);
+  }
+
   Future<void> _openAttendanceDriverWithQrScan() async {
     if (!mounted) return;
 
@@ -620,12 +690,69 @@ class _ViewDashboardState extends State<ViewDashboard>
       return;
     }
 
-    if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+    // 1) Scan/save QR dulu → 2) cek SIM → 3) baru FrmAttendanceDriver
+    if (!globals.isApiLokarRUN) {
+      await _goToAttendanceDriverIfSimValid();
       return;
     }
 
-    final requireAttendanceQr = await _shouldRequireAttendanceQr();
-    _navigateToAttendanceDriver(requireAttendanceQr: requireAttendanceQr);
+    EasyLoading.show(status: 'Memeriksa QR Code...');
+    try {
+      final checkResult = await _checkQrAbsen(drvid);
+      if (!mounted) return;
+      EasyLoading.dismiss();
+
+      if (checkResult != null &&
+          checkResult.statusCode == 200 &&
+          checkResult.isQrCode) {
+        // QR sudah ada → lanjut cek SIM
+        await _goToAttendanceDriverIfSimValid();
+        return;
+      }
+
+      final String? qrData = await openQrScanner(context);
+      if (qrData == null || qrData.trim().isEmpty) {
+        final ctx = globalScaffoldKey.currentContext ?? context;
+        _showAlert(ctx, 0, "Scan QR Code wajib dilakukan", "error");
+        return;
+      }
+
+      EasyLoading.show(status: 'Menyimpan QR Code...');
+      final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
+      final lat = (gpsResult["latitude"] ?? 0).toString();
+      final lon = (gpsResult["longitude"] ?? 0).toString();
+      final apiLokar = sharedPreferences!.getString("api_lokar") ?? '';
+      final statusCode = await _saveQrAbsen(
+        empid: drvid,
+        qrData: qrData.trim(),//
+        lon: lon,
+        lat: lat,
+        apiLokar: apiLokar,
+      );
+      if (!mounted) return;
+      EasyLoading.dismiss();
+
+      if (statusCode == 200) {
+        // QR save sukses → cek SIM → baru masuk Driver Attendance
+        await _goToAttendanceDriverIfSimValid();
+      } else {
+        final ctx = globalScaffoldKey.currentContext ?? context;
+        _showAlert(
+          ctx,
+          0,
+          statusCode == null
+              ? "Gagal menyimpan QR Code"
+              : "Gagal menyimpan QR Code (status: $statusCode)",
+          "error",
+        );
+      }
+    } catch (e) {
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
+      final ctx = globalScaffoldKey.currentContext ?? context;
+      _showAlert(ctx, 0, "Gagal memproses QR Code: $e", "error");
+    }
   }
 
   Future scanQRCode() async {
@@ -3487,6 +3614,10 @@ class _ViewDashboardState extends State<ViewDashboard>
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(18),
+            topRight: Radius.circular(18),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.shade300,
@@ -3558,7 +3689,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,//
+                  textAlign: TextAlign.center, //
                 ),
               ),
             ],
@@ -4226,14 +4357,51 @@ class _ViewDashboardState extends State<ViewDashboard>
       return value > 0 ? value : null;
     }
     if (body is String) {
-      return int.tryParse(body.trim());
+      final parsed = int.tryParse(body.trim());
+      if (parsed != null && parsed > 0) {
+        return parsed;
+      }
+      return null;
+    }
+    // Response Logkar: "data": [ { "do_id": 59332, ... } ]
+    if (body is List) {
+      for (final item in body) {
+        final parsed = _parseDoIdFromJson(item);
+        if (parsed != null && parsed > 0) {
+          return parsed;
+        }
+      }
+      return null;
     }
     if (body is Map) {
-      final direct = _parseDoIdFromJson(body['do_id']);
-      if (direct != null && direct > 0) {
-        return direct;
+      final candidates = <dynamic>[
+        body['do_id'],
+        body['doId'],
+        body['id'],
+      ];
+      final data = body['data'];
+      if (data is Map) {
+        candidates.add(data['do_id']);
+        candidates.add(data['doId']);
+        candidates.add(data['id']);
+      } else if (data is List && data.isNotEmpty) {
+        final first = data.first;
+        if (first is Map) {
+          candidates.add(first['do_id']);
+          candidates.add(first['doId']);
+          candidates.add(first['id']);
+        }
+        candidates.add(data);
       }
-      return _parseDoIdFromJson(body['data']);
+      for (final c in candidates) {
+        final parsed = _parseDoIdFromJson(c);
+        if (parsed != null && parsed > 0) {
+          return parsed;
+        }
+      }
+      if (data != null) {
+        return _parseDoIdFromJson(data);
+      }
     }
     return null;
   }
@@ -4262,7 +4430,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     final body = json.encode({
       'do_no': doNo,
       'request_code': requestCode,
-    });
+    });//
     print('logkar get do_id url: $uri');
     print('logkar get do_id body: $body');
     final response = await http.post(
@@ -4328,7 +4496,8 @@ class _ViewDashboardState extends State<ViewDashboard>
     if (clientId.trim().isEmpty || apiToken.trim().isEmpty) {
       return (
         ok: false,
-        message: 'Client ID atau API Token Logkar belum tersedia. Silakan login ulang.',
+        message:
+            'Client ID atau API Token Logkar belum tersedia. Silakan login ulang.',
       );
     }
     if (no_do.trim().isEmpty) {
@@ -4407,7 +4576,8 @@ class _ViewDashboardState extends State<ViewDashboard>
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(success ? 'Logkar Position' : 'Logkar Position Gagal'),
+              child:
+                  Text(success ? 'Logkar Position' : 'Logkar Position Gagal'),
             ),
           ],
         ),
@@ -4442,8 +4612,7 @@ class _ViewDashboardState extends State<ViewDashboard>
         final logkarNoDo = item['do_number']?.toString() ?? '';
         if (logkarNoDo.isNotEmpty) {
           sharedPreferences ??= await SharedPreferences.getInstance();
-          await sharedPreferences!
-              .setString('logkar_mixer_no_do', logkarNoDo);
+          await sharedPreferences!.setString('logkar_mixer_no_do', logkarNoDo);
         }
         GetVhcidDo();
         Timer(Duration(seconds: 1), () {
@@ -4572,7 +4741,7 @@ class _ViewDashboardState extends State<ViewDashboard>
         return;
       }
 
-      EasyLoading.show(status: 'Memproses update status DO mixer...');//
+      EasyLoading.show(status: 'Memproses update status DO mixer...'); //
 
       var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
       if (!mounted) {
@@ -5412,8 +5581,10 @@ class _ViewDashboardState extends State<ViewDashboard>
               "error");
         }
       }
-    } else if (anpService.idKey == 15) {
-      if (loginname == "DRIVER") {
+    } else if (anpService.idKey == 15 ) {
+      // DRIVER + MIXER: QR sukses → cek SIM → FrmAttendanceDriver
+      // Karyawan: cukup cek SIM lalu FrmAttendance
+      if (loginname == "DRIVER" && login_type == "MIXER") {
         await _openAttendanceDriverWithQrScan();
       } else {
         if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
@@ -5778,8 +5949,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       await LogkarPositionBackgroundService.stop();
       return;
     }
-    await sharedPreferences!
-        .setBool('is_api_lokar_run', globals.isApiLokarRUN);
+    await sharedPreferences!.setBool('is_api_lokar_run', globals.isApiLokarRUN);
     if (data_list_do.isNotEmpty) {
       final noDo = data_list_do.first['do_number']?.toString() ?? '';
       if (noDo.isNotEmpty) {

@@ -16,18 +16,28 @@ class ListWareHouseOpName extends StatefulWidget {
 }
 
 class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
+  final Color primaryOrange = Color(0xFFFF8C69);
+  final Color lightOrange = Color(0xFFFFF4E6);
+  final Color accentOrange = Color(0xFFFFB347);
+  final Color darkOrange = Color(0xFFE07B39);
+  final Color backgroundColor = Color(0xFFFFFAF5);
+  final Color cardColor = Color(0xFFFFF8F0);//
+
   GlobalKey<PaginatorState> paginatorGlobalKey = GlobalKey();
   String _searchText = "";
-  final TextEditingController _filter = new TextEditingController();
+  final TextEditingController _txtSearch = TextEditingController();
+  Icon customIcon = const Icon(Icons.search, color: Colors.white);
+  Widget customSearchBar = const Text(
+    'List Stock Opname',
+    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+  );
 
-  _goBack(BuildContext context) {
+  void _goBack(BuildContext context) {
     Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => FrmWareHouseOpName()));
+      context,
+      MaterialPageRoute(builder: (context) => FrmWareHouseOpName()),
+    );
   }
-
-  TextEditingController _txtSearch = new TextEditingController();
-  Icon customIcon = const Icon(Icons.search);
-  Widget customSearchBar = const Text('List Stock Opname');
 
   @override
   void initState() {
@@ -36,93 +46,129 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
   }
 
   @override
+  void dispose() {
+    _txtSearch.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: customSearchBar,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          iconSize: 20.0,
-          onPressed: () {
-            _goBack(context);
-          },
-        ),
-        actions: <Widget>[
-          IconButton(
-            icon: customIcon,
-            onPressed: () {
-              setState(() {
-                print(customIcon.icon == Icons.search);
-                if (customIcon.icon == Icons.search) {
-                  customIcon = const Icon(Icons.cancel);
-                  customSearchBar = ListTile(
-                    onTap: () async {
-                      if (_txtSearch.text.isEmpty) {
-                        return;
-                      } else {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+        _goBack(context);
+      },
+      child: Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          backgroundColor: primaryOrange,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          iconTheme: IconThemeData(color: Colors.white),
+          automaticallyImplyLeading: false,
+          title: customSearchBar,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.white),
+            iconSize: 20.0,
+            onPressed: () => _goBack(context),
+          ),
+          actions: <Widget>[
+            IconButton(
+              icon: customIcon,
+              onPressed: () {
+                setState(() {
+                  if (customIcon.icon == Icons.search) {
+                    customIcon = const Icon(Icons.cancel, color: Colors.white);
+                    customSearchBar = ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      onTap: () async {
+                        if (_txtSearch.text.isEmpty) {
+                          return;
+                        }
                         _searchText = _txtSearch.text;
                         paginatorGlobalKey.currentState?.changeState(
-                            pageLoadFuture: sendInventoryDataRequest,
-                            resetState: true);
-                      }
-                    },
-                    leading: Icon(
-                      Icons.search,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                    title: TextField(
-                      controller: _txtSearch,
-                      decoration: InputDecoration(
-                        hintText: 'Trx Inventory number',
-                        hintStyle: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontStyle: FontStyle.italic,
-                        ),
-                        border: InputBorder.none,
-                      ),
-                      style: TextStyle(
+                          pageLoadFuture: sendInventoryDataRequest,
+                          resetState: true,
+                        );
+                      },
+                      leading: Icon(
+                        Icons.search,
                         color: Colors.white,
+                        size: 28,
                       ),
-                    ),
-                  );
-                } else {
-                  setState(() {
+                      title: TextField(
+                        controller: _txtSearch,
+                        cursorColor: Colors.white,
+                        decoration: InputDecoration(
+                          hintText: 'Cari item / warehouse...',
+                          hintStyle: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          border: InputBorder.none,
+                        ),
+                        style: TextStyle(color: Colors.white),
+                        onSubmitted: (v) {
+                          _searchText = v;
+                          paginatorGlobalKey.currentState?.changeState(
+                            pageLoadFuture: sendInventoryDataRequest,
+                            resetState: true,
+                          );
+                        },
+                      ),
+                    );
+                  } else {
                     _searchText = "";
                     _txtSearch.text = "";
-                  });
-                  customIcon = const Icon(Icons.search);
-                  customSearchBar = const Text('List Inventory');
-                }
-              });
-            },
-          ),
-        ],
-      ),
-      body: Paginator.listView(
-        key: paginatorGlobalKey,
-        pageLoadFuture: sendInventoryDataRequest,
-        pageItemsGetter: (data) => listItemsGetter(data as InventoryTransDataModel),
-        listItemBuilder: listItemBuilder,
-        loadingWidgetBuilder: loadingWidgetMaker,
-        errorWidgetBuilder: errorWidgetMaker,
-        emptyListWidgetBuilder: (data) => emptyListWidgetMaker(data as InventoryTransDataModel),
-        totalItemsGetter: (data) => totalPagesGetter(data as InventoryTransDataModel),
-        pageErrorChecker: (data) => pageErrorChecker(data as InventoryTransDataModel),
-        scrollPhysics: BouncingScrollPhysics(),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            _searchText = "";
-            _txtSearch.text = "";
-          });
-          paginatorGlobalKey.currentState?.changeState(
-              pageLoadFuture: sendInventoryDataRequest, resetState: true);
-        },
-        child: Icon(Icons.refresh),
+                    customIcon = const Icon(Icons.search, color: Colors.white);
+                    customSearchBar = const Text(
+                      'List Stock Opname',
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.w600),
+                    );
+                    paginatorGlobalKey.currentState?.changeState(
+                      pageLoadFuture: sendInventoryDataRequest,
+                      resetState: true,
+                    );
+                  }
+                });
+              },
+            ),
+          ],
+        ),
+        body: Paginator.listView(
+          key: paginatorGlobalKey,
+          pageLoadFuture: sendInventoryDataRequest,
+          pageItemsGetter: (data) =>
+              listItemsGetter(data as InventoryTransDataModel),
+          listItemBuilder: listItemBuilder,
+          loadingWidgetBuilder: loadingWidgetMaker,
+          errorWidgetBuilder: errorWidgetMaker,
+          emptyListWidgetBuilder: (data) =>
+              emptyListWidgetMaker(data as InventoryTransDataModel),
+          totalItemsGetter: (data) =>
+              totalPagesGetter(data as InventoryTransDataModel),
+          pageErrorChecker: (data) =>
+              pageErrorChecker(data as InventoryTransDataModel),
+          scrollPhysics: BouncingScrollPhysics(),
+        ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: primaryOrange,
+          foregroundColor: Colors.white,
+          onPressed: () {
+            setState(() {
+              _searchText = "";
+              _txtSearch.text = "";
+            });
+            paginatorGlobalKey.currentState?.changeState(
+              pageLoadFuture: sendInventoryDataRequest,
+              resetState: true,
+            );
+          },
+          child: Icon(Icons.refresh, color: Colors.white),
+        ),
       ),
     );
   }
@@ -130,9 +176,6 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
   Future<InventoryTransDataModel> sendInventoryDataRequest(int page) async {
     print('page ${page}');
     try {
-      // String url = Uri.encodeFull(
-      //     'http://apps.tuluatas.com:8085/cemindo/api/inventory/list_inventory_trans.jsp?method=list-inventory-trans-v1&page=${page}&search=' +
-      //         _searchText);
       String url = Uri.encodeFull(
           '${GlobalData.baseUrl}api/inventory/list_warehouse_opname.jsp?method=list-warehouse-opname-v1&page=${page}&search=' +
               _searchText);
@@ -143,7 +186,6 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
       return InventoryTransDataModel.fromResponse(response);
     } catch (e) {
       if (e is IOException) {
-        //paginatorGlobalKey
         alert(context, 2, "Please check your internet connection.", "warning");
         return InventoryTransDataModel.withError(
             'Please check your internet connection.');
@@ -154,9 +196,15 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
     }
   }
 
+  String _s(dynamic v) {
+    if (v == null) return '';
+    final t = v.toString().trim();
+    if (t == 'null') return '';
+    return t;
+  }
+
   List<Map<String, dynamic>> listItemsGetter(InventoryTransDataModel data) {
     List<Map<String, dynamic>> list = [];
-    print("listItemsGetter");
     data.inventorydataModel.forEach((value) {
       list.add({
         "whswarehpuseid": value['_whswarehpuseid'],
@@ -174,6 +222,8 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
         "wh_access": value['_wh_access'],
         "wh_typepo": value['_wh_typepo'],
         "wh_withmonth": value['_wh_withmonth'],
+        "wh_genuine_no": value['_wh_genuine_no'],
+        "wh_item_size": value['_wh_item_size'],
       });
     });
     return list;
@@ -181,127 +231,165 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
 
   Widget _kv(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: EdgeInsets.symmetric(vertical: 2),
+      child: Table(
+        columnWidths: const {
+          0: IntrinsicColumnWidth(),
+          1: FixedColumnWidth(14),
+          2: FlexColumnWidth(),
+        },
         children: [
-          Expanded(
-            flex: 3,
-            child: Text(
-              label,
-              style: const TextStyle(color: Colors.black87, fontSize: 12),
+          TableRow(children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                label,
+                style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
+              ),
             ),
-          ),
-          const SizedBox(
-            width: 10,
-            child: Text(
-              ":",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black87, fontSize: 12),
+            Align(
+              alignment: Alignment.center,
+              child: Text(
+                ":",
+                style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
+              ),
             ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: const TextStyle(color: Colors.black87, fontSize: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                value.isEmpty ? '-' : value,
+                style: TextStyle(
+                  color: Colors.grey.shade900,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
-          ),
+          ])
         ],
       ),
     );
   }
 
   Widget listItemBuilder(value, int index) {
-    //print(value["drvid"]);
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accentOrange.withOpacity(0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x20FF8C69),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
       child: Column(
         children: <Widget>[
           Container(
-            width: MediaQuery.of(context).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                  leading: Container(
-                    padding: EdgeInsets.only(right: 12.0),
-                    decoration: new BoxDecoration(
-                        border: new Border(
-                            right: new BorderSide(
-                                width: 1.0, color: Colors.black45))),
-                    child: Icon(Icons.settings, color: Colors.black),
-                  ),
-
-                  title: Text(
-                    "WH ID: ${value['whswarehpuseid']}",
-                    style: TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Wrap(children: <Widget>[ //_kv('PBNBR', _j(d, ['pbnbr', 'PBNBR'])),
-                    Text(
-                        "\nITEM ID: ${value['wh_item_id']}"
-                        "\nPART NAME: ${value['wh_part_name']}"
-                        "\nITEM DESC: ${value['wh_item_descr']}"
-                        "\nType: ${value['wh_type']}"
-                        "\nAccessories: ${value['wh_access']}"
-                        "\nType PO: ${value['wh_typepo']}"
-                        "\nCurrency: ${value['wh_curyid']}"
-                        "\nQty On Hands: ${value['wh_on_hands']}"
-                        "\nQty On Actual: ${value['wh_on_actual']}"
-                        "\nWith Month: ${value['wh_withmonth']}",
-                        style: TextStyle(color: Colors.black)),
-                  ]),
-                  // trailing: Icon(Icons.keyboard_arrow_right,
-                  //     color: Colors.black, size: 30.0)
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(14, 12, 14, 8),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
               ),
             ),
-          ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.add,
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
                     color: Colors.white,
-                    size: 15.0,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: primaryOrange, width: 1.2),
                   ),
-                  label: Text("Edit"),
-                  onPressed: () {
-                    globals.wh_id = value['whswarehpuseid'];
-                    globals.wh_itemid = value['wh_item_id'];
-                    globals.wh_part_name = value['wh_part_name'];
-                    globals.wh_type = value['wh_type'];
-                    globals.wh_accessories = value['wh_access'];
-                    globals.wh_quantity_on_hands = value['wh_on_hands'];
-                    globals.wh_quantity_on_actuals = value['wh_on_actual'];
-                    globals.wh_typepo = value['wh_typepo'];
-                    globals.wh_itemcost = value['wh_item_cost'];
-                    globals.wh_currency_id = value['wh_curyid'];
-                    globals.wh_month = value['wh_withmonth'];
-                    globals.wh_month_year = value['wh_with_month_year'];
-                    globals.wh_month_month = value['wh_with_month_month'];
-                    globals.wh_method = "edit";
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => FrmWareHouseOpName()));
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.lightBlueAccent,
-                      padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                      textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                ))
-              ]),
+                  child: Icon(Icons.warehouse_outlined,
+                      color: primaryOrange, size: 20),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    "WH ID : ${_s(value['whswarehpuseid'])}",
+                    style: TextStyle(
+                      color: darkOrange,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(14, 8, 14, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _kv('Item ID', _s(value['wh_item_id'])),
+                _kv('Part Name', _s(value['wh_part_name'])),
+                _kv('Item Desc', _s(value['wh_item_descr'])),
+                _kv('Genuine No', _s(value['wh_genuine_no'])),
+                _kv('Item Size', _s(value['wh_item_size'])),
+                _kv('Type', _s(value['wh_type'])),
+                _kv('Accessories', _s(value['wh_access'])),
+                _kv('Type PO', _s(value['wh_typepo'])),
+                _kv('Currency', _s(value['wh_curyid'])),
+                _kv('Qty On Hands', _s(value['wh_on_hands'])),
+                _kv('Qty On Actual', _s(value['wh_on_actual'])),
+                _kv('With Month', _s(value['wh_withmonth'])),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(12, 4, 12, 12),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: Icon(Icons.edit, color: Colors.white, size: 16),
+                label: Text(
+                  'Edit',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                onPressed: () {
+                  globals.wh_id = _s(value['whswarehpuseid']);
+                  globals.wh_itemid = _s(value['wh_item_id']);
+                  globals.wh_part_name = _s(value['wh_part_name']);
+                  globals.wh_type = _s(value['wh_type']);
+                  globals.wh_accessories = _s(value['wh_access']);
+                  globals.wh_quantity_on_hands = _s(value['wh_on_hands']);
+                  globals.wh_quantity_on_actuals = _s(value['wh_on_actual']);
+                  globals.wh_typepo = _s(value['wh_typepo']);
+                  globals.wh_itemcost = _s(value['wh_item_cost']);
+                  globals.wh_currency_id = _s(value['wh_curyid']);
+                  globals.wh_month = _s(value['wh_withmonth']);
+                  globals.wh_month_year = _s(value['wh_with_month_year']);
+                  globals.wh_month_month = _s(value['wh_with_month_month']);
+                  globals.wh_item_size = _s(value['wh_item_size']);
+                  globals.wh_genuine_no = _s(value['wh_genuine_no']);
+                  globals.wh_method = "edit";
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => FrmWareHouseOpName()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  elevation: 2,
+                  backgroundColor: primaryOrange,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -313,7 +401,7 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
     return Container(
       alignment: Alignment.center,
       height: 160.0,
-      child: CircularProgressIndicator(),
+      child: CircularProgressIndicator(color: primaryOrange),
     );
   }
 
@@ -324,11 +412,18 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
       children: <Widget>[
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Text(inventorydataModel?.errorMessage ?? "Something went wrong."),
+          child: Text(
+            inventorydataModel?.errorMessage ?? "Something went wrong.",
+            textAlign: TextAlign.center,
+          ),
         ),
-        TextButton(
+        ElevatedButton(
           onPressed: retryListener,
-          child: Text('Retry'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryOrange,
+            foregroundColor: Colors.white,
+          ),
+          child: Text('Retry', style: TextStyle(color: Colors.white)),
         )
       ],
     );
@@ -336,7 +431,10 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
 
   Widget emptyListWidgetMaker(InventoryTransDataModel inventorydataModel) {
     return Center(
-      child: Text('Tidak ada inventory dalam list'),
+      child: Text(
+        'Tidak ada stock opname dalam list',
+        style: TextStyle(color: Colors.grey.shade700),
+      ),
     );
   }
 

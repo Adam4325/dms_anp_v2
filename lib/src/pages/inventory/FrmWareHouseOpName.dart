@@ -278,7 +278,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         builder: (context) {
           return AlertDialog(
             title: Text('List Item'),
-            content: setupAlertDialoadContainerList(context),
+            content: setupAlertDialoadContainerList(context),//
           );
         });
   }
@@ -710,6 +710,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         txtTypeAccessories.text = globals.wh_accessories!;
         txtMerk.text = globals.wh_merk!;
         txtItemSize.text = globals.wh_item_size!;
+        txtGenuinoNumber.text = globals.wh_genuine_no ?? '';
         txtQuantityOnHands.text = globals.wh_quantity_on_hands!;
         txtQuantityOnActual.text = globals.wh_quantity_on_actuals!;
         txtTypePO.text = globals.wh_typepo!;
@@ -1019,107 +1020,162 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
   }
 
   List<Map<String, dynamic>> dataListNewItem = [];
+  String _itemStr(dynamic v) {
+    if (v == null) return '-';
+    final t = v.toString().trim();
+    if (t.isEmpty || t == 'null') return '-';
+    return t;
+  }
+
   Widget buildBtnAddNewItem(BuildContext context, dynamic item) {
     return Expanded(
-        child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.check,
-        color: Colors.white,
-        size: 15.0,
-      ),
-      label: Text("Pilih"),
-      onPressed: () async {
-        //Navigator.of(context).pop(false);
-        Navigator.pop(context);
-        print(item['item_id']);
-        Timer(Duration(seconds: 1), () {
-          setState(() {
-            txtItemID.text = item['item_id'];
-            txtPartName.text = item['part_name'];
-            txtTypeAccessories.text = item['idaccess'];
-            txtMerk.text = item['merk'];
-            txtItemSize.text = item['item_size'];
-            txtTypePO.text = item['typepo'];
-            selTypePO = item['typepo'];
-            txtType.text = item['idtype'];
-            txtCurrencyTypeID.text = item['curyid'];
-            selCuryID = item['curyid'];
-            txtQuantityOnHands.text = item['qty_on_hand'];
-            txtQuantityOnActual.text = '0';
-            selCuryID = item['curyid'];
-            print("selCuryID ${selCuryID}");
-            witwarehouseid = item['witwarehouseid'];
-            txtIDWareHouse.text = item['witwarehouseid'];
-            selWareHouseID = item['witwarehouseid'];
-            txtVHTID.text = item['vhtid'];
-            txtGenuinoNumber.text = item['genuine_no'];
-            print('Piilih ${selWareHouseID}');
-            print('selTypePO ${selTypePO}');
-            //FocusScope.of(context).requestFocus(myFocusNode);
+      child: ElevatedButton.icon(
+        icon: Icon(Icons.check, color: Colors.white, size: 16.0),
+        label: Text(
+          "Pilih",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        onPressed: () async {
+          Navigator.pop(context);
+          print(item['item_id']);
+          Timer(Duration(seconds: 1), () {
+            setState(() {
+              txtItemID.text = item['item_id'];
+              txtPartName.text = item['part_name'];
+              txtTypeAccessories.text = item['idaccess'];
+              txtMerk.text = item['merk'];
+              txtItemSize.text = item['item_size'];
+              txtTypePO.text = item['typepo'];
+              selTypePO = item['typepo'];
+              txtType.text = item['idtype'];
+              txtCurrencyTypeID.text = item['curyid'];
+              selCuryID = item['curyid'];
+              txtQuantityOnHands.text = item['qty_on_hand'];
+              txtQuantityOnActual.text = '0';
+              selCuryID = item['curyid'];
+              print("selCuryID ${selCuryID}");
+              witwarehouseid = item['witwarehouseid'];
+              txtIDWareHouse.text = item['witwarehouseid'];
+              selWareHouseID = item['witwarehouseid'];
+              txtVHTID.text = item['vhtid'];
+              txtGenuinoNumber.text = item['genuine_no'];
+              print('Piilih ${selWareHouseID}');
+              print('selTypePO ${selTypePO}');
+            });
           });
-        });
-      },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
+        },
+        style: ElevatedButton.styleFrom(
+          elevation: 2,
           backgroundColor: primaryOrange,
           foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-    ));
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          textStyle: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildDListNewItems(BuildContext context, dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: primaryOrange.withOpacity(0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x18FF8A50),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Container(
-            width: MediaQuery.of(context).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings_applications, color: Colors.black),
-                ),
-                title: Text(
-                  "WH ID : ${item['witwarehouseid']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    _kv("Item ID", (item['item_id'] ?? '').toString()),
-                    _kv("Accesoris", (item['idaccess'] ?? '').toString()),
-                    _kv("Part Name", (item['part_name'] ?? '').toString()),
-                    _kv("Merk", (item['merk'] ?? '').toString()),
-                    _kv("Item Size", (item['item_size'] ?? '').toString()),
-                  ],
-                ),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
+            padding: EdgeInsets.fromLTRB(12, 10, 12, 8),
+            decoration: BoxDecoration(
+              color: Color(0xFFFFF4E6),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
+              ),
+            ),
+            child: Text(
+              "WH ID : ${_itemStr(item['witwarehouseid'])}",
+              style: TextStyle(
+                color: Color(0xFFE07B39),
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
               ),
             ),
           ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[buildBtnAddNewItem(context, item)]),
+          Padding(
+            padding: EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: Table(
+              columnWidths: const {
+                0: FixedColumnWidth(88),
+                1: FixedColumnWidth(14),
+                2: FlexColumnWidth(),
+              },
+              defaultVerticalAlignment: TableCellVerticalAlignment.top,
+              children: [
+                _kvRow("Item ID", _itemStr(item['item_id'])),
+                _kvRow("Genuine No", _itemStr(item['genuine_no'])),
+                _kvRow("Accesoris", _itemStr(item['idaccess'])),
+                _kvRow("Part Name", _itemStr(item['part_name'])),
+                _kvRow("Merk", _itemStr(item['merk'])),
+                _kvRow("Item Size", _itemStr(item['item_size'])),
+              ],
             ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(10, 4, 10, 10),
+            child: Row(children: <Widget>[buildBtnAddNewItem(context, item)]),
           ),
         ],
       ),
     );
+  }
+
+  TableRow _kvRow(String label, String value) {
+    return TableRow(children: [
+      Padding(
+        padding: EdgeInsets.symmetric(vertical: 3),
+        child: Text(
+          label,
+          style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
+        ),
+      ),
+      Padding(
+        padding: EdgeInsets.symmetric(vertical: 3),
+        child: Text(
+          ":",
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
+        ),
+      ),
+      Padding(
+        padding: EdgeInsets.symmetric(vertical: 3),
+        child: Text(
+          value,
+          textAlign: TextAlign.right,
+          style: TextStyle(
+            color: Colors.grey.shade900,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    ]);
   }
 
   Widget _kv(String label, String value) {
@@ -1127,75 +1183,110 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
       padding: EdgeInsets.only(top: 2, bottom: 2),
       child: Table(
         columnWidths: const {
-          0: IntrinsicColumnWidth(),
+          0: FixedColumnWidth(88),
           1: FixedColumnWidth(14),
           2: FlexColumnWidth(),
         },
         children: [
-          TableRow(children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(label, style: TextStyle(color: Colors.black)),
-            ),
-            Align(
-              alignment: Alignment.center,
-              child: Text(":", style: TextStyle(color: Colors.black)),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(value, style: TextStyle(color: Colors.black)),
-            ),
-          ])
+          _kvRow(label, value.isEmpty ? '-' : value),
         ],
       ),
     );
   }
 
   Widget setupAlertDialoadContainer(BuildContext dialogContext) {
-    return SingleChildScrollView(
-      //shrinkWrap: true,
-      padding: EdgeInsets.all(2.0),
-      clipBehavior: Clip.antiAlias,
+    final screenW = MediaQuery.of(dialogContext).size.width;
+    return SizedBox(
+      width: screenW,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            margin: EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Color(0xFFFFF4E6),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: primaryOrange.withOpacity(0.55), width: 1.4),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x18FF8A50),
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
             child: TextField(
-              readOnly: globals.wh_method != "edit" ? false : true,//
-              cursorColor: Colors.black,
-              style: TextStyle(color: Colors.grey.shade800),
+              readOnly: globals.wh_method == "edit",
+              cursorColor: primaryOrange,
+              style: TextStyle(
+                color: Colors.grey.shade800,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
               controller: txtSearchPartname,
               keyboardType: TextInputType.text,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => searchItemByPartName(dialogContext),
-              onChanged: (value) async {
-                if (value != null && value != '') {
-                  if (value.length > 5) {
-                    //await getItemID(value);
-                    //print(lstItemID);
-                  }
-                }
-              },
-              decoration: new InputDecoration(
-                suffixIcon: IconButton(
-                  icon: new Image.asset(
-                    "assets/img/search.png",
-                    width: 32.0,
-                    height: 32.0,
-                  ),
-                  onPressed: () async {
-                    print('witwarehouseid ' + selWareHouseID);
-                    await searchItemByPartName(dialogContext);
-                  },
-                ),
-                fillColor: Colors.white,
+              decoration: InputDecoration(
                 filled: true,
+                fillColor: Colors.white,
+                hintText: 'Ketik part name / item ID...',
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
                 labelText: 'Search',
+                labelStyle: TextStyle(
+                  color: primaryOrange,
+                  fontWeight: FontWeight.w600,
+                ),
+                prefixIcon: Icon(Icons.search, color: primaryOrange, size: 22),
+                suffixIcon: Material(
+                  color: primaryOrange,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(11),
+                    bottomRight: Radius.circular(11),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(11),
+                      bottomRight: Radius.circular(11),
+                    ),
+                    onTap: () async {
+                      print('witwarehouseid ' + selWareHouseID);
+                      await searchItemByPartName(dialogContext);
+                    },
+                    child: SizedBox(
+                      width: 48,
+                      child: Icon(Icons.arrow_forward, color: Colors.white, size: 22),
+                    ),
+                  ),
+                ),
                 isDense: true,
-                contentPadding: EdgeInsets.all(2.0),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.transparent),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: primaryOrange, width: 1.6),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.transparent),
+                ),
               ),
             ),
-          )
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Masukkan minimal beberapa huruf lalu tap panah / Enter.',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+          ),
         ],
       ),
     );
@@ -1260,73 +1351,300 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                         label: 'Item ID',
                         readOnly: globals.wh_method == "edit",
                       ).copyWith(
-                        suffixIcon: IconButton(
-                          icon: Image.asset("assets/img/qrcode.png", width: 32.0, height: 32.0),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: Text('Information'),
-                                content: Text("Filter by name or Scan item ID?"),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                                ),
-                                actions: <Widget>[
-                                  ElevatedButton.icon(
-                                    icon: Icon(Icons.qr_code_scanner, color: Colors.white, size: 20.0),
-                                    label: Text("Scan QRCode"),
-                                    onPressed: () {
-                                      Navigator.of(context).pop(false);
-                                      setState(() {
-                                        isScan = true;
-                                      });
-                                      scanQRCode();
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: primaryOrange,
-                                      foregroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                                      textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                                    ),
-                                  ),
-                                  ElevatedButton.icon(
-                                    icon: Icon(Icons.search, color: Colors.white, size: 20.0),
-                                    label: Text("Search By Name"),
-                                    onPressed: () async {
-                                      Navigator.of(context).pop(false);
-                                      SharedPreferences prefs = await SharedPreferences.getInstance();
-                                      var username = prefs.getString("name") ?? "";
-                                      print('Search By Name');
-                                      setState(() {
-                                        isScan = false;
-                                      });
+                        suffixIcon: globals.wh_method == "edit"
+                            ? null
+                            : Padding(
+                                padding: EdgeInsets.only(right: 4),
+                                child: Material(
+                                  color: Color(0xFFFFF4E6),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(10),
+                                    onTap: () {
+                                      final parentCtx = context;
                                       showDialog(
-                                        context: context,
-                                        builder: (context) {
-                                          return AlertDialog(
-                                            title: Text('Search Item'),
-                                            content: setupAlertDialoadContainer(context),
+                                        context: parentCtx,
+                                        builder: (choiceCtx) {
+                                          return Dialog(
+                                            insetPadding: EdgeInsets.symmetric(
+                                              horizontal: 20,
+                                              vertical: 24,
+                                            ),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                                              borderRadius:
+                                                  BorderRadius.circular(18),
+                                            ),
+                                            backgroundColor: Colors.white,
+                                            child: Padding(
+                                              padding: EdgeInsets.fromLTRB(
+                                                  18, 20, 18, 16),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Container(
+                                                    width: 64,
+                                                    height: 64,
+                                                    decoration: BoxDecoration(
+                                                      color: Color(0xFFFFF4E6),
+                                                      shape: BoxShape.circle,
+                                                      border: Border.all(
+                                                        color: primaryOrange,
+                                                        width: 1.5,
+                                                      ),
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.qr_code_2_rounded,
+                                                      color: primaryOrange,
+                                                      size: 34,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 14),
+                                                  Text(
+                                                    'Pilih Cara Input',
+                                                    textAlign: TextAlign.center,
+                                                    style: TextStyle(
+                                                      fontSize: 17,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: Color(0xFFE07B39),
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  Text(
+                                                    'Scan QR Code item, atau cari berdasarkan nama / Item ID.',
+                                                    textAlign: TextAlign.center,
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.grey.shade700,
+                                                      height: 1.35,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 18),
+                                                  SizedBox(
+                                                    width: double.infinity,
+                                                    child: ElevatedButton.icon(
+                                                      icon: Icon(
+                                                        Icons.qr_code_scanner,
+                                                        color: Colors.white,
+                                                        size: 20,
+                                                      ),
+                                                      label: Text(
+                                                        'Scan QRCode',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                      onPressed: () {
+                                                        Navigator.of(choiceCtx)
+                                                            .pop();
+                                                        setState(() {
+                                                          isScan = true;
+                                                        });
+                                                        scanQRCode();
+                                                      },
+                                                      style: ElevatedButton
+                                                          .styleFrom(
+                                                        elevation: 2,
+                                                        backgroundColor:
+                                                            primaryOrange,
+                                                        foregroundColor:
+                                                            Colors.white,
+                                                        padding:
+                                                            EdgeInsets.symmetric(
+                                                                vertical: 12),
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 10),
+                                                  SizedBox(
+                                                    width: double.infinity,
+                                                    child: ElevatedButton.icon(
+                                                      icon: Icon(
+                                                        Icons.search,
+                                                        color: Colors.white,
+                                                        size: 20,
+                                                      ),
+                                                      label: Text(
+                                                        'Search By Name',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                      onPressed: () async {
+                                                        Navigator.of(choiceCtx)
+                                                            .pop();
+                                                        setState(() {
+                                                          isScan = false;
+                                                        });
+                                                        await Future.delayed(
+                                                            Duration(
+                                                                milliseconds:
+                                                                    120));
+                                                        if (!mounted) return;
+                                                        showDialog(
+                                                          context: parentCtx,
+                                                          builder: (dialogCtx) {
+                                                            return Dialog(
+                                                              insetPadding:
+                                                                  EdgeInsets
+                                                                      .symmetric(
+                                                                horizontal: 12,
+                                                                vertical: 24,
+                                                              ),
+                                                              shape:
+                                                                  RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            18),
+                                                              ),
+                                                              backgroundColor:
+                                                                  Colors.white,
+                                                              child: Padding(
+                                                                padding: EdgeInsets
+                                                                    .fromLTRB(16,
+                                                                        18, 16, 14),
+                                                                child: Column(
+                                                                  mainAxisSize:
+                                                                      MainAxisSize
+                                                                          .min,
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .stretch,
+                                                                  children: [
+                                                                    Row(
+                                                                      children: [
+                                                                        Container(
+                                                                          padding:
+                                                                              EdgeInsets.all(8),
+                                                                          decoration:
+                                                                              BoxDecoration(
+                                                                            color:
+                                                                                Color(0xFFFFF4E6),
+                                                                            shape:
+                                                                                BoxShape.circle,
+                                                                            border:
+                                                                                Border.all(
+                                                                              color: primaryOrange,
+                                                                              width: 1.2,
+                                                                            ),
+                                                                          ),
+                                                                          child:
+                                                                              Icon(
+                                                                            Icons
+                                                                                .search,
+                                                                            color:
+                                                                                primaryOrange,
+                                                                            size:
+                                                                                20,
+                                                                          ),
+                                                                        ),
+                                                                        SizedBox(
+                                                                            width:
+                                                                                10),
+                                                                        Expanded(
+                                                                          child:
+                                                                              Text(
+                                                                            'Search Item',
+                                                                            style:
+                                                                                TextStyle(
+                                                                              fontSize: 17,
+                                                                              fontWeight: FontWeight.w700,
+                                                                              color: Color(0xFFE07B39),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                        IconButton(
+                                                                          padding:
+                                                                              EdgeInsets.zero,
+                                                                          constraints:
+                                                                              BoxConstraints(),
+                                                                          icon:
+                                                                              Icon(
+                                                                            Icons
+                                                                                .close,
+                                                                            color:
+                                                                                Colors.grey.shade600,
+                                                                          ),
+                                                                          onPressed:
+                                                                              () =>
+                                                                                  Navigator.of(dialogCtx).pop(),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    SizedBox(
+                                                                        height:
+                                                                            14),
+                                                                    setupAlertDialoadContainer(
+                                                                        dialogCtx),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            );
+                                                          },
+                                                        );
+                                                      },
+                                                      style: ElevatedButton
+                                                          .styleFrom(
+                                                        elevation: 2,
+                                                        backgroundColor:
+                                                            Color(0xFFFFB347),
+                                                        foregroundColor:
+                                                            Colors.white,
+                                                        padding:
+                                                            EdgeInsets.symmetric(
+                                                                vertical: 12),
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 8),
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(choiceCtx)
+                                                            .pop(),
+                                                    child: Text(
+                                                      'Batal',
+                                                      style: TextStyle(
+                                                        color:
+                                                            Colors.grey.shade600,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           );
                                         },
                                       );
                                     },
-                                    style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: primaryOrange,
-                                      foregroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                                      textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                                    child: Padding(
+                                      padding: EdgeInsets.all(6),
+                                      child: Icon(
+                                        Icons.qr_code_scanner_rounded,
+                                        color: primaryOrange,
+                                        size: 24,
+                                      ),
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
-                            );
-                          },
-                        ),
                       ),
                     ),
                   ),

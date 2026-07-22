@@ -435,8 +435,10 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
   Future<String> CreateVehicleDoDiTerima(
       String vhcid, String bujnumber, String drvid) async {
     String bujnumber_diterima = "";
+    // Jangan matikan loading milik caller (Close DO kontinu).
+    final bool startedHere = !EasyLoading.isShow;
     try {
-      if (!EasyLoading.isShow) {
+      if (startedHere) {
         EasyLoading.show();
       }
 
@@ -456,14 +458,12 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
         alert(globalScaffoldKey.currentContext!, 0, "Gagal create session data ",
             "error");
       }
-      if (EasyLoading.isShow) {
-        EasyLoading.dismiss();
-      }
     } catch (e) {
       // alert(globalScaffoldKey.currentContext!, 0, "Client, create session",
       //     "error");
       print(e.toString());
-      if (EasyLoading.isShow) {
+    } finally {
+      if (startedHere && EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
     }
@@ -481,8 +481,9 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
       String lon,
       String geo_code,
       String photo) async {
+    // Jangan show ulang — loading sudah dipegang caller (satu spinner kontinu).
     if (!EasyLoading.isShow) {
-      EasyLoading.show();
+      _showOrUpdateLoading('Menyimpan Close DO...');
     }
     try {
       //String _photo = photo!=null && photo!=""?photo.toString().trim():"";
@@ -534,9 +535,6 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
         setState(() {
           GlobalData.responseMessage = message;
         });
-        if (EasyLoading.isShow) {
-          EasyLoading.show();
-        }
       }
       return status_code;
     } catch (e) {
@@ -733,6 +731,11 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
     await Future.delayed(Duration(milliseconds: 50));
   }
 
+  /// Satu loading kontinu: update teks saja, jangan dismiss/show ulang.
+  void _showOrUpdateLoading(String status) {
+    EasyLoading.show(status: status, dismissOnTap: false);
+  }
+
   Future<void> _showThemedInfoDialog({
     bool success = true,
     String title = "Information",
@@ -861,13 +864,13 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
   }
 
   /// Upload dokumen + status 99 ke Logkar saat Submit Close DO.
-  /// Return true = lanjut closeDo; false = stop.
+  /// Selalu return true agar closeDo (API JSP) tetap jalan meski Logkar gagal.
+  /// Loading satu kali kontinu (update teks saja), tanpa dialog di tengah proses.
   Future<bool> _uploadDocumentToLogkar(String lat, String lon) async {
     logkarPhotoStatus = "";
     logkarPhotoMessage = "";
     logkarStatus99Message = "";
 
-    // Form Close Mixer: selalu proses upload foto ke Logkar (jangan silent skip).
     final logkarNoDo = await _resolveLogkarNoDo();
     print('LOGKAR upload start, noDo=$logkarNoDo, isApiLokarRUN=${globals.isApiLokarRUN}');
 
@@ -875,26 +878,14 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
       logkarPhotoStatus = "DILEWATI";
       logkarPhotoMessage =
           "Upload Foto ke Logkar tidak dijalankan karena flag isApiLokarRUN = false.";
-      await _showLogkarDialog(
-        success: false,
-        title: 'Upload Foto ke Logkar Dilewati',
-        message: logkarPhotoMessage,
-      );
-      // Tetap lanjut Close DO lokal, tapi info sudah ditampilkan.
       return true;
     }
 
     if (logkarNoDo == "") {
       logkarPhotoStatus = "GAGAL";
       logkarPhotoMessage =
-          "Nomor DO Logkar tidak ditemukan. Ulangi dari OUTUNLOADING.";
-      await _dismissEasyLoading();
-      await _showLogkarDialog(
-        success: false,
-        title: 'Upload Foto ke Logkar Gagal',
-        message: logkarPhotoMessage,
-      );
-      return false;
+          "Nomor DO Logkar tidak ditemukan. Close DO lokal tetap dilanjutkan.";
+      return true;
     }
 
     String photoPath = filePathDisk;
@@ -904,31 +895,19 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
     if (photoPath == "" || !File(photoPath).existsSync()) {
       logkarPhotoStatus = "GAGAL";
       logkarPhotoMessage =
-          "Foto wajib diambil dari kamera (Capture) sebelum Submit ke Logkar.";
-      await _dismissEasyLoading();
-      await _showLogkarDialog(
-        success: false,
-        title: 'Upload Foto ke Logkar Gagal',
-        message: logkarPhotoMessage,
-      );
-      return false;
+          "Foto untuk Logkar tidak tersedia. Close DO lokal tetap dilanjutkan.";
+      return true;
     }
 
     final creds = await LogkarApiService.loadCredentials();
     if (creds == null) {
       logkarPhotoStatus = "GAGAL";
       logkarPhotoMessage =
-          "Credential Logkar belum tersedia. Silakan login ulang.";
-      await _dismissEasyLoading();
-      await _showLogkarDialog(
-        success: false,
-        title: 'Upload Foto ke Logkar Gagal',
-        message: logkarPhotoMessage,
-      );
-      return false;
+          "Credential Logkar belum tersedia. Close DO lokal tetap dilanjutkan.";
+      return true;
     }
 
-    EasyLoading.show(status: 'Mengirim foto dokumen ke Logkar...');
+    _showOrUpdateLoading('Mengirim foto dokumen ke Logkar...');
     try {
       final uploadResult = await LogkarApiService.uploadDocument(
         apiLokar: creds.apiLokar,
@@ -938,20 +917,15 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
         filePath: photoPath,
       );
 
-      await _dismissEasyLoading();
       print('LOGKAR upload result ok=${uploadResult.ok} msg=${uploadResult.message}');
 
       if (!uploadResult.ok) {
         logkarPhotoStatus = "GAGAL";
         logkarPhotoMessage = uploadResult.message.isNotEmpty
-            ? uploadResult.message
-            : 'Gagal mengirim foto dokumen ke API Logkar.';
-        await _showLogkarDialog(
-          success: false,
-          title: 'Upload Foto ke Logkar Gagal',
-          message: logkarPhotoMessage,
-        );
-        return false;
+            ? '${uploadResult.message}\n\nClose DO lokal tetap dilanjutkan.'
+            : 'Gagal mengirim foto dokumen ke API Logkar.\n\nClose DO lokal tetap dilanjutkan.';
+        // Jangan dismiss di sini — caller lanjut Close DO dengan loading yang sama.
+        return true;
       }
 
       logkarPhotoStatus = "BERHASIL";
@@ -959,13 +933,7 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
           ? uploadResult.message
           : 'Foto dokumen berhasil dikirim ke API Logkar.\nDO: $logkarNoDo';
 
-      await _showLogkarDialog(
-        success: true,
-        title: 'Upload Foto ke Logkar Berhasil',
-        message: logkarPhotoMessage,
-      );
-
-      EasyLoading.show(status: 'Mengirim status 99 ke Logkar...');
+      _showOrUpdateLoading('Mengirim status 99 ke Logkar...');
       final statusResult = await LogkarApiService.sendOrderStatus(
         apiLokar: creds.apiLokar,
         clientId: creds.clientId,
@@ -976,43 +944,24 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
         status: 99,
       );
 
-      await _dismissEasyLoading();
       print('LOGKAR status99 ok=${statusResult.ok} msg=${statusResult.message}');
 
       if (!statusResult.ok) {
         logkarStatus99Message = statusResult.message.isNotEmpty
-            ? statusResult.message
-            : 'Gagal mengirim status 99 ke API Logkar.';
-        await _showLogkarDialog(
-          success: false,
-          title: 'Status Logkar Gagal',
-          message: logkarStatus99Message,
-        );
-        return false;
+            ? '${statusResult.message}\n\nClose DO lokal tetap dilanjutkan.'
+            : 'Gagal mengirim status 99 ke API Logkar.\n\nClose DO lokal tetap dilanjutkan.';
+        return true;
       }
 
       logkarStatus99Message = statusResult.message.isNotEmpty
           ? statusResult.message
           : 'Status 99 berhasil dikirim ke API Logkar.\nDO: $logkarNoDo';
-
-      await _showLogkarDialog(
-        success: true,
-        title: 'Status Logkar Berhasil',
-        message: logkarStatus99Message,
-      );
       return true;
     } catch (e) {
       logkarPhotoStatus = "GAGAL";
-      logkarPhotoMessage = 'Gagal proses Logkar: $e';
-      await _dismissEasyLoading();
-      await _showLogkarDialog(
-        success: false,
-        title: 'Upload Foto ke Logkar Gagal',
-        message: logkarPhotoMessage,
-      );
-      return false;
-    } finally {
-      await _dismissEasyLoading();
+      logkarPhotoMessage =
+          'Gagal proses Logkar: $e\n\nClose DO lokal tetap dilanjutkan.';
+      return true;
     }
   }
 
@@ -1537,27 +1486,20 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
                                             Navigator.of(confirmCtx).pop(false);
                                             print('Close Do test');
 
-                                            // Tunggu dialog konfirmasi tertutup dulu biar dialog Logkar tampil.
+                                            // Tunggu dialog konfirmasi tertutup.
                                             await Future.delayed(
                                                 Duration(milliseconds: 150));
                                             await WidgetsBinding
                                                 .instance.endOfFrame;
 
-                                            // Upload dokumen Logkar dulu (jika aktif), baru close DO.
-                                            final logkarOk =
-                                                await _uploadDocumentToLogkar(
-                                                    lat, lon);
-                                            if (!logkarOk) {
-                                              if (EasyLoading.isShow) {
-                                                EasyLoading.dismiss();
-                                              }
-                                              pr?.hide();
-                                              return;
-                                            }
+                                            // Satu loading kontinu: Logkar → Close DO JSP.
+                                            _showOrUpdateLoading(
+                                                'Memproses Close DO...');
+                                            await _uploadDocumentToLogkar(
+                                                lat, lon);
 
-                                            EasyLoading.show(
-                                                status:
-                                                    'Menyimpan Close DO...');
+                                            _showOrUpdateLoading(
+                                                'Menyimpan Close DO...');
                                             var scode = await closeDo(
                                                 GlobalData.frmBujDoNumber,
                                                 GlobalData.frmDloDoNumber,
@@ -1569,9 +1511,7 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
                                                 lon,
                                                 GlobalData.frmGeoCodeTujuan,
                                                 filePathImage);
-                                            if (EasyLoading.isShow) {
-                                              EasyLoading.dismiss();
-                                            }
+                                            await _dismissEasyLoading();
                                             //var scode = "100";
 
                                             if (scode != null &&

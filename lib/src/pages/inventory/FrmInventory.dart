@@ -1267,7 +1267,7 @@ class _FrmInventoryState extends State<FrmInventory> {
   }
 
   /// Tunggu overlay benar-benar hilang sebelum aksi berikutnya.
-  Future<void> _waitDialogDisposed() async {
+  Future<void> _waitDialogDisposed() async {//
     await Future<void>.delayed(const Duration(milliseconds: 50));
     await WidgetsBinding.instance.endOfFrame;
   }
@@ -1281,10 +1281,10 @@ class _FrmInventoryState extends State<FrmInventory> {
   }) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: onTap,
+      onTap: onTap,//
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
+        decoration: BoxDecoration(//
           color: bgColor,
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
@@ -1606,7 +1606,10 @@ class _FrmInventoryState extends State<FrmInventory> {
             subtitle: Text(
               "Partname : ${item['part_name']}\n"
               "Type : ${item['type']} | Merk : ${item['merk']}\n"
-              "UOM: ${item['uom_id']}",
+              "UOM: ${item['uom_id']}\n"
+              "Genuino: ${item['genuine_no']}\n"
+              "Size: ${item['item_size']}\n"
+              "IDAccess: ${item['accessories']}",
               style: const TextStyle(color: Colors.black),
             ),
           ),
@@ -1833,7 +1836,7 @@ class _FrmInventoryState extends State<FrmInventory> {
                       ),
                       padding:
                           EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      textStyle: 
+                      textStyle:
                           TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 )),
               ]),

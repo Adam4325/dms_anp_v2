@@ -112,6 +112,7 @@ String? wh_type = "";
 String? wh_accessories = "";
 String? wh_merk = "";
 String? wh_item_size = "";
+String? wh_genuine_no = "";
 String? wh_quantity_on_hands = "";
 String? wh_quantity_on_actuals = "";
 String? wh_typepo = "";

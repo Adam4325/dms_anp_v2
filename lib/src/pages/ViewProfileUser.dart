@@ -284,21 +284,109 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
   Future<void> _logout() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: Text('Konfirmasi'),
-        content: Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Tidak'),
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 22, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: lightOrange,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: primaryOrange, width: 1.5),
+                  ),
+                  child: Icon(Icons.logout_rounded, color: primaryOrange, size: 34),
+                ),
+                SizedBox(height: 14),
+                Text(
+                  'Konfirmasi',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: darkOrange,
+                  ),
+                ),
+                SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: lightOrange,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: accentOrange.withOpacity(0.5)),
+                  ),
+                  child: Text(
+                    'Apakah Anda yakin ingin keluar?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: 14,
+                      height: 1.35,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogCtx, false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: darkOrange,
+                          side: BorderSide(color: primaryOrange, width: 1.5),
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          'Tidak',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: darkOrange,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(dialogCtx, true),
+                        style: ElevatedButton.styleFrom(
+                          elevation: 2,
+                          backgroundColor: primaryOrange,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          'Ya, Keluar',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text('Ya'),
-          ),
-        ],
-      ),
+        );
+      },
     );
 
     if (confirmed == true) {
