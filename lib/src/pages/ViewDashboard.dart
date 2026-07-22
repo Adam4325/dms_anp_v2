@@ -4625,6 +4625,13 @@ class _ViewDashboardState extends State<ViewDashboard>
         });
         return;
       } else if (items.toString().toUpperCase() == "CLOSE DO") {
+        final logkarNoDo = item['do_number']?.toString().trim() ?? '';
+        if (logkarNoDo.isNotEmpty) {
+          sharedPreferences ??= await SharedPreferences.getInstance();
+          await sharedPreferences!.setString('logkar_mixer_no_do', logkarNoDo);
+          await sharedPreferences!.setString('do_maps', logkarNoDo);
+          print('LOGKAR save android do_number (Close DO)=$logkarNoDo');
+        }
         GetVhcidDo();
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
@@ -4650,6 +4657,14 @@ class _ViewDashboardState extends State<ViewDashboard>
         alert(globalScaffoldKey.currentContext!, 0,
             "Data driver tidak ditemukan", "error");
         return;
+      }
+
+      // no_do Logkar = item['do_number'] (sama yang dikirim ke update_status_do_mixerv2.jsp)
+      final String androidDoNumber = item['do_number']?.toString().trim() ?? '';
+      if (androidDoNumber.isNotEmpty) {
+        await sharedPreferences!.setString('logkar_mixer_no_do', androidDoNumber);
+        await sharedPreferences!.setString('do_maps', androidDoNumber);
+        print('LOGKAR save android do_number=$androidDoNumber');
       }
 
       if (globals.isApiLokarRUN) {
@@ -4695,13 +4710,15 @@ class _ViewDashboardState extends State<ViewDashboard>
             );
             if (!mounted) return;
             EasyLoading.dismiss();
-            await _showLogkarPositionDialog(
-              success: logkarResult.ok,
-              message: logkarResult.message,
-            );
+            // Success: silent (seperti background). Gagal: tetap tampilkan dialog.
             if (!logkarResult.ok) {
+              await _showLogkarPositionDialog(
+                success: false,
+                message: logkarResult.message,
+              );
               return;
             }
+            print('LOGKAR position OK (silent): ${logkarResult.message}');
           }
         } catch (e) {
           if (EasyLoading.isShow) {
@@ -4753,13 +4770,32 @@ class _ViewDashboardState extends State<ViewDashboard>
       var latitude = gpsResult["latitude"] ?? 0;
       var longitude = gpsResult["longitude"] ?? 0;
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      var api_lokar = prefs.getString("api_lokar");
-      var baseURL = GlobalData.baseUrl +
-          "api/do_mixer/update_status_do_mixerv2.jsp?method=update-status-do-mixer&api_lokar=${api_lokar}&do_number=${item['do_number']}&bujnbr=${item['bujnbr']}"
-              "&status_do_mixer=${item['status_do_mixer']}&latitude=${latitude}&longitude=${longitude}&bujdestination=${item['bujdestination']}&userid=${loginname}";
-      print(baseURL);
-      var encoded = Uri.encodeFull(baseURL);
-      Uri myUri = Uri.parse(encoded);
+      var api_lokar = prefs.getString("api_lokar") ?? '';
+      // Pastikan no_do Logkar = do_number dari Android (bukan dlodetail)
+      final String doNumberAndroid = item['do_number']?.toString().trim() ?? '';
+      final String bujnbrAndroid = item['bujnbr']?.toString().trim() ?? '';
+      final String statusMixer = item['status_do_mixer']?.toString() ?? '';
+      final String bujDest = item['bujdestination']?.toString() ?? '';
+      if (doNumberAndroid.isNotEmpty) {
+        await prefs.setString('logkar_mixer_no_do', doNumberAndroid);
+        await prefs.setString('do_maps', doNumberAndroid);
+      }
+      // Pakai queryParameters agar do_number tidak rusak karena encode api_lokar
+      final Uri myUri = Uri.parse(
+              '${GlobalData.baseUrl}api/do_mixer/update_status_do_mixerv2.jsp')
+          .replace(queryParameters: {
+        'method': 'update-status-do-mixer',
+        'api_lokar': api_lokar,
+        'do_number': doNumberAndroid,
+        'bujnbr': bujnbrAndroid,
+        'status_do_mixer': statusMixer,
+        'latitude': latitude.toString(),
+        'longitude': longitude.toString(),
+        'bujdestination': bujDest,
+        'userid': loginname?.toString() ?? '',
+      });
+      print('LOGKAR JSP url: $myUri');
+      print('LOGKAR JSP do_number(android)=$doNumberAndroid bujnbr=$bujnbrAndroid');
       var response =
           await http.get(myUri, headers: {"Accept": "application/json"});
       if (!mounted) {

@@ -707,18 +707,19 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
 
   Future<String> _resolveLogkarNoDo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    // Hanya pakai nomor DO mixer untuk Logkar (bukan dlodetaildonumber).
+    // Wajib pakai do_number dari Android (ViewDashboard item['do_number']),
+    // yang sama dikirim ke update_status_do_mixerv2.jsp — JANGAN frmDloDoNumber/dlodetail.
     final saved = prefs.getString('logkar_mixer_no_do');
     if (saved != null && saved.trim().isNotEmpty) {
-      print('LOGKAR resolve do_no from prefs logkar_mixer_no_do=$saved');
+      print('LOGKAR upload no_do from android prefs logkar_mixer_no_do=$saved');
       return saved.trim();
     }
     final fromMaps = prefs.getString('do_maps');
     if (fromMaps != null && fromMaps.trim().isNotEmpty) {
-      print('LOGKAR resolve do_no from prefs do_maps=$fromMaps');
+      print('LOGKAR upload no_do fallback do_maps=$fromMaps');
       return fromMaps.trim();
     }
-    print('LOGKAR resolve do_no: kosong (jangan pakai frmDloDoNumber/dlodetail)');
+    print('LOGKAR upload no_do: kosong (harus dari android item do_number)');
     return "";
   }
 

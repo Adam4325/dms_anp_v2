@@ -669,6 +669,9 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
     }
     if (widget.do_number != null && widget.do_number!.isNotEmpty) {
       prefs.setString("dlodetaildonumber", widget.do_number!);
+      // Samakan no_do Logkar dengan do_number dari Android / ViewDashboard
+      prefs.setString("logkar_mixer_no_do", widget.do_number!);
+      prefs.setString("do_maps", widget.do_number!);
     }
   }
 
