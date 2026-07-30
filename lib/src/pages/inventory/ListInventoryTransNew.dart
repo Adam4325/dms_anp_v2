@@ -2086,102 +2086,153 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
         "nopol": value['nopol'],
         "vhtid": value['vhtid'],
         "genuine_no": value['genuine_no'],
+        "itxnotes": value['itxnotes'],
       });
     });
     return list;
   }
 
+  String _s(dynamic v) {
+    if (v == null) return '';
+    final t = v.toString().trim();
+    if (t.isEmpty || t == 'null') return '';
+    return t;
+  }
+
+  Widget _kv(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2),
+      child: Table(
+        columnWidths: const {
+          0: IntrinsicColumnWidth(),
+          1: FixedColumnWidth(14),
+          2: FlexColumnWidth(),
+        },
+        children: [
+          TableRow(children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                label,
+                style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: Text(
+                ":",
+                style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                value.isEmpty ? '-' : value,
+                style: TextStyle(
+                  color: Colors.grey.shade900,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ])
+        ],
+      ),
+    );
+  }
+
+  Widget _invBtn({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Expanded(
+      child: ElevatedButton.icon(
+        icon: Icon(icon, color: Colors.white, size: 15),
+        label: Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          elevation: 1,
+          backgroundColor: color,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        ),
+      ),
+    );
+  }
+
   Widget listItemBuilder(value, int index) {
-    //print(value["drvid"]);
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accentOrange.withOpacity(0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor,
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Container(
-            width: MediaQuery.of(context).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings, color: Colors.black),
-                ),
-
-                title: Text(
-                  "Inv. Trx Number: ${value['inv_trx_number']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("Nopol: ${value['nopol']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text(
-                      "Inv. Trx Status / Type: ${value['inv_trx_status']} / ${value['inv_trx_type']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("From Ware House: ${value['from_ware_house']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text(
-                      "To Ware House: ${(value['towarehouse'] == 'null' || value['towarehouse'] == '' || value['towarehouse'] == null ? '' : value['towarehouse'])}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text(
-                      "Vendor ID: ${(value['vendorid'] == 'null' || value['vendorid'] == null ? '' : value['vendorid'])}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text(
-                      "Wo Number: ${(value['wo_number'] == 'null' || value['wo_number'] == '' || value['wo_number'] == null ? '' : value['wo_number'])}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Cabang: ${value['locid']}",
-                      style: TextStyle(color: Colors.black)),
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(14, 12, 14, 10),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
+              ),
+            ),
+            child: Text(
+              "Inv. Trx : ${_s(value['inv_trx_number'])}",
+              style: TextStyle(
+                color: darkOrange,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
               ),
             ),
           ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Add",style: TextStyle(color: Colors.white)),
+          Padding(
+            padding: EdgeInsets.fromLTRB(14, 8, 14, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _kv('Nopol', _s(value['nopol'])),
+                _kv(
+                  'Status / Type',
+                  '${_s(value['inv_trx_status'])} / ${_s(value['inv_trx_type'])}',
+                ),
+                _kv('From WH', _s(value['from_ware_house'])),
+                _kv('To WH', _s(value['towarehouse'])),
+                _kv('Vendor ID', _s(value['vendorid'])),
+                _kv('WO Number', _s(value['wo_number'])),
+                _kv('Cabang', _s(value['locid'])),
+                _kv('Note', _s(value['itxnotes'])),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(12, 4, 12, 4),
+            child: Row(
+              children: [
+                _invBtn(
+                  icon: Icons.add,
+                  label: 'Add',
+                  color: accentOrange,
                   onPressed: () {
                     globals.inv_trx_number = value['inv_trx_number'];
                     globals.from_ware_house = value['from_ware_house'];
@@ -2193,314 +2244,175 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                     globals.inv_back_page = "form";
                     globals.inv_back_page_detail = value['inv_trx_number'];
                     globals.inv_wonumber = value['wo_number'];
-                    print(
-                        'globals.inv_towarehouse ${value['towarehouse'].toString()}');
-                    print(
-                        'globals.from_ware_house ${value['from_ware_house'].toString()}');
-                    globals.inv_vendorid =
-                        value['vendorid'] == 'null' || value['vendorid'] == null
-                            ? ''
-                            : value['vendorid'];
-                    globals.inv_towarehouse = value['towarehouse'] == 'null' ||
-                            value['towarehouse'] == null
-                        ? ''
-                        : value['towarehouse'];
-                    // print(globals.inv_back_page_detail);
-                    // print(globals.inv_locid);
-                    // print("inv_towarehouse");
-                    // print(globals.inv_towarehouse);
-                    print('inv_trx_type');
-                    print(value['inv_trx_type']);
-                    var isIsm = value['inv_trx_type'] != null &&
-                            value['inv_trx_type'].toString() != ''
+                    globals.inv_vendorid = _s(value['vendorid']);
+                    globals.inv_towarehouse = _s(value['towarehouse']);
+                    var isIsm = _s(value['inv_trx_type']).isNotEmpty
                         ? value['inv_trx_type'].toString()
                         : null;
-                    print(isIsm);
                     Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                FrmInventory(invTrxStatusBarang: isIsm!)));
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 2.0,
-                      backgroundColor: accentOrange, // ✅ Accent orange for Add
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            FrmInventory(invTrxStatusBarang: isIsm!),
                       ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      textStyle:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                )),
-                SizedBox(
-                  width: 2,
+                    );
+                  },
                 ),
-                Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("View Detail",style: TextStyle(color: Colors.white)),
-                  onPressed: () async {
-                    print(value['inv_trx_number']);
+                SizedBox(width: 6),
+                _invBtn(
+                  icon: Icons.visibility_outlined,
+                  label: 'View Detail',
+                  color: primaryOrange,
+                  onPressed: () {
                     globals.inv_trx_number = value['inv_trx_number'];
                     globals.from_ware_house = value['from_ware_house'];
                     globals.inv_trx_type = value['inv_trx_type'];
                     globals.inv_locid = value['locid'];
                     globals.inv_vhtid = value['vhtid'];
                     globals.inv_genuine_no = value['genuine_no'];
-                    globals.inv_vendorid =
-                        value['vendorid'] == 'null' || value['vendorid'] == null
-                            ? ''
-                            : value['vendorid'];
-                    globals.inv_towarehouse = value['towarehouse'] == 'null' ||
-                            value['towarehouse'] == null
-                        ? ''
-                        : value['towarehouse'];
-                    print(globals.inv_locid);
+                    globals.inv_vendorid = _s(value['vendorid']);
+                    globals.inv_towarehouse = _s(value['towarehouse']);
                     globals.inv_back_page = "detail";
                     globals.inv_back_page_detail = value['inv_trx_number'];
-                    print(globals.inv_back_page_detail);
-                    var isIsm = value['inv_trx_type'] != null &&
-                            value['inv_trx_type'].toString() != ''
-                        ? value['inv_trx_type'].toString()
-                        : null;
+                    var isIsm = _s(value['inv_trx_type']);
                     Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => ListInventoryDetail(
-                                tabName: '', invTrxStatusBarang: isIsm ?? '')));
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 2.0,
-                      backgroundColor:
-                          primaryOrange, // ✅ Orange for View Detail
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ListInventoryDetail(
+                          tabName: '',
+                          invTrxStatusBarang: isIsm,
+                        ),
                       ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      textStyle:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                )),
-              ]),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.only(left: 10, top: 0, right: 10, bottom: 0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.cancel,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Cancel",style: TextStyle(color: Colors.white)),
+          Padding(
+            padding: EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: Row(
+              children: [
+                _invBtn(
+                  icon: Icons.cancel_outlined,
+                  label: 'Cancel',
+                  color: Colors.grey.shade500,
                   onPressed: () {
-                    // globals.inv_trx_number = value['inv_trx_number'];
-                    // globals.from_ware_house = value['from_ware_house'];
-                    // globals.inv_trx_type = value['inv_trx_type'];
-                    // globals.inv_locid = value['locid'];
-                    // globals.inv_vhtid = value['vhtid'];
-                    // globals.inv_genuine_no = value['genuine_no'];
-                    // globals.inv_method = "cancel";
-                    print('cancel');
-
-                    if (value['wo_number'] == null ||
-                        value['wo_number'] == '') {
+                    if (_s(value['wo_number']).isEmpty) {
                       alert(globalScaffoldKey.currentContext!, 0,
                           "WO Number tidak boleh kosong", "error");
-                    } else if (value['inv_trx_number'] == null ||
-                        value['inv_trx_number'] == '') {
+                    } else if (_s(value['inv_trx_number']).isEmpty) {
                       alert(globalScaffoldKey.currentContext!, 0,
                           "Trx Number tidak boleh kosong", "error");
                     } else {
                       showDialog(
                         context: globalScaffoldKey.currentContext!,
-                        builder: (context) => new AlertDialog(
-                          title: new Text('Information'),
-                          content: new Text("Cancel this data?"),
+                        builder: (context) => AlertDialog(
+                          title: Text('Information'),
+                          content: Text("Cancel this data?"),
                           actions: <Widget>[
-                            new ElevatedButton.icon(
-                              icon: Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 24.0,
-                              ),
-                              label: Text("No"),
-                              onPressed: () async {
+                            ElevatedButton.icon(
+                              icon: Icon(Icons.close,
+                                  color: Colors.white, size: 20),
+                              label: Text("No",
+                                  style: TextStyle(color: Colors.white)),
+                              onPressed: () {
                                 Navigator.of(context, rootNavigator: true)
                                     .pop();
                               },
                               style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: Colors.orangeAccent,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  textStyle: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                            new SizedBox(width: 10),
-                            new ElevatedButton.icon(
-                              icon: Icon(
-                                Icons.info,
-                                color: Colors.white,
-                                size: 24.0,
+                                backgroundColor: Colors.grey.shade500,
                               ),
-                              label: Text("Cancel Transaction"),
+                            ),
+                            ElevatedButton.icon(
+                              icon: Icon(Icons.cancel_outlined,
+                                  color: Colors.white, size: 20),
+                              label: Text("Cancel Transaction",
+                                  style: TextStyle(color: Colors.white)),
                               onPressed: () async {
                                 Navigator.of(context, rootNavigator: true)
                                     .pop();
                                 await CancelTrxInv(value['inv_trx_number']);
                               },
                               style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: Colors.blue,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  textStyle: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
+                                backgroundColor: primaryOrange,
+                              ),
                             ),
                           ],
                         ),
                       );
                     }
                   },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 2.0,
-                      backgroundColor:
-                          Colors.grey.shade500, // ✅ Gray for Cancel
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      textStyle:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                )),
-                SizedBox(
-                  width: 2,
                 ),
-                Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.save_outlined,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Approve",style: TextStyle(color: Colors.white)),
-                  onPressed: () async {
-                    // print(value['inv_trx_number']);
-                    // globals.inv_trx_number = value['inv_trx_number'];
-                    // globals.from_ware_house = value['from_ware_house'];
-                    // globals.inv_trx_type = value['inv_trx_type'];
-                    print('Approve');
-                    if (value['wo_number'] == null ||
-                        value['wo_number'] == '') {
+                SizedBox(width: 6),
+                _invBtn(
+                  icon: Icons.check_circle_outline,
+                  label: 'Approve',
+                  color: darkOrange,
+                  onPressed: () {
+                    if (_s(value['wo_number']).isEmpty) {
                       alert(globalScaffoldKey.currentContext!, 0,
                           "WO Number tidak boleh kosong", "error");
-                    } else if (value['inv_trx_number'] == null ||
-                        value['inv_trx_number'] == '') {
+                    } else if (_s(value['inv_trx_number']).isEmpty) {
                       alert(globalScaffoldKey.currentContext!, 0,
                           "Trx Number tidak boleh kosong", "error");
-                    } else if (value['inv_trx_type'] == null ||
-                        value['inv_trx_type'] == '') {
+                    } else if (_s(value['inv_trx_type']).isEmpty) {
                       alert(globalScaffoldKey.currentContext!, 0,
                           "Type tidak boleh kosong", "error");
-                    } else if (value['from_ware_house'] == null ||
-                        value['from_ware_house'] == '') {
+                    } else if (_s(value['from_ware_house']).isEmpty) {
                       alert(globalScaffoldKey.currentContext!, 0,
                           "WH ID tidak boleh kosong", "error");
-                    } else if (value['locid'] == null || value['locid'] == '') {
+                    } else if (_s(value['locid']).isEmpty) {
                       alert(globalScaffoldKey.currentContext!, 0,
                           "Cabang tidak boleh kosong", "error");
                     } else {
                       showDialog(
                         context: globalScaffoldKey.currentContext!,
-                        builder: (context) => new AlertDialog(
-                          title: new Text('Information'),
-                          content: new Text("Approve this data?"),
+                        builder: (context) => AlertDialog(
+                          title: Text('Information'),
+                          content: Text("Approve this data?"),
                           actions: <Widget>[
-                            new ElevatedButton.icon(
-                              icon: Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 24.0,
-                              ),
-                              label: Text("No"),
-                              onPressed: () async {
+                            ElevatedButton.icon(
+                              icon: Icon(Icons.close,
+                                  color: Colors.white, size: 20),
+                              label: Text("No",
+                                  style: TextStyle(color: Colors.white)),
+                              onPressed: () {
                                 Navigator.of(context, rootNavigator: true)
                                     .pop();
                               },
                               style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: Colors.orangeAccent,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  textStyle: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
+                                backgroundColor: Colors.grey.shade500,
+                              ),
                             ),
-                            new SizedBox(width: 10),
-                            new ElevatedButton.icon(
-                              icon: Icon(
-                                Icons.info,
-                                color: Colors.white,
-                                size: 24.0,
-                              ),
-                              label: Text("Approve"),
+                            ElevatedButton.icon(
+                              icon: Icon(Icons.check,
+                                  color: Colors.white, size: 20),
+                              label: Text("Approve",
+                                  style: TextStyle(color: Colors.white)),
                               onPressed: () async {
                                 Navigator.of(context, rootNavigator: true)
                                     .pop();
-                                print(value['inv_trx_type']);
-                                print(value['wo_number']);
-                                print(value['inv_trx_number']);
-                                print(value['from_ware_house']);
-                                print(value['towarehouse']);
-                                print(value['locid']);
                                 await ApproveTrxInv(
-                                    value['inv_trx_type'],
-                                    value['wo_number'],
-                                    value['inv_trx_number'],
-                                    value['from_ware_house'],
-                                    value['towarehouse'],
-                                    value['locid']);
+                                  value['inv_trx_type'],
+                                  value['wo_number'],
+                                  value['inv_trx_number'],
+                                  value['from_ware_house'],
+                                  value['towarehouse'],
+                                  value['locid'],
+                                );
                               },
                               style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: Colors.blue,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  textStyle: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
+                                backgroundColor: darkOrange,
+                              ),
                             ),
                           ],
                         ),
                       );
                     }
                   },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 2.0,
-                      backgroundColor: darkOrange, // ✅ Dark orange for Approve
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      textStyle:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                )),
-              ]),
+                ),
+              ],
             ),
           ),
         ],

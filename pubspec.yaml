@@ -107,6 +107,8 @@ dependencies:
   google_fonts: ^8.0.1
   share_plus: ^12.0.1
   flutter_pdfview: ^1.4.4
+  print_bluetooth_thermal: ^1.2.1
+  esc_pos_utils_plus: ^2.0.4
 
 dev_dependencies:
   flutter_test:

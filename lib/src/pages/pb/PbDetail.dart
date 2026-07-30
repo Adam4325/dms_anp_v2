@@ -5,17 +5,15 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 // Warna tema
 final Color primaryOrange = Color(0xFFFF8C69);
-final Color lightOrange = Color(0xFFFFF4E6);
-final Color accentOrange = Color(0xFFFFB347);
 final Color darkOrange = Color(0xFFE07B39);
 final Color backgroundColor = Color(0xFFFFFAF5);
 final Color cardColor = Color(0xFFFFF8F0);
 final Color shadowColor = Color(0x20FF8C69);
 
+/// Detail PR → Outstanding PO (view-only).
+/// Beda dari [PoDetail]: tidak ada edit/update; Qty Terima = hasil receive PO.
 class PbDetail extends StatefulWidget {
   final String pbnbr;
 
@@ -28,7 +26,7 @@ class PbDetail extends StatefulWidget {
 class _PbDetailState extends State<PbDetail> {
   List detailList = [];
   bool isLoading = true;
-  List<TextEditingController> qtyControllers = [];
+  String _errorMsg = '';
 
   @override
   void initState() {
@@ -39,167 +37,92 @@ class _PbDetailState extends State<PbDetail> {
     }
   }
 
+  int _toInt(dynamic v) {
+    if (v == null) return 0;
+    return int.tryParse(v.toString().split('.').first) ?? 0;
+  }
+
+  /// View-only: Qty Pesan = qty asli; Qty Terima = sudah diterima dari update PO.
+  List _normalizeDetailList(dynamic data) {
+    if (data is! List) return [];
+    final List result = [];
+    for (final raw in data) {
+      try {
+        if (raw is! Map) continue;
+        final item = Map<String, dynamic>.from(raw);
+        final qtyPesan = item['qty_pesan_asli'] != null
+            ? _toInt(item['qty_pesan_asli'])
+            : _toInt(item['qty_pesan']);
+        final qtyTerima = item['qty_sudah_terima'] != null
+            ? _toInt(item['qty_sudah_terima'])
+            : _toInt(item['qty_terima']);
+        item['qty_pesan'] = qtyPesan.toString();
+        item['qty_terima'] = qtyTerima.toString();
+        result.add(item);
+      } catch (e) {
+        print('normalize pb detail error: $e');
+      }
+    }
+    return result;
+  }
+
   Future<void> fetchDetailData() async {
     setState(() {
       isLoading = true;
+      _errorMsg = '';
     });
 
+    final nbr = (widget.pbnbr ?? '').toString().trim();
+    if (nbr.isEmpty) {
+      setState(() {
+        detailList = [];
+        isLoading = false;
+        _errorMsg = 'Nomor PO kosong. Kembali ke list lalu buka Detail lagi.';
+      });
+      return;
+    }
+
     try {
-      var baseUrl = GlobalData.baseUrl + "api/pb/detail_pb_header.jsp?method=list-pb-detail&pbnbr=${widget.pbnbr}";
-      print(baseUrl);
-      var url = Uri.parse(baseUrl);
-      var res = await http.get(url);
+      final baseUrl = GlobalData.baseUrl +
+          "api/pb/detail_pb_header.jsp?method=list-pb-detail&ponbr=${Uri.encodeComponent(nbr)}&pbnbr=${Uri.encodeComponent(nbr)}";
+      print('pb detail url: $baseUrl');
+      final res = await http.get(Uri.parse(baseUrl));
+      print('pb detail status: ${res.statusCode}');
+      print('pb detail body: ${res.body}');
 
       if (res.statusCode == 200) {
-        var data = json.decode(res.body);
+        final body = res.body.trim();
+        if (body.isEmpty) {
+          setState(() {
+            detailList = [];
+            isLoading = false;
+            _errorMsg = 'Response API kosong';
+          });
+          return;
+        }
+        final data = json.decode(body);
+        final list = _normalizeDetailList(data);
         setState(() {
-          detailList = data;
-          qtyControllers = List.generate(
-            detailList.length,
-                (index) => TextEditingController(
-              text: detailList[index]['qty_terima'] ?? '',
-            ),
-          );
+          detailList = list;
           isLoading = false;
+          _errorMsg = list.isEmpty ? 'Tidak ada detail untuk $nbr' : '';
         });
       } else {
-        throw Exception("Gagal load data");
+        throw Exception("HTTP ${res.statusCode}");
       }
     } catch (e) {
+      print('fetchDetailData pb error: $e');
       setState(() {
+        detailList = [];
         isLoading = false;
+        _errorMsg = 'Gagal load detail: $e';
       });
     }
   }
 
-  _goBack(BuildContext context) {
+  void _goBack(BuildContext context) {
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => PbHeaderPage()));
-  }
-
-  Future<void> updateData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<Map<String, dynamic>> payload = [];
-    var userid = prefs.getString("name") ?? '';
-    print(userid);
-    for (int i = 0; i < detailList.length; i++) {
-      if(!qtyControllers[i].text.isEmpty){
-        if(int.parse(qtyControllers[i].text)>0){
-          if(int.parse(qtyControllers[i].text)<=int.parse(detailList[i]['qty_pesan'])){
-            payload.add({
-              "method": "receive-pb",
-              "pbnbr": widget.pbnbr,
-              "itditemid": detailList[i]['itditemid'],
-              "partname": detailList[i]['partname'],
-              "genuineno": detailList[i]['genuineno'],
-              "merk": detailList[i]['merk'],
-              "harga": detailList[i]['harga'],
-              "qty_pesan": detailList[i]['qty_pesan'],
-              "qty_terima": qtyControllers[i].text,
-              "userid": userid,
-            });
-          }
-        }
-      }
-
-    }
-    print("payload");
-    print(payload);
-    if(payload.isEmpty){
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('QTY tidak boleh 0')));
-      return;
-    }
-    try {
-      EasyLoading.show(status: 'Updating...');
-      var url = Uri.parse(GlobalData.baseUrl + "api/pb/update_po_detail.jsp");
-      var res = await http.post(url, body: {"data": json.encode(payload)});
-
-      EasyLoading.dismiss();
-      if (res.statusCode == 200) {
-        var response = json.decode(res.body);
-        print(response);
-        print(response['status']);
-        if (response['status'] == 'success') {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Data berhasil diupdate')));
-          _goBack(context);
-        } else {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text('Gagal update data')));
-        }
-      }
-    } catch (e) {
-      EasyLoading.dismiss();
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
-  }
-
-  void confirmUpdate() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 28),
-            SizedBox(width: 8),
-            Text(
-              "Konfirmasi",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          "Apakah Anda yakin ingin update data ini?",
-          style: TextStyle(fontSize: 15, color: Colors.black54, height: 1.4),
-        ),
-        actionsPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.grey.shade600,
-            ),
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text("Batal"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              elevation: 0,
-            ),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              updateData();
-            },
-            child: Text("Ya"),
-          ),
-        ],
-      ),
-    );
-  }
-
-
-  Widget buildRowLabelValue(String label, Widget valueWidget) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-          Container(width: 140, child: valueWidget),
-        ],
-      ),
-    );
   }
 
   @override
@@ -216,87 +139,86 @@ class _PbDetailState extends State<PbDetail> {
             _goBack(context);
           },
         ),
-        title: Text("Detail PB ${widget.pbnbr}",
+        title: Text("Detail PO ${widget.pbnbr}",
             style: TextStyle(fontWeight: FontWeight.bold)),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: fetchDetailData,
+          ),
+        ],
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator(color: primaryOrange))
           : detailList.isEmpty
-          ? Center(
-          child: Text("Tidak ada detail data",
-              style: TextStyle(color: Colors.grey)))
-          : Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.all(10),
-              itemCount: detailList.length,
-              itemBuilder: (context, index) {
-                var item = detailList[index];
-                return Container(
-                  margin: EdgeInsets.symmetric(vertical: 6),
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: cardColor,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: shadowColor,
-                        spreadRadius: 1,
-                        blurRadius: 6,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(item['partname'] ?? '',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: darkOrange)),
-                      SizedBox(height: 6),
-                      _kv("Item ID", (item['itditemid'] ?? '').toString()),
-                      _kv("Genuine No", (item['genuineno'] ?? '').toString()),
-                      _kv("Merk", (item['merk'] ?? '').toString()),
-                      _kv("Harga", (item['harga'] ?? '').toString()),
-                      _kv("Qty Pesan", (item['qty_pesan'] ?? '').toString()),
-                      buildRowLabelValue(
-                        "Qty Terima:",
-                        TextField(
-                          controller: qtyControllers[index],
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            contentPadding:
-                            EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                          ),
+              ? Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _errorMsg.isEmpty
+                              ? 'Tidak ada detail data'
+                              : _errorMsg,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey.shade700),
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 12),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryOrange),
+                          onPressed: fetchDetailData,
+                          child: Text('Coba lagi',
+                              style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              },
-            ),
-          ),
-          Container(
-            width: double.infinity,
-            margin: EdgeInsets.fromLTRB(12, 12, 12, 60),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: accentOrange,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: confirmUpdate,
-              child: Text("Update", style: TextStyle(fontSize: 16)),
-            ),
-          ),
-        ],
-      ),
+                )
+              : ListView.builder(
+                  padding: EdgeInsets.fromLTRB(10, 10, 10, 40),
+                  itemCount: detailList.length,
+                  itemBuilder: (context, index) {
+                    var item = detailList[index];
+                    return Container(
+                      margin: EdgeInsets.symmetric(vertical: 6),
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: shadowColor,
+                            spreadRadius: 1,
+                            blurRadius: 6,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item['partname'] ?? '',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: darkOrange)),
+                          SizedBox(height: 6),
+                          _kv("Item ID",
+                              (item['itditemid'] ?? '').toString()),
+                          _kv("Genuine No",
+                              (item['genuineno'] ?? '').toString()),
+                          _kv("Merk", (item['merk'] ?? '').toString()),
+                          _kv("Harga", (item['harga'] ?? '').toString()),
+                          _kv("Qty Pesan",
+                              (item['qty_pesan'] ?? '').toString()),
+                          _kv("Qty Terima",
+                              (item['qty_terima'] ?? '0').toString()),
+                        ],
+                      ),
+                    );
+                  },
+                ),
     );
   }
 
@@ -308,15 +230,18 @@ class _PbDetailState extends State<PbDetail> {
         children: [
           Expanded(
             flex: 3,
-            child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+            child: Text(label,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
           ),
           const SizedBox(
             width: 10,
-            child: Text(":", textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
+            child: Text(":",
+                textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
           ),
           Expanded(
             flex: 5,
-            child: Text(value, textAlign: TextAlign.right, style: TextStyle(fontSize: 12)),
+            child: Text(value,
+                textAlign: TextAlign.right, style: TextStyle(fontSize: 12)),
           ),
         ],
       ),

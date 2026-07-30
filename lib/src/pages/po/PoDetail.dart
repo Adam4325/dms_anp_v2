@@ -51,13 +51,23 @@ class _PoDetailState extends State<PoDetail> {
       var res = await http.get(url);
 
       if (res.statusCode == 200) {
-        var data = json.decode(res.body);
+        var body = res.body.trim();
+        print('detail_po_header body: $body');
+        if (body.isEmpty) {
+          setState(() {
+            detailList = [];
+            qtyControllers = [];
+            isLoading = false;
+          });
+          return;
+        }
+        var data = json.decode(body);
         setState(() {
-          detailList = data;
+          detailList = _normalizeDetailList(data);
           qtyControllers = List.generate(
             detailList.length,
                 (index) => TextEditingController(
-              text: detailList[index]['qty_terima'] ?? '',
+              text: (detailList[index]['qty_terima'] ?? '0').toString(),
             ),
           );
           isLoading = false;
@@ -66,10 +76,43 @@ class _PoDetailState extends State<PoDetail> {
         throw Exception("Gagal load data");
       }
     } catch (e) {
+      print('fetchDetailData error: $e');
       setState(() {
         isLoading = false;
       });
     }
+  }
+
+  int _toInt(dynamic v) {
+    if (v == null) return 0;
+    return int.tryParse(v.toString().split('.').first) ?? 0;
+  }
+
+  /// qty_pesan = sisa (asli - sudah terima); qty_terima input = 0 jika masih outstanding
+  List _normalizeDetailList(dynamic data) {
+    if (data is! List) return [];
+    final List result = [];
+    for (final raw in data) {
+      try {
+        if (raw is! Map) continue;
+        final item = Map<String, dynamic>.from(raw);
+        int sisa;
+        if (item['qty_pesan_asli'] != null) {
+          sisa = _toInt(item['qty_pesan_asli']) - _toInt(item['qty_sudah_terima'] ?? 0);
+        } else if (item['qty_sudah_terima'] != null) {
+          sisa = _toInt(item['qty_pesan']);
+        } else {
+          sisa = _toInt(item['qty_pesan']) - _toInt(item['qty_terima']);
+        }
+        if (sisa < 0) sisa = 0;
+        item['qty_pesan'] = sisa.toString();
+        item['qty_terima'] = sisa > 0 ? '0' : _toInt(item['qty_sudah_terima'] ?? item['qty_terima']).toString();
+        result.add(item);
+      } catch (e) {
+        print('normalize item error: $e');
+      }
+    }
+    return result;
   }
 
   _goBack(BuildContext context) {
@@ -81,35 +124,54 @@ class _PoDetailState extends State<PoDetail> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     List<Map<String, dynamic>> payload = [];
     var userid = prefs.getString("name") ?? '';
-    print(userid);
+
+    // Hanya baris yang qty terima > 0 yang di-update; kosong/0 di-skip
     for (int i = 0; i < detailList.length; i++) {
-      if(!qtyControllers[i].text.isEmpty){
-        if(int.parse(qtyControllers[i].text)>0){
-          if(int.parse(qtyControllers[i].text)<=int.parse(detailList[i]['qty_pesan'])){
-            payload.add({
-              "method": "receive-po",
-              "ponbr": widget.ponbr,
-              "itditemid": detailList[i]['itditemid'],
-              "partname": detailList[i]['partname'],
-              "genuineno": detailList[i]['genuineno'],
-              "merk": detailList[i]['merk'],
-              "harga": detailList[i]['harga'],
-              "qty_pesan": detailList[i]['qty_pesan'],
-              "qty_terima": qtyControllers[i].text,
-              "userid": userid,
-            });
-          }
-        }
+      final rawQty = qtyControllers[i].text.trim();
+      if (rawQty.isEmpty) continue;
+
+      final qtyTerima = int.tryParse(rawQty) ?? 0;
+      if (qtyTerima <= 0) continue; // skip baris tanpa perubahan
+
+      final qtyPesan = _toInt(detailList[i]['qty_pesan']);
+      if (qtyTerima > qtyPesan) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Qty terima baris ${i + 1} melebihi qty pesan ($qtyPesan)',
+            ),
+          ),
+        );
+        return;
       }
 
+      payload.add({
+        "method": "receive-po",
+        "ponbr": widget.ponbr,
+        "itditemid": detailList[i]['itditemid'],
+        "partname": detailList[i]['partname'],
+        "genuineno": detailList[i]['genuineno'],
+        "merk": detailList[i]['merk'],
+        "harga": detailList[i]['harga'],
+        "qty_pesan": detailList[i]['qty_pesan'],
+        "qty_terima": qtyTerima.toString(),
+        "userid": userid,
+      });
     }
+
     print("payload");
     print(payload);
-    if(payload.isEmpty){
+    if (payload.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('QTY tidak boleh 0')));
+        SnackBar(
+          content: Text(
+            'Tidak ada baris diupdate. Isi Qty Terima > 0 pada baris yang diterima.',
+          ),
+        ),
+      );
       return;
     }
+
     try {
       EasyLoading.show(status: 'Updating...');
       var url = Uri.parse(GlobalData.baseUrl + "api/po/update_po_detail.jsp");
@@ -119,11 +181,16 @@ class _PoDetailState extends State<PoDetail> {
       if (res.statusCode == 200) {
         var response = json.decode(res.body);
         print(response);
-        print(response['status']);
         if (response['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Data berhasil diupdate')));
-          _goBack(context);
+            SnackBar(
+              content: Text(
+                'Berhasil update ${payload.length} baris. Baris lain di-skip.',
+              ),
+            ),
+          );
+          // Refresh detail: pesan sisa berkurang, qty terima kembali 0
+          await fetchDetailData();
         } else {
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text('Gagal update data')));

@@ -201,7 +201,7 @@ class _PbHeaderPageState extends State<PbHeaderPage> {
       padding: EdgeInsets.all(10.0),
       child: TextField(
         decoration: InputDecoration(
-          hintText: "Cari PR Number",
+          hintText: "Cari Vendor / PO Number",
           hintStyle: TextStyle(fontSize: 11, color: Colors.grey),
           filled: true,
           fillColor: lightOrange,
@@ -592,6 +592,15 @@ class _PbHeaderPageState extends State<PbHeaderPage> {
                                 itemCount: pbList.length,
                                 itemBuilder: (context, index) {
                                   var po = pbList[index];
+                                  // API kirim ponbr; fallback pbnbr (kompatibel)
+                                  final poNbr = (po['ponbr'] ??
+                                          po['pbnbr'] ??
+                                          '')
+                                      .toString();
+                                  final poDate = (po['podate'] ??
+                                          po['pbdate'] ??
+                                          '')
+                                      .toString();
                                   return Container(
                                     margin: EdgeInsets.symmetric(vertical: 6),
                                     decoration: BoxDecoration(
@@ -610,7 +619,7 @@ class _PbHeaderPageState extends State<PbHeaderPage> {
                                       contentPadding: EdgeInsets.symmetric(
                                           horizontal: 16, vertical: 10),
                                       title: Text(
-                                        po['pbnbr'] ?? '',
+                                        poNbr,
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: darkOrange,
@@ -627,18 +636,12 @@ class _PbHeaderPageState extends State<PbHeaderPage> {
                                                 "CpyName",
                                                 (po['cpyname'] ?? '')
                                                     .toString()),
-                                            _kv("pbnbr",
-                                                (po['pbnbr'] ?? '').toString()),
+                                            _kv("PoNBR", poNbr),
                                             _kv(
                                                 "Warehouse",
                                                 (po['towarehouse'] ?? '')
                                                     .toString()),
-                                            _kv(
-                                                "Pb Date",
-                                                (po['pbdate'] ?? '')
-                                                    .toString()),
-                                            // _kv("Status", (po['pbstatus'] ?? '').toString()),
-                                            // _kv("Type", (po['typepb'] ?? '').toString()),
+                                            _kv("Po Date", poDate),
                                             _kv("Loc",
                                                 (po['locid'] ?? '').toString()),
                                             _kv("Notes",
@@ -674,8 +677,7 @@ class _PbHeaderPageState extends State<PbHeaderPage> {
                                                       MaterialPageRoute(
                                                         builder: (context) =>
                                                             PbDetail(
-                                                                pbnbr: po[
-                                                                    'pbnbr']),
+                                                                pbnbr: poNbr),
                                                       ),
                                                     );
                                                   },

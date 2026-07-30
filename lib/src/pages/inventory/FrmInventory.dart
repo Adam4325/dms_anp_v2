@@ -1698,150 +1698,212 @@ class _FrmInventoryState extends State<FrmInventory> {
     }
   }
 
-  final FocusNode _focusNodeTxtQty = FocusNode();
-  Widget _buildDListDetailItem(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings_applications, color: Colors.black),
-                ),
-                title: Text(
-                  "Item ID : ${item['item_id']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("Partname : ${item['part_name']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Type : ${item['type']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Merk : ${item['merk']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("ID ACCESS : ${item['accessories']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("UOM: ${item['uom_id']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("ITEM SIZE: ${item['item_size']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("VHTID: ${item['vhtid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  )
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
+  bool _canShowOpnameSelectButtons(dynamic item) {
+    final trx = (globals.inv_trx_type ?? '').toString().trim();
+    // Selain IS-M: selalu tampilkan Pilih/Close
+    if (trx != 'IS-M') return true;
+
+    final parent = (item['parentitemid'] ?? '').toString().trim();
+    // PARENTITEMID null/kosong/bukan 1: tampilkan button
+    if (parent.isEmpty || parent.toLowerCase() == 'null' || parent != '1') {
+      return true;
+    }
+
+    // PARENTITEMID=1: hanya boleh jika APV_USER sudah terisi
+    final apv = (item['apv_user'] ?? '').toString().trim();
+    return apv.isNotEmpty && apv.toLowerCase() != 'null';
+  }
+
+  String _itemField(dynamic item, String key) {
+    final v = (item[key] ?? '').toString().trim();
+    if (v.isEmpty || v.toLowerCase() == 'null') return '-';
+    return v;
+  }
+
+  Widget _detailKv(String label, String value, {bool highlight = false}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.edit,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Pilih",style: TextStyle(color:Colors.white)),
-                  onPressed: () async {
-                    Navigator.of(context).pop(false);
-                    //print(item);
-                    txtItemID.text = item['item_id'];
-                    txtPartName.text = item['part_name'];
-                    txtMerk.text = item['merk'];
-                    txtType.text = item['type'];
-                    txtGenuineNo.text = item['genuine_no'];
-                    txtVHTID.text = item['vhtid'];
-                    txtTypeAccess.text = item['accessories'];
-                    txtUomID.text = item['uom_id'];
-                    // txtSnTyre.text = item['part_name'];
-                    //txtQuantity.text = '0'; //;item['quantity'];
-                    txtQuantity.text =  item['quantity'];
-                    txtRealQtyBekas.text = '0';
-                    FocusScope.of(context).requestFocus(myFocusNode);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 2.0,
-                      backgroundColor: primaryOrange, //// ✅ Orange for Pilih
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                )),
-                SizedBox(width: 10),
-                Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Close",style: TextStyle(color:Colors.white)),
-                  onPressed: () async {
-                    Navigator.of(context).pop(false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 2.0,
-                      backgroundColor: Colors.grey.shade500, // ✅ Gray for Close
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                )),
-              ]),
+          Text(':  ', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: highlight ? FontWeight.w700 : FontWeight.w500,
+                color: highlight ? darkOrange : Colors.grey.shade900,
+              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  final FocusNode _focusNodeTxtQty = FocusNode();
+  Widget _buildDListDetailItem(dynamic item, int index) {
+    final showButtons = _canShowOpnameSelectButtons(item);
+    final parentId = _itemField(item, 'parentitemid');
+    final apv = _itemField(item, 'apv_user');
+    final isParent1 = parentId == '1';
+    final waitingApv = isParent1 && apv == '-';
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accentOrange.withOpacity(0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x18FF8C69),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: EdgeInsets.fromLTRB(14, 12, 14, 8),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+            ),
+            child: Text(
+              "Item ID : ${_itemField(item, 'item_id')}",
+              style: TextStyle(
+                color: darkOrange,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(14, 8, 14, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _detailKv('PARENTITEMID', parentId, highlight: isParent1),
+                _detailKv('Partname', _itemField(item, 'part_name')),
+                _detailKv('Type', _itemField(item, 'type')),
+                _detailKv('Merk', _itemField(item, 'merk')),
+                _detailKv('ID ACCESS', _itemField(item, 'accessories')),
+                _detailKv('UOM', _itemField(item, 'uom_id')),
+                _detailKv('ITEM SIZE', _itemField(item, 'item_size')),
+                _detailKv('VHTID', _itemField(item, 'vhtid')),
+                if ((globals.inv_trx_type ?? '') == 'IS-M' && isParent1) ...[
+                  SizedBox(height: 6),
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: waitingApv
+                          ? Colors.red.shade50
+                          : Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: waitingApv
+                            ? Colors.red.shade200
+                            : Colors.green.shade200,
+                      ),
+                    ),
+                    child: Text(
+                      waitingApv
+                          ? 'Status : Menunggu Approval Opname'
+                          : 'Status : Approved ($apv)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: waitingApv
+                            ? Colors.red.shade700
+                            : Colors.green.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (showButtons)
+            Padding(
+              padding: EdgeInsets.fromLTRB(12, 2, 12, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.check_circle_outline,
+                          color: Colors.white, size: 16),
+                      label: Text('Pilih',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600)),
+                      onPressed: () async {
+                        Navigator.of(context).pop(false);
+                        txtItemID.text = item['item_id']?.toString() ?? '';
+                        txtPartName.text = item['part_name']?.toString() ?? '';
+                        txtMerk.text = item['merk']?.toString() ?? '';
+                        txtType.text = item['type']?.toString() ?? '';
+                        txtGenuineNo.text =
+                            item['genuine_no']?.toString() ?? '';
+                        txtVHTID.text = item['vhtid']?.toString() ?? '';
+                        txtTypeAccess.text =
+                            item['accessories']?.toString() ?? '';
+                        txtUomID.text = item['uom_id']?.toString() ?? '';
+                        txtQuantity.text = item['quantity']?.toString() ?? '';
+                        txtRealQtyBekas.text = '0';
+                        FocusScope.of(context).requestFocus(myFocusNode);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: primaryOrange,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.close, color: Colors.white, size: 16),
+                      label: Text('Close',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600)),
+                      onPressed: () {
+                        Navigator.of(context).pop(false);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: Colors.grey.shade600,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -1850,7 +1912,7 @@ class _FrmInventoryState extends State<FrmInventory> {
   Widget listDataSearchItem(BuildContext context) {
     return ListView.builder(
       scrollDirection: Axis.vertical,
-      padding: const EdgeInsets.all(2.0),
+      padding: const EdgeInsets.fromLTRB(4, 8, 4, 16),
       itemCount: dataListItemSearch.length,
       itemBuilder: (BuildContext context, int index) {
         return _buildDListDetailItem(dataListItemSearch[index], index);
@@ -1896,22 +1958,77 @@ class _FrmInventoryState extends State<FrmInventory> {
                           showDialog(
                             context: context,
                             useRootNavigator: true,
-                            builder: (BuildContext dialogCtx) => new AlertDialog(
-                              title: new Text('Information'),
-                              content:
-                                  new Text("View Opname/ Item By Scan Code"),
+                            builder: (BuildContext dialogCtx) => AlertDialog(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              titlePadding: EdgeInsets.fromLTRB(20, 18, 12, 0),
+                              contentPadding:
+                                  EdgeInsets.fromLTRB(20, 12, 20, 8),
+                              actionsPadding:
+                                  EdgeInsets.fromLTRB(16, 0, 16, 16),
+                              title: Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: lightOrange,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(Icons.inventory_2_outlined,
+                                        color: darkOrange, size: 22),
+                                  ),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Pilih Cara Input',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        color: darkOrange,
+                                        fontSize: 17,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.close,
+                                        color: Colors.grey.shade600),
+                                    onPressed: () {
+                                      if (dialogCtx.mounted) {
+                                        Navigator.of(dialogCtx,
+                                                rootNavigator: true)
+                                            .pop();
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                              content: Text(
+                                'View Opname / Item By Scan Code',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade700,
+                                  height: 1.35,
+                                ),
+                              ),
                               actions: <Widget>[
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                Column(
                                   children: [
-                                    Expanded(
+                                    SizedBox(
+                                      width: double.infinity,
                                       child: ElevatedButton.icon(
                                         icon: Icon(
-                                          Icons.search,
+                                          Icons.list_alt,
                                           color: Colors.white,
-                                          size: 24.0,
+                                          size: 20,
                                         ),
-                                        label: Text("View Opname",style: TextStyle(color:Colors.white)),
+                                        label: Text(
+                                          'View Opname',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                         onPressed: () async {
                                           final parentContext = context;
                                           print('globals.inv_wonumber');
@@ -1939,29 +2056,66 @@ class _FrmInventoryState extends State<FrmInventory> {
                                               context: parentContext,
                                               useRootNavigator: true,
                                               barrierDismissible: true,
-                                              builder: (BuildContext listDialogContext) {
+                                              builder: (BuildContext
+                                                  listDialogContext) {
                                                 final size = MediaQuery.sizeOf(
                                                     listDialogContext);
                                                 return Dialog(
                                                   insetPadding: EdgeInsets.zero,
+                                                  backgroundColor:
+                                                      Color(0xFFFFFAF5),
                                                   child: SizedBox(
                                                     width: size.width,
                                                     height: size.height,
                                                     child: SafeArea(
                                                       child: Column(
                                                         children: [
-                                                          ListTile(
-                                                            title: Text('List Detail Item'),
-                                                            trailing: IconButton(
-                                                              icon: Icon(Icons.close),
-                                                              onPressed: () {
-                                                                Navigator.of(listDialogContext).pop();
-                                                              },
+                                                          Container(
+                                                            width:
+                                                                double.infinity,
+                                                            padding:
+                                                                EdgeInsets
+                                                                    .fromLTRB(
+                                                                        8,
+                                                                        4,
+                                                                        4,
+                                                                        4),
+                                                            color:
+                                                                primaryOrange,
+                                                            child: Row(
+                                                              children: [
+                                                                Expanded(
+                                                                  child: Text(
+                                                                    'List Detail Item',
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .white,
+                                                                        fontWeight:
+                                                                            FontWeight.w700,
+                                                                        fontSize:
+                                                                            16),
+                                                                  ),
+                                                                ),
+                                                                IconButton(
+                                                                  icon: Icon(
+                                                                      Icons
+                                                                          .close,
+                                                                      color: Colors
+                                                                          .white),
+                                                                  onPressed:
+                                                                      () {
+                                                                    Navigator.of(
+                                                                            listDialogContext)
+                                                                        .pop();
+                                                                  },
+                                                                ),
+                                                              ],
                                                             ),
                                                           ),
-                                                          Divider(height: 1),//
                                                           Expanded(
-                                                            child: listDataSearchItem(listDialogContext),
+                                                            child:
+                                                                listDataSearchItem(
+                                                                    listDialogContext),
                                                           ),
                                                         ],
                                                       ),
@@ -1973,24 +2127,34 @@ class _FrmInventoryState extends State<FrmInventory> {
                                           }
                                         },
                                         style: ElevatedButton.styleFrom(
-                                            elevation: 2.0,
-                                            backgroundColor: accentOrange,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                            textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+                                          elevation: 0,
+                                          backgroundColor: accentOrange,
+                                          foregroundColor: Colors.white,
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 14),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                    SizedBox(width: 12),
-                                    Expanded(
+                                    SizedBox(height: 10),
+                                    SizedBox(
+                                      width: double.infinity,
                                       child: ElevatedButton.icon(
                                         icon: Icon(
                                           Icons.qr_code_scanner,
                                           color: Colors.white,
-                                          size: 24.0,
+                                          size: 20,
                                         ),
-                                        label: Text("Scan Barcode",style: TextStyle(color:Colors.white)),
+                                        label: Text(
+                                          'Scan Barcode',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                         onPressed: () async {
                                           if (dialogCtx.mounted) {
                                             Navigator.of(dialogCtx,
@@ -2004,17 +2168,20 @@ class _FrmInventoryState extends State<FrmInventory> {
                                           await scanQRCode();
                                         },
                                         style: ElevatedButton.styleFrom(
-                                            elevation: 2.0,
-                                            backgroundColor: primaryOrange,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                            textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+                                          elevation: 0,
+                                          backgroundColor: primaryOrange,
+                                          foregroundColor: Colors.white,
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 14),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],
-                                )
+                                ),
                               ],
                             ),
                           );

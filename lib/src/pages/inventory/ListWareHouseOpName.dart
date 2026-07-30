@@ -5,10 +5,12 @@ import 'dart:io';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/flusbar.dart';
 import 'package:dms_anp/src/pages/inventory/FrmWareHouseOpName.dart';
+import 'package:dms_anp/src/pages/inventory/OpnamePrintPreview.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:dms_anp/src/widgets/simple_paginator.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class ListWareHouseOpName extends StatefulWidget {
   @override
@@ -203,6 +205,15 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
     return t;
   }
 
+  void _openPrintPreview(Map<String, dynamic> value) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OpnamePrintPreview(data: value),
+      ),
+    );
+  }
+
   List<Map<String, dynamic>> listItemsGetter(InventoryTransDataModel data) {
     List<Map<String, dynamic>> list = [];
     data.inventorydataModel.forEach((value) {
@@ -330,6 +341,46 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _kv('Item ID', _s(value['wh_item_id'])),
+                if (_s(value['wh_item_id']).isNotEmpty) ...[
+                  SizedBox(height: 8),
+                  Center(
+                    child: Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border:
+                            Border.all(color: accentOrange.withOpacity(0.6)),
+                      ),
+                      child: QrImageView(
+                        data: _s(value['wh_item_id']),
+                        version: QrVersions.auto,
+                        size: 120,
+                        backgroundColor: Colors.white,
+                        eyeStyle: QrEyeStyle(
+                          eyeShape: QrEyeShape.square,
+                          color: darkOrange,
+                        ),
+                        dataModuleStyle: QrDataModuleStyle(
+                          dataModuleShape: QrDataModuleShape.square,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Center(
+                    child: Text(
+                      _s(value['wh_item_id']),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: darkOrange,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                ],
                 _kv('Part Name', _s(value['wh_part_name'])),
                 _kv('Item Desc', _s(value['wh_item_descr'])),
                 _kv('Genuine No', _s(value['wh_genuine_no'])),
@@ -346,50 +397,77 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(12, 4, 12, 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: Icon(Icons.edit, color: Colors.white, size: 16),
-                label: Text(
-                  'Edit',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: Icon(Icons.print, color: Colors.white, size: 16),
+                    label: Text(
+                      'Print',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onPressed: () =>
+                        _openPrintPreview(Map<String, dynamic>.from(value)),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 2,
+                      backgroundColor: accentOrange,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                   ),
                 ),
-                onPressed: () {
-                  globals.wh_id = _s(value['whswarehpuseid']);
-                  globals.wh_itemid = _s(value['wh_item_id']);
-                  globals.wh_part_name = _s(value['wh_part_name']);
-                  globals.wh_type = _s(value['wh_type']);
-                  globals.wh_accessories = _s(value['wh_access']);
-                  globals.wh_quantity_on_hands = _s(value['wh_on_hands']);
-                  globals.wh_quantity_on_actuals = _s(value['wh_on_actual']);
-                  globals.wh_typepo = _s(value['wh_typepo']);
-                  globals.wh_itemcost = _s(value['wh_item_cost']);
-                  globals.wh_currency_id = _s(value['wh_curyid']);
-                  globals.wh_month = _s(value['wh_withmonth']);
-                  globals.wh_month_year = _s(value['wh_with_month_year']);
-                  globals.wh_month_month = _s(value['wh_with_month_month']);
-                  globals.wh_item_size = _s(value['wh_item_size']);
-                  globals.wh_genuine_no = _s(value['wh_genuine_no']);
-                  globals.wh_method = "edit";
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => FrmWareHouseOpName()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  elevation: 2,
-                  backgroundColor: primaryOrange,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: Icon(Icons.edit, color: Colors.white, size: 16),
+                    label: Text(
+                      'Edit',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onPressed: () {
+                      globals.wh_id = _s(value['whswarehpuseid']);
+                      globals.wh_itemid = _s(value['wh_item_id']);
+                      globals.wh_part_name = _s(value['wh_part_name']);
+                      globals.wh_type = _s(value['wh_type']);
+                      globals.wh_accessories = _s(value['wh_access']);
+                      globals.wh_quantity_on_hands = _s(value['wh_on_hands']);
+                      globals.wh_quantity_on_actuals = _s(value['wh_on_actual']);
+                      globals.wh_typepo = _s(value['wh_typepo']);
+                      globals.wh_itemcost = _s(value['wh_item_cost']);
+                      globals.wh_currency_id = _s(value['wh_curyid']);
+                      globals.wh_month = _s(value['wh_withmonth']);
+                      globals.wh_month_year = _s(value['wh_with_month_year']);
+                      globals.wh_month_month = _s(value['wh_with_month_month']);
+                      globals.wh_item_size = _s(value['wh_item_size']);
+                      globals.wh_genuine_no = _s(value['wh_genuine_no']);
+                      globals.wh_method = "edit";
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => FrmWareHouseOpName()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      elevation: 2,
+                      backgroundColor: primaryOrange,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ],

@@ -65,7 +65,7 @@ import 'package:dms_anp/src/services/logkar_position_background_service.dart';
 
 import '../flusbar.dart';
 import 'FrmAttendanceDriver.dart';
-import 'FrmMasterData.dart';
+import 'master/FrmMasterMenu.dart';
 import 'FrmNonTera.dart';
 import 'FrmSetKmByDoMixer.dart';
 import 'LiveMaps.dart';
@@ -1318,7 +1318,7 @@ class _ViewDashboardState extends State<ViewDashboard>
             image: Icons.storage,
             color: Colors.blue.shade700,
             idKey: 32,
-            title: "Mst Data"));
+            title: "Master"));
       }
     }
 
@@ -5758,10 +5758,10 @@ class _ViewDashboardState extends State<ViewDashboard>
           EasyLoading.show();
         }
         Timer(Duration(seconds: 1), () {
+          EasyLoading.dismiss();
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-                builder: (context) => FrmMasterData()), //ApprovedDriverRequest
+            MaterialPageRoute(builder: (context) => FrmMasterMenu()),
           );
         });
       } else {

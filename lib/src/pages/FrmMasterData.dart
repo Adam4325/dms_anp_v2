@@ -4,8 +4,8 @@ import 'package:awesome_select/awesome_select.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:dms_anp/src/flusbar.dart';
-import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/FrmKoordinat.dart';
+import 'package:dms_anp/src/pages/master/FrmMasterMenu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
@@ -171,7 +171,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
 
   _goBack(BuildContext context) {
     Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => ViewDashboard()));
+        context, MaterialPageRoute(builder: (context) => FrmMasterMenu()));
   }
 
   Future<bool> _showConfirmDialog(String title, String message) async {
@@ -2177,7 +2177,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
             onPressed: () => _goBack(context),
           ),
           centerTitle: true,
-          title: Text('Master Data',
+          title: Text('Master Data Lainnya',
               style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
