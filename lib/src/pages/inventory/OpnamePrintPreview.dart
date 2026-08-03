@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
@@ -29,6 +32,11 @@ class _OpnamePrintPreviewState extends State<OpnamePrintPreview> {
 
   final GlobalKey _previewKey = GlobalKey();
   bool _busy = false;
+  bool _mutasiLoading = false;
+  bool _mutasiLoaded = false;
+  String _mutasiTitle = '';
+  String _mutasiSaldoAwal = '0';
+  List<Map<String, dynamic>> _mutasiDetails = [];
 
   String _s(dynamic v) {
     if (v == null) return '';
@@ -39,12 +47,112 @@ class _OpnamePrintPreviewState extends State<OpnamePrintPreview> {
 
   String get _whId => _s(widget.data['whswarehpuseid']);
   String get _itemId => _s(widget.data['wh_item_id']);
+  String get _month {
+    final m = _s(widget.data['wh_with_month_month']);
+    if (m.isNotEmpty) return m;
+    final raw = _s(widget.data['wh_withmonth']);
+    final parts = raw.split(RegExp(r'[-/]'));
+    if (parts.length >= 2) {
+      return int.tryParse(parts[1])?.toString() ?? '';
+    }
+    return '';
+  }
+
+  String get _year {
+    final y = _s(widget.data['wh_with_month_year']);
+    if (y.isNotEmpty) return y;
+    final raw = _s(widget.data['wh_withmonth']);
+    final parts = raw.split(RegExp(r'[-/]'));
+    if (parts.isNotEmpty) {
+      return int.tryParse(parts[0])?.toString() ?? '';
+    }
+    return '';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMutasiForPrint();
+  }
+
+  Future<void> _loadMutasiForPrint() async {
+    if (_mutasiLoading) return;
+    setState(() => _mutasiLoading = true);
+    try {
+      if (_whId.isEmpty || _itemId.isEmpty || _month.isEmpty || _year.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _mutasiLoaded = true;
+            _mutasiLoading = false;
+            _mutasiTitle = 'DETAIL MUTASI';
+          });
+        }
+        return;
+      }
+      final uri = Uri.parse(
+              '${GlobalData.baseUrl}api/inventory/list_warehouse_opname_detail_mutasi.jsp')
+          .replace(queryParameters: {
+        'method': 'list-mutasi-opname-v1',
+        'warehouseid': _whId,
+        'itemid': _itemId,
+        'month': _month,
+        'year': _year,
+      });
+      print('preview mutasi url: $uri');
+      final res = await http.get(uri);
+      if (res.statusCode != 200) {
+        throw Exception('HTTP ${res.statusCode}');
+      }
+      final body = json.decode(res.body.trim());
+      if (body is! Map) {
+        throw Exception('Response tidak valid');
+      }
+      final detailsRaw = body['details'];
+      final List<Map<String, dynamic>> rows = [];
+      if (detailsRaw is List) {
+        for (final e in detailsRaw) {
+          if (e is Map) rows.add(Map<String, dynamic>.from(e));
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _mutasiTitle = (body['title'] ?? 'DETAIL MUTASI').toString();
+        _mutasiSaldoAwal = (body['saldo_awal'] ?? '0').toString();
+        _mutasiDetails = rows;
+        _mutasiLoaded = true;
+        _mutasiLoading = false;
+      });
+    } catch (e) {
+      print('preview load mutasi error: $e');
+      if (!mounted) return;
+      setState(() {
+        _mutasiLoaded = true;
+        _mutasiLoading = false;
+        _mutasiTitle = 'DETAIL MUTASI';
+      });
+    }
+  }
+
+  Future<void> _ensureMutasiReady() async {
+    if (_mutasiLoaded) return;
+    if (_mutasiLoading) {
+      // tunggu loading selesai
+      while (_mutasiLoading && mounted) {
+        await Future.delayed(Duration(milliseconds: 80));
+      }
+      return;
+    }
+    await _loadMutasiForPrint();
+  }
 
   Future<void> _shareAsImage() async {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      await Future.delayed(Duration(milliseconds: 80));
+      await _ensureMutasiReady();
+      // tunggu frame setelah setState agar detail ikut ke RepaintBoundary
+      await Future.delayed(Duration(milliseconds: 120));
+      await WidgetsBinding.instance.endOfFrame;
       final boundary = _previewKey.currentContext?.findRenderObject()
           as RenderRepaintBoundary?;
       if (boundary == null) {
@@ -108,79 +216,87 @@ class _OpnamePrintPreviewState extends State<OpnamePrintPreview> {
 
   Future<void> _printThermal() async {
     if (_busy) return;
-    final ok = await _ensureBluetoothReady();
-    if (!ok) return;
-
-    final paired = await PrintBluetoothThermal.pairedBluetooths;
-    if (paired.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'Tidak ada perangkat Bluetooth. Pair printer thermal di Settings HP dulu.'),
-        ),
-      );
-      return;
-    }
-
-    if (!mounted) return;
-    final selected = await showModalBottomSheet<BluetoothInfo>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  'Pilih Printer Thermal',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: darkOrange,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: paired.length,
-                  itemBuilder: (_, i) {
-                    final p = paired[i];
-                    return ListTile(
-                      leading: Icon(Icons.print, color: primaryOrange),
-                      title: Text(p.name.isEmpty ? 'Unknown' : p.name),
-                      subtitle: Text(p.macAdress),
-                      onTap: () => Navigator.pop(ctx, p),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    if (selected == null) return;
-
     setState(() => _busy = true);
     try {
+      await _ensureMutasiReady();
+      final ok = await _ensureBluetoothReady();
+      if (!ok) return;
+
+      final paired = await PrintBluetoothThermal.pairedBluetooths;
+      if (paired.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Tidak ada perangkat Bluetooth. Pair printer thermal di Settings HP dulu.'),
+          ),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() => _busy = false); // allow sheet interaction
+      final selected = await showModalBottomSheet<BluetoothInfo>(
+        context: context,
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (ctx) {
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Text(
+                    'Pilih Printer Thermal',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: darkOrange,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: paired.length,
+                    itemBuilder: (_, i) {
+                      final p = paired[i];
+                      return ListTile(
+                        leading: Icon(Icons.print, color: primaryOrange),
+                        title: Text(p.name.isEmpty ? 'Unknown' : p.name),
+                        subtitle: Text(p.macAdress),
+                        onTap: () => Navigator.pop(ctx, p),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+      if (selected == null) return;
+
+      setState(() => _busy = true);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Menghubungkan ke ${selected.name}...')),
       );
       final connected = await PrintBluetoothThermal.connect(
           macPrinterAddress: selected.macAdress);
       if (!connected) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal connect ke printer')),
         );
         return;
       }
 
+      // pastikan mutasi sudah ada di ticket
+      await _ensureMutasiReady();
       final bytes = await _buildOpnameTicket();
       final printed = await PrintBluetoothThermal.writeBytes(bytes);
       await PrintBluetoothThermal.disconnect;
@@ -240,6 +356,28 @@ class _OpnamePrintPreviewState extends State<OpnamePrintPreview> {
     bytes += generator.text('Qty On Actual: ${_s(d['wh_on_actual'])}');
     bytes += generator.text('With Month: ${_s(d['wh_withmonth'])}');
     bytes += generator.hr();
+    if (_mutasiTitle.isNotEmpty) {
+      bytes += generator.text(_mutasiTitle,
+          styles: PosStyles(bold: true, align: PosAlign.center));
+    } else {
+      bytes += generator.text('DETAIL MUTASI',
+          styles: PosStyles(bold: true, align: PosAlign.center));
+    }
+    bytes += generator.text('Saldo Awal: $_mutasiSaldoAwal');
+    if (_mutasiDetails.isEmpty) {
+      bytes += generator.text('(Tidak ada mutasi)');
+    } else {
+      bytes += generator.text('Date|In|Out|Saldo|User');
+      for (final row in _mutasiDetails) {
+        final date = _s(row['date']);
+        final din = _s(row['qty_in']);
+        final dout = _s(row['qty_out']);
+        final saldo = _s(row['saldo_akhir']);
+        final user = _s(row['user']);
+        bytes += generator.text('$date $din/$dout=$saldo $user');
+      }
+    }
+    bytes += generator.hr();
     bytes += generator.text(
       'DMS ANP',
       styles: PosStyles(align: PosAlign.center),
@@ -247,6 +385,147 @@ class _OpnamePrintPreviewState extends State<OpnamePrintPreview> {
     bytes += generator.feed(2);
     bytes += generator.cut();
     return bytes;
+  }
+
+  Widget _buildMutasiSectionForPreview() {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(top: 10, bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: accentOrange.withOpacity(0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+            ),
+            child: Text(
+              _mutasiTitle.isEmpty ? 'DETAIL MUTASI' : _mutasiTitle,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: darkOrange,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(4, 6, 4, 8),
+            child: _mutasiLoading
+                ? Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(8),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: primaryOrange,
+                        ),
+                      ),
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                          'Saldo Awal : $_mutasiSaldoAwal',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: darkOrange,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      if (_mutasiDetails.isEmpty)
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            'Tidak ada mutasi di bulan ini',
+                            style: TextStyle(
+                                fontSize: 11, color: Colors.grey.shade600),
+                          ),
+                        )
+                      else
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minWidth: constraints.maxWidth,
+                                ),
+                                child: DataTable(
+                                  headingRowHeight: 30,
+                                  dataRowMinHeight: 26,
+                                  dataRowMaxHeight: 34,
+                                  horizontalMargin: 6,
+                                  columnSpacing: 10,
+                                  headingRowColor:
+                                      WidgetStateProperty.all(lightOrange),
+                                  columns: const [
+                                    DataColumn(
+                                        label: Text('Date',
+                                            style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700))),
+                                    DataColumn(
+                                        label: Text('In',
+                                            style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700))),
+                                    DataColumn(
+                                        label: Text('Out',
+                                            style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700))),
+                                    DataColumn(
+                                        label: Text('Saldo Akhir',
+                                            style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700))),
+                                    DataColumn(
+                                        label: Text('User',
+                                            style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700))),
+                                  ],
+                                  rows: _mutasiDetails.map((d) {
+                                    return DataRow(cells: [
+                                      DataCell(Text(_s(d['date']),
+                                          style: TextStyle(fontSize: 10))),
+                                      DataCell(Text(_s(d['qty_in']),
+                                          style: TextStyle(fontSize: 10))),
+                                      DataCell(Text(_s(d['qty_out']),
+                                          style: TextStyle(fontSize: 10))),
+                                      DataCell(Text(_s(d['saldo_akhir']),
+                                          style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w600))),
+                                      DataCell(Text(_s(d['user']),
+                                          style: TextStyle(fontSize: 10))),
+                                    ]);
+                                  }).toList(),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _billingRow(String label, String value, {bool highlight = false}) {
@@ -416,30 +695,10 @@ class _OpnamePrintPreviewState extends State<OpnamePrintPreview> {
                   _billingRow('Qty On Actual', _s(d['wh_on_actual']),
                       highlight: true),
                   _billingRow('With Month', _s(d['wh_withmonth'])),
+                  _buildMutasiSectionForPreview(),
                 ],
               ),
             ),
-            // Container(
-            //   margin: EdgeInsets.fromLTRB(16, 4, 16, 16),
-            //   padding: EdgeInsets.all(12),
-            //   decoration: BoxDecoration(
-            //     color: lightOrange,
-            //     borderRadius: BorderRadius.circular(8),
-            //     border: Border.all(color: accentOrange.withOpacity(0.5)),
-            //   ),
-            //   child: Row(
-            //     children: [
-            //       Icon(Icons.info_outline, color: darkOrange, size: 18),
-            //       SizedBox(width: 8),
-            //       Expanded(
-            //         child: Text(
-            //           'Preview Stock Opname — siap di-share atau di-print.',
-            //           style: TextStyle(fontSize: 11, color: darkOrange),
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
           ],
         ),
       ),

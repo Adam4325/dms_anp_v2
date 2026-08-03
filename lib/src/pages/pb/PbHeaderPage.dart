@@ -672,7 +672,7 @@ class _PbHeaderPageState extends State<PbHeaderPage> {
                                                     if (!EasyLoading.isShow) {
                                                       EasyLoading.show();
                                                     }
-                                                    Navigator.push(
+                                                    Navigator.push(//
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (context) =>

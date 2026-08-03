@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/flusbar.dart';
 import 'package:dms_anp/src/pages/inventory/FrmWareHouseOpName.dart';
+import 'package:dms_anp/src/pages/inventory/OpnameMutasiPanel.dart';
 import 'package:dms_anp/src/pages/inventory/OpnamePrintPreview.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -205,6 +206,29 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
     return t;
   }
 
+  /// Fallback dari wh_withmonth "2026-07-22" jika year/month kosong.
+  String _monthOf(Map value) {
+    final m = _s(value['wh_with_month_month']);
+    if (m.isNotEmpty) return m;
+    final raw = _s(value['wh_withmonth']);
+    final parts = raw.split(RegExp(r'[-/]'));
+    if (parts.length >= 2) {
+      return int.tryParse(parts[1])?.toString() ?? '';
+    }
+    return '';
+  }
+
+  String _yearOf(Map value) {
+    final y = _s(value['wh_with_month_year']);
+    if (y.isNotEmpty) return y;
+    final raw = _s(value['wh_withmonth']);
+    final parts = raw.split(RegExp(r'[-/]'));
+    if (parts.isNotEmpty) {
+      return int.tryParse(parts[0])?.toString() ?? '';
+    }
+    return '';
+  }
+
   void _openPrintPreview(Map<String, dynamic> value) {
     Navigator.push(
       context,
@@ -392,6 +416,16 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
                 _kv('Qty On Hands', _s(value['wh_on_hands'])),
                 _kv('Qty On Actual', _s(value['wh_on_actual'])),
                 _kv('With Month', _s(value['wh_withmonth'])),
+                OpnameMutasiPanel(
+                  warehouseId: _s(value['whswarehpuseid']),
+                  itemId: _s(value['wh_item_id']),
+                  month: _monthOf(value is Map ? value : {}),
+                  year: _yearOf(value is Map ? value : {}),
+                  primaryOrange: primaryOrange,
+                  lightOrange: lightOrange,
+                  accentOrange: accentOrange,
+                  darkOrange: darkOrange,
+                ),
               ],
             ),
           ),
