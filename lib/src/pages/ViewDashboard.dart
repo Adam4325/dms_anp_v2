@@ -5617,11 +5617,16 @@ class _ViewDashboardState extends State<ViewDashboard>
               "error");
         }
       }
-    } else if (anpService.idKey == 15 ) {
-      // DRIVER + MIXER: QR sukses → cek SIM → FrmAttendanceDriver
-      // Karyawan: cukup cek SIM lalu FrmAttendance
-      if (loginname == "DRIVER" && login_type == "MIXER") {
-        await _openAttendanceDriverWithQrScan();
+    } else if (anpService.idKey == 15) {
+      // DRIVER + status_karyawan DRIVER → FrmAttendanceDriver
+      // status_karyawan KARYAWAN (selain itu) → FrmAttendance
+      if (loginname == "DRIVER" &&
+          _normalizedStatusKaryawan() == "DRIVER") {
+        if (login_type == "MIXER") {
+          await _openAttendanceDriverWithQrScan();
+        } else {
+          await _goToAttendanceDriverIfSimValid();
+        }
       } else {
         if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
           return;
@@ -5631,7 +5636,7 @@ class _ViewDashboardState extends State<ViewDashboard>
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-                builder: (context) => FrmAttendance()), //KARYAWAN///
+                builder: (context) => FrmAttendance()), //KARYAWAN
           );
         });
       }
