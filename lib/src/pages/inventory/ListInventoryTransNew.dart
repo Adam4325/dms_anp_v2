@@ -570,7 +570,7 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
             ),
             body: TabBarView(
               key: globalScaffoldKey,
-              controller: _tabController,
+              controller: _tabController,//
               children: [
                 _buildListViewFormTrx(context),
                 _buildListViewInventory(context),
@@ -1646,47 +1646,65 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
   }
 
   Widget _buildListViewTmsTyre(BuildContext context) {
-    return SingleChildScrollView(
-        //shrinkWrap: true,
-        padding: EdgeInsets.all(2.0),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          children: [
-            buildTextField(
-              labelText: "Search",
+    return Container(
+      color: backgroundColor,
+      child: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(12, 12, 12, 4),
+            child: buildTextField(
+              labelText: "Cari No. Tyre / SN...",
               controller: txtSearchVehicleTyreTms,
               onChanged: (value) {
-                //print(value);
                 if (value != "" && value != null) {
                   if (value.length >= 3) {
-                    print(value);
                     getJSONDataTyre(false, value);
                   } else {
-                    dataListTyreTms = dataListTmsTyreDummy;
-                    return;
+                    setState(() {
+                      dataListTyreTms = dataListTmsTyreDummy;
+                    });
                   }
                 } else {
-                  dataListTyreTms = dataListTmsTyreDummy;
-                  return;
+                  setState(() {
+                    dataListTyreTms = dataListTmsTyreDummy;
+                  });
                 }
               },
-              suffixIcon: Icon(Icons.search, color: primaryOrange), onTap: (String p1) {  },
+              suffixIcon: Icon(Icons.search, color: primaryOrange),
+              onTap: (String p1) {},
             ),
-            Container(
-              //padding: const EdgeInsets.all(8.0),
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  padding: const EdgeInsets.all(5.0),
-                  itemCount: dataListTyreTms.length,
-                  itemBuilder: (context, index) {
-                    return _buildDListRequestTmsTyre(
-                        dataListTyreTms[index], index);
-                  }),
-            )
-          ],
-        ));
+          ),
+          Expanded(
+            child: dataListTyreTms.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.car_repair,
+                              size: 48, color: accentOrange),
+                          SizedBox(height: 12),
+                          Text(
+                            'Tidak ada data tyre',
+                            style: TextStyle(color: Colors.grey.shade700),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: EdgeInsets.fromLTRB(12, 4, 12, 88),
+                    itemCount: dataListTyreTms.length,
+                    itemBuilder: (context, index) {
+                      return _buildDListRequestTmsTyre(
+                          dataListTyreTms[index], index);
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildListViewInventory(BuildContext context) {
@@ -1746,71 +1764,68 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
   }
 
   Widget _buildDListRequestTmsTyre(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+    final tyreNumber = _s(item['tyrenumber']);
+    final tyreStatus = _s(item['tyrestatus']);
+    final originalSn = _s(item['original_sn']);
+
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 6.0),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accentOrange.withOpacity(0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor,
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings_applications, color: Colors.black),
-                ),
-                title: Text(
-                  "Tyre Number : ${item['tyrenumber']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("Status : ${item['tyrestatus']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Po. Number : ${item['ponumber']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("IV. Number: ${item['ivnumber']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text(
-                      "Original SN: ${item['original_sn'] == null ? '[Not Set]' : item['original_sn']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(14, 12, 14, 10),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
+              ),
+            ),
+            child: Text(
+              tyreNumber.isEmpty ? '-' : tyreNumber,
+              style: TextStyle(
+                color: darkOrange,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
               ),
             ),
           ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                buildButtonUpdateSn(context, item['tyrenumber']),
-              ]),
+          Padding(
+            padding: EdgeInsets.fromLTRB(14, 8, 14, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _kv('Status', tyreStatus),
+                _kv('Po. Number', _s(item['ponumber'])),
+                _kv('Date', _s(item['date'])),
+                _kv('IV. Number', _s(item['ivnumber'])),
+                _kv(
+                  'Original SN',
+                  originalSn.isEmpty ? '[Not Set]' : originalSn,
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(12, 4, 12, 12),
+            child: Row(
+              children: [
+                buildButtonUpdateSn(context, tyreNumber),
+              ],
             ),
           ),
         ],
@@ -1820,107 +1835,137 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
 
   Widget buildButtonUpdateSn(BuildContext context, String tyrenumber) {
     return Expanded(
-        child: ElevatedButton.icon(
-      icon: Icon(
-        Icons.save,
-        color: Colors.white,
-        size: 18.0,
-      ),
-      label: Text("Update SN"),
-      onPressed: () async {
-        showDialog(
-          context: globalScaffoldKey.currentContext!,
-          builder: (context) => new AlertDialog(
-            title: new Text('Information'),
-            //content: new Text("Close WO data ${appSrnumber}"),
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              //position
-              mainAxisSize: MainAxisSize.min,
-              // wrap content in flutter
-              children: <Widget>[
-                Container(
-                  margin: EdgeInsets.all(10.0),
-                  child: Text("Update SN ${tyrenumber}"),
+      child: ElevatedButton.icon(
+        icon: Icon(
+          Icons.save,
+          color: Colors.white,
+          size: 18.0,
+        ),
+        label: Text(
+          "Update SN",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
+        onPressed: () async {
+          showDialog(
+            context: globalScaffoldKey.currentContext!,
+            builder: (context) {
+              final dialogWidth =
+                  MediaQuery.of(context).size.width * 0.92;
+              return AlertDialog(
+                insetPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 24),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+                title: Text('Update SN'),
+                content: SizedBox(
+                  width: dialogWidth,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        tyrenumber,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: darkOrange,
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      TextField(
+                        cursorColor: primaryOrange,
+                        style:
+                            TextStyle(color: Colors.black87, fontSize: 14),
+                        controller: txtOrginalSn,
+                        keyboardType: TextInputType.text,
+                        decoration: InputDecoration(
+                          fillColor: Colors.white,
+                          filled: true,
+                          isDense: true,
+                          labelText: "Set original SN",
+                          labelStyle: TextStyle(
+                              color: Colors.grey.shade600, fontSize: 13),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                                color: Colors.grey.shade300, width: 1),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                                color: Colors.grey.shade300, width: 1),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                                color: primaryOrange, width: 2),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                Container(
-                  margin: EdgeInsets.all(10.0),
-                  child: TextField(
-                    cursorColor: primaryOrange, // ✅ Orange cursor
-                    style: TextStyle(color: Colors.black87, fontSize: 14),
-                    controller: txtOrginalSn,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      fillColor: Colors.white,
-                      filled: true,
-                      isDense: true,
-                      labelText: "Set original SN",
-                      labelStyle:
-                          TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: Colors.grey.shade300, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: Colors.grey.shade300, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: primaryOrange, width: 2), // ✅ Orange focus
-                      ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(globalScaffoldKey.currentContext!)
+                          .pop(false);
+                      txtOrginalSn.text = "";
+                    },
+                    child:
+                        Text('Batal', style: TextStyle(color: Colors.grey)),
+                  ),
+                  ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.save,
+                      color: Colors.white,
+                      size: 18.0,
                     ),
-                  ),
-                ),
-              ],
-            ),
-            actions: <Widget>[
-              new TextButton(
-                  onPressed: () {
-                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                    txtOrginalSn.text = "";
-                  },
-                  child: new Text('No')),
-              new ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.save,
-                    color: Colors.white,
-                    size: 18.0,
-                  ),
-                  label: Text("Update"),
-                  onPressed: () async {
-                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                     updateSnTyre(tyrenumber, txtOrginalSn.text, "");
-                    txtOrginalSn.text = "";
-                  },
-                  style: ElevatedButton.styleFrom(
+                    label: Text(
+                      "Update",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () async {
+                      Navigator.of(globalScaffoldKey.currentContext!)
+                          .pop(false);
+                      updateSnTyre(tyrenumber, txtOrginalSn.text, "");
+                      txtOrginalSn.text = "";
+                    },
+                    style: ElevatedButton.styleFrom(
                       elevation: 2.0,
-                      backgroundColor: primaryOrange, // ✅ Orange background
+                      backgroundColor: primaryOrange,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       textStyle: TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w600))),
-            ],
-          ),
-        );
-      },
-      style: ElevatedButton.styleFrom(
+                          fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+        style: ElevatedButton.styleFrom(
           elevation: 2.0,
-          backgroundColor: primaryOrange, // ✅ Orange background
+          backgroundColor: primaryOrange,
+          foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-    ));
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          textStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
   }
 
   void updateSnTyre(String tyrenumber, original_sn, notes) async {

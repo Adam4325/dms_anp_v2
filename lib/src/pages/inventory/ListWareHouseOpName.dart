@@ -413,7 +413,7 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
                 _kv('Accessories', _s(value['wh_access'])),
                 _kv('Type PO', _s(value['wh_typepo'])),
                 _kv('Currency', _s(value['wh_curyid'])),
-                _kv('Qty On Hands', _s(value['wh_on_hands'])),
+                _kv('Qty On Books', _s(value['wh_on_hands'])),
                 _kv('Qty On Actual', _s(value['wh_on_actual'])),
                 _kv('With Month', _s(value['wh_withmonth'])),
                 OpnameMutasiPanel(

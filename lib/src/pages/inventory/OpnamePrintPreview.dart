@@ -352,7 +352,7 @@ class _OpnamePrintPreviewState extends State<OpnamePrintPreview> {
     bytes += generator.text('Accessories: ${_s(d['wh_access'])}');
     bytes += generator.text('Type PO: ${_s(d['wh_typepo'])}');
     bytes += generator.text('Currency: ${_s(d['wh_curyid'])}');
-    bytes += generator.text('Qty On Hands: ${_s(d['wh_on_hands'])}');
+    bytes += generator.text('Qty On Books: ${_s(d['wh_on_hands'])}');
     bytes += generator.text('Qty On Actual: ${_s(d['wh_on_actual'])}');
     bytes += generator.text('With Month: ${_s(d['wh_withmonth'])}');
     bytes += generator.hr();
@@ -690,7 +690,7 @@ class _OpnamePrintPreviewState extends State<OpnamePrintPreview> {
                     ),
                   ),
                   SizedBox(height: 8),
-                  _billingRow('Qty On Hands', _s(d['wh_on_hands']),
+                  _billingRow('Qty On Books', _s(d['wh_on_hands']),
                       highlight: true),
                   _billingRow('Qty On Actual', _s(d['wh_on_actual']),
                       highlight: true),
