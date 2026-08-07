@@ -142,6 +142,7 @@ class _FrmInventoryState extends State<FrmInventory> {
       ititemidOri = "";
       txtQuantity.text = "1";
       txtUomID.text = "";
+      selUomID = "";
       txtType.text = "";
       txtTypeAccess.text = "";
       txtPartName.text = "";
@@ -194,7 +195,9 @@ class _FrmInventoryState extends State<FrmInventory> {
       var itdinvtrannbr = txtInvNumber.text;
       var ititemid = txtItemID.text;
       var idqty = txtQuantity.text;
-      var uomid = globals.inv_itdlinenbr != "" ? selUomID : txtUomID.text;
+      var uomid = txtUomID.text.trim().isNotEmpty
+          ? txtUomID.text.trim()
+          : selUomID;
       var username = usr;
       var idtype = txtType.text;
       print(type_transaction);
@@ -262,6 +265,11 @@ class _FrmInventoryState extends State<FrmInventory> {
         final ctx = globalScaffoldKey.currentContext;
         if (ctx != null) {
           alert(ctx, 0, "Quantity (QTY) harus lebih dari 0", "error");
+        }
+      } else if (_validateSnTyreIfBanLuar() != null) {
+        final ctx = globalScaffoldKey.currentContext;
+        if (ctx != null) {
+          alert(ctx, 0, _validateSnTyreIfBanLuar()!, "error");
         }
       } else {
         if (globals.inv_trx_type == 'IS-M') {
@@ -392,7 +400,9 @@ class _FrmInventoryState extends State<FrmInventory> {
       var itdinvtrannbr = txtInvNumber.text;
       var ititemid = txtItemID.text;
       var idqty = txtQuantity.text;
-      var uomid = selUomID;
+      var uomid = txtUomID.text.trim().isNotEmpty
+          ? txtUomID.text.trim()
+          : selUomID;
       var username = usr;
       var idtype = txtType.text;
       var idaccess = txtTypeAccess.text;
@@ -456,6 +466,11 @@ class _FrmInventoryState extends State<FrmInventory> {
         final ctx = globalScaffoldKey.currentContext;
         if (ctx != null) {
           alert(ctx, 0, "Quantity (QTY) harus lebih dari 0", "error");
+        }
+      } else if (_validateSnTyreIfBanLuar() != null) {
+        final ctx = globalScaffoldKey.currentContext;
+        if (ctx != null) {
+          alert(ctx, 0, _validateSnTyreIfBanLuar()!, "error");
         }
       } else {
         EasyLoading.show();
@@ -756,6 +771,7 @@ class _FrmInventoryState extends State<FrmInventory> {
     }
 
     selUomID = globals.inv_uomid ?? '';
+    txtUomID.text = globals.inv_uomid ?? '';
     txtUnitCost.text = globals.inv_itdunitcost ?? '0';
     txtExtendedCost.text = globals.inv_idtextcost ?? '0';
     //globals.inv_itdinvtrannbr;
@@ -808,6 +824,28 @@ class _FrmInventoryState extends State<FrmInventory> {
                   ListInventoryTransNew(tabName: "wid_list_inventory")));
     }
     globals.inv_back_page = "";
+  }
+
+  /// SN Tyre editable hanya jika part name / type mengandung ban luar.
+  bool _isBanLuarItem() {
+    final text =
+        '${txtPartName.text} ${txtType.text} ${txtItemID.text}'.toLowerCase();
+    return text.contains('ban luar') ||
+        text.contains('ban-luar') ||
+        text.contains('banluar');
+  }
+
+  /// Return pesan error jika ban luar & SN Tyre invalid; null jika OK.
+  String? _validateSnTyreIfBanLuar() {
+    if (!_isBanLuarItem()) return null;
+    final sn = txtSnTyre.text.trim();
+    if (sn.isEmpty) {
+      return "SN Tyre (No Stample Ban) tidak boleh kosong untuk Ban Luar";
+    }
+    if (sn.length < 5) {
+      return "SN Tyre (No Stample Ban) minimal 5 karakter";
+    }
+    return null;
   }
 
   // Custom TextField with orange theme (sesuai INSTRUCTIONS.md)
@@ -939,37 +977,7 @@ class _FrmInventoryState extends State<FrmInventory> {
   // }
 
   Widget _buildUOMID(BuildContext context) {
-    print(globals.inv_method);
-    if (globals.inv_method == "edit" || globals.inv_itdlinenbr != "") {
-      return Container(
-        margin: EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
-        child: IgnorePointer(
-          ignoring: globals.inv_method == "edit",//
-          child: SmartSelect<String?>.single(
-            title: 'UOM ID',
-            selectedValue: selUomID,
-            placeholder: 'Pilih satu',
-            onChange: (selected) => setState(() => selUomID = selected.value!),
-            choiceItems: S2Choice.listFrom<String, Map>(
-                source: lstSelUomID,
-                value: (index, item) => item['uomid'],
-                title: (index, item) => item['uomdescr']),
-            modalFilter: true,
-            modalFilterAuto: true,
-            modalConfirm: true,
-            modalType: S2ModalType.bottomSheet,
-            choiceStyle: S2ChoiceStyle(
-              titleStyle: TextStyle(color: Colors.grey.shade800),
-              color: primaryOrange.withOpacity(0.1),
-            ),
-            modalStyle: S2ModalStyle(
-              backgroundColor: cardColor,
-              elevation: 3,
-            ),
-          ),
-        ),
-      );
-    }
+    // Selalu tampil sebagai teks dari detail item, tidak bisa diubah.
     return buildTextField(
       labelText: 'UOM ID',
       controller: txtUomID,
@@ -1854,18 +1862,24 @@ class _FrmInventoryState extends State<FrmInventory> {
                               fontWeight: FontWeight.w600)),
                       onPressed: () async {
                         Navigator.of(context).pop(false);
-                        txtItemID.text = item['item_id']?.toString() ?? '';
-                        txtPartName.text = item['part_name']?.toString() ?? '';
-                        txtMerk.text = item['merk']?.toString() ?? '';
-                        txtType.text = item['type']?.toString() ?? '';
-                        txtGenuineNo.text =
-                            item['genuine_no']?.toString() ?? '';
-                        txtVHTID.text = item['vhtid']?.toString() ?? '';
-                        txtTypeAccess.text =
-                            item['accessories']?.toString() ?? '';
-                        txtUomID.text = item['uom_id']?.toString() ?? '';
-                        txtQuantity.text = item['quantity']?.toString() ?? '';
-                        txtRealQtyBekas.text = '0';
+                        final uom = item['uom_id']?.toString() ?? '';
+                        setState(() {
+                          txtItemID.text = item['item_id']?.toString() ?? '';
+                          txtPartName.text =
+                              item['part_name']?.toString() ?? '';
+                          txtMerk.text = item['merk']?.toString() ?? '';
+                          txtType.text = item['type']?.toString() ?? '';
+                          txtGenuineNo.text =
+                              item['genuine_no']?.toString() ?? '';
+                          txtVHTID.text = item['vhtid']?.toString() ?? '';
+                          txtTypeAccess.text =
+                              item['accessories']?.toString() ?? '';
+                          txtUomID.text = uom;
+                          selUomID = uom;
+                          txtQuantity.text =
+                              item['quantity']?.toString() ?? '';
+                          txtRealQtyBekas.text = '0';
+                        });
                         FocusScope.of(context).requestFocus(myFocusNode);
                       },
                       style: ElevatedButton.styleFrom(
@@ -2245,54 +2259,15 @@ class _FrmInventoryState extends State<FrmInventory> {
                     onTap: (String p1) {},
                     onChanged: (String p1) {},
                   ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: _buildUOMID(context),
-                  ),
+                  _buildUOMID(context),
                   buildTextField(
-                    labelText: 'SN Tyre (No Stampl Ban)',
+                    labelText: 'SN Tyre (No Stample Ban)',
                     controller: txtSnTyre,
-                    readOnly: globals.inv_method == "edit" ? false : true,
+                    // Ban luar (add/edit): editable; selain itu: readonly
+                    readOnly: !_isBanLuarItem(),
                     onTap: (String p1) {},
                     onChanged: (String p1) {},
                   ),
-                  // Container(
-                  //   margin:
-                  //   EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
-                  //   child: TextField(
-                  //     readOnly: true,
-                  //     cursorColor: Colors.black,
-                  //     style: TextStyle(color: Colors.grey.shade800),
-                  //     controller: txtUnitCost,
-                  //     keyboardType: TextInputType.text,
-                  //     decoration: new InputDecoration(
-                  //       fillColor: Colors.white,
-                  //       filled: true,
-                  //       labelText: 'Unit Cost',
-                  //       isDense: true,
-                  //       contentPadding: EdgeInsets.all(2.0),
-                  //     ),
-                  //   ),
-                  // ),
-                  // Container(
-                  //   margin:
-                  //   EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
-                  //   child: TextField(
-                  //     readOnly: true,
-                  //     cursorColor: Colors.black,
-                  //     style: TextStyle(color: Colors.grey.shade800),
-                  //     controller: txtExtendedCost,
-                  //     keyboardType: TextInputType.text,
-                  //     decoration: new InputDecoration(
-                  //       fillColor: Colors.white,
-                  //       filled: true,
-                  //       labelText: 'Extended Cost',
-                  //       isDense: true,
-                  //       contentPadding: EdgeInsets.all(2.0),
-                  //     ),
-                  //   ),
-                  // ),
                   buildTextField(
                     labelText: 'Quantity',
                     controller: txtQuantity,

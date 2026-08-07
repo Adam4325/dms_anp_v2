@@ -14,7 +14,7 @@ import 'package:dms_anp/src/widgets/simple_paginator.dart';
 
 class ListInventoryDetail extends StatefulWidget {
   final String tabName;
-  final String invTrxStatusBarang;
+  final String invTrxStatusBarang;//
   const ListInventoryDetail(
       {Key? key, required this.tabName, required this.invTrxStatusBarang})
       : super(key: key);
@@ -500,7 +500,35 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
     }
   }
 
+  Future<String> _fetchQtyOnHand(String itemId, String warehouseId) async {
+    try {
+      final uri = Uri.parse(
+              '${GlobalData.baseUrl}api/inventory/update_inv_detail_realqty.jsp')
+          .replace(queryParameters: {
+        'method': 'get-qty-onhand',
+        'itemid': itemId,
+        'warehouseid': warehouseId,
+      });
+      final response = await http.get(uri);
+      if (response.statusCode != 200) return '0';
+      final decoded = json.decode(response.body);
+      if ((decoded['status']?.toString().toLowerCase() ?? '') == 'success') {
+        return (decoded['qty_onhand'] ?? '0').toString();
+      }
+    } catch (_) {}
+    return '0';
+  }
+
   Future<void> _closeInventoryDetail(Map<String, dynamic> value) async {
+    final trxType = (globals.inv_trx_type ?? '').toString().trim().toUpperCase();
+    if (trxType == 'IS-M') {
+      await _closeInventoryDetailWithActual(value);
+    } else {
+      await _closeInventoryDetailSimple(value);
+    }
+  }
+
+  Future<void> _closeInventoryDetailSimple(Map<String, dynamic> value) async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -565,6 +593,246 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
 
       if (status == 'success') {
         alert(context, 1, message, "success");
+        _reloadList();
+      } else {
+        alert(context, 0, message, "error");
+      }
+    } catch (e) {
+      _hideLoader();
+      alert(context, 0, "Client, gagal close item", "error");
+      print(e.toString());
+    }
+  }
+
+  Future<void> _closeInventoryDetailWithActual(
+      Map<String, dynamic> value) async {
+    final itdinvtrannbr = (value['itdinvtrannbr'] ?? '').toString();
+    final itdlinenbr = (value['itdlinenbr'] ?? '').toString();
+    final ititemid = (value['ititemid'] ?? '').toString();
+    final warehouseId = (globals.from_ware_house ?? '').toString();
+
+    if (itdinvtrannbr.isEmpty || itdlinenbr.isEmpty || ititemid.isEmpty) {
+      alert(context, 0, "Data item tidak valid untuk di-close", "error");
+      return;
+    }
+    if (warehouseId.isEmpty) {
+      alert(context, 0, "Warehouse tidak ditemukan", "error");
+      return;
+    }
+
+    _showLoader();
+    final qtyOnHand = await _fetchQtyOnHand(ititemid, warehouseId);
+    _hideLoader();
+
+    final actualCtrl = TextEditingController(text: qtyOnHand);
+    String? formError;
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
+              title: Text('Close & Stock Actual'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${value['itdinvtrannbr']} - ${value['ititemid']}',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      '${value['partname'] ?? ''}',
+                      style: TextStyle(
+                          color: Colors.grey.shade700, fontSize: 12),
+                    ),
+                    SizedBox(height: 14),
+                    Text('Qty On Hand',
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade700)),
+                    SizedBox(height: 4),
+                    Container(
+                      width: double.infinity,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade400),
+                      ),
+                      child: Text(
+                        qtyOnHand,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    Text('Stock Actual',
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade700)),
+                    SizedBox(height: 4),
+                    TextField(
+                      controller: actualCtrl,
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
+                      style: TextStyle(color: Colors.black87),
+                      decoration: InputDecoration(
+                        hintText: 'Input stock actual',
+                        isDense: true,
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade400),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade400),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide:
+                              BorderSide(color: primaryOrange, width: 1.5),
+                        ),
+                      ),
+                    ),
+                    if (formError != null) ...[
+                      SizedBox(height: 8),
+                      Text(formError!,
+                          style: TextStyle(
+                              color: Colors.red.shade700, fontSize: 12)),
+                    ],
+                    SizedBox(height: 8),
+                    Text(
+                      'Setelah disimpan, item tidak akan tampil lagi di list.',
+                      style: TextStyle(
+                          fontSize: 11, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text('Batal', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final raw = actualCtrl.text.trim();
+                    if (raw.isEmpty) {
+                      setModalState(() {
+                        formError = 'Stock Actual wajib diisi';
+                      });
+                      return;
+                    }
+                    if (double.tryParse(raw) == null) {
+                      setModalState(() {
+                        formError = 'Stock Actual harus angka';
+                      });
+                      return;
+                    }
+                    Navigator.pop(ctx, true);
+                  },
+                  style: _orangeBtnStyle(),
+                  child: Text('Simpan & Close'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    final realQty = actualCtrl.text.trim();
+    actualCtrl.dispose();
+
+    if (confirmed != true) return;
+
+    try {
+      _showLoader();
+      final prefs = await SharedPreferences.getInstance();
+      final userId =
+          prefs.getString("name") ?? prefs.getString("loginname") ?? "";
+
+      // 1) Update ITDREALQTY
+      final updateUri = Uri.parse(
+          "${GlobalData.baseUrl}api/inventory/update_inv_detail_realqty.jsp");
+      final updateRes = await http.post(
+        updateUri,
+        body: {
+          'method': 'update-realqty',
+          'itdinvtrannbr': itdinvtrannbr,
+          'ititemid': ititemid,
+          'itdlinenbr': itdlinenbr,
+          'realqty': realQty,
+          'userid': userId,
+        },
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        encoding: Encoding.getByName('utf-8'),
+      );
+
+      if (updateRes.statusCode != 200) {
+        _hideLoader();
+        alert(context, 0,
+            "Gagal update Stock Actual (${updateRes.statusCode})", "error");
+        return;
+      }
+
+      final updateDecoded = json.decode(updateRes.body);
+      final updateStatus =
+          updateDecoded['status']?.toString().toLowerCase() ?? '';
+      if (updateStatus != 'success') {
+        _hideLoader();
+        alert(
+            context,
+            0,
+            updateDecoded['message']?.toString() ??
+                'Update Stock Actual gagal',
+            "error");
+        return;
+      }
+
+      // 2) Close item (hide from list)
+      final closeUri = Uri.parse(
+          "${GlobalData.baseUrl}api/inventory/close_inv_detail_param.jsp");
+      final closeRes = await http.post(
+        closeUri,
+        body: {
+          'method': 'close-item-detail',
+          'itdinvtrannbr': itdinvtrannbr,
+          'itdlinenbr': itdlinenbr,
+          'userid': userId,
+        },
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        encoding: Encoding.getByName('utf-8'),
+      );
+
+      _hideLoader();
+
+      if (closeRes.statusCode != 200) {
+        alert(context, 0,
+            "Stock Actual tersimpan, tapi gagal close (${closeRes.statusCode})",
+            "error");
+        return;
+      }
+
+      final closeDecoded = json.decode(closeRes.body);
+      final closeStatus =
+          closeDecoded['status']?.toString().toLowerCase() ?? '';
+      final message = closeDecoded['message']?.toString() ?? 'Close item gagal';
+
+      if (closeStatus == 'success') {
+        alert(context, 1, "Stock Actual tersimpan. $message", "success");
         _reloadList();
       } else {
         alert(context, 0, message, "error");
