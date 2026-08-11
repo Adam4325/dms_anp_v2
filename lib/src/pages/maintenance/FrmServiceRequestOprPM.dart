@@ -9242,7 +9242,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     //         javascriptMode: JavascriptMode.unrestricted));
 
     return Container(
-      margin: EdgeInsets.all(16.0),
+      margin: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: cardColor,
@@ -9280,7 +9280,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           Column(
             children: [
               Container(
-                margin: EdgeInsets.all(12.0),
+                margin: EdgeInsets.fromLTRB(12.0, 6.0, 12.0, 2.0),
                 child: TextField(
                   cursorColor: primaryOrange,
                   style: TextStyle(color: Colors.black87, fontSize: 14),
@@ -9295,7 +9295,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               Container(
-                margin: EdgeInsets.all(12.0),
+                margin: EdgeInsets.fromLTRB(12.0, 2.0, 12.0, 2.0),
                 child: TextField(
                   readOnly: true,
                   cursorColor: primaryOrange,
@@ -9308,7 +9308,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               Container(
-                margin: EdgeInsets.all(12.0),
+                margin: EdgeInsets.fromLTRB(12.0, 2.0, 12.0, 2.0),
                 child: TextField(
                   readOnly: true,
                   cursorColor: primaryOrange,
@@ -9321,7 +9321,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               Container(
-                margin: EdgeInsets.all(12.0),
+                margin: EdgeInsets.fromLTRB(12.0, 4.0, 12.0, 4.0),
                 child: TextField(
                   readOnly: true,
                   cursorColor: primaryOrange,
@@ -9337,7 +9337,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               Container(
-                margin: EdgeInsets.all(12.0),
+                margin: EdgeInsets.fromLTRB(12.0, 4.0, 12.0, 6.0),
                 child: TextField(
                   cursorColor: primaryOrange,
                   style: TextStyle(color: Colors.black87, fontSize: 14),
@@ -9351,48 +9351,56 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             ],
           ),
           Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-              margin: const EdgeInsets.all(0.0),
+              width: double.infinity,
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              margin: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 4.0),
+              alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Colors.black12,
-                    width: 10.0,
+                    color: Colors.black26,
+                    width: 1.5,
                   )),
-              child: Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 4,
-                runSpacing: 4,
-                children: [
-                  Text('Note: Baik'),
-                  Radio(
-                    value: "0",
-                    //groupValue:
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    fillColor: MaterialStateColor.resolveWith(
-                            (states) => Colors.green),
-                  ),
-                  Text('Tidak Baik'),
-                  Radio(
-                    value: "0",
-                    //groupValue:
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    fillColor: MaterialStateColor.resolveWith(
-                            (states) => Colors.orange),
-                  ),
-                  Text('Tidak Ada'),
-                  Radio(
-                    value: "0",
-                    //groupValue:
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    fillColor:
-                    MaterialStateColor.resolveWith((states) => Colors.red),
-                  )
-                ],
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Note:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                    SizedBox(width: 8),
+                    Text('Baik', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Radio(
+                      value: "0",
+                      visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      fillColor: MaterialStateColor.resolveWith(
+                              (states) => Colors.green),
+                    ),
+                    SizedBox(width: 8),
+                    Text('Tidak Baik', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Radio(
+                      value: "0",
+                      visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      fillColor: MaterialStateColor.resolveWith(
+                              (states) => Colors.orange),
+                    ),
+                    SizedBox(width: 8),
+                    Text('Tidak Ada', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Radio(
+                      value: "0",
+                      visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      fillColor:
+                      MaterialStateColor.resolveWith((states) => Colors.red),
+                    ),
+                  ],
+                ),
               )),
-          SizedBox(height: 10),
+          SizedBox(height: 4),
           Expanded(
             child: GroupedListView<dynamic, String>(
               elements: dataCHK,
@@ -9402,6 +9410,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   item1['nama_group'].compareTo(item2['nama_group']),
               order: GroupedListOrder.DESC,
               useStickyGroupSeparators: false,
+              padding: EdgeInsets.only(bottom: 8),
               groupSeparatorBuilder: (String value) => Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
@@ -9668,6 +9677,10 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           Container(
             //height: 150,
             decoration: BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                ),
                 gradient: LinearGradient(
                   begin: Alignment.topRight,
                   end: Alignment.bottomLeft,
@@ -9676,8 +9689,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     Colors.black12,
                   ],
                 )),
-            margin: EdgeInsets.only(left: 0, right: 0, top: 0, bottom: 0),
-            padding: EdgeInsets.fromLTRB(8, 8, 8, 12),
+            margin: EdgeInsets.only(left: 0, right: 0, top: 4, bottom: 0),
+            padding: EdgeInsets.fromLTRB(10, 10, 10, 14),
             child: Row(children: <Widget>[
               Expanded(
                   child: ElevatedButton.icon(
@@ -9694,9 +9707,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
                         backgroundColor: Colors.orangeAccent,
-                        padding: EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+                        padding: EdgeInsets.symmetric(horizontal: 0, vertical: 10),
                         textStyle:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   )),
               SizedBox(width: 10),
               Expanded(

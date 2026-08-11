@@ -34,7 +34,7 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
   final Color shadowColor = Color(0x20FF8C69);
 
   Icon customIcon = const Icon(Icons.search, color: Colors.white);
-  Widget customSearchBar = const Text('List Inventory Detail');
+  Widget customSearchBar = const Text('List Inventory Detail.');
 
   _goBack(BuildContext context) {
     Navigator.pushReplacement(context,
@@ -157,7 +157,7 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
           .replace(queryParameters: {
         'method': 'list-inventory-detail-v1',
         'number': number ?? '',
-        'type': type ?? '',
+        'type': type ?? '',//
         'from': from ?? '',
         'page': page.toString(),
         'search': _searchText,
@@ -192,6 +192,7 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
         "itdlinenbr": value['itdlinenbr'],
         "idaccess": value['idaccess'],
         "merk": value['merk'],
+        "size": value['size'],
         "sntyre": value['sntyre'],
         "idrealqty": value['idrealqty'],
         "vhtid": value['vhtid'],
@@ -298,6 +299,7 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
                 _infoRow('UOM', '${value['uomid'] ?? '-'}'),
                 _infoRow('Type', '${value['idtype'] ?? '-'}'),
                 _infoRow('Merk', '${value['merk'] ?? '-'}'),
+                _infoRow('Size', '${value['size'] ?? '-'}'),
                 _infoRow('Trx No', '${value['itdinvtrannbr'] ?? '-'}'),
                 _infoRow('Line', '${value['itdlinenbr'] ?? '-'}'),
               ],
