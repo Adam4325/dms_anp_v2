@@ -1528,7 +1528,7 @@ class _FrmInventoryState extends State<FrmInventory> {
                                     fontSize: 18, fontWeight: FontWeight.w600),
                               ),
                             ),
-                            GestureDetector(
+                            GestureDetector(////
                               behavior: HitTestBehavior.opaque,
                               onTap: () => Navigator.of(routeCtx).pop(),
                               child: const Padding(

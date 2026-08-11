@@ -1749,13 +1749,14 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                     margin: EdgeInsets.only(
                         left: 10, top: 10, right: 10, bottom: 10),
                     child: TextField(
-                      readOnly: globals.wh_method != "edit" ? false : true,
+                      readOnly: false,
                       cursorColor: Colors.black,
                       style: TextStyle(color: Colors.grey.shade800),
                       controller: txtQuantityOnActual,
                       keyboardType: TextInputType.number,
                       focusNode: myFocusNode,
-                      decoration: softDecoration(label: 'Quantity Actual', readOnly: globals.wh_method == "edit"),
+                      decoration: softDecoration(
+                          label: 'Quantity Actual', readOnly: false),
                     ),
                   ),
                   // Container(

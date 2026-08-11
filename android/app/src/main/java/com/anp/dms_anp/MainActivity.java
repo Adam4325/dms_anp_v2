@@ -1,23 +1,5 @@
 package com.anp.dms_anp;
 
-//import io.flutter.embedding.android.FlutterActivity;
-
-//public class MainActivity extends FlutterActivity {
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        GeneratedPluginRegistrant.registerWith(this)
-//    }
-//    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//
-//        super.onCreate(savedInstanceState);
-//        FlutterAndroidLifecyclePlugin.registerWith(
-//                registrarFor(
-//                        "io.flutter.plugins.flutter_plugin_android_lifecycle.FlutterAndroidLifecyclePlugin"));
-//        LocalAuthPlugin.registerWith(registrarFor("io.flutter.plugins.localauth.LocalAuthPlugin"));
-//    }
-//}
-
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -26,6 +8,7 @@ import android.provider.Settings;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -40,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 public class MainActivity extends FlutterFragmentActivity {
+    private static final String TAG = "SimPhone";
     private static final String DEVELOPER_MODE_CHANNEL = "dms_anp/developer_mode";
     private static final String SIM_PHONE_CHANNEL = "dms_anp/sim_phone";
 
@@ -76,16 +60,17 @@ public class MainActivity extends FlutterFragmentActivity {
         });
     }
 
-    private boolean hasPhonePermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
-                != PackageManager.PERMISSION_GRANTED) {
-            return false;
+    private boolean hasPhoneStatePermission() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private boolean hasPhoneNumbersPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return hasPhoneStatePermission();
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_NUMBERS)
-                    == PackageManager.PERMISSION_GRANTED;
-        }
-        return true;
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_NUMBERS)
+                == PackageManager.PERMISSION_GRANTED;
     }
 
     private void addPhoneIfPresent(Set<String> phones, String raw) {
@@ -93,36 +78,53 @@ public class MainActivity extends FlutterFragmentActivity {
             return;
         }
         String trimmed = raw.trim();
-        if (!trimmed.isEmpty()) {
+        if (!trimmed.isEmpty() && !trimmed.equalsIgnoreCase("null")) {
             phones.add(trimmed);
         }
     }
 
     /**
      * Fallback nomor per subscription.
-     * getLine1Number() deprecated sejak API 33; dipakai hanya jika getNumber() kosong.
+     * getLine1Number() deprecated sejak API 33; dipakai hanya jika getNumber()/getPhoneNumber kosong.
      */
     @SuppressWarnings("deprecation")
     private String readLine1ForSubscription(TelephonyManager telephonyManager, int subscriptionId) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            TelephonyManager slotManager =
-                    telephonyManager.createForSubscriptionId(subscriptionId);
-            if (slotManager != null) {
-                return slotManager.getLine1Number();
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                TelephonyManager slotManager =
+                        telephonyManager.createForSubscriptionId(subscriptionId);
+                if (slotManager != null) {
+                    return slotManager.getLine1Number();
+                }
             }
+            return telephonyManager.getLine1Number();
+        } catch (SecurityException e) {
+            Log.w(TAG, "readLine1ForSubscription denied: " + e.getMessage());
+            return null;
         }
-        return telephonyManager.getLine1Number();
     }
 
     @SuppressWarnings("deprecation")
     private String readDefaultLine1Number(TelephonyManager telephonyManager) {
-        return telephonyManager.getLine1Number();
+        try {
+            return telephonyManager.getLine1Number();
+        } catch (SecurityException e) {
+            Log.w(TAG, "readDefaultLine1Number denied: " + e.getMessage());
+            return null;
+        }
     }
 
     /** Semua nomor MSISDN yang terbaca dari SIM aktif (slot manapun). */
     private List<String> getAllSimPhoneNumbers() {
         List<String> empty = new ArrayList<>();
-        if (!hasPhonePermission()) {
+        boolean hasState = hasPhoneStatePermission();
+        boolean hasNumbers = hasPhoneNumbersPermission();
+        Log.d(TAG, "perm state=" + hasState + " numbers=" + hasNumbers
+                + " sdk=" + Build.VERSION.SDK_INT);
+
+        // Tanpa salah satu izin, tidak bisa baca nomor
+        if (!hasState && !hasNumbers) {
+            Log.w(TAG, "No phone permissions granted");
             return empty;
         }
 
@@ -134,31 +136,67 @@ public class MainActivity extends FlutterFragmentActivity {
 
         Set<String> phones = new LinkedHashSet<>();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            SubscriptionManager subscriptionManager =
-                    (SubscriptionManager) getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
-            if (subscriptionManager != null) {
-                List<SubscriptionInfo> subscriptions =
-                        subscriptionManager.getActiveSubscriptionInfoList();
-                if (subscriptions != null) {
-                    for (SubscriptionInfo info : subscriptions) {
-                        if (info == null) {
-                            continue;
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                SubscriptionManager subscriptionManager =
+                        (SubscriptionManager) getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+                if (subscriptionManager != null) {
+                    List<SubscriptionInfo> subscriptions = null;
+                    try {
+                        if (hasState || hasNumbers) {
+                            subscriptions = subscriptionManager.getActiveSubscriptionInfoList();
                         }
-                        // API 33+: SubscriptionInfo.getNumber() (pengganti getLine1Number)
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            addPhoneIfPresent(phones, info.getNumber());
+                    } catch (SecurityException e) {
+                        Log.w(TAG, "getActiveSubscriptionInfoList denied: " + e.getMessage());
+                    }
+
+                    if (subscriptions != null) {
+                        Log.d(TAG, "active SIMs=" + subscriptions.size());
+                        for (SubscriptionInfo info : subscriptions) {
+                            if (info == null) {
+                                continue;
+                            }
+                            int subId = info.getSubscriptionId();
+
+                            // API 33+: sumber nomor yang direkomendasikan Google
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && hasNumbers) {
+                                try {
+                                    addPhoneIfPresent(
+                                            phones, subscriptionManager.getPhoneNumber(subId));
+                                } catch (SecurityException e) {
+                                    Log.w(TAG, "getPhoneNumber denied sub=" + subId + ": "
+                                            + e.getMessage());
+                                } catch (Exception e) {
+                                    Log.w(TAG, "getPhoneNumber failed sub=" + subId + ": "
+                                            + e.getMessage());
+                                }
+                            }
+
+                            // API 33+: SubscriptionInfo.getNumber()
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                try {
+                                    addPhoneIfPresent(phones, info.getNumber());
+                                } catch (SecurityException e) {
+                                    Log.w(TAG, "SubscriptionInfo.getNumber denied: "
+                                            + e.getMessage());
+                                }
+                            }
+
+                            addPhoneIfPresent(
+                                    phones, readLine1ForSubscription(telephonyManager, subId));
                         }
-                        addPhoneIfPresent(
-                                phones,
-                                readLine1ForSubscription(
-                                        telephonyManager, info.getSubscriptionId()));
+                    } else {
+                        Log.w(TAG, "No active subscription info");
                     }
                 }
             }
+
+            addPhoneIfPresent(phones, readDefaultLine1Number(telephonyManager));
+        } catch (Exception e) {
+            Log.e(TAG, "getAllSimPhoneNumbers failed", e);
         }
 
-        addPhoneIfPresent(phones, readDefaultLine1Number(telephonyManager));
+        Log.d(TAG, "phones found=" + phones.size() + " values=" + phones);
         return new ArrayList<>(phones);
     }
 

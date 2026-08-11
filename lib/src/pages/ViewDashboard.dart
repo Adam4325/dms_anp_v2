@@ -183,21 +183,93 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   String _attendanceQrRole() => username == "ADMIN" ? "ADMIN" : "OP";
 
-  bool _isDriverStatusUnitClose() {
-    for (var i = data.length - 1; i >= 0; i--) {
-      final item = data[i];
-      if (item is Map && item['name'] == 'status_unit') {
-        return (item['status']?.toString() ?? '').trim().toUpperCase() ==
-            'CLOSE';
+  /// CLOSE atau SERVICE → wajib Scan QR sebelum absensi MIXER.
+  bool _isDriverStatusUnitRequireQr([String? rawStatus]) {
+    var status = (rawStatus ?? '').trim().toUpperCase();
+
+    if (status.isEmpty) {
+      for (var i = data.length - 1; i >= 0; i--) {
+        final item = data[i];
+        if (item is Map && item['name'] == 'status_unit') {
+          status = (item['status']?.toString() ?? '').trim().toUpperCase();
+          break;
+        }
       }
     }
+    if (status.isEmpty) {
+      status = status_unit.trim().toUpperCase();
+    }
 
-    return status_unit.trim().toUpperCase().endsWith('CLOSE');
+    // ONGOING → tidak wajib QR
+    if (status.contains('ONGOING')) {
+      return false;
+    }
+    // CLOSE / SERVICE / kosong (tidak ada BUJ) → wajib QR
+    if (status.isEmpty ||
+        status == 'CLOSE' ||
+        status.endsWith('CLOSE') ||
+        status.contains('CLOSE') ||
+        status == 'SERVICE' ||
+        status.endsWith('SERVICE') ||
+        status.contains('SERVICE')) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Ambil status unit terbaru dari API (langsung dipakai, tidak andalkan list `data` lama).
+  Future<String> _fetchStatusUnitRaw() async {
+    try {
+      sharedPreferences ??= await SharedPreferences.getInstance();
+      final vhcid = sharedPreferences!.getString('vhcid') ?? '';
+      final drvid = sharedPreferences!.getString('drvid') ?? '';
+      final url =
+          '${GlobalData.baseUrlProd}api/detail_info.jsp?method=status_unit_new&vhcid=$vhcid&drvid=$drvid';
+      debugPrint('MIXER status_unit_new: $url');
+      final response =
+          await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
+      if (response.statusCode != 200) {
+        return '';
+      }
+      final dynamic result = json.decode(response.body);
+      if (result is! Map) {
+        return '';
+      }
+      final statusCode = result['status_code']?.toString() ?? '';
+      if (statusCode != '200') {
+        return '';
+      }
+      final status = (result['status'] ?? '').toString().trim();
+      final nopol = (result['nopol'] ?? '').toString();
+      if (mounted) {
+        setState(() {
+          data.removeWhere(
+              (e) => e is Map && e['name'] == 'status_unit');
+          data.add({
+            'name': 'status_unit',
+            'from': '',
+            'to': '',
+            'status': status,
+            'nopol': nopol,
+          });
+          status_unit = status.isEmpty
+              ? ''
+              : '${nopol.isEmpty ? '' : '$nopol '}${status.toUpperCase()}';
+        });
+      }
+      debugPrint('MIXER status_unit raw="$status" display="$status_unit"');
+      return status;
+    } catch (e) {
+      debugPrint('MIXER fetch status_unit failed: $e');
+      return '';
+    }
   }
 
   Future<bool> _shouldRequireAttendanceQr() async {
-    await cekDetailInfo("status_unit");
-    return _isDriverStatusUnitClose();
+    final status = await _fetchStatusUnitRaw();
+    final needQr = _isDriverStatusUnitRequireQr(status);
+    debugPrint('MIXER requireAttendanceQr=$needQr (status="$status")');
+    return needQr;
   }
 
   Future<AttendanceQrResult> _createAttendanceQrData() {
@@ -669,62 +741,70 @@ class _ViewDashboardState extends State<ViewDashboard>
     );
   }
 
-  Future<void> _goToAttendanceDriverIfSimValid() async {
+  Future<void> _goToAttendanceDriverIfSimValid({bool? requireAttendanceQr}) async {
     if (!mounted) return;
     if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
       return;
     }
-    final requireAttendanceQr = await _shouldRequireAttendanceQr();
+    // QR absensi MIXER sudah di-handle di dashboard sebelum navigasi;
+    // halaman attendance tidak cek QR lagi (default false).
+    final needQr = requireAttendanceQr ?? false;
     if (!mounted) return;
-    _navigateToAttendanceDriver(requireAttendanceQr: requireAttendanceQr);
+    _navigateToAttendanceDriver(requireAttendanceQr: needQr);
   }
 
   Future<void> _openAttendanceDriverWithQrScan() async {
     if (!mounted) return;
 
+    // Pastikan login_type dari prefs (hindari state kosong)
     sharedPreferences ??= await SharedPreferences.getInstance();
-    final String drvid = sharedPreferences!.getString("drvid") ?? '';
+    login_type = sharedPreferences!.getString('login_type') ?? login_type;
+
+    // QR absensi MIXER wajib jika status unit CLOSE atau SERVICE — scan di dashboard,
+    // lalu masuk FrmAttendanceDriver tanpa cek QR lagi di halaman absensi.
+    final requireQr = await _shouldRequireAttendanceQr();
+    if (!mounted) return;
+    if (!requireQr) {
+      debugPrint('MIXER skip Scan QR (bukan CLOSE/SERVICE)');
+      await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
+      return;
+    }
+
+    final String drvid = sharedPreferences!.getString('drvid') ?? '';
     if (drvid.isEmpty) {
       final ctx = globalScaffoldKey.currentContext ?? context;
-      _showAlert(ctx, 0, "Data driver tidak ditemukan", "error");
+      _showAlert(ctx, 0, 'Data driver tidak ditemukan', 'error');
       return;
     }
 
-    // 1) Scan/save QR dulu → 2) cek SIM → 3) baru FrmAttendanceDriver
+    Future<void> goAttendanceAfterDashboardQr() async {
+      await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
+    }
+
+    // CLOSE / SERVICE → SELALU tampilkan kamera Scan QR
+    debugPrint('MIXER unit CLOSE/SERVICE → buka Scan QR');
+    final String? qrData = await openQrScanner(context);
+    if (!mounted) return;
+    if (qrData == null || qrData.trim().isEmpty) {
+      final ctx = globalScaffoldKey.currentContext ?? context;
+      _showAlert(ctx, 0, 'Scan QR Code wajib dilakukan', 'error');
+      return;
+    }
+
     if (!globals.isApiLokarRUN) {
-      await _goToAttendanceDriverIfSimValid();
+      await goAttendanceAfterDashboardQr();
       return;
     }
 
-    EasyLoading.show(status: 'Memeriksa QR Code...');
+    EasyLoading.show(status: 'Menyimpan QR Code...');
     try {
-      final checkResult = await _checkQrAbsen(drvid);
-      if (!mounted) return;
-      EasyLoading.dismiss();
-
-      if (checkResult != null &&
-          checkResult.statusCode == 200 &&
-          checkResult.isQrCode) {
-        // QR sudah ada → lanjut cek SIM
-        await _goToAttendanceDriverIfSimValid();
-        return;
-      }
-
-      final String? qrData = await openQrScanner(context);
-      if (qrData == null || qrData.trim().isEmpty) {
-        final ctx = globalScaffoldKey.currentContext ?? context;
-        _showAlert(ctx, 0, "Scan QR Code wajib dilakukan", "error");
-        return;
-      }
-
-      EasyLoading.show(status: 'Menyimpan QR Code...');
       final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
-      final lat = (gpsResult["latitude"] ?? 0).toString();
-      final lon = (gpsResult["longitude"] ?? 0).toString();
-      final apiLokar = sharedPreferences!.getString("api_lokar") ?? '';
+      final lat = (gpsResult['latitude'] ?? 0).toString();
+      final lon = (gpsResult['longitude'] ?? 0).toString();
+      final apiLokar = sharedPreferences!.getString('api_lokar') ?? '';
       final statusCode = await _saveQrAbsen(
         empid: drvid,
-        qrData: qrData.trim(),//
+        qrData: qrData.trim(),
         lon: lon,
         lat: lat,
         apiLokar: apiLokar,
@@ -733,17 +813,16 @@ class _ViewDashboardState extends State<ViewDashboard>
       EasyLoading.dismiss();
 
       if (statusCode == 200) {
-        // QR save sukses → cek SIM → baru masuk Driver Attendance
-        await _goToAttendanceDriverIfSimValid();
+        await goAttendanceAfterDashboardQr();
       } else {
         final ctx = globalScaffoldKey.currentContext ?? context;
         _showAlert(
           ctx,
           0,
           statusCode == null
-              ? "Gagal menyimpan QR Code"
-              : "Gagal menyimpan QR Code (status: $statusCode)",
-          "error",
+              ? 'Gagal menyimpan QR Code'
+              : 'Gagal menyimpan QR Code (status: $statusCode)',
+          'error',
         );
       }
     } catch (e) {
@@ -751,7 +830,7 @@ class _ViewDashboardState extends State<ViewDashboard>
         EasyLoading.dismiss();
       }
       final ctx = globalScaffoldKey.currentContext ?? context;
-      _showAlert(ctx, 0, "Gagal memproses QR Code: $e", "error");
+      _showAlert(ctx, 0, 'Gagal memproses QR Code: $e', 'error');
     }
   }
 
@@ -4667,7 +4746,16 @@ class _ViewDashboardState extends State<ViewDashboard>
         print('LOGKAR save android do_number=$androidDoNumber');
       }
 
-      if (globals.isApiLokarRUN) {
+      final String statusDoMixer = item['status_do_mixer']?.toString() ?? '';
+      // Cek QR absensi hanya untuk INLOADING.
+      // OUTLOADING / OUTPOOL / INCUSTOMER / INUNLOADING / OUTUNLOADING → skip.
+      final bool skipQrAbsensiCheck = statusDoMixer == 'OUTLOADING' ||
+          statusDoMixer == 'OUTPOOL' ||
+          statusDoMixer == 'INCUSTOMER' ||
+          statusDoMixer == 'INUNLOADING' ||
+          statusDoMixer == 'OUTUNLOADING';
+
+      if (globals.isApiLokarRUN && !skipQrAbsensiCheck) {
         EasyLoading.show(status: 'Memeriksa absensi QR...');
         try {
           final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
@@ -4698,7 +4786,7 @@ class _ViewDashboardState extends State<ViewDashboard>
             return;
           }
 
-          if (item['status_do_mixer'].toString() == "INLOADING") {
+          if (statusDoMixer == "INLOADING") {
             EasyLoading.show(status: 'Mengirim posisi...');
             final logkarResult = await _sendLokarOrderPosition(
               apiLokar: apiLokar,
@@ -4710,15 +4798,17 @@ class _ViewDashboardState extends State<ViewDashboard>
             );
             if (!mounted) return;
             EasyLoading.dismiss();
-            // Success: silent (seperti background). Gagal: tetap tampilkan dialog.
+            // Logkar gagal: tetap lanjut update status ke JSP
             if (!logkarResult.ok) {
               await _showLogkarPositionDialog(
                 success: false,
                 message: logkarResult.message,
               );
-              return;
+              if (!mounted) return;
+              print('LOGKAR position FAIL (lanjut JSP): ${logkarResult.message}');
+            } else {
+              print('LOGKAR position OK (silent): ${logkarResult.message}');
             }
-            print('LOGKAR position OK (silent): ${logkarResult.message}');
           }
         } catch (e) {
           if (EasyLoading.isShow) {
@@ -5572,10 +5662,10 @@ class _ViewDashboardState extends State<ViewDashboard>
             sharedPreferences!.setString("tire_drvid", "");
             sharedPreferences!.setString("tire_vhcid", "");
             await DatabaseHelper.instance.deleteItemLogsAll();
-            Timer(Duration(seconds: 1), () {
+            Timer(Duration(seconds: 1), () {//
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => FrmServiceTire()),
+                MaterialPageRoute(builder: (context) => FrmServiceTire()),//
               );
             });
           } else {
@@ -5620,6 +5710,8 @@ class _ViewDashboardState extends State<ViewDashboard>
     } else if (anpService.idKey == 15) {
       // DRIVER + status_karyawan DRIVER → FrmAttendanceDriver
       // status_karyawan KARYAWAN (selain itu) → FrmAttendance
+      sharedPreferences ??= await SharedPreferences.getInstance();
+      login_type = sharedPreferences!.getString('login_type') ?? login_type;
       if (loginname == "DRIVER" &&
           _normalizedStatusKaryawan() == "DRIVER") {
         if (login_type == "MIXER") {

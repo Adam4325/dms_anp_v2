@@ -1425,11 +1425,11 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
             ),
             SmartSelect<String>.single(
               title: 'Cabang',
-              selectedValue: selInvToCustomer,
+              selectedValue: selInvLocid,
               placeholder: 'Pilih Cabang',
               onChange: (selected) async {
                 setState(() {
-                  selInvLocid = selected.value;
+                  selInvLocid = selected.value ?? '';
                 });
               },
               choiceItems: S2Choice.listFrom<String, Map>(
@@ -1532,83 +1532,82 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                               label: Text("Ok"),
                               onPressed: () async {
                                 Navigator.of(context).pop(false);
-                                var isOK = globals.akses_pages == null
-                                    ? globals.akses_pages
-                                    : globals.akses_pages.where((x) =>
-                                        x == "OP" || username == "ADMIN");
-                                if (isOK != null) {
-                                  if (isOK.length > 0) {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => new AlertDialog(
-                                        title: new Text('Information'),
-                                        content: new Text(
-                                            "Create transaction Inventory?"),
-                                        actions: <Widget>[
-                                          new ElevatedButton.icon(
-                                            icon: Icon(
-                                              Icons.close,
-                                              color: Colors.white,
-                                              size: 20.0,
-                                            ),
-                                            label: Text("No"),
-                                            onPressed: () {
-                                              Navigator.of(context).pop(false);
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                                elevation: 0.0,
-                                                backgroundColor: Colors.red,
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 10,
-                                                    vertical: 0),
-                                                textStyle: TextStyle(
-                                                    fontSize: 10,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                          ),
-                                          new ElevatedButton.icon(
-                                            icon: Icon(
-                                              Icons.save,
-                                              color: Colors.white,
-                                              size: 20.0,
-                                            ),
-                                            label: Text("Ok"),
-                                            onPressed: () async {
-                                              Navigator.of(context).pop(false);
-                                              await CreateTrxInv(
-                                                  txtInvTrxDate.text,
-                                                  selTrxType,
-                                                  selInvVendorID,
-                                                  selInvFromWH,
-                                                  selInvToWH,
-                                                  selInvOrderNumber,
-                                                  selInvToCustomer,
-                                                  txtInvTrxNotes.text,
-                                                  username,
-                                                  selInvLocid);
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                                elevation: 0.0,
-                                                backgroundColor: Colors.blue,
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 10,
-                                                    vertical: 0),
-                                                textStyle: TextStyle(
-                                                    fontSize: 10,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                } else {
+                                // Validasi akses: ADMIN / OP / IR
+                                final bool canCreateInv = username == "ADMIN" ||
+                                    (globals.akses_pages != null &&
+                                        globals.akses_pages.any((x) =>
+                                            x == "OP" || x == "IR"));
+                                if (!canCreateInv) {
                                   alert(
                                       globalScaffoldKey.currentContext!,
                                       0,
-                                      "Anda tidak dapat melakukan transaksi ini",
+                                      "Anda tidak dapat melakukan transaksi ini (perlu akses ADMIN/OP/IR)",
                                       "error");
+                                  return;
                                 }
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => new AlertDialog(
+                                    title: new Text('Information'),
+                                    content: new Text(
+                                        "Create transaction Inventory?"),
+                                    actions: <Widget>[
+                                      new ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 20.0,
+                                        ),
+                                        label: Text("No"),
+                                        onPressed: () {
+                                          Navigator.of(context).pop(false);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            elevation: 0.0,
+                                            backgroundColor: Colors.red,
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 0),
+                                            textStyle: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight:
+                                                    FontWeight.bold)),
+                                      ),
+                                      new ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.save,
+                                          color: Colors.white,
+                                          size: 20.0,
+                                        ),
+                                        label: Text("Ok"),
+                                        onPressed: () async {
+                                          Navigator.of(context).pop(false);
+                                          await CreateTrxInv(
+                                              txtInvTrxDate.text,
+                                              selTrxType,
+                                              selInvVendorID,
+                                              selInvFromWH,
+                                              selInvToWH,
+                                              selInvOrderNumber,
+                                              selInvToCustomer,
+                                              txtInvTrxNotes.text,
+                                              username,
+                                              selInvLocid);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            elevation: 0.0,
+                                            backgroundColor: Colors.blue,
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 0),
+                                            textStyle: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight:
+                                                    FontWeight.bold)),
+                                      ),
+                                    ],
+                                  ),
+                                );
                               },
                               style: ElevatedButton.styleFrom(
                                   elevation: 0.0,

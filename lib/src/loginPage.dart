@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dms_anp/helpers/sim_phone_guard.dart';
 import 'package:dms_anp/src/Helper/MasterDataPreloader.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/flusbar.dart';
@@ -258,6 +259,15 @@ class _LoginPageState extends State<LoginPage> {
           var cpyname = result["data"][0]["cpyname"];
           var ismixer = result["data"][0]["ismixer"];
           var phone = result["data"][0]["phone"]??"";
+          // default true bila field belum ada di response lama
+          final dynamic isReadSimRaw = result["data"][0]["is_read_sim"];
+          final bool isReadSim = (() {
+            if (isReadSimRaw == null) return true;
+            if (isReadSimRaw is bool) return isReadSimRaw;
+            final s = isReadSimRaw.toString().trim().toLowerCase();
+            if (s == 'false' || s == '0' || s == 'no') return false;
+            return true;
+          })();
           var status_karyawan = result["data"][0]["status_karyawan"];
           var kryid = result["data"][0]["kryid"];
           var login_type = result["data"][0]["login_type"];
@@ -318,6 +328,7 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('cpyname', cpyname);
           prefs.setString('ismixer', ismixer);
           prefs.setString('phone', phone);
+          prefs.setBool('is_read_sim', isReadSim);
           prefs.setString('login_type', login_type);
           prefs.setString('status_karyawan', status_karyawan);
           prefs.setString('kryid', kryid);
@@ -325,6 +336,10 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('lokar_client_id', (lokar_client_id ?? '').toString());
           prefs.setString('lokar_api_token', (lokar_api_token ?? '').toString());
           print('IMMEIID $_identifier');
+          // Debug: dump nomor login vs nomor SIM yang terbaca di device
+          unawaited(
+            SimPhoneGuard.debugDumpSimPhones(note: 'setelah login'),
+          );
           UserInactivityController.resetTimer();
           UserInactivityController.reloadIdleDuration();
 

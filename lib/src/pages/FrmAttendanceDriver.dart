@@ -88,7 +88,7 @@ class GeofenceArea {
 class FrmAttendanceDriver extends StatefulWidget {
   FrmAttendanceDriver({
     Key? key,
-    this.requireAttendanceQr = true,
+    this.requireAttendanceQr = false,
   }) : super(key: key);
 
   final bool requireAttendanceQr;

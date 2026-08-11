@@ -292,6 +292,39 @@ var pm_merk = '';
 var pm_vhttype = '';
 var pm_locid = '';
 
+InputDecoration tireSearchDecoration({
+  String? label,
+  String? hint,
+  Widget? prefixIcon,
+  Widget? suffixIcon,
+  Color focusColor = const Color(0xFFFF8C69),
+}) {
+  return InputDecoration(
+    labelText: label,
+    hintText: hint,
+    isDense: true,
+    filled: true,
+    fillColor: Colors.white,
+    labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+    hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    prefixIcon: prefixIcon,
+    suffixIcon: suffixIcon,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: focusColor, width: 2),
+    ),
+  );
+}
+
 class _BottomSheetContentWONumberCHK extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -384,12 +417,11 @@ class _BottomSheetContentVehicleCHK extends StatelessWidget {
               //   //filterSearchResultsDriver(value);
               // },
               controller: txtSearchVehicleCHK,
-              decoration: InputDecoration(
-                  labelText: "Search",
-                  hintText: "Search",
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+              decoration: tireSearchDecoration(
+                label: "Search",
+                hint: "Search",
+                prefixIcon: Icon(Icons.search, color: Color(0xFFFF8C69)),
+              ),
             ),
           ),
           Expanded(
@@ -467,12 +499,11 @@ class _BottomSheetContentDriver extends StatelessWidget {
               //   //filterSearchResultsDriver(value);
               // },
               controller: txtSearchDriver,
-              decoration: InputDecoration(
-                  labelText: "Search",
-                  hintText: "Search",
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+              decoration: tireSearchDecoration(
+                label: "Search",
+                hint: "Search",
+                prefixIcon: Icon(Icons.search, color: Color(0xFFFF8C69)),
+              ),
             ),
           ),
           Expanded(
@@ -530,12 +561,11 @@ class _BottomSheetContentVehicle extends StatelessWidget {
               //   //filterSearchResultsDriver(value);
               // },
               controller: txtSearchVehicle,
-              decoration: InputDecoration(
-                  labelText: "Search",
-                  hintText: "Search",
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+              decoration: tireSearchDecoration(
+                label: "Search",
+                hint: "Search",
+                prefixIcon: Icon(Icons.search, color: Color(0xFFFF8C69)),
+              ),
             ),
           ),
           Expanded(
@@ -639,12 +669,11 @@ class _BottomSheetContentMechanic extends StatelessWidget {
               //   //filterSearchResultsDriver(value);
               // },
               controller: txtSearchMechanic,
-              decoration: InputDecoration(
-                  labelText: "Search",
-                  hintText: "Search",
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+              decoration: tireSearchDecoration(
+                label: "Search",
+                hint: "Search",
+                prefixIcon: Icon(Icons.search, color: Color(0xFFFF8C69)),
+              ),
             ),
           ),
           Expanded(
@@ -820,22 +849,79 @@ class _FrmServiceTireState extends State<FrmServiceTire>
   String bSave = "Save Request";
   String bUpdate = "Update Request";
   InputDecoration softDecoration(
-      {String? label, bool readOnly = false, Widget? suffixIcon}) {
+      {String? label,
+      String? hint,
+      bool readOnly = false,
+      Widget? suffixIcon,
+      Widget? prefixIcon}) {
     return InputDecoration(
       labelText: label,
+      hintText: hint,
       isDense: true,
       filled: true,
-      fillColor: readOnly ? Colors.black12 : Colors.white,
-      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      fillColor: Colors.white,
+      labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+      hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey.shade400),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: primaryOrange, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: primaryOrange, width: 2),
       ),
-      suffixIcon: suffixIcon,
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+    );
+  }
+
+  ButtonStyle tireBtnStyle(Color bg) {
+    return ElevatedButton.styleFrom(
+      elevation: 0,
+      backgroundColor: bg,
+      foregroundColor: Colors.white,
+      disabledForegroundColor: Colors.white70,
+      shadowColor: Colors.transparent,
+      side: BorderSide.none,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    );
+  }
+
+  Widget tireBtnLabel(String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        fontSize: 13,
+      ),
+    );
+  }
+
+  AlertDialog tireAlertDialog({
+    required String title,
+    required Widget content,
+    List<Widget> actions = const <Widget>[],
+  }) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: cardColor,
+      title: Text(
+        title,
+        style: TextStyle(color: darkOrange, fontWeight: FontWeight.w600),
+      ),
+      content: content,
+      actions: actions,
     );
   }
 
@@ -1202,15 +1288,16 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           }
           await showDialog(
             context: globalScaffoldKey.currentContext!,
-            builder: (context) => new AlertDialog(
-              title: new Text('Success'),
+            builder: (context) => tireAlertDialog(
+              title: 'Success',
               content: new Text(json.decode(response.body)["message"]),
               actions: <Widget>[
-                new TextButton(
+                ElevatedButton(
                   onPressed: () async {
                     Navigator.of(context).pop(true);
                   },
-                  child: new Text('Ok'),
+                  child: tireBtnLabel('Ok'),
+                  style: tireBtnStyle(primaryOrange),
                 ),
               ],
             ),
@@ -1222,15 +1309,16 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           await Future.delayed(Duration(milliseconds: 1));
           await showDialog(
             context: globalScaffoldKey.currentContext!,
-            builder: (context) => new AlertDialog(
-              title: new Text('Alert'),
+            builder: (context) => tireAlertDialog(
+              title: 'Alert',
               content: new Text(json.decode(response.body)["message"]),
               actions: <Widget>[
-                new TextButton(
+                ElevatedButton(
                   onPressed: () async {
                     Navigator.of(context).pop(true);
                   },
-                  child: new Text('Ok'),
+                  child: tireBtnLabel('Ok'),
+                  style: tireBtnStyle(primaryOrange),
                 ),
               ],
             ),
@@ -1436,9 +1524,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
             if (status_code == 200) {
               showDialog(
                 context: globalScaffoldKey.currentContext!,
-                builder: (context) => new AlertDialog(
-                  title: new Text('Information'),
-                  content: new Text("$message"),
+                builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("$message"),
                   actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
@@ -1446,18 +1534,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: tireBtnLabel('Ok'),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeksFinish();
                       },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.blue,
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: tireBtnStyle(primaryOrange),
                     ),
                   ],
                 ),
@@ -1565,9 +1647,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
             if (status_code == 200) {
               showDialog(
                 context: globalScaffoldKey.currentContext!,
-                builder: (context) => new AlertDialog(
-                  title: new Text('Information'),
-                  content: new Text("$message"),
+                builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("$message"),
                   actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
@@ -1575,18 +1657,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: tireBtnLabel('Ok'),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeks();
                       },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.blue,
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: tireBtnStyle(primaryOrange),
                     ),
                   ],
                 ),
@@ -1677,9 +1753,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
             if (status_code == 200) {
               showDialog(
                 context: globalScaffoldKey.currentContext!,
-                builder: (context) => new AlertDialog(
-                  title: new Text('Information'),
-                  content: new Text("$message"),
+                builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("$message"),
                   actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
@@ -1687,19 +1763,13 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: tireBtnLabel('Ok'),
                       onPressed: () async {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeks();
                         await getJSONData(true, '');
                       },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.blue,
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: tireBtnStyle(primaryOrange),
                     ),
                   ],
                 ),
@@ -1819,9 +1889,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
             if (status_code == 200) {
               showDialog(
                 context: globalScaffoldKey.currentContext!,
-                builder: (context) => new AlertDialog(
-                  title: new Text('Information'),
-                  content: new Text("$message"),
+                builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("$message"),
                   actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
@@ -1829,18 +1899,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: tireBtnLabel('Ok'),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         getJSONDataFinish(true, "");
                       },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.blue,
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: tireBtnStyle(primaryOrange),
                     ),
                   ],
                 ),
@@ -1909,9 +1973,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
             if (status_code == 200) {
               showDialog(
                 context: globalScaffoldKey.currentContext!,
-                builder: (context) => new AlertDialog(
-                  title: new Text('Information'),
-                  content: new Text("$message"),
+                builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("$message"),
                   actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
@@ -1919,18 +1983,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: tireBtnLabel('Ok'),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         getJSONDataTyre(true, "");
                       },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.blue,
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: tireBtnStyle(primaryOrange),
                     ),
                   ],
                 ),
@@ -2001,9 +2059,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
             if (status_code == 200) {
               showDialog(
                 context: globalScaffoldKey.currentContext!,
-                builder: (context) => new AlertDialog(
-                  title: new Text('Information'),
-                  content: new Text("$message"),
+                builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("$message"),
                   actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
@@ -2011,18 +2069,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: tireBtnLabel('Ok'),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         getJSONData(true, '');
                       },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.blue,
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: tireBtnStyle(primaryOrange),
                     ),
                   ],
                 ),
@@ -2497,100 +2549,23 @@ class _FrmServiceTireState extends State<FrmServiceTire>
   //int selectedPage=1;
   //_RegisterNewDriverState(this.selectedPage);
   Widget _buildDListBanTmsFinish(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings_applications, color: Colors.black),
-                ),
-                title: Text(
-                  "Tyre Number : ${item['tyrenumber']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("ID ItemID : ${item['iditemid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("PartName : ${item['partname']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Genuino: ${item['genuino']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Merk: ${item['merk']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Item Alias: ${item['itmalias']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("ID Unit Cost: ${item['itdunitcost']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Original SN: ${item['original_sn']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("WH: ${item['wh']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
-              ),
-            ),
-          ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                buildButtonAddBanFinish(context, item),
-                SizedBox(width: 10.0),
-                buildButtonCancelBan(context)
-              ]),
-            ),
-          ),
-        ],
-      ),
+    return _tireListCard(
+      title: "Tyre Number : ${_s(item['tyrenumber'])}",
+      rows: [
+        _kv('ID ItemID', _s(item['iditemid'])),
+        _kv('PartName', _s(item['partname'])),
+        _kv('Genuino', _s(item['genuino'])),
+        _kv('Merk', _s(item['merk'])),
+        _kv('Item Alias', _s(item['itmalias'])),
+        _kv('ID Unit Cost', _s(item['itdunitcost'])),
+        _kv('Original SN', _s(item['original_sn'])),
+        _kv('WH', _s(item['wh'])),
+      ],
+      actions: Row(children: <Widget>[
+        buildButtonAddBanFinish(context, item),
+        SizedBox(width: 10.0),
+        buildButtonCancelBan(context)
+      ]),
     );
   }
 
@@ -2622,97 +2597,20 @@ class _FrmServiceTireState extends State<FrmServiceTire>
   }
 
   Widget _buildDListTyreFit(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings_applications, color: Colors.black),
-                ),
-                title: Text(
-                  "VHCID : ${item['vhcid']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("ITEMID : ${item['fittyreid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Tyre Number : ${item['fitserialno']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("CurDate: ${item['startdate']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("START KM: ${item['startkm']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text(
-                      "MERK/ ITMALIAS: ${item['tyrebrand']}/${item['tyrepattern']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("PRICE: ${item['tyreprice']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("SN/ GENUINENO: ${item['genuineno']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("FIT POST: ${item['fitpost']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
-              ),
-            ),
-          ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[buildDeleteTyreFit(context, item)]),
-            ),
-          ),
-        ],
-      ),
+    return _tireListCard(
+      title: "VHCID : ${_s(item['vhcid'])}",
+      rows: [
+        _kv('ITEMID', _s(item['fittyreid'])),
+        _kv('Tyre Number', _s(item['fitserialno'])),
+        _kv('CurDate', _s(item['startdate'])),
+        _kv('START KM', _s(item['startkm'])),
+        _kv('MERK/ ITMALIAS',
+            '${_s(item['tyrebrand'])}/${_s(item['tyrepattern'])}'),
+        _kv('PRICE', _s(item['tyreprice'])),
+        _kv('SN/ GENUINENO', _s(item['genuineno'])),
+        _kv('FIT POST', _s(item['fitpost'])),
+      ],
+      actions: Row(children: <Widget>[buildDeleteTyreFit(context, item)]),
     );
   }
 
@@ -2724,14 +2622,14 @@ class _FrmServiceTireState extends State<FrmServiceTire>
         color: Colors.white,
         size: 15.0,
       ),
-      label: Text("Delete"),
+      label: tireBtnLabel('Delete'),
       onPressed: () async {
         Navigator.of(globalScaffoldKey.currentContext!).pop(false);
         showDialog(
           context: globalScaffoldKey.currentContext!,
-          builder: (context) => new AlertDialog(
-            title: new Text('Information'),
-            content: new Text("Delete this data?"),
+          builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("Delete this data?"),
             actions: <Widget>[
               new ElevatedButton.icon(
                 icon: Icon(
@@ -2739,17 +2637,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   color: Colors.white,
                   size: 24.0,
                 ),
-                label: Text("Close"),
+                label: tireBtnLabel('Close'),
                 onPressed: () async {
                   //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                   Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                 },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.redAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                style: tireBtnStyle(Colors.redAccent),
               ),
               new ElevatedButton.icon(
                 icon: Icon(
@@ -2757,7 +2650,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   color: Colors.white,
                   size: 24.0,
                 ),
-                label: Text("Delete"),
+                label: tireBtnLabel('Delete'),
                 onPressed: () async {
                   print('show');
                   Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -2775,22 +2668,13 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                     await DeleteTyreFit(true, item['wonumber'], item['id']);
                   }
                 },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                style: tireBtnStyle(primaryOrange),
               ),
             ],
           ),
         );
       },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.orangeAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+      style: tireBtnStyle(Colors.grey.shade500),
     ));
   }
 
@@ -2984,28 +2868,23 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               style: TextStyle(color: Colors.grey.shade800),
               controller: txtSearchVehicleSr,
               keyboardType: TextInputType.text,
-              decoration: new InputDecoration(
-                  suffixIcon: IconButton(
-                    icon: new Image.asset(
-                      "assets/img/search.png",
-                      width: 32.0,
-                      height: 32.0,
-                    ),
-                    onPressed: () async {
-                      if (txtSearchVehicleSr.text != null &&
-                          txtSearchVehicleSr.text != "" &&
-                          METHOD_DETAIL == '') {
-                        await getListDataSr(true, txtSearchVehicleSr.text);
-                      }
-                    },
+              decoration: softDecoration(
+                label: "VHCID",
+                suffixIcon: IconButton(
+                  icon: new Image.asset(
+                    "assets/img/search.png",
+                    width: 32.0,
+                    height: 32.0,
                   ),
-                  fillColor: HexColor("FFF6F1BF"),
-                  filled: true,
-                  isDense: true,
-                  labelText: "VHCID",
-                  contentPadding: EdgeInsets.all(5.0),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+                  onPressed: () async {
+                    if (txtSearchVehicleSr.text != null &&
+                        txtSearchVehicleSr.text != "" &&
+                        METHOD_DETAIL == '') {
+                      await getListDataSr(true, txtSearchVehicleSr.text);
+                    }
+                  },
+                ),
+              ),
             ),
           ),
           Container(
@@ -3041,12 +2920,11 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               padding: const EdgeInsets.all(5.0),
               child: TextField(
                 controller: txtSearchVehicleStart,
-                decoration: InputDecoration(
-                    labelText: "Search",
-                    hintText: "Search nopol/locid",
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+                decoration: softDecoration(
+                  label: "Search",
+                  hint: "Search nopol/locid",
+                  prefixIcon: Icon(Icons.search, color: primaryOrange),
+                ),
               ),
             ),
             Container(
@@ -3207,18 +3085,19 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           }
           await showDialog(
             context: globalScaffoldKey.currentContext!,
-            builder: (context) => new AlertDialog(
-              title: new Text('Success'),
+            builder: (context) => tireAlertDialog(
+              title: 'Success',
               content: new Text(json.decode(response.body)["message"]),
               actions: <Widget>[
-                new TextButton(
+                ElevatedButton(
                   onPressed: () async {
                     Navigator.of(context).pop(true);
                     if (EasyLoading.isShow) {
                       EasyLoading.dismiss();
                     }
                   },
-                  child: new Text('Ok'),
+                  child: tireBtnLabel('Ok'),
+                  style: tireBtnStyle(primaryOrange),
                 ),
               ],
             ),
@@ -3233,15 +3112,16 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           await Future.delayed(Duration(milliseconds: 1));
           await showDialog(
             context: globalScaffoldKey.currentContext!,
-            builder: (context) => new AlertDialog(
-              title: new Text('Alert'),
+            builder: (context) => tireAlertDialog(
+              title: 'Alert',
               content: new Text(json.decode(response.body)["message"]),
               actions: <Widget>[
-                new TextButton(
+                ElevatedButton(
                   onPressed: () async {
                     Navigator.of(context).pop(true);
                   },
-                  child: new Text('Ok'),
+                  child: tireBtnLabel('Ok'),
+                  style: tireBtnStyle(primaryOrange),
                 ),
               ],
             ),
@@ -3265,114 +3145,28 @@ class _FrmServiceTireState extends State<FrmServiceTire>
   }
 
   Widget _buildDListDetailOpname(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
+    return _tireListCard(
+      title: "Katalog : ${_s(item['katalog'])}",
+      rows: [
+        _kv('ItemID', _s(item['itemid'])),
+        _kv('TypID', _s(item['idtype'])),
+        _kv('Genuino', _s(item['genuineno'])),
+        _kv('Merk', _s(item['merk'])),
+        _kv('Partname', _s(item['partname'])),
+        _kv('Item Size', _s(item['item_size'])),
+        _kv('QTY', _s(item['qty'])),
+      ],
+      actions: Row(
         children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings_applications, color: Colors.black),
-                ),
-                title: Text(
-                  "Katalog : ${item['katalog']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("ItemID : ${item['itemid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("TypID : ${item['idtype']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Genuino: ${item['genuineno']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Merk: ${item['merk']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Partname: ${item['partname']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Item Size: ${item['item_size']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("QTY: ${item['qty']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  )
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
-              ),
-            ),
-          ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(
-                children: <Widget>[
-                  buildDeleteOpnameDetail(context, item),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  Expanded(
-                      child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: Text("Close"),
-                    onPressed: () async {
-                      Navigator.of(globalScaffoldKey.currentContext!)
-                          .pop(false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.orangeAccent,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold)),
-                  ))
-                ],
-              ),
-            ),
+          buildDeleteOpnameDetail(context, item),
+          SizedBox(width: 10),
+          _tireBtn(
+            icon: Icons.close,
+            label: "Close",
+            color: accentOrange,
+            onPressed: () {
+              Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+            },
           ),
         ],
       ),
@@ -3410,14 +3204,14 @@ class _FrmServiceTireState extends State<FrmServiceTire>
         color: Colors.white,
         size: 15.0,
       ),
-      label: Text("Delete"),
+      label: tireBtnLabel('Delete'),
       onPressed: () async {
         Navigator.of(globalScaffoldKey.currentContext!).pop(false);
         showDialog(
           context: globalScaffoldKey.currentContext!,
-          builder: (context) => new AlertDialog(
-            title: new Text('Information'),
-            content: new Text("Delete this data?"), //DELETE OPNAME
+          builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("Delete this data?"), //DELETE OPNAME
             actions: <Widget>[
               new ElevatedButton.icon(
                 icon: Icon(
@@ -3425,17 +3219,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   color: Colors.white,
                   size: 24.0,
                 ),
-                label: Text("Close"),
+                label: tireBtnLabel('Close'),
                 onPressed: () async {
                   //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                   Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                 },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.redAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                style: tireBtnStyle(Colors.redAccent),
               ),
               new ElevatedButton.icon(
                 icon: Icon(
@@ -3443,7 +3232,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   color: Colors.white,
                   size: 24.0,
                 ),
-                label: Text("Delete"),
+                label: tireBtnLabel('Delete'),
                 onPressed: () async {
                   print('show');
                   Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -3455,22 +3244,13 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                     await DeleteOpnameDetail(true, item['vhcid'], item['id']);
                   }
                 },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                style: tireBtnStyle(primaryOrange),
               ),
             ],
           ),
         );
       },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.redAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+      style: tireBtnStyle(Colors.redAccent),
     ));
   }
 
@@ -3565,15 +3345,16 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           }
           await showDialog(
             context: globalScaffoldKey.currentContext!,
-            builder: (context) => new AlertDialog(
-              title: new Text('Success'),
+            builder: (context) => tireAlertDialog(
+              title: 'Success',
               content: new Text(json.decode(response.body)["message"]),
               actions: <Widget>[
-                new TextButton(
+                ElevatedButton(
                   onPressed: () async {
                     Navigator.of(context).pop(true);
                   },
-                  child: new Text('Ok'),
+                  child: tireBtnLabel('Ok'),
+                  style: tireBtnStyle(primaryOrange),
                 ),
               ],
             ),
@@ -3585,15 +3366,16 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           await Future.delayed(Duration(milliseconds: 1));
           await showDialog(
             context: globalScaffoldKey.currentContext!,
-            builder: (context) => new AlertDialog(
-              title: new Text('Alert'),
+            builder: (context) => tireAlertDialog(
+              title: 'Alert',
               content: new Text(json.decode(response.body)["message"]),
               actions: <Widget>[
-                new TextButton(
+                ElevatedButton(
                   onPressed: () async {
                     Navigator.of(context).pop(true);
                   },
-                  child: new Text('Ok'),
+                  child: tireBtnLabel('Ok'),
+                  style: tireBtnStyle(primaryOrange),
                 ),
               ],
             ),
@@ -3693,9 +3475,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               }
               showDialog(
                 context: globalScaffoldKey.currentContext!,
-                builder: (context) => new AlertDialog(
-                  title: new Text('Information'),
-                  content: new Text("$message"),
+                builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("$message"),
                   actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
@@ -3703,18 +3485,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: tireBtnLabel('Ok'),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeksFinishOpnameDetail();
                       },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.blue,
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: tireBtnStyle(primaryOrange),
                     ),
                   ],
                 ),
@@ -4045,9 +3821,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                 }
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
-                  builder: (context) => new AlertDialog(
-                    title: new Text('Information'),
-                    content: new Text("$message"),
+                  builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("$message"),
                     actions: <Widget>[
                       new ElevatedButton.icon(
                         icon: Icon(
@@ -4055,19 +3831,13 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                           color: Colors.white,
                           size: 24.0,
                         ),
-                        label: Text("Ok"),
+                        label: tireBtnLabel('Ok'),
                         onPressed: () async {
                           Navigator.of(context, rootNavigator: true).pop();
                           await DatabaseHelper.instance.deleteItemLogsAll();
                           resetTeksFinishOpnameDetail();
                         },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0.0,
-                            backgroundColor: Colors.blue,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 5, vertical: 0),
-                            textStyle: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
+                        style: tireBtnStyle(primaryOrange),
                       ),
                     ],
                   ),
@@ -4171,9 +3941,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               }
               showDialog(
                 context: globalScaffoldKey.currentContext!,
-                builder: (context) => new AlertDialog(
-                  title: new Text('Information'),
-                  content: new Text("$message"),
+                builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("$message"),
                   actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
@@ -4181,18 +3951,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: tireBtnLabel('Ok'),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeksFinishOpname();
                       },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.blue,
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: tireBtnStyle(primaryOrange),
                     ),
                   ],
                 ),
@@ -4289,9 +4053,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               }
               showDialog(
                 context: globalScaffoldKey.currentContext!,
-                builder: (context) => new AlertDialog(
-                  title: new Text('Information'),
-                  content: new Text("$message"),
+                builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("$message"),
                   actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
@@ -4299,18 +4063,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: tireBtnLabel('Ok'),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeksFinishOpname();
                       },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.blue,
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: tireBtnStyle(primaryOrange),
                     ),
                   ],
                 ),
@@ -4449,249 +4207,145 @@ class _FrmServiceTireState extends State<FrmServiceTire>
   }
 
   Widget _buildDListDetailOpnameSr(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                title: Text(
-                  "SR Number : ${item['srnumber']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text(
-                      "SR DateTime : ${DateFormat("yyyy-MM-dd HH:mm:ss").parse(item['requestdate'], false)}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("VHCID : ${item['vhcid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("MERK : ${item['manufacturer']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("VHTTYPE : ${item['vhttype']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("SERVICE TYPE : ${item['srtypeid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("LOCID : ${item['srlocid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("DRV. NAME: ${item['drvname']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("NOTES: ${item['srnotes']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  )
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
-              ),
-            ),
-          ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.edit,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Add"), //ADD TIRE
-                  onPressed: () async {
-                    SharedPreferences prefs =
-                        await SharedPreferences.getInstance();
-                    Navigator.of(context).pop(false);
-                    //FOR DEV
-                    // service_typeid = "PM1";
-                    // txtOpnameVHCID.text = "B 9744 YU";//
-                    // if(service_typeid=="PM1"){
-                    //   pm_merk= "ISUZU";
-                    //   pm_vhttype="LT";
-                    //
-                    // }
-                    //print(item);
-                    service_typeid = item['srtypeid'].toString();
-                    pm_locid = item['srlocid'].toString();
-                    txtOpnameVHCID.text = item['vhcid'].toString();
-                    prefs.setString("tire_vhcid", item['vhcid'].toString());
-                    prefs.setString("tire_drvid", item['drvid'].toString());
-                    print(
-                        "item['vhttype'].toString()  ${item['vhttype'].toString()}");
-                    var tireType = item['vhttype'].toString() != null &&
-                            item['vhttype'].toString() != "" &&
-                            item['vhttype'].toString() != 'null'
-                        ? item['vhttype'].toString().toUpperCase()
-                        : "";
-                    //tireType = "LT";
-                    if (tireType.contains("TRAILLER")) {
-                      if (tireType.substring(0, tireType.length - 3) ==
-                          "TRAIL") {
-                        prefs.setString("tire_vhttype", "TRAIL");
-                      }
-                    } else {
-                      if (tireType.substring(0, 2) == "TR") {
-                        prefs.setString("tire_vhttype", "TR");
-                      } else if (tireType.substring(0, 2) == "LT") {
-                        prefs.setString("tire_vhttype", "LT");
-                      } else {
-                        prefs.setString("tire_vhttype", "");
-                      }
-                    }
+    return _tireListCard(
+      title: "SR Number : ${_s(item['srnumber'])}",
+      rows: [
+        _kv(
+            'SR DateTime',
+            _s(DateFormat("yyyy-MM-dd HH:mm:ss")
+                .parse(item['requestdate'], false)
+                .toString())),
+        _kv('VHCID', _s(item['vhcid'])),
+        _kv('MERK', _s(item['manufacturer'])),
+        _kv('VHTTYPE', _s(item['vhttype'])),
+        _kv('SERVICE TYPE', _s(item['srtypeid'])),
+        _kv('LOCID', _s(item['srlocid'])),
+        _kv('DRV. NAME', _s(item['drvname'])),
+        _kv('NOTES', _s(item['srnotes'])),
+      ],
+      actions: Row(children: <Widget>[
+        _tireBtn(
+          icon: Icons.edit,
+          label: "Add", //ADD TIRE
+          color: primaryOrange,
+          onPressed: () async {
+            SharedPreferences prefs = await SharedPreferences.getInstance();
+            Navigator.of(context).pop(false);
+            //FOR DEV
+            // service_typeid = "PM1";
+            // txtOpnameVHCID.text = "B 9744 YU";//
+            // if(service_typeid=="PM1"){
+            //   pm_merk= "ISUZU";
+            //   pm_vhttype="LT";
+            //
+            // }
+            //print(item);
+            service_typeid = item['srtypeid'].toString();
+            pm_locid = item['srlocid'].toString();
+            txtOpnameVHCID.text = item['vhcid'].toString();
+            prefs.setString("tire_vhcid", item['vhcid'].toString());
+            prefs.setString("tire_drvid", item['drvid'].toString());
+            print(
+                "item['vhttype'].toString()  ${item['vhttype'].toString()}");
+            var tireType = item['vhttype'].toString() != null &&
+                    item['vhttype'].toString() != "" &&
+                    item['vhttype'].toString() != 'null'
+                ? item['vhttype'].toString().toUpperCase()
+                : "";
+            //tireType = "LT";
+            if (tireType.contains("TRAILLER")) {
+              if (tireType.substring(0, tireType.length - 3) == "TRAIL") {
+                prefs.setString("tire_vhttype", "TRAIL");
+              }
+            } else {
+              if (tireType.substring(0, 2) == "TR") {
+                prefs.setString("tire_vhttype", "TR");
+              } else if (tireType.substring(0, 2) == "LT") {
+                prefs.setString("tire_vhttype", "LT");
+              } else {
+                prefs.setString("tire_vhttype", "");
+              }
+            }
 
-                    pm_merk = '';
-                    pm_vhttype = '';
-                    if (service_typeid == "PM1" ||
-                        service_typeid == "PM2" ||
-                        service_typeid == "PM3") {
-                      pm_merk = item['manufacturer'].toString();
-                      pm_vhttype = item['vhttype'].toString();
-                    }
-                    print(pm_merk);
-                    print(pm_vhttype);
-                    txtOpnameWONUMBER.text = item['srnumber'].toString();
-                    print(
-                        'wonumberopname ${item['wodwonbr'].toString()} ${wonumberopname}');
-                    wonumberopname = item['wodwonbr'].toString();
-                    srnumberopname = item['srnumber'].toString();
-                    await getMenuKatalog();
-                    Timer(Duration(seconds: 1), () {
-                      showDialog(
-                        context: globalScaffoldKey.currentContext!,
-                        builder: (context) => new AlertDialog(
-                          title: new Text('Information'),
-                          content: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              Container(
-                                margin: EdgeInsets.all(10.0),
-                                child: Text("Save Opname?"),
-                              ),
-                            ],
-                          ),
-                          actions: <Widget>[
-                            new ElevatedButton.icon(
-                              icon: Icon(
-                                Icons.save,
-                                color: Colors.white,
-                                size: 20.0,
-                              ),
-                              label: Text("Save Opname"),
-                              onPressed: () async {
-                                Navigator.of(context).pop(false);
-                                createOpname();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: Colors.blue,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 0),
-                                  textStyle: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                            new ElevatedButton.icon(
-                              icon: Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 20.0,
-                              ),
-                              label: Text("Close"),
-                              onPressed: () async {
-                                Navigator.of(context).pop(false);
-                                setState(() {
-                                  wonumberopname = "";
-                                  srnumberopname = "";
-                                  txtOpnameVHCID.text = "";
-                                  txtOpnameWONUMBER.text = "";
-                                });
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: Colors.orangeAccent,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 0),
-                                  textStyle: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                      );
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.blueAccent,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                )),
-                SizedBox(width: 10),
-                Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 15.0,
+            pm_merk = '';
+            pm_vhttype = '';
+            if (service_typeid == "PM1" ||
+                service_typeid == "PM2" ||
+                service_typeid == "PM3") {
+              pm_merk = item['manufacturer'].toString();
+              pm_vhttype = item['vhttype'].toString();
+            }
+            print(pm_merk);
+            print(pm_vhttype);
+            txtOpnameWONUMBER.text = item['srnumber'].toString();
+            print(
+                'wonumberopname ${item['wodwonbr'].toString()} ${wonumberopname}');
+            wonumberopname = item['wodwonbr'].toString();
+            srnumberopname = item['srnumber'].toString();
+            await getMenuKatalog();
+            Timer(Duration(seconds: 1), () {
+              showDialog(
+                context: globalScaffoldKey.currentContext!,
+                builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Container(
+                        margin: EdgeInsets.all(10.0),
+                        child: Text("Save Opname?"),
+                      ),
+                    ],
                   ),
-                  label: Text("Close"),
-                  onPressed: () async {
-                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.orangeAccent,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                )),
-              ]),
-            ),
-          ),
-        ],
-      ),
+                  actions: <Widget>[
+                    new ElevatedButton.icon(
+                      icon: Icon(
+                        Icons.save,
+                        color: Colors.white,
+                        size: 20.0,
+                      ),
+                      label: tireBtnLabel('Save Opname'),
+                      onPressed: () async {
+                        Navigator.of(context).pop(false);
+                        createOpname();
+                      },
+                      style: tireBtnStyle(primaryOrange),
+                    ),
+                    new ElevatedButton.icon(
+                      icon: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 20.0,
+                      ),
+                      label: tireBtnLabel('Close'),
+                      onPressed: () async {
+                        Navigator.of(context).pop(false);
+                        setState(() {
+                          wonumberopname = "";
+                          srnumberopname = "";
+                          txtOpnameVHCID.text = "";
+                          txtOpnameWONUMBER.text = "";
+                        });
+                      },
+                      style: tireBtnStyle(Colors.grey.shade500),
+                    ),
+                  ],
+                ),
+              );
+            });
+          },
+        ),
+        SizedBox(width: 10),
+        _tireBtn(
+          icon: Icons.close,
+          label: "Close",
+          color: accentOrange,
+          onPressed: () async {
+            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+          },
+        ),
+      ]),
     );
   }
 
@@ -4740,27 +4394,22 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               style: TextStyle(color: Colors.grey.shade800),
               controller: txtSearchPartname,
               keyboardType: TextInputType.text,
-              decoration: new InputDecoration(
-                  suffixIcon: IconButton(
-                    icon: new Image.asset(
-                      "assets/img/search.png",//,style: TextStyle(color:Colors.white)
-                      width: 32.0,
-                      height: 32.0,
-                    ),
-                    onPressed: () async {
-                      if (txtSearchPartname.text != null &&
-                          txtSearchPartname.text != "") {
-                        await getListDataItem(true, txtSearchPartname.text, 0);
-                      }
-                    },
+              decoration: softDecoration(
+                label: "Partname",
+                suffixIcon: IconButton(
+                  icon: new Image.asset(
+                    "assets/img/search.png",
+                    width: 32.0,
+                    height: 32.0,
                   ),
-                  fillColor: HexColor("FFF6F1BF"),
-                  filled: true,
-                  isDense: true,
-                  labelText: "Partname",
-                  contentPadding: EdgeInsets.all(5.0),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+                  onPressed: () async {
+                    if (txtSearchPartname.text != null &&
+                        txtSearchPartname.text != "") {
+                      await getListDataItem(true, txtSearchPartname.text, 0);
+                    }
+                  },
+                ),
+              ),
             ),
           ),
           Container(
@@ -4891,187 +4540,76 @@ class _FrmServiceTireState extends State<FrmServiceTire>
 
   Widget _buildDListDetailItem(dynamic item, int index) {
     return Align(
-        alignment: Alignment.bottomCenter,
-        child: Card(
-          elevation: 8.0,
-          margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-          child: Column(
-            children: <Widget>[
-              Container(
-                width:
-                    MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-                decoration:
-                    BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-                child: Container(
-                  child: ListTile(
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                    leading: Container(
-                      padding: EdgeInsets.only(right: 12.0),
-                      decoration: new BoxDecoration(
-                          border: new Border(
-                              right: new BorderSide(
-                                  width: 1.0, color: Colors.black45))),
-                      child: Icon(Icons.settings_applications,
-                          color: Colors.black),
-                    ),
-                    title: Text(
-                      "Item ID : ${item['item_id']}",
-                      style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Wrap(children: <Widget>[
-                      Text("Partname : ${item['part_name']}",
-                          style: TextStyle(color: Colors.black)),
-                      Divider(
-                        color: Colors.transparent,
-                        height: 0,
-                      ),
-                      Text("Type : ${item['type']}",
-                          style: TextStyle(color: Colors.black)),
-                      Divider(
-                        color: Colors.transparent,
-                        height: 0,
-                      ),
-                      Text("Merk : ${item['merk']}",
-                          style: TextStyle(color: Colors.black)),
-                      Divider(
-                        color: Colors.transparent,
-                        height: 0,
-                      ),
-                      Text("QTY : ${item['quantity']}",
-                          style: TextStyle(color: Colors.black)),
-                      Divider(
-                        color: Colors.transparent,
-                        height: 0,
-                      ),
-                      Text("ID ACCESS : ${item['accessories']}",
-                          style: TextStyle(color: Colors.black)),
-                      Divider(
-                        color: Colors.transparent,
-                        height: 0,
-                      ),
-                      Text("UOM: ${item['uom_id']}",
-                          style: TextStyle(color: Colors.black)),
-                      Divider(
-                        color: Colors.transparent,
-                        height: 0,
-                      ),
-                      Text("ITEM SIZE: ${item['item_size']}",
-                          style: TextStyle(color: Colors.black)),
-                      Divider(
-                        color: Colors.transparent,
-                        height: 0,
-                      ),
-                      Text("VHTID: ${item['vhtid']}",
-                          style: TextStyle(color: Colors.black)),
-                      Divider(
-                        color: Colors.transparent,
-                        height: 0,
-                      ),
-                      Text("LOCID: ${item['ware_house']}",
-                          style: TextStyle(color: Colors.black)),
-                      Divider(
-                        color: Colors.transparent,
-                        height: 0,
-                      ),
-                      Text("GENUINO: ${item['genuine_no']}",
-                          style: TextStyle(color: Colors.black)),
-                    ]),
-                    // trailing: Icon(Icons.keyboard_arrow_right,
-                    //     color: Colors.black, size: 30.0)
-                  ),
-                ),
-              ),
-              Container(
-                width: MediaQuery.of(context).size.width,
-                padding: EdgeInsets.all(10.0),
-                decoration:
-                    BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-                child: Container(
-                  child: Row(children: <Widget>[
-                    Expanded(
-                        child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.edit,
-                        color: Colors.white,
-                        size: 15.0,
-                      ),
-                      label: Text("Pilih"),
-                      onPressed: () async {
-                        Navigator.of(globalScaffoldKey.currentContext!)
-                            .pop(false);
-                        //print(item);
-                        if (service_typeid == "PM1" ||
-                            service_typeid == "PM2" ||
-                            service_typeid == "PM3") {
-                          txtOpnameQty.text = item['quantity'];
-                        }
-                        txtItemID.text = item['item_id'];
-                        txtPartName.text = item['part_name'];
-                        txtItemSize.text = item['item_size'];
-                        txtTypeID.text = item['type'];
-                        txtTypeAccess.text = item['accessories'];
-                        txtGenuineNoOpname.text = item['genuine_no'];
-                        txtOpnameMerk.text = item['merk'];
-                        var itpid = item['itpid'];
-                        selKatalog = itpid;
-                        print('itpid ${itpid}');
-                        if (tab_name == "FORMAN_OR_PROSES") {
-                          status_apr = "APR";
-                        } else {
-                          status_apr = "NEW";
-                        }
+      alignment: Alignment.bottomCenter,
+      child: _tireListCard(
+        title: "Item ID : ${_s(item['item_id'])}",
+        rows: [
+          _kv('Partname', _s(item['part_name'])),
+          _kv('Type', _s(item['type'])),
+          _kv('Merk', _s(item['merk'])),
+          _kv('QTY', _s(item['quantity'])),
+          _kv('ID ACCESS', _s(item['accessories'])),
+          _kv('UOM', _s(item['uom_id'])),
+          _kv('ITEM SIZE', _s(item['item_size'])),
+          _kv('VHTID', _s(item['vhtid'])),
+          _kv('LOCID', _s(item['ware_house'])),
+          _kv('GENUINO', _s(item['genuine_no'])),
+        ],
+        actions: Row(children: <Widget>[
+          _tireBtn(
+            icon: Icons.edit,
+            label: "Pilih",
+            color: primaryOrange,
+            onPressed: () async {
+              Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+              //print(item);
+              if (service_typeid == "PM1" ||
+                  service_typeid == "PM2" ||
+                  service_typeid == "PM3") {
+                txtOpnameQty.text = item['quantity'];
+              }
+              txtItemID.text = item['item_id'];
+              txtPartName.text = item['part_name'];
+              txtItemSize.text = item['item_size'];
+              txtTypeID.text = item['type'];
+              txtTypeAccess.text = item['accessories'];
+              txtGenuineNoOpname.text = item['genuine_no'];
+              txtOpnameMerk.text = item['merk'];
+              var itpid = item['itpid'];
+              selKatalog = itpid;
+              print('itpid ${itpid}');
+              if (tab_name == "FORMAN_OR_PROSES") {
+                status_apr = "APR";
+              } else {
+                status_apr = "NEW";
+              }
 
-                        var nKatalog = lstVKatalog
-                            .where((e) => e['value'] == selKatalog)
-                            .single;
+              var nKatalog =
+                  lstVKatalog.where((e) => e['value'] == selKatalog).single;
 
-                        setState(() {
-                          nama_katalog = "(${nKatalog['title']})";
-                        });
-                        print(status_apr);
-                        print(nKatalog['title']);
-                        //print(lstVKatalog);
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.blueAccent,
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
-                    )),
-                    SizedBox(width: 10),
-                    Expanded(
-                        child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 15.0,
-                      ),
-                      label: Text("Close"),
-                      onPressed: () async {
-                        Navigator.of(globalScaffoldKey.currentContext!)
-                            .pop(false);
-                        setState(() {
-                          nama_katalog = "";
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.orangeAccent,
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
-                    )),
-                  ]),
-                ),
-              ),
-            ],
+              setState(() {
+                nama_katalog = "(${nKatalog['title']})";
+              });
+              print(status_apr);
+              print(nKatalog['title']);
+              //print(lstVKatalog);
+            },
           ),
-        ));
+          SizedBox(width: 10),
+          _tireBtn(
+            icon: Icons.close,
+            label: "Close",
+            color: accentOrange,
+            onPressed: () async {
+              Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+              setState(() {
+                nama_katalog = "";
+              });
+            },
+          ),
+        ]),
+      ),
+    );
   }
 
   final TextEditingController _kmAwalController = TextEditingController();
@@ -5125,8 +4663,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text("Input KM Awal & KM Akhir"),
+        return tireAlertDialog(
+          title: 'Input KM Awal & KM Akhir',
           content: Form(
             key: _formKey,
             child: Column(
@@ -5135,7 +4673,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                 TextFormField(
                   readOnly: true,
                   controller: _kmAwalController,
-                  decoration: const InputDecoration(labelText: "KM Awal"),
+                  decoration: softDecoration(label: "KM Awal", readOnly: true),
                   validator: (value) => value == null || value.isEmpty
                       ? "KM Awal wajib diisi"
                       : null,
@@ -5144,7 +4682,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                 TextFormField(
                   controller: _kmAkhirController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: "KM Akhir"),
+                  decoration: softDecoration(label: "KM Akhir"),
                   validator: (value) => value == null || value.isEmpty
                       ? "KM Akhir wajib diisi"
                       : null,
@@ -5153,20 +4691,22 @@ class _FrmServiceTireState extends State<FrmServiceTire>
             ),
           ),
           actions: [
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _kmAkhirController.text = "";
                 _kmAwalController.text = "";
               },
-              child: const Text("Batal"),
+              child: tireBtnLabel('Batal'),
+              style: tireBtnStyle(Colors.grey.shade500),
             ),
             ElevatedButton(
               onPressed: () async {
                 print('vhcids ${vhcids}');
                 await _submitDataKM(vhcids);
               },
-              child: const Text("Submit"),
+              child: tireBtnLabel('Submit'),
+              style: tireBtnStyle(primaryOrange),
             ),
           ],
         );
@@ -5177,55 +4717,77 @@ class _FrmServiceTireState extends State<FrmServiceTire>
   Widget _buildListViewOPNAME(BuildContext context) {
     if (getAkses("SA")) {
       return Container(
-        margin: EdgeInsets.all(10.0),
+        margin: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          color: cardColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.blue,
-              spreadRadius: 1,
-              blurRadius: 0,
-              offset: Offset(0, 0),
+              color: shadowColor,
+              blurRadius: 10,
+              offset: Offset(0, 4),
             ),
           ],
         ),
-        height: MediaQuery.of(context).size.height,
         child: SingleChildScrollView(
           clipBehavior: Clip.antiAlias,
           padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).padding.bottom + 48),
           child: Column(
             children: <Widget>[
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: lightOrange,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.inventory_2_outlined, color: primaryOrange, size: 24),
+                    SizedBox(width: 12),
+                    Text(
+                      'Data Opname Tire',
+                      style: TextStyle(
+                        color: darkOrange,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               if (isCreatePrNumber) ...[
                 Container(
-                  margin:
-                      EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                  margin: EdgeInsets.all(12.0),
                   child: TextField(
                     readOnly: true,
-                    cursorColor: Colors.black,
-                    style: TextStyle(color: Colors.grey.shade800),
+                    cursorColor: primaryOrange,
+                    style: TextStyle(color: Colors.black87, fontSize: 14),
                     controller: txtPrNumber,
                     keyboardType: TextInputType.text,
-                    decoration: new InputDecoration(
-                      fillColor: Colors.black12,
-                      filled: true,
-                      labelText: 'PR Number',
-                      isDense: true,
-                      contentPadding: EdgeInsets.all(2.0),
+                    decoration: softDecoration(
+                      label: 'PR Number',
+                      readOnly: true,
                     ),
                   ),
                 )
               ],
               Container(
-                margin: EdgeInsets.all(10.0),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
-                  cursorColor: Colors.black,
-                  style: TextStyle(color: Colors.grey.shade800),
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                   controller: txtOpnameVHCID,
                   keyboardType: TextInputType.text,
-                  decoration: new InputDecoration(
+                  decoration: softDecoration(
+                    label: "Search",
+                    hint: "Search nopol/locid",
+                    readOnly: true,
+                    prefixIcon: Icon(Icons.search, color: primaryOrange),
                     suffixIcon: IconButton(
                       icon: new Image.asset(
                         "assets/img/search.png",
@@ -5255,37 +4817,29 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                             showDialog(
                                 context: globalScaffoldKey.currentContext!,
                                 builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('List Detail SR'),
-                                    content: listDataSrOpname(context),
+                                  return tireAlertDialog(
+              title: 'List Detail SR',
+              content: listDataSrOpname(context),
                                   );
                                 });
                           });
                         }
                       },
                     ),
-                    labelText: "Search",
-                    hintText: "Search nopol/locid",
-                    prefixIcon: Icon(Icons.search),
-                    isDense: true,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
                   ),
                 ),
               ),
               Container(
-                margin: EdgeInsets.all(10.0),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
-                  cursorColor: Colors.black,
-                  style: TextStyle(color: Colors.grey.shade800),
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                   controller: txtOpnameWONUMBER, //as srnumber kebalik
                   keyboardType: TextInputType.text,
-                  decoration: new InputDecoration(
-                    isDense: true,
-                    labelText: "SR Number",
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
+                  decoration: softDecoration(
+                    label: "SR Number",
+                    readOnly: true,
                   ),
                 ),
               ),
@@ -5296,7 +4850,10 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                     child: Padding(
                       padding: const EdgeInsets.only(
                           left: 16.0, right: 8.0), // Spasi antar tombol
-                      child: TextButton(
+                      child: ElevatedButton.icon(
+                        icon: Icon(Icons.add_circle_outline, color: Colors.white),
+                        label: tireBtnLabel('Add Tire Insp.'),
+                        style: tireBtnStyle(primaryOrange),
                         onPressed: () async {
                           SharedPreferences prefs =
                               await SharedPreferences.getInstance();
@@ -5333,8 +4890,6 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                             }
                           });
                         },
-                        child: Text('Add Tire Inspection',
-                            style: TextStyle(fontSize: 16, color: Colors.blue)),
                       ),
                     ),
                   ),
@@ -5342,7 +4897,10 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                     child: Padding(
                       padding: const EdgeInsets.only(
                           left: 8.0, right: 16.0), // Spasi antar tombol
-                      child: TextButton(
+                      child: ElevatedButton.icon(
+                        icon: Icon(Icons.speed, color: Colors.white),
+                        label: tireBtnLabel('Update KM'),
+                        style: tireBtnStyle(accentOrange),
                         onPressed: () async {
                           SharedPreferences prefs =
                               await SharedPreferences.getInstance();
@@ -5354,14 +4912,14 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                           print('TOTAL KM $total_km');
                           _showInputDialogUpdateKM(total_km, vhcids);
                         },
-                        child: Text('Update KM',
-                            style: TextStyle(fontSize: 16, color: Colors.blue)),
                       ),
                     ),
                   ),
                 ],
               ),
-              SmartSelect<String?>.single(
+              Container(
+                margin: EdgeInsets.all(12.0),
+                child: SmartSelect<String?>.single(
                 title: 'Katalog ${nama_katalog}',
                 selectedValue: selKatalog,
                 placeholder: 'Pilih satu',
@@ -5387,9 +4945,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         showDialog(
                             context: globalScaffoldKey.currentContext!,
                             builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text('List Detail Mechanic'),
-                                content: listDataSearchItem(context),
+                              return tireAlertDialog(
+              title: 'List Detail Mechanic',
+              content: listDataSearchItem(context),
                               );
                             });
                       });
@@ -5405,19 +4963,21 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                 modalFilter: true,
                 modalFilterAuto: true,
               ),
+              ),
               Container(
-                margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
-                  cursorColor: Colors.black,
-                  style: TextStyle(color: Colors.grey.shade800),
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                   controller: txtItemID,
                   keyboardType: TextInputType.text,
                   // onChanged: (value) {
                   //   updateButtonState(value);
                   // },
-                  decoration: new InputDecoration(
+                  decoration: softDecoration(
+                    label: 'Item ID',
+                    readOnly: true,
                     suffixIcon: IconButton(
                       icon: new Image.asset(
                         "assets/img/qrcode.png",
@@ -5431,10 +4991,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         }
                         showDialog(
                           context: globalScaffoldKey.currentContext!,
-                          builder: (BuildContext context) => new AlertDialog(
-                            title: new Text('Information'),
-                            content:
-                                new Text("Search Partname/ Item By Scan Code"),
+                          builder: (BuildContext context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("Search Partname/ Item By Scan Code"),
                             actions: <Widget>[
                               new ElevatedButton.icon(
                                 icon: Icon(
@@ -5442,7 +5001,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                   color: Colors.white,
                                   size: 24.0,
                                 ),
-                                label: Text("Searh Partname",style: TextStyle(color:Colors.white)),
+                                label: tireBtnLabel('Searh Partname'),
                                 onPressed: () async {
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
@@ -5457,23 +5016,15 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                           context:
                                               globalScaffoldKey.currentContext!,
                                           builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title: Text('List Detail Item'),
-                                              content:
-                                                  listDataSearchItem(context),
+                                            return tireAlertDialog(
+              title: 'List Detail Item',
+              content: listDataSearchItem(context),
                                             );
                                           });
                                     });
                                   }
                                 },
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 0.0,
-                                    backgroundColor: Colors.blueAccent,
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 0),
-                                    textStyle: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold)),
+                                style: tireBtnStyle(primaryOrange),
                               ),
                               new SizedBox(width: 5),
                               new ElevatedButton.icon(
@@ -5482,7 +5033,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                   color: Colors.white,
                                   size: 24.0,
                                 ),
-                                label: Text("Scan Code",style: TextStyle(color:Colors.white)),
+                                label: tireBtnLabel('Scan Code'),
                                 onPressed: () async {
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
@@ -5493,155 +5044,116 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                     scanQRCode();
                                   }
                                 },
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 0.0,
-                                    backgroundColor: Colors.blue,
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 0),
-                                    textStyle: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold)),
+                                style: tireBtnStyle(primaryOrange),
                               )
                             ],
                           ),
                         );
                       },
                     ),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    labelText: 'Item ID',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
                   ),
                 ),
               ),
               Container(
-                margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
-                  cursorColor: Colors.black,
-                  style: TextStyle(color: Colors.grey.shade800),
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                   controller: txtPartName,
                   keyboardType: TextInputType.text,
-                  decoration: new InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    labelText: 'Part Name',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                  decoration: softDecoration(
+                    label: 'Part Name',
+                    readOnly: true,
                   ),
                 ),
               ),
               Container(
-                margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
-                  cursorColor: Colors.black,
-                  style: TextStyle(color: Colors.grey.shade800),
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                   controller: txtItemSize,
                   keyboardType: TextInputType.text,
-                  decoration: new InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    labelText: 'Item Size',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                  decoration: softDecoration(
+                    label: 'Item Size',
+                    readOnly: true,
                   ),
                 ),
               ),
               Container(
-                margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
-                  cursorColor: Colors.black,
-                  style: TextStyle(color: Colors.grey.shade800),
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                   controller: txtTypeID,
                   keyboardType: TextInputType.text,
-                  decoration: new InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    labelText: 'Type ID',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                  decoration: softDecoration(
+                    label: 'Type ID',
+                    readOnly: true,
                   ),
                 ),
               ),
               Container(
-                margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
-                  cursorColor: Colors.black,
-                  style: TextStyle(color: Colors.grey.shade800),
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                   controller: txtTypeAccess,
                   keyboardType: TextInputType.text,
-                  decoration: new InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    labelText: 'IDACCESS',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                  decoration: softDecoration(
+                    label: 'IDACCESS',
+                    readOnly: true,
                   ),
                 ),
               ),
               Container(
-                margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
-                  cursorColor: Colors.black,
-                  style: TextStyle(color: Colors.grey.shade800),
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                   controller: txtGenuineNoOpname,
                   keyboardType: TextInputType.text,
-                  decoration: new InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    labelText: 'GENUINENO',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                  decoration: softDecoration(
+                    label: 'GENUINENO',
+                    readOnly: true,
                   ),
                 ),
               ),
               Container(
-                margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
-                  cursorColor: Colors.black,
-                  style: TextStyle(color: Colors.grey.shade800),
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                   controller: txtOpnameMerk,
                   keyboardType: TextInputType.text,
-                  decoration: new InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    labelText: 'Merk',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                  decoration: softDecoration(
+                    label: 'Merk',
+                    readOnly: true,
                   ),
                 ),
               ),
               Container(
-                margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: false,
-                  cursorColor: Colors.black,
-                  style: TextStyle(color: Colors.grey.shade800),
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                   controller: txtOpnameQty,
                   keyboardType: TextInputType.number,
-                  decoration: new InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    labelText: 'QTY',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                  decoration: softDecoration(
+                    label: 'QTY',
                   ),
                 ),
               ),
-              SmartSelect<String?>.single(
+              Container(
+                margin: EdgeInsets.all(12.0),
+                child: SmartSelect<String?>.single(
                 title: 'Status Item',
                 selectedValue: selStatusItem,
                 onChange: (selected) {
@@ -5659,6 +5171,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                     ),
                   ),
                 ),
+              ),
               ),
               // SmartSelect<String>.single(
               //   title: 'Estimasi',
@@ -5681,23 +5194,19 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               //   ),
               // ),
               Container(
-                margin:
-                    EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   onTap: () {
                     dateTimePickerWidget(context);
                   },
                   readOnly: true,
-                  cursorColor: Colors.black,
-                  style: TextStyle(color: Colors.grey.shade800),
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                   controller: txtEstimasi,
                   keyboardType: TextInputType.datetime,
-                  decoration: new InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0))),
-                    labelText: 'Estimasi',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(2.0),
+                  decoration: softDecoration(
+                    label: 'Estimasi',
+                    readOnly: true,
                   ),
                 ),
               ),
@@ -5712,7 +5221,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Create",style: TextStyle(color:Colors.white)), //CREATE OPNAME
+                    label: tireBtnLabel('Create'), //CREATE OPNAME
                     onPressed: () async {
                       print(fnWONUMBER);
                       print("METHOD_DETAIL ${METHOD_DETAIL}");
@@ -5730,9 +5239,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         if (id_header > 0 && METHOD_DETAIL != '') {
                           showDialog(
                             context: globalScaffoldKey.currentContext!,
-                            builder: (context) => new AlertDialog(
-                              title: new Text('Information'),
-                              content: new Text("Create new detail opname?"),
+                            builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("Create new detail opname?"),
                               actions: <Widget>[
                                 new ElevatedButton.icon(
                                   icon: Icon(
@@ -5740,19 +5249,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                     color: Colors.white,
                                     size: 24.0,
                                   ),
-                                  label: Text("Cancel"),
+                                  label: tireBtnLabel('Cancel'),
                                   onPressed: () async {
                                     Navigator.of(context, rootNavigator: true)
                                         .pop();
                                   },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.orangeAccent,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
+                                  style: tireBtnStyle(Colors.grey.shade500),
                                 ),
                                 new SizedBox(width: 10),
                                 new ElevatedButton.icon(
@@ -5761,20 +5263,13 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                     color: Colors.white,
                                     size: 24.0,
                                   ),
-                                  label: Text("Ok"),
+                                  label: tireBtnLabel('Ok'),
                                   onPressed: () async {
                                     Navigator.of(context, rootNavigator: true)
                                         .pop();
                                     createOpnameDetail(); //HERE SAVE OPNAME
                                   },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.blue,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
+                                  style: tireBtnStyle(primaryOrange),
                                 ),
                               ],
                             ),
@@ -5784,9 +5279,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         if (fnWONUMBER != '' && METHOD_DETAIL == 'PROSES') {
                           showDialog(
                             context: globalScaffoldKey.currentContext!,
-                            builder: (context) => new AlertDialog(
-                              title: new Text('Information'),
-                              content: new Text("Create new detail opname?"),
+                            builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("Create new detail opname?"),
                               actions: <Widget>[
                                 new ElevatedButton.icon(
                                   icon: Icon(
@@ -5794,19 +5289,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                     color: Colors.white,
                                     size: 24.0,
                                   ),
-                                  label: Text("Cancel"),
+                                  label: tireBtnLabel('Cancel'),
                                   onPressed: () async {
                                     Navigator.of(context, rootNavigator: true)
                                         .pop();
                                   },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.orangeAccent,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
+                                  style: tireBtnStyle(Colors.grey.shade500),
                                 ),
                                 new SizedBox(width: 10),
                                 new ElevatedButton.icon(
@@ -5815,20 +5303,13 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                     color: Colors.white,
                                     size: 24.0,
                                   ),
-                                  label: Text("Ok"),
+                                  label: tireBtnLabel('Ok'),
                                   onPressed: () async {
                                     Navigator.of(context, rootNavigator: true)
                                         .pop();
                                     createOpnameDetailProses();
                                   },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.blue,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
+                                  style: tireBtnStyle(primaryOrange),
                                 ),
                               ],
                             ),
@@ -5838,9 +5319,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         if (fnWONUMBERQC != '' && METHOD_DETAIL == 'QC') {
                           showDialog(
                             context: globalScaffoldKey.currentContext!,
-                            builder: (context) => new AlertDialog(
-                              title: new Text('Information'),
-                              content: new Text("Create new detail opname?"),
+                            builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("Create new detail opname?"),
                               actions: <Widget>[
                                 new ElevatedButton.icon(
                                   icon: Icon(
@@ -5848,19 +5329,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                     color: Colors.white,
                                     size: 24.0,
                                   ),
-                                  label: Text("Cancel"),
+                                  label: tireBtnLabel('Cancel'),
                                   onPressed: () async {
                                     Navigator.of(context, rootNavigator: true)
                                         .pop();
                                   },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.orangeAccent,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
+                                  style: tireBtnStyle(Colors.grey.shade500),
                                 ),
                                 new SizedBox(width: 10),
                                 new ElevatedButton.icon(
@@ -5869,20 +5343,13 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                     color: Colors.white,
                                     size: 24.0,
                                   ),
-                                  label: Text("Ok"),
+                                  label: tireBtnLabel('Ok'),
                                   onPressed: () async {
                                     Navigator.of(context, rootNavigator: true)
                                         .pop();
                                     createOpnameDetailQC();
                                   },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: Colors.blue,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
+                                  style: tireBtnStyle(primaryOrange),
                                 ),
                               ],
                             ),
@@ -5891,13 +5358,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         print('save detail opname');
                       }
                     },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.blue,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold)),
+                    style: tireBtnStyle(primaryOrange),
                   )),
                   SizedBox(width: 5),
                   Expanded(
@@ -5907,7 +5368,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text(btnNameCreatePR,style: TextStyle(color:Colors.white)),
+                    label: tireBtnLabel(btnNameCreatePR),
                     onPressed: () async {
                       //Navigator.of(context, rootNavigator: false).pop();
                       print('Create PR Number');
@@ -5921,9 +5382,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                       if (btnNameCreatePR.toUpperCase() == "CREATE PR") {
                         showDialog(
                           context: globalScaffoldKey.currentContext!,
-                          builder: (context) => new AlertDialog(
-                            title: new Text('Information'),
-                            content: new Text("Create purchase order"),
+                          builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("Create purchase order"),
                             actions: <Widget>[
                               new ElevatedButton.icon(
                                 icon: Icon(
@@ -5931,19 +5392,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                   color: Colors.white,
                                   size: 24.0,
                                 ),
-                                label: Text("Close"),
+                                label: tireBtnLabel('Close'),
                                 onPressed: () async {
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
                                 },
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 0.0,
-                                    backgroundColor: Colors.orange,
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 0),
-                                    textStyle: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold)),
+                                style: tireBtnStyle(Colors.grey.shade500),
                               ),
                               SizedBox(width: 10),
                               new ElevatedButton.icon(
@@ -5952,7 +5406,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                   color: Colors.white,
                                   size: 24.0,
                                 ),
-                                label: Text("Submit",style: TextStyle(color:Colors.white)),
+                                label: tireBtnLabel('Submit'),
                                 onPressed: () async {
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
@@ -5961,14 +5415,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                   });
                                   await CreatePurchaseRequest();
                                 },
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 0.0,
-                                    backgroundColor: Colors.blue,
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 0),
-                                    textStyle: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold)),
+                                style: tireBtnStyle(primaryOrange),
                               )
                             ],
                           ),
@@ -5979,15 +5426,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         SavePurchaseOrder();
                       }
                     },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.blue,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white)),
+                    style: tireBtnStyle(primaryOrange),
                   )),
                   SizedBox(width: 5),
                   Expanded(
@@ -5997,7 +5436,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("List Detail",style: TextStyle(color:Colors.white)),
+                    label: tireBtnLabel('List Detail'),
                     onPressed: () async {
                       print("METHOD ${METHOD_DETAIL}");
                       print("Button List Detail Opname");
@@ -6019,9 +5458,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                           showDialog(
                               context: context,
                               builder: (BuildContext context) {
-                                return AlertDialog(
-                                    title: Text('List Detail'),
-                                    content: listDataOpnameDetail(context),
+                                return tireAlertDialog(
+              title: 'List Detail',
+              content: listDataOpnameDetail(context),
                                     actions: <Widget>[
                                       if (METHOD_DETAIL !=
                                           'PURCHASE-ORDER') ...[
@@ -6035,8 +5474,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                                 color: Colors.white,
                                                 size: 15.0,
                                               ),
-                                              label: Text(
-                                                  "Approve"), //Approve Opname
+                                              label: tireBtnLabel('Approve'), //Approve Opname
                                               onPressed: () async {
                                                 //selEstimasi = "1";
                                                 //id_header=88;
@@ -6075,11 +5513,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                                     showDialog(
                                                       context: context,
                                                       builder: (context) =>
-                                                          new AlertDialog(
-                                                        title: new Text(
-                                                            'Information'),
-                                                        //content:
-                                                        //new Text("Save new request service?"),
+                                                          tireAlertDialog(
+                                                        title: 'Information',
                                                         content: Column(
                                                           crossAxisAlignment:
                                                               CrossAxisAlignment
@@ -6106,8 +5541,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                                                   Colors.white,
                                                               size: 20.0,
                                                             ),
-                                                            label:
-                                                                Text("Approve"),
+                                                            label: tireBtnLabel('Approve'),
                                                             onPressed:
                                                                 () async {
                                                               Navigator.of(
@@ -6124,22 +5558,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                                                   id_header
                                                                       .toString());
                                                             },
-                                                            style: ElevatedButton.styleFrom(
-                                                                elevation: 0.0,
-                                                                backgroundColor:
-                                                                    Colors.blue,
-                                                                padding: EdgeInsets
-                                                                    .symmetric(
-                                                                        horizontal:
-                                                                            10,
-                                                                        vertical:
-                                                                            0),
-                                                                textStyle: TextStyle(
-                                                                    fontSize:
-                                                                        10,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold)),
+                                                            style: tireBtnStyle(primaryOrange),
                                                           ),
                                                           new ElevatedButton
                                                               .icon(
@@ -6149,31 +5568,14 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                                                   Colors.white,
                                                               size: 20.0,
                                                             ),
-                                                            label:
-                                                                Text("Close"),
+                                                            label: tireBtnLabel('Close'),
                                                             onPressed:
                                                                 () async {
                                                               Navigator.of(
                                                                       context)
                                                                   .pop(false);
                                                             },
-                                                            style: ElevatedButton.styleFrom(
-                                                                elevation: 0.0,
-                                                                backgroundColor:
-                                                                    Colors
-                                                                        .orangeAccent,
-                                                                padding: EdgeInsets
-                                                                    .symmetric(
-                                                                        horizontal:
-                                                                            10,
-                                                                        vertical:
-                                                                            0),
-                                                                textStyle: TextStyle(
-                                                                    fontSize:
-                                                                        10,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold)),
+                                                            style: tireBtnStyle(Colors.grey.shade500),
                                                           ),
                                                         ],
                                                       ),
@@ -6188,16 +5590,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                                       "error");
                                                 }
                                               },
-                                              style: ElevatedButton.styleFrom(
-                                                  elevation: 0.0,
-                                                  backgroundColor: Colors.blue,
-                                                  padding: EdgeInsets.symmetric(
-                                                      horizontal: 5,
-                                                      vertical: 0),
-                                                  textStyle: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
+                                              style: tireBtnStyle(primaryOrange),
                                             )),
                                           ],
                                         )
@@ -6212,15 +5605,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         }
                       }
                     },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.blue,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white)),
+                    style: tireBtnStyle(primaryOrange),
                   )),
                   //SizedBox(width: 5),
                 ]),
@@ -6235,7 +5620,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Clear",style: TextStyle(color:Colors.white)),
+                    label: tireBtnLabel('Clear'),
                     onPressed: () async {
                       await DatabaseHelper.instance.deleteItemLogsAll();
                       setState(() {
@@ -6267,15 +5652,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         tab_name = '';
                       });
                     },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.orangeAccent,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white)),
+                    style: tireBtnStyle(Colors.grey.shade500),
                   )),
                 ]),
               ),
@@ -6306,12 +5683,11 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               padding: const EdgeInsets.all(5.0),
               child: TextField(
                 controller: txtSearchVehicleStart,
-                decoration: InputDecoration(
-                    labelText: "Search",
-                    hintText: "Search nopol/locid",
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+                decoration: softDecoration(
+                  label: "Search",
+                  hint: "Search nopol/locid",
+                  prefixIcon: Icon(Icons.search, color: primaryOrange),
+                ),
               ),
             ),
             Container(
@@ -6349,13 +5725,11 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                 padding: const EdgeInsets.all(5.0),
                 child: TextField(
                   controller: txtSearchVehicleFinish,
-                  decoration: InputDecoration(
-                      labelText: "Search",
-                      hintText: "Search nopol/wo/sr number",
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.all(Radius.circular(25.0)))),
+                  decoration: softDecoration(
+                    label: "Search",
+                    hint: "Search nopol/wo/sr number",
+                    prefixIcon: Icon(Icons.search, color: primaryOrange),
+                  ),
                 ),
               ),
               Container(
@@ -6816,21 +6190,11 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         color: Colors.white,
                         size: 18.0,
                       ),
-                      label: Text("Cancel"),
+                      label: tireBtnLabel('Cancel'),
                       onPressed: () async {
                         await DeleteDraft();
                       },
-                      style: ElevatedButton.styleFrom(
-                        elevation: 2.0,
-                        backgroundColor: Colors.grey.shade500,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w600),
-                      ),
+                      style: tireBtnStyle(Colors.grey.shade500),
                     ),
                   ),
                   SizedBox(width: 8),
@@ -6841,7 +6205,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         color: Colors.white,
                         size: 18.0,
                       ),
-                      label: Text("Submit"),
+                      label: tireBtnLabel('Submit'),
                       onLongPress: () async {
                         if (txtCabangIdCHK.text.isEmpty) {
                           alert(context, 2, "Cabang tidak boleh kosong",
@@ -6868,42 +6232,22 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                           } else {
                             showDialog(
                               context: context,
-                              builder: (context) => AlertDialog(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                backgroundColor: cardColor,
-                                title: Text('Information',
-                                    style: TextStyle(
-                                      color: darkOrange,
-                                      fontWeight: FontWeight.w600,
-                                    )),
+                              builder: (context) => tireAlertDialog(
+                                title: 'Information',
                                 content: Text("Save data form checklist?"),
                                 actions: [
                                   ElevatedButton(
-                                    child: Text("Cancel"),
+                                    child: tireBtnLabel('Cancel'),
                                     onPressed: () => Navigator.pop(context),
-                                    style: ElevatedButton.styleFrom(
-                                      elevation: 2.0,
-                                      backgroundColor: Colors.grey.shade500,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
+                                    style: tireBtnStyle(Colors.grey.shade500),
                                   ),
                                   ElevatedButton(
-                                    child: Text("Ok"),
+                                    child: tireBtnLabel('Ok'),
                                     onPressed: () async {
                                       Navigator.pop(context);
                                       await UpdateAll();
                                     },
-                                    style: ElevatedButton.styleFrom(
-                                      elevation: 2.0,
-                                      backgroundColor: primaryOrange,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
+                                    style: tireBtnStyle(primaryOrange),
                                   ),
                                 ],
                               ),
@@ -6911,17 +6255,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                           }
                         }
                       },
-                      style: ElevatedButton.styleFrom(
-                        elevation: 2.0,
-                        backgroundColor: primaryOrange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w600),
-                      ),
+                      style: tireBtnStyle(primaryOrange),
                       onPressed: () {},
                     ),
                   ),
@@ -6936,89 +6270,27 @@ class _FrmServiceTireState extends State<FrmServiceTire>
   }
 
   Widget _buildDListRequestOprsStart(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings_applications, color: Colors.black),
-                ),
-                title: Text(
-                  "SR : ${item['srnumber']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text(
-                      "SR DateTime : ${DateFormat("yyyy-MM-dd HH:mm:ss").parse(item['requestdate'], false)}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Original SR Number : ${item['orisrnumber']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("VHCID : ${item['vhcid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("LOCID : ${item['srlocid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("DRV. NAME: ${item['drvname']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Notes: ${item['srnotes']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
-              ),
-            ),
-          ),
-          _ButtonListSr(globalScaffoldKey.currentContext!, item)
-        ],
-      ),
+    return _tireListCard(
+      title: "SR : ${_s(item['srnumber'])}",
+      rows: [
+        _kv(
+            'SR DateTime',
+            _s(DateFormat("yyyy-MM-dd HH:mm:ss")
+                .parse(item['requestdate'], false)
+                .toString())),
+        _kv('Original SR Number', _s(item['orisrnumber'])),
+        _kv('VHCID', _s(item['vhcid'])),
+        _kv('LOCID', _s(item['srlocid'])),
+        _kv('DRV. NAME', _s(item['drvname'])),
+        _kv('Notes', _s(item['srnotes'])),
+      ],
+      actions: _ButtonListSr(globalScaffoldKey.currentContext!, item),
     );
   }
 
   Widget _ButtonListSr(BuildContext context, dynamic item) {
     if (getAkses("TY") || username == "ADMIN") {
-      return Container(
-        width: MediaQuery.of(context).size.width,
-        padding: EdgeInsets.all(10.0),
-        decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-        child: Container(
-          child: Row(children: <Widget>[
+      return Row(children: <Widget>[
             Expanded(
                 child: ElevatedButton.icon(
               icon: Icon(
@@ -7026,22 +6298,24 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                 color: Colors.white,
                 size: 15.0,
               ),
-              label: Text("Cancel"),
+              label: tireBtnLabel('Cancel'),
               onPressed: () async {
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
-                  builder: (context) => new AlertDialog(
-                    title: new Text('Information'),
-                    content: new Text("Cancel data ${item['srnumber']}"),
+                  builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("Cancel data ${item['srnumber']}"),
                     actions: <Widget>[
-                      new TextButton(
-                          onPressed: () {
+                      ElevatedButton(
+                  onPressed: () {
                             Navigator.of(globalScaffoldKey.currentContext!)
                                 .pop(false);
                           },
-                          child: new Text('No')),
-                      new TextButton(
-                        onPressed: () async {
+                  child: tireBtnLabel('No'),
+                  style: tireBtnStyle(Colors.grey.shade500),
+                ),
+                      ElevatedButton(
+                  onPressed: () async {
                           //_tabController.animateTo(0);
                           Navigator.of(globalScaffoldKey.currentContext!)
                               .pop(false);
@@ -7049,18 +6323,14 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                               item['srnumber'], item['vhcid'], item['drvid']);
                           //
                         },
-                        child: new Text('Ok'),
-                      ),
+                  child: tireBtnLabel('Ok'),
+                  style: tireBtnStyle(primaryOrange),
+                ),
                     ],
                   ),
                 );
               },
-              style: ElevatedButton.styleFrom(
-                  elevation: 0.0,
-                  backgroundColor: Colors.redAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  textStyle:
-                      TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              style: tireBtnStyle(Colors.redAccent),
             )),
             SizedBox(width: 10),
             Expanded(
@@ -7070,31 +6340,32 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                 color: Colors.white,
                 size: 15.0,
               ),
-              label: Text("Start"),
+              label: tireBtnLabel('Start'),
               onPressed: () async {
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
-                  builder: (context) => new AlertDialog(
-                    title: new Text('Information'),
-                    content: new Text("Start data ${item['srnumber']}"),
+                  builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("Start data ${item['srnumber']}"),
                     actions: <Widget>[
-                      new TextButton(
-                          onPressed: () {
+                      ElevatedButton(
+                  onPressed: () {
                             Navigator.of(globalScaffoldKey.currentContext!)
                                 .pop(false);
                             resetTeks();
                           },
-                          child: new Text('No')),
-                      new TextButton(
-                        onPressed: () async {
+                  child: tireBtnLabel('No'),
+                  style: tireBtnStyle(Colors.grey.shade500),
+                ),
+                      ElevatedButton(
+                  onPressed: () async {
                           //_tabController.animateTo(0);
                           Navigator.of(globalScaffoldKey.currentContext!)
                               .pop(false);
                           showDialog(
                             context: globalScaffoldKey.currentContext!,
-                            builder: (context) => new AlertDialog(
-                              //title: new Text('Start '),
-                              //content: new Text("Cancel data ini?"),
+                            builder: (context) => tireAlertDialog(
+                              title: 'Start',
                               content: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 //position
@@ -7141,36 +6412,38 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                 ],
                               ),
                               actions: <Widget>[
-                                new TextButton(
-                                    onPressed: () async {
+                                ElevatedButton(
+                  onPressed: () async {
                                       Navigator.of(
                                               globalScaffoldKey.currentContext!)
                                           .pop(false);
                                     },
-                                    child: new Text('No')),
-                                new TextButton(
-                                  onPressed: () async {
+                  child: tireBtnLabel('No'),
+                  style: tireBtnStyle(Colors.grey.shade500),
+                ),
+                                ElevatedButton(
+                  onPressed: () async {
                                     Navigator.of(
                                             globalScaffoldKey.currentContext!)
                                         .pop(false);
                                     showDialog(
                                       context:
                                           globalScaffoldKey.currentContext!,
-                                      builder: (context) => new AlertDialog(
-                                        title: new Text(
-                                            'Information: Start this data?'),
-                                        //content: new Text("Cancel data ini?"),
-
+                                      builder: (context) => tireAlertDialog(
+                                        title: 'Information: Start this data?',
+                                        content: Text('Start this data?'),
                                         actions: <Widget>[
-                                          new TextButton(
-                                              onPressed: () async {
+                                          ElevatedButton(
+                  onPressed: () async {
                                                 Navigator.of(globalScaffoldKey
                                                         .currentContext!)
                                                     .pop(false);
                                               },
-                                              child: new Text('No')),
-                                          new TextButton(
-                                            onPressed: () async {
+                  child: tireBtnLabel('No'),
+                  style: tireBtnStyle(Colors.grey.shade500),
+                ),
+                                          ElevatedButton(
+                  onPressed: () async {
                                               Navigator.of(globalScaffoldKey
                                                       .currentContext!)
                                                   .pop(false);
@@ -7186,35 +6459,31 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                                   txtWodNotes.text,
                                                   item['srtypeid']);
                                             },
-                                            child: new Text('Ok'),
-                                          ),
+                  child: tireBtnLabel('Ok'),
+                  style: tireBtnStyle(primaryOrange),
+                ),
                                         ],
                                       ),
                                     );
                                   },
-                                  child: new Text('Ok'),
-                                ),
+                  child: tireBtnLabel('Ok'),
+                  style: tireBtnStyle(primaryOrange),
+                ),
                               ],
                             ),
                           );
                           //
                         },
-                        child: new Text('Ok'),
-                      ),
+                  child: tireBtnLabel('Ok'),
+                  style: tireBtnStyle(primaryOrange),
+                ),
                     ],
                   ),
                 );
               },
-              style: ElevatedButton.styleFrom(
-                  elevation: 0.0,
-                  backgroundColor: Colors.blueAccent,
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  textStyle:
-                      TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              style: tireBtnStyle(primaryOrange),
             )),
-          ]),
-        ),
-      );
+      ]);
     } else {
       return Container();
       // if (getAkses("TY") || username == "ADMIN") {
@@ -7231,7 +6500,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
       //             color: Colors.white,
       //             size: 15.0,
       //           ),
-      //           label: Text("Edit"),
+      //           label: tireBtnLabel('Edit'),
       //           onPressed: () async {
       //             showDialog(
       //               context: globalScaffoldKey.currentContext!,
@@ -7277,12 +6546,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
       //               ),
       //             );
       //           },
-      //           style: ElevatedButton.styleFrom(
-      //               elevation: 0.0,
-      //               backgroundColor: Colors.orangeAccent,
-      //               padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      //               textStyle:
-      //                   TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+      //           style: tireBtnStyle(Colors.grey.shade500),
       //         )),
       //       ]),
       //     ),
@@ -7294,350 +6558,143 @@ class _FrmServiceTireState extends State<FrmServiceTire>
   }
 
   Widget _buildDListRequestOprsFinish(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings_applications, color: Colors.black),
-                ),
-                title: Text(
-                  "SR Number: ${item['srnumber']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("WO Number : ${item['wodwonbr']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
+    return _tireListCard(
+      title: "SR Number: ${_s(item['srnumber'])}",
+      rows: [
+        _kv('WO Number', _s(item['wodwonbr'])),
+        _kv('VHCID', _s(item['vhcid'])),
+        _kv('DRV. NAME', _s(item['drvname'])),
+        _kv('Notes', _s(item['srnotes'])),
+      ],
+      actions: Row(children: <Widget>[
+        buildButtonApprove(context, item),
+        SizedBox(width: 5),
+        ElevatedButton.icon(
+          icon: Icon(
+            Icons.details_outlined,
+            color: Colors.white,
+            size: 20.0,
+          ),
+          label: tireBtnLabel('Detail List Ban'),
+          onPressed: () async {
+            showDialog(
+              context: globalScaffoldKey.currentContext!,
+              builder: (context) => tireAlertDialog(
+              title: 'Information',
+              content: new Text("Add/ view detail?"),
+                actions: <Widget>[
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    label: tireBtnLabel('Add'),
+                    onPressed: () async {
+                      //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                      Navigator.of(globalScaffoldKey.currentContext!)
+                          .pop(false);
+                      await Future.delayed(Duration(seconds: 1));
+                      fnVHCID = item['vhcid'];
+                      fnSTARTKM = item['vhckm'];
+                      fnWONUMBER = item['wodwonbr'];
+                      await getListBanTMS(true, '');
+                      showDialog(
+                          context: globalScaffoldKey.currentContext!,
+                          builder: (BuildContext context) {
+                            return tireAlertDialog(
+              title: 'List Ban SR',
+              content: setupAlertDialoadContainerFinish(
+                                  context),
+                            );
+                          });
+                    },
+                    style: tireBtnStyle(accentOrange),
                   ),
-                  Text("VHCID : ${item['vhcid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.save,
+                      color: Colors.white,
+                      size: 24.0,
+                    ),
+                    label: tireBtnLabel('View'),
+                    onPressed: () async {
+                      print('show');
+                      // Navigator.of(context)
+                      //     .pop(false);
+                      // await Future.delayed(Duration(milliseconds: 1));
+                      await getListTyreFit(true, item['wodwonbr']);
+                      if (dataListTyreFit.length > 0) {
+                        Navigator.of(context).pop(false);
+                        await Future.delayed(Duration(milliseconds: 1));
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return tireAlertDialog(
+              title: 'List Item Tyre FIT',
+              content: setupAlertDialoadContainerTyreFit(
+                                        context),
+                              );
+                            });
+                      } else {
+                        Navigator.of(context).pop(false);
+                        await Future.delayed(Duration(milliseconds: 1));
+                        alert(
+                            context,
+                            2,
+                            "tidak ada data yang di temukan",
+                            "warning");
+                      }
+                    },
+                    style: tireBtnStyle(primaryOrange),
                   ),
-                  Text("DRV. NAME: ${item['drvname']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Notes: ${item['srnotes']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
+                ],
               ),
-            ),
-          ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                buildButtonApprove(context, item),
-                SizedBox(width: 5),
-                new ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.details_outlined,
-                    color: Colors.white,
-                    size: 20.0,
-                  ),
-                  label: Text("Detail List Ban"),
-                  onPressed: () async {
-                    showDialog(
-                      context: globalScaffoldKey.currentContext!,
-                      builder: (context) => new AlertDialog(
-                        title: new Text('Information'),
-                        content: new Text("Add/ view detail?"),
-                        actions: <Widget>[
-                          new ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 24.0,
-                            ),
-                            label: Text("Add"),
-                            onPressed: () async {
-                              //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                              Navigator.of(globalScaffoldKey.currentContext!)
-                                  .pop(false);
-                              await Future.delayed(Duration(seconds: 1));
-                              fnVHCID = item['vhcid'];
-                              fnSTARTKM = item['vhckm'];
-                              fnWONUMBER = item['wodwonbr'];
-                              await getListBanTMS(true, '');
-                              showDialog(
-                                  context: globalScaffoldKey.currentContext!,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: Text('List Ban SR'),
-                                      content: setupAlertDialoadContainerFinish(
-                                          context),
-                                    );
-                                  });
-                            },
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0.0,
-                                backgroundColor: Colors.green,
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 0),
-                                textStyle: TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold)),
-                          ),
-                          new ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.save,
-                              color: Colors.white,
-                              size: 24.0,
-                            ),
-                            label: Text("View"),
-                            onPressed: () async {
-                              print('show');
-                              // Navigator.of(context)
-                              //     .pop(false);
-                              // await Future.delayed(Duration(milliseconds: 1));
-                              await getListTyreFit(true, item['wodwonbr']);
-                              if (dataListTyreFit.length > 0) {
-                                Navigator.of(context).pop(false);
-                                await Future.delayed(Duration(milliseconds: 1));
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: Text('List Item Tyre FIT'),
-                                        content:
-                                            setupAlertDialoadContainerTyreFit(
-                                                context),
-                                      );
-                                    });
-                              } else {
-                                Navigator.of(context).pop(false);
-                                await Future.delayed(Duration(milliseconds: 1));
-                                alert(
-                                    context,
-                                    2,
-                                    "tidak ada data yang di temukan",
-                                    "warning");
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0.0,
-                                backgroundColor: Colors.blue,
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 0),
-                                textStyle: TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.green,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      textStyle:
-                          TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-              ]),
-            ),
-          ),
-        ],
-      ),
+            );
+          },
+          style: tireBtnStyle(accentOrange),
+        ),
+      ]),
     );
   }
 
   Widget _buildDListBanTms(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings_applications, color: Colors.black),
-                ),
-                title: Text(
-                  "Tyre Number : ${item['tyrenumber']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("ID ItemID : ${item['iditemid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("PartName : ${item['partname']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Genuino: ${item['genuino']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Merk: ${item['merk']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Item Alias: ${item['itmalias']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("ID Unit Cost: ${item['itdunitcost']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Original SN: ${item['original_sn']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("WH: ${item['wh']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
-              ),
-            ),
-          ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                buildButtonAddBan(context, item),
-                SizedBox(width: 10.0),
-                buildButtonCancelBan(context)
-              ]),
-            ),
-          ),
-        ],
-      ),
+    return _tireListCard(
+      title: "Tyre Number : ${_s(item['tyrenumber'])}",
+      rows: [
+        _kv('ID ItemID', _s(item['iditemid'])),
+        _kv('PartName', _s(item['partname'])),
+        _kv('Genuino', _s(item['genuino'])),
+        _kv('Merk', _s(item['merk'])),
+        _kv('Item Alias', _s(item['itmalias'])),
+        _kv('ID Unit Cost', _s(item['itdunitcost'])),
+        _kv('Original SN', _s(item['original_sn'])),
+        _kv('WH', _s(item['wh'])),
+      ],
+      actions: Row(children: <Widget>[
+        buildButtonAddBan(context, item),
+        SizedBox(width: 10.0),
+        buildButtonCancelBan(context)
+      ]),
     );
   }
 
   Widget _buildDListRequestTmsTyre(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings_applications, color: Colors.black),
-                ),
-                title: Text(
-                  "Tyre Number : ${item['tyrenumber']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("Status : ${item['tyrestatus']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Po. Number : ${item['ponumber']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("IV. Number: ${item['ivnumber']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text(
-                      "Original SN: ${item['original_sn'] == null ? '[Not Set]' : item['original_sn']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
-              ),
-            ),
-          ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                buildButtonUpdateSn(context, item['tyrenumber']),
-              ]),
-            ),
-          ),
-        ],
-      ),
+    return _tireListCard(
+      title: "Tyre Number : ${_s(item['tyrenumber'])}",
+      rows: [
+        _kv('Status', _s(item['tyrestatus'])),
+        _kv('Po. Number', _s(item['ponumber'])),
+        _kv('IV. Number', _s(item['ivnumber'])),
+        _kv(
+            'Original SN',
+            item['original_sn'] == null
+                ? '[Not Set]'
+                : _s(item['original_sn'])),
+      ],
+      actions: Row(children: <Widget>[
+        buildButtonUpdateSn(context, item['tyrenumber']),
+      ]),
     );
   }
 
@@ -7661,7 +6718,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           color: Colors.white,
           size: 15.0,
         ),
-        label: Text("Approve"),
+        label: tireBtnLabel('Approve'),
         onPressed: () async {
           print("dummylistBanTms.length");
           print(dummylistBanTms.length);
@@ -7684,17 +6741,13 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           showDialog(
               context: context,
               builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text('List Ban TMS'),
-                  content: setupAlertDialoadContainer(context),
+                return tireAlertDialog(
+              title: 'List Ban TMS',
+              content: setupAlertDialoadContainer(context),
                 );
               });
         },
-        style: ElevatedButton.styleFrom(
-            elevation: 0.0,
-            backgroundColor: Colors.blueAccent,
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        style: tireBtnStyle(primaryOrange),
       ));
     } else {
       return Container();
@@ -7710,7 +6763,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           color: Colors.white,
           size: 15.0,
         ),
-        label: Text("Pilih"),
+        label: tireBtnLabel('Pilih'),
         onPressed: () async {
           Navigator.of(globalScaffoldKey.currentContext!).pop(false);
           print(item['wh']);
@@ -7723,9 +6776,8 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           if (listItemApprove.length > 0) {
             showDialog(
               context: globalScaffoldKey.currentContext!,
-              builder: (context) => new AlertDialog(
-                title: new Text('Information'),
-                //content: new Text("Close WO data ${appSrnumber}"),
+              builder: (context) => tireAlertDialog(
+                title: 'Information',
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   //position
@@ -7772,20 +6824,22 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   ],
                 ),
                 actions: <Widget>[
-                  new TextButton(
-                      onPressed: () {
+                  ElevatedButton(
+                  onPressed: () {
                         Navigator.of(globalScaffoldKey.currentContext!)
                             .pop(false);
                         resetTeks();
                       },
-                      child: new Text('No')),
+                  child: tireBtnLabel('No'),
+                  style: tireBtnStyle(Colors.grey.shade500),
+                ),
                   new ElevatedButton.icon(
                       icon: Icon(
                         Icons.close,
                         color: Colors.white,
                         size: 15.0,
                       ),
-                      label: Text("Finish"),
+                      label: tireBtnLabel('Finish'),
                       onPressed: () async {
                         Navigator.of(globalScaffoldKey.currentContext!)
                             .pop(false);
@@ -7817,23 +6871,14 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                             tyreprice,
                             genuino);
                       },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.redAccent,
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold))),
+                      style: tireBtnStyle(Colors.redAccent),
+                    ),
                 ],
               ),
             );
           }
         },
-        style: ElevatedButton.styleFrom(
-            elevation: 0.0,
-            backgroundColor: Colors.blueAccent,
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        style: tireBtnStyle(primaryOrange),
       ));
     } else {
       return Container();
@@ -7853,7 +6898,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
         color: Colors.white,
         size: 15.0,
       ),
-      label: Text("Pilih Item"),
+      label: tireBtnLabel('Pilih Item'),
       onPressed: () async {
         print(item['iditemid']);
         Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -7872,11 +6917,14 @@ class _FrmServiceTireState extends State<FrmServiceTire>
             "${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
         showDialog(
           context: context,
-          builder: (context) => new AlertDialog(
+          builder: (context) => AlertDialog(
             scrollable: true,
-            title: new Text('Information'),
-            //content:
-            //new Text("Save new request service?"),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            backgroundColor: cardColor,
+            title: Text(
+              'Information',
+              style: TextStyle(color: darkOrange, fontWeight: FontWeight.w600),
+            ),
             content: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               //position
@@ -7941,16 +6989,11 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   color: Colors.white,
                   size: 20.0,
                 ),
-                label: Text("Close"),
+                label: tireBtnLabel('Close'),
                 onPressed: () {
                   Navigator.of(context).pop(false);
                 },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.red,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                style: tireBtnStyle(Colors.redAccent),
               ),
               new ElevatedButton.icon(
                 icon: Icon(
@@ -7958,7 +7001,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                   color: Colors.white,
                   size: 20.0,
                 ),
-                label: Text("Save"),
+                label: tireBtnLabel('Save'),
                 onPressed: () async {
                   Navigator.of(context).pop(false);
                   if (getAkses("TY") || username == "ADMIN") {
@@ -7972,22 +7015,13 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                         "Anda tidak dapat melakukan transaksi ini", "error");
                   }
                 },
-                style: ElevatedButton.styleFrom(
-                    elevation: 0.0,
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                style: tireBtnStyle(primaryOrange),
               ),
             ],
           ),
         );
       },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.blueAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+      style: tireBtnStyle(primaryOrange),
     ));
   }
 
@@ -7999,7 +7033,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
         color: Colors.white,
         size: 15.0,
       ),
-      label: Text("Cancel"),
+      label: tireBtnLabel('Cancel'),
       onPressed: () async {
         listItemApprove = [];
         dummylistBanTms = [];
@@ -8007,11 +7041,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
         txtGenuino.text = "";
         Navigator.of(globalScaffoldKey.currentContext!).pop(false);
       },
-      style: ElevatedButton.styleFrom(
-          elevation: 0.0,
-          backgroundColor: Colors.orangeAccent,
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+      style: tireBtnStyle(accentOrange),
     ));
   }
 
@@ -8025,13 +7055,12 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           color: Colors.white,
           size: 15.0,
         ),
-        label: Text("Update SN"),
+        label: tireBtnLabel('Update SN'),
         onPressed: () async {
           showDialog(
             context: globalScaffoldKey.currentContext!,
-            builder: (context) => new AlertDialog(
-              title: new Text('Information'),
-              //content: new Text("Close WO data ${appSrnumber}"),
+            builder: (context) => tireAlertDialog(
+              title: 'Information',
               content: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 //position
@@ -8061,46 +7090,162 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                 ],
               ),
               actions: <Widget>[
-                new TextButton(
-                    onPressed: () {
+                ElevatedButton(
+                  onPressed: () {
                       Navigator.of(globalScaffoldKey.currentContext!)
                           .pop(false);
                       resetTeks();
                     },
-                    child: new Text('No')),
+                  child: tireBtnLabel('No'),
+                  style: tireBtnStyle(Colors.grey.shade500),
+                ),
                 new ElevatedButton.icon(
                     icon: Icon(
                       Icons.save,
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Update"),
+                    label: tireBtnLabel('Update'),
                     onPressed: () async {
                       Navigator.of(globalScaffoldKey.currentContext!)
                           .pop(false);
                       updateSnTyre(tyrenumber, txtOrginalSn.text, "");
                       txtOrginalSn.text = "";
                     },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.redAccent,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold))),
+                    style: tireBtnStyle(Colors.redAccent),
+                ),
               ],
             ),
           );
         },
-        style: ElevatedButton.styleFrom(
-            elevation: 0.0,
-            backgroundColor: Colors.blueAccent,
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        style: tireBtnStyle(primaryOrange),
       ));
     } else {
       return Container();
     }
+  }
+
+  String _s(dynamic v) {
+    if (v == null) return '';
+    final t = v.toString().trim();
+    if (t.isEmpty || t == 'null') return '';
+    return t;
+  }
+
+  Widget _kv(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2),
+      child: Table(
+        columnWidths: const {
+          0: IntrinsicColumnWidth(),
+          1: FixedColumnWidth(14),
+          2: FlexColumnWidth(),
+        },
+        children: [
+          TableRow(children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                label,
+                style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: Text(
+                ":",
+                style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                value.isEmpty ? '-' : value,
+                style: TextStyle(
+                  color: Colors.grey.shade900,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ])
+        ],
+      ),
+    );
+  }
+
+  Widget _tireBtn({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+    bool expanded = true,
+  }) {
+    final btn = ElevatedButton.icon(
+      icon: Icon(icon, color: Colors.white, size: 15),
+      label: tireBtnLabel(label),
+      onPressed: onPressed,
+      style: tireBtnStyle(color),
+    );
+    return expanded ? Expanded(child: btn) : btn;
+  }
+
+  Widget _tireListCard({
+    required String title,
+    required List<Widget> rows,
+    Widget? actions,
+  }) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accentOrange.withOpacity(0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor,
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(14, 12, 14, 10),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
+              ),
+            ),
+            child: Text(
+              title,
+              style: TextStyle(
+                color: darkOrange,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(14, 8, 14, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: rows,
+            ),
+          ),
+          if (actions != null)
+            Padding(
+              padding: EdgeInsets.fromLTRB(12, 4, 12, 12),
+              child: actions,
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -8115,10 +7260,13 @@ class _FrmServiceTireState extends State<FrmServiceTire>
       child: DefaultTabController(
         length: lengTabs,
         child: Scaffold(
+          backgroundColor: backgroundColor,
           appBar: AppBar(
-            backgroundColor: Colors.orange,
+            backgroundColor: primaryOrange,
+            foregroundColor: Colors.white,
+            elevation: 2,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back),
+              icon: Icon(Icons.arrow_back, color: Colors.white),
               iconSize: 20.0,
               onPressed: () {
                 _goBack(globalScaffoldKey.currentContext!);
@@ -8127,32 +7275,32 @@ class _FrmServiceTireState extends State<FrmServiceTire>
             bottom: TabBar(
               controller: _tabController,
               isScrollable: true,
-              padding: EdgeInsets.all(5),
-              indicator: BoxDecoration(
-                  borderRadius: BorderRadius.circular(5), // Creates border
-                  color: Colors.black38),
+              indicatorColor: Colors.white,
+              indicatorWeight: 3,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              labelStyle:
+                  TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+              unselectedLabelStyle:
+                  TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
               tabs: [
-                //Tab(icon: Icon(Icons.car_repair), child: Text('List Tire')),
                 Tab(
-                    icon: Icon(Icons.list, color: Colors.white),
-                    child: Text('SERAH TERIMA',
-                        style: TextStyle(color: Colors.white))),
+                    icon: Icon(Icons.list, size: 20, color: Colors.white),
+                    child: Text('SERAH TERIMA')),
                 Tab(
-                    icon: Icon(Icons.list, color: Colors.white),
-                    child:
-                        Text('OPNAME', style: TextStyle(color: Colors.white))),
+                    icon: Icon(Icons.list, size: 20, color: Colors.white),
+                    child: Text('OPNAME')),
                 Tab(
-                    icon: Icon(Icons.list, color: Colors.white),
-                    child: Text('LIST TMS',
-                        style: TextStyle(color: Colors.white))),
+                    icon: Icon(Icons.list, size: 20, color: Colors.white),
+                    child: Text('LIST TMS')),
                 Tab(
-                    icon: Icon(Icons.list, color: Colors.white),
-                    child: Text('FINISH TMS',
-                        style: TextStyle(color: Colors.white))),
+                    icon: Icon(Icons.list, size: 20, color: Colors.white),
+                    child: Text('FINISH TMS')),
               ],
             ),
-            title:
-                Text('Tire Managament', style: TextStyle(color: Colors.white)),
+            title: Text('Tyre Management',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w600)),
           ),
           body: TabBarView(
             key: globalScaffoldKey,
