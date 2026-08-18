@@ -7466,7 +7466,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                             actions: <Widget>[
                               new ElevatedButton.icon(
                                 icon: Icon(
-                                  Icons.delete,
+                                  Icons.save,
                                   color: Colors.white,
                                   size: 20.0,
                                 ),
@@ -7486,7 +7486,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               ),
                               new ElevatedButton.icon(
                                 icon: Icon(
-                                  Icons.save,
+                                  Icons.close,
                                   color: Colors.white,
                                   size: 20.0,
                                 ),
@@ -11057,7 +11057,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 size: 15.0,
               ),
               label:
-                  Text("Opname Det.", style: TextStyle(color: Colors.white)),
+                  Text("Opname", style: TextStyle(color: Colors.white)),
               onPressed: () async {
                 print('OPNAME FOREMAN LIST ${item['wodwonbr']}');
                 print('show dialog');

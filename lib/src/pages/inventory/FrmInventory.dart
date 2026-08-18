@@ -6,6 +6,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/Theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:dms_anp/src/Color/hex_color.dart';
 import 'package:progress_dialog_null_safe/progress_dialog_null_safe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,6 +35,42 @@ class _FrmInventoryState extends State<FrmInventory> {
   String BASE_URL =
       GlobalData.baseUrl; //"http://apps.tuluatas.com:8085/cemindo";
   FocusNode myFocusNode = FocusNode();
+
+  /// Normalize qty: "1,2" / "1.2" -> "1.2". Returns null if invalid / <= 0.
+  String? _normalizeQty(String? raw) {
+    if (raw == null) return null;
+    var s = raw.trim().replaceAll(' ', '').replaceAll('\u00A0', '');
+    if (s.isEmpty) return null;
+    // Indonesian decimal comma -> dot
+    if (s.contains(',') && !s.contains('.')) {
+      s = s.replaceAll(',', '.');
+    } else if (s.contains(',') && s.contains('.')) {
+      // e.g. 1.234,5 -> 1234.5
+      s = s.replaceAll('.', '').replaceAll(',', '.');
+    }
+    final v = double.tryParse(s);
+    if (v == null || v <= 0) return null;
+    // Always send dot-decimal to API (MaxDB FLOAT)
+    return v.toString();
+  }
+
+  String _bodyStr(dynamic v) {
+    if (v == null) return '';
+    return v.toString();
+  }
+
+  Map<String, dynamic>? _safeJsonDecode(String body) {
+    try {
+      final cleaned = body.trim();
+      if (cleaned.isEmpty) return null;
+      final decoded = json.decode(cleaned);
+      if (decoded is Map<String, dynamic>) return decoded;
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   // Orange Soft Theme Colors (sesuai INSTRUCTIONS.md)
   final Color primaryOrange = Color(0xFFFF8C69); // Soft orange
@@ -261,10 +298,10 @@ class _FrmInventoryState extends State<FrmInventory> {
         if (ctx != null) {
           alert(ctx, 0, "Quantity (QTY) tidak boleh kosong", "error");
         }
-      } else if (int.parse(idqty) <= 0) {
+      } else if (_normalizeQty(idqty) == null) {
         final ctx = globalScaffoldKey.currentContext;
         if (ctx != null) {
-          alert(ctx, 0, "Quantity (QTY) harus lebih dari 0", "error");
+          alert(ctx, 0, "Quantity (QTY) harus angka > 0 (contoh: 1.2 atau 1,2)", "error");
         }
       } else if (_validateSnTyreIfBanLuar() != null) {
         final ctx = globalScaffoldKey.currentContext;
@@ -272,6 +309,7 @@ class _FrmInventoryState extends State<FrmInventory> {
           alert(ctx, 0, _validateSnTyreIfBanLuar()!, "error");
         }
       } else {
+        idqty = _normalizeQty(idqty)!;
         if (globals.inv_trx_type == 'IS-M') {
           final isAllowed = await _isItemAllowedForIsm(ititemid);
           if (!isAllowed) {
@@ -282,35 +320,34 @@ class _FrmInventoryState extends State<FrmInventory> {
         }
 
         EasyLoading.show();
-        var encoded =
-            Uri.encodeFull("${BASE_URL}api/inventory/create_inv_detail.jsp");
-        print(encoded);
-        Uri urlEncode = Uri.parse(encoded);
-        var data = {
+        final urlEncode =
+            Uri.parse("${BASE_URL}api/inventory/create_inv_detail.jsp");
+        print(urlEncode);
+        final data = <String, String>{
           'method': 'create-inv-detail-v1',
-          'itdinvtrannbr': itdinvtrannbr,
-          'inv_vendorid': globals.inv_vendorid,
-          'type_transaction': type_transaction,
-          'ititemid': ititemid,
-          'idqty': idqty,
-          'unitprice': selunitpricce,
-          'uomid': uomid,
-          'username': username,
-          'idtype': idtype,
-          'idaccess': idaccess,
-          'part_name': part_name,
-          'locid': locid,
-          'merk': merk,
-          'sntyre': sntyre,
-          'genuine_no': genuine_no,
-          'vhtid': vhtid,
-          'towarehouseid': seltowarehouseid,
-          'item_size': selitem_size,
-          'itdlinenbr': selitdlinenbr,
-          'vendorid': globals.inv_vendorid,
-          'real_qty_bekas': txtRealQtyBekas.text, // Field baru
-          'kondisi_barang_bekas': txtKondisiBarangBekas, // Field baru
-          "userid": username
+          'itdinvtrannbr': _bodyStr(itdinvtrannbr),
+          'inv_vendorid': _bodyStr(globals.inv_vendorid),
+          'type_transaction': _bodyStr(type_transaction),
+          'ititemid': _bodyStr(ititemid),
+          'idqty': _bodyStr(idqty),
+          'unitprice': _bodyStr(selunitpricce),
+          'uomid': _bodyStr(uomid),
+          'username': _bodyStr(username),
+          'idtype': _bodyStr(idtype),
+          'idaccess': _bodyStr(idaccess),
+          'part_name': _bodyStr(part_name),
+          'locid': _bodyStr(locid),
+          'merk': _bodyStr(merk),
+          'sntyre': _bodyStr(sntyre),
+          'genuine_no': _bodyStr(genuine_no),
+          'vhtid': _bodyStr(vhtid),
+          'towarehouseid': _bodyStr(seltowarehouseid),
+          'item_size': _bodyStr(selitem_size),
+          'itdlinenbr': _bodyStr(selitdlinenbr),
+          'vendorid': _bodyStr(globals.inv_vendorid),
+          'real_qty_bekas': _bodyStr(txtRealQtyBekas.text),
+          'kondisi_barang_bekas': _bodyStr(txtKondisiBarangBekas),
+          'userid': _bodyStr(username),
         };
         print(data);
         final response = await http.post(
@@ -319,79 +356,84 @@ class _FrmInventoryState extends State<FrmInventory> {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-          encoding: Encoding.getByName('utf-8'),
+          encoding: utf8,
         );
         print(response.body);
         if (EasyLoading.isShow) {
           EasyLoading.dismiss();
         }
-        setState(() {
-          if (response.statusCode == 200) {
-            status_code = json.decode(response.body)["status_code"];
-            message = json.decode(response.body)["message"];
-            //print(response.body);
-            if (status_code == 200) {
-              showDialog(
-                context: globalScaffoldKey.currentContext!,
-                builder: (context) => new AlertDialog(
-                  title: new Text('Information'),
-                  content: new Text("$message"),
-                  actions: <Widget>[
-                    new ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.info,
-                        color: Colors.white,
-                        size: 18.0,
-                      ),
-                      label: Text("Ok"),
-                      onPressed: () {
-                        Navigator.of(context, rootNavigator: true).pop();
-                        reseTeks();
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 2.0,
-                          backgroundColor: primaryOrange, // ✅ Orange background
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          textStyle: TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w600)),
-                    ),
-                  ],
-                ),
-              );
-            } else {
-              //Navigator.of(scafoldGlobal.currentContext).pop(false);
-              Future.delayed(Duration(milliseconds: 1));
-              final ctx = globalScaffoldKey.currentContext;
-              if (ctx != null) {
-                alert(ctx, 0, "Gagal menyimpan ${message}", "error");
-              }
-            }
-          } else {
-            if (EasyLoading.isShow) {
-              EasyLoading.dismiss();
-            }
-            //Navigator.of(scafoldGlobal.currentContext).pop(false);
-            Future.delayed(Duration(milliseconds: 1));
+        if (response.statusCode == 200) {
+          final parsed = _safeJsonDecode(response.body);
+          if (parsed == null) {
             final ctx = globalScaffoldKey.currentContext;
             if (ctx != null) {
-              alert(ctx, 0, "Gagal menyimpan ${response.statusCode}", "error");
+              alert(ctx, 0,
+                  "Respon server tidak valid: ${response.body.length > 120 ? response.body.substring(0, 120) : response.body}",
+                  "error");
+            }
+            return;
+          }
+          final codeRaw = parsed["status_code"];
+          status_code = codeRaw is int
+              ? codeRaw
+              : int.tryParse(codeRaw?.toString() ?? '') ?? 0;
+          message = parsed["message"]?.toString() ?? '';
+          if (status_code == 200) {
+            if (!mounted) return;
+            showDialog(
+              context: globalScaffoldKey.currentContext!,
+              builder: (context) => new AlertDialog(
+                title: new Text('Information'),
+                content: new Text("$message"),
+                actions: <Widget>[
+                  new ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.info,
+                      color: Colors.white,
+                      size: 18.0,
+                    ),
+                    label: Text("Ok"),
+                    onPressed: () {
+                      Navigator.of(context, rootNavigator: true).pop();
+                      reseTeks();
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 2.0,
+                        backgroundColor: primaryOrange,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        textStyle: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            final ctx = globalScaffoldKey.currentContext;
+            if (ctx != null) {
+              alert(ctx, 0, "Gagal menyimpan ${message}", "error");
             }
           }
-        });
+        } else {
+          final ctx = globalScaffoldKey.currentContext;
+          if (ctx != null) {
+            alert(ctx, 0, "Gagal menyimpan HTTP ${response.statusCode}", "error");
+          }
+        }
       }
-    } catch (e) {
+    } catch (e, st) {
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
+      print(e.toString());
+      print(st.toString());
       final ctx = globalScaffoldKey.currentContext;
       if (ctx != null) {
-        alert(ctx, 0, "Client, Gagal Menyimpan Data", "error");
+        alert(ctx, 0, "Client, Gagal Menyimpan Data: $e", "error");
       }
-      print(e.toString());
     }
   }
 
@@ -462,10 +504,10 @@ class _FrmInventoryState extends State<FrmInventory> {
         if (ctx != null) {
           alert(ctx, 0, "Quantity (QTY) tidak boleh kosong", "error");
         }
-      } else if (double.parse(idqty) <= 0) {
+      } else if (_normalizeQty(idqty) == null) {
         final ctx = globalScaffoldKey.currentContext;
         if (ctx != null) {
-          alert(ctx, 0, "Quantity (QTY) harus lebih dari 0", "error");
+          alert(ctx, 0, "Quantity (QTY) harus angka > 0 (contoh: 1.2 atau 1,2)", "error");
         }
       } else if (_validateSnTyreIfBanLuar() != null) {
         final ctx = globalScaffoldKey.currentContext;
@@ -473,30 +515,30 @@ class _FrmInventoryState extends State<FrmInventory> {
           alert(ctx, 0, _validateSnTyreIfBanLuar()!, "error");
         }
       } else {
+        idqty = _normalizeQty(idqty)!;
         EasyLoading.show();
-        var encoded =
-            Uri.encodeFull("${BASE_URL}api/inventory/create_inv_detail.jsp");
-        print(encoded);
-        Uri urlEncode = Uri.parse(encoded);
-        var data = {
+        final urlEncode =
+            Uri.parse("${BASE_URL}api/inventory/create_inv_detail.jsp");
+        print(urlEncode);
+        final data = <String, String>{
           'method': 'update-inv-detail-v1',
-          'itdinvtrannbr': itdinvtrannbr,
-          'ititemid': ititemid,
-          'ititemidori': ititemidOri,
-          'idqty': idqty??"0.0",
-          'uomid': uomid,
-          'itdlinenbr': itdlinenbr,
-          'username': username,
-          'idtype': idtype,
-          'idaccess': idaccess,
-          'part_name': part_name,
-          'locid': locid,
-          'merk': merk,
-          'sntyre': sntyre,
-          'genuine_no': genuine_no,
-          'vhtid': vhtid,
-          'real_qty_bekas': txtRealQtyBekas.text, // Field baru
-          'kondisi_barang_bekas': txtKondisiBarangBekas, // Field baru
+          'itdinvtrannbr': _bodyStr(itdinvtrannbr),
+          'ititemid': _bodyStr(ititemid),
+          'ititemidori': _bodyStr(ititemidOri),
+          'idqty': _bodyStr(idqty),
+          'uomid': _bodyStr(uomid),
+          'itdlinenbr': _bodyStr(itdlinenbr),
+          'username': _bodyStr(username),
+          'idtype': _bodyStr(idtype),
+          'idaccess': _bodyStr(idaccess),
+          'part_name': _bodyStr(part_name),
+          'locid': _bodyStr(locid),
+          'merk': _bodyStr(merk),
+          'sntyre': _bodyStr(sntyre),
+          'genuine_no': _bodyStr(genuine_no),
+          'vhtid': _bodyStr(vhtid),
+          'real_qty_bekas': _bodyStr(txtRealQtyBekas.text),
+          'kondisi_barang_bekas': _bodyStr(txtKondisiBarangBekas),
         };
         print("UPDATE DATA");
         print(data);
@@ -506,17 +548,30 @@ class _FrmInventoryState extends State<FrmInventory> {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-          encoding: Encoding.getByName('utf-8'),
+          encoding: utf8,
         );
         print(response.body);
         if (EasyLoading.isShow) {
           EasyLoading.dismiss();
         }
         if (response.statusCode == 200) {
-          status_code = json.decode(response.body)["status_code"];
-          message = json.decode(response.body)["message"];
-          //print(response.body);
+          final parsed = _safeJsonDecode(response.body);
+          if (parsed == null) {
+            final ctx = globalScaffoldKey.currentContext;
+            if (ctx != null) {
+              alert(ctx, 0,
+                  "Respon server tidak valid: ${response.body.length > 120 ? response.body.substring(0, 120) : response.body}",
+                  "error");
+            }
+            return;
+          }
+          final codeRaw = parsed["status_code"];
+          status_code = codeRaw is int
+              ? codeRaw
+              : int.tryParse(codeRaw?.toString() ?? '') ?? 0;
+          message = parsed["message"]?.toString() ?? '';
           if (status_code == 200) {
+            if (!mounted) return;
             showDialog(
               context: globalScaffoldKey.currentContext!,
               builder: (context) => new AlertDialog(
@@ -532,7 +587,6 @@ class _FrmInventoryState extends State<FrmInventory> {
                     label: Text("Ok"),
                     onPressed: () {
                       Navigator.of(context).pop(false);
-                      //reseTeks();
                     },
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
@@ -546,35 +600,29 @@ class _FrmInventoryState extends State<FrmInventory> {
               ),
             );
           } else {
-            //Navigator.of(scafoldGlobal.currentContext).pop(false);
-            Future.delayed(Duration(milliseconds: 1));
             final ctx = globalScaffoldKey.currentContext;
             if (ctx != null) {
               alert(ctx, 0, "Gagal update inventory ${message}", "error");
             }
           }
         } else {
-          if (EasyLoading.isShow) {
-            EasyLoading.dismiss();
-          }
-          //Navigator.of(scafoldGlobal.currentContext).pop(false);
-          Future.delayed(Duration(milliseconds: 1));
           final ctx = globalScaffoldKey.currentContext;
           if (ctx != null) {
-            alert(ctx, 0, "Gagal update ${response.statusCode}", "error");
+            alert(ctx, 0, "Gagal update HTTP ${response.statusCode}", "error");
           }
           print("Gagal menyimpan ${response.statusCode}");
         }
       }
-    } catch (e) {
+    } catch (e, st) {
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
+      print(e.toString());
+      print(st.toString());
       final ctx = globalScaffoldKey.currentContext;
       if (ctx != null) {
-        alert(ctx, 0, "Client, Gagal Update Inventory Data", "error");
+        alert(ctx, 0, "Client, Gagal Update Inventory Data: $e", "error");
       }
-      print(e.toString());
     }
   }
 
@@ -858,6 +906,7 @@ class _FrmInventoryState extends State<FrmInventory> {
     required Function(String) onTap,
     required Function(String) onChanged,
     FocusNode? focusNode,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Container(
       margin: EdgeInsets.only(left: 10, top: 10, right: 10, bottom: 10),
@@ -868,6 +917,7 @@ class _FrmInventoryState extends State<FrmInventory> {
         controller: controller,
         keyboardType: keyboardType,
         focusNode: focusNode,
+        inputFormatters: inputFormatters,
         onChanged: onChanged,
         onTap: onTap != null ? () => onTap('') : null,
         decoration: InputDecoration(
@@ -2271,11 +2321,15 @@ class _FrmInventoryState extends State<FrmInventory> {
                   buildTextField(
                     labelText: 'Quantity',
                     controller: txtQuantity,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true, signed: false),
                     focusNode: myFocusNode,
                     readOnly: false,
+                    inputFormatters: [//
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                    ],
                     onTap: (String p1) {},
-                    onChanged: (String p1) {},
+                    onChanged: (String p1) {},//
                   ),
                   // Field baru 1: Quantity Barang Bekas
                   if (widget.invTrxStatusBarang != null &&
