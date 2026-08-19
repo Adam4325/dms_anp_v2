@@ -259,12 +259,16 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
         "wh_withmonth": value['_wh_withmonth'],
         "wh_genuine_no": value['_wh_genuine_no'],
         "wh_item_size": value['_wh_item_size'],
+        "wh_vhtid": value['_wh_vhtid'],
+        "wh_merk": value['_wh_merk'],
       });
     });
     return list;
   }
 
   Widget _kv(String label, String value) {
+   // print('value list stock opname');
+   // print(value);
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 2),
       child: Table(
@@ -307,6 +311,7 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
   }
 
   Widget listItemBuilder(value, int index) {
+    print("LIST STOK ${value}");
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
       decoration: BoxDecoration(
@@ -409,7 +414,9 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
                 _kv('Item Desc', _s(value['wh_item_descr'])),
                 _kv('Genuine No', _s(value['wh_genuine_no'])),
                 _kv('Item Size', _s(value['wh_item_size'])),
+                _kv('VhtID', _s(value['wh_vhtid'])),
                 _kv('Type', _s(value['wh_type'])),
+                _kv('Merk', _s(value['wh_merk'])),
                 _kv('Accessories', _s(value['wh_access'])),
                 _kv('Type PO', _s(value['wh_typepo'])),
                 _kv('Currency', _s(value['wh_curyid'])),
@@ -483,6 +490,8 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
                       globals.wh_month_month = _s(value['wh_with_month_month']);
                       globals.wh_item_size = _s(value['wh_item_size']);
                       globals.wh_genuine_no = _s(value['wh_genuine_no']);
+                      globals.wh_vhtid = _s(value['wh_vhtid']);
+                      globals.wh_merk = _s(value['wh_merk']);
                       globals.wh_method = "edit";
                       Navigator.pushReplacement(
                         context,

@@ -1068,13 +1068,37 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     return t;
   }
 
-  Widget _kv(String label, String value) {
+  String _fmtDt(dynamic v) {
+    final s = _s(v);
+    if (s.isEmpty) return '';
+    DateTime? dt = DateTime.tryParse(s);
+    if (dt == null) {
+      final patterns = <String>[
+        'yyyy-MM-dd HH:mm:ss',
+        'yyyy-MM-dd HH:mm',
+        "yyyy-MM-dd'T'HH:mm:ss",
+        'dd/MM/yyyy HH:mm:ss',
+        'dd-MM-yyyy HH:mm:ss',
+        'MM/dd/yyyy HH:mm:ss',
+      ];
+      for (final p in patterns) {
+        try {
+          dt = DateFormat(p).parse(s);
+          break;
+        } catch (_) {}
+      }
+    }
+    if (dt == null) return s;
+    return DateFormat('yyyy-MM-dd HH:mm:ss').format(dt);
+  }
+
+  Widget _kv(String label, String value, {bool dense = false}) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 2),
+      padding: EdgeInsets.symmetric(vertical: dense ? 0 : 2),
       child: Table(
         columnWidths: const {
           0: IntrinsicColumnWidth(),
-          1: FixedColumnWidth(14),
+          1: FixedColumnWidth(10),
           2: FlexColumnWidth(),
         },
         children: [
@@ -1082,12 +1106,16 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             Align(
               alignment: Alignment.centerLeft,
               child: Text(label,
-                  style: TextStyle(color: Colors.grey.shade800, fontSize: 12)),
+                  style: TextStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: dense ? 11 : 12)),
             ),
             Align(
               alignment: Alignment.center,
               child: Text(":",
-                  style: TextStyle(color: Colors.grey.shade800, fontSize: 12)),
+                  style: TextStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: dense ? 11 : 12)),
             ),
             Align(
               alignment: Alignment.centerRight,
@@ -1095,7 +1123,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 value.isEmpty ? '-' : value,
                 style: TextStyle(
                   color: Colors.grey.shade900,
-                  fontSize: 12,
+                  fontSize: dense ? 11 : 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1126,15 +1154,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     required String title,
     required List<Widget> rows,
     Widget? actions,
+    bool compact = false,
   }) {
+    final m = compact ? 6.0 : 12.0;
+    final v = compact ? 3.0 : 6.0;
+    final r = compact ? 10.0 : 14.0;
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+      margin: EdgeInsets.symmetric(horizontal: m, vertical: v),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(r),
         border: Border.all(color: accentOrange.withOpacity(0.45)),
         boxShadow: [
-          BoxShadow(color: shadowColor, blurRadius: 8, offset: Offset(0, 3)),
+          BoxShadow(color: shadowColor, blurRadius: compact ? 4 : 8, offset: Offset(0, compact ? 1 : 3)),
         ],
       ),
       child: Column(
@@ -1142,12 +1174,14 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         children: <Widget>[
           Container(
             width: double.infinity,
-            padding: EdgeInsets.fromLTRB(14, 12, 14, 10),
+            padding: compact
+                ? EdgeInsets.fromLTRB(10, 6, 10, 6)
+                : EdgeInsets.fromLTRB(14, 12, 14, 10),
             decoration: BoxDecoration(
               color: lightOrange,
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(14),
-                topRight: Radius.circular(14),
+                topLeft: Radius.circular(r),
+                topRight: Radius.circular(r),
               ),
             ),
             child: Text(
@@ -1155,12 +1189,14 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               style: TextStyle(
                 color: darkOrange,
                 fontWeight: FontWeight.w700,
-                fontSize: 14,
+                fontSize: compact ? 12 : 14,
               ),
             ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(14, 8, 14, 6),
+            padding: compact
+                ? EdgeInsets.fromLTRB(10, 4, 10, 4)
+                : EdgeInsets.fromLTRB(14, 8, 14, 6),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: rows,
@@ -1168,7 +1204,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           ),
           if (actions != null)
             Padding(
-              padding: EdgeInsets.fromLTRB(12, 4, 12, 12),
+              padding: compact
+                  ? EdgeInsets.fromLTRB(8, 2, 8, 8)
+                  : EdgeInsets.fromLTRB(12, 4, 12, 12),
               child: actions,
             ),
         ],
@@ -7675,38 +7713,18 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   }
 
   Widget _buildDListDetailMechanicProses(dynamic item, int index) {
-    return Card(
-      elevation: 0.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(color: Colors.grey, spreadRadius: 1),
-              ],
-            ),
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            //decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              color: Colors.white60,
-              padding: EdgeInsets.all(10),
-              child: Text(
-                  "WOD Number: ${item['wodwonbr']}\n"
-                      "MechanicID: ${item['mechanicid']}\n"
-                      "MechanicName: ${item['mechanicname']}\n"
-                      "Start Date: ${item['startdate']}\n"
-                      "Start Note: ${item['start_notes']}\n"
-                      "Stop Date: ${item['stopdate']}\n"
-                      "Stop Note: ${item['stop_notes']}\n",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
-      ),
+    return _pmListCard(
+      compact: true,
+      title: "WOD : ${_s(item['wodwonbr'])}",
+      rows: [
+        _kv("WOD Number", (item['wodwonbr'] ?? '').toString(), dense: true),
+        _kv("MechanicID", (item['mechanicid'] ?? '').toString(), dense: true),
+        _kv("MechanicName", (item['mechanicname'] ?? '').toString(), dense: true),
+        _kv("Start Date", _fmtDt(item['startdate']), dense: true),
+        _kv("Start Note", (item['start_notes'] ?? '').toString(), dense: true),
+        _kv("Stop Date", _fmtDt(item['stopdate']), dense: true),
+        _kv("Stop Note", (item['stop_notes'] ?? '').toString(), dense: true),
+      ],
     );
   }
 
@@ -8288,7 +8306,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       child: Column(
         children: [
           Container(
-            margin: EdgeInsets.all(10.0),
+            margin: EdgeInsets.all(10.0),//
             child: TextField(
               readOnly: false,
               cursorColor: Colors.black,
@@ -8347,7 +8365,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               height: MediaQuery.of(context)
                   .size
                   .height, // Change as per your requirement
-              width: MediaQuery.of(context).size.width,
+              width: MediaQuery.of(context).size.width + 10,
               child: ListView.builder(
                   scrollDirection: Axis.vertical,
                   shrinkWrap: true,
@@ -11790,7 +11808,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           color: Colors.white,
                           size: 16.0,
                         ),
-                        label: pmBtnLabel("Add/Update MCN"),
+                        label: pmBtnLabel("Add/Update"),
                         onPressed: () async {
                           mechanicID = null;
 
@@ -11820,13 +11838,13 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           color: Colors.white,
                           size: 16.0,
                         ),
-                        label: pmBtnLabel("Detail List"),
+                        label: pmBtnLabel("Detail List."),
                         onPressed: () async {
                           await getListDataListMechanic(item['wodwonbr']);
 
                           if (dataListMechanicProses.isNotEmpty) {
                             showDialog(
-                              context: context,
+                              context: context,//
                               builder: (BuildContext context) {
                                 return AlertDialog(
                                   shape: RoundedRectangleBorder(
@@ -11839,6 +11857,29 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                         fontWeight: FontWeight.w600),
                                   ),
                                   content: listDataMechanicProses(context),
+                                  actions: <Widget>[
+                                    ElevatedButton.icon(
+                                      icon: Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 16.0,
+                                      ),
+                                      label: Text("Close",
+                                          style: TextStyle(color: Colors.white)),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(false);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        elevation: 0.0,
+                                        backgroundColor: Colors.orangeAccent,
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 8),
+                                        textStyle: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
                                 );
                               },
                             );
@@ -11858,7 +11899,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 16.0,
                     ),
-                    label: pmBtnLabel("Opname Det."),
+                    label: pmBtnLabel("Opname"),
                     onPressed: () async {
                       print('OPNAME PROSES ${item['wodwonbr']}');
                       await getListDataItemForeman(item["wodwonbr"]);

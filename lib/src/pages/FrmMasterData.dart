@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:awesome_select/awesome_select.dart';
@@ -44,6 +45,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   List<Map<String, dynamic>> _listOrigin = [];
   List<dynamic> _osmAddressSuggestions = [];
   bool _osmSearching = false;
+  Timer? _osmSearchDebounce;
   static const List<Map<String, String>> _originTypeOptions = [
     {'value': '', 'label': 'Pilih Origin Type'},
     {'value': '1', 'label': 'Normal'},
@@ -72,6 +74,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   List<Map<String, dynamic>> _listDestination = [];
   List<dynamic> _osmDestSuggestions = [];
   bool _osmDestSearching = false;
+  Timer? _osmDestSearchDebounce;
   static const String _destinationType = 'SPECIFIC';
 
   // Item Type tab
@@ -367,6 +370,61 @@ class _FrmMasterDataState extends State<FrmMasterData>
     }
   }
 
+  /// Proxy server dulu; jika kosong/gagal → Nominatim langsung (UA valid).
+  Future<List<Map<String, dynamic>>> _fetchOsmSuggestions(String query) async {
+    final q = query.trim();
+    if (q.length < 2) return [];
+
+    Future<List<Map<String, dynamic>>> parseList(String body) async {
+      final trimmed = body.trim();
+      if (trimmed.isEmpty || trimmed == '[]') return [];
+      try {
+        final decoded = jsonDecode(trimmed);
+        if (decoded is! List) return [];
+        return decoded
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      } catch (_) {
+        return [];
+      }
+    }
+
+    // 1) Server proxy
+    try {
+      final url = Uri.parse('${GlobalData.baseUrlOri}api/osm_address.jsp').replace(
+        queryParameters: {'query': q},
+      );
+      final response = await http.get(url, headers: {"Accept": "application/json"});
+      if (response.statusCode == 200) {
+        final list = await parseList(response.body);
+        if (list.isNotEmpty) return list;
+      }
+    } catch (_) {}
+
+    // 2) Fallback langsung ke Nominatim (hindari UA generik yang di-block 403)
+    try {
+      final url = Uri.parse('https://nominatim.openstreetmap.org/search').replace(
+        queryParameters: {
+          'q': q,
+          'format': 'json',
+          'addressdetails': '0',
+          'limit': '8',
+          'countrycodes': 'id',
+        },
+      );
+      final response = await http.get(url, headers: {
+        "Accept": "application/json",
+        "User-Agent": "DMS-ANP-MasterData/1.0 (Flutter; contact: admin@tuluatas.com)",
+      });
+      if (response.statusCode == 200) {
+        return await parseList(response.body);
+      }
+    } catch (_) {}
+
+    return [];
+  }
+
   Future<void> _searchOsmAddress(String query) async {
     final q = query.trim();
     if (q.isEmpty) {
@@ -374,21 +432,14 @@ class _FrmMasterDataState extends State<FrmMasterData>
       return;
     }
     setState(() => _osmSearching = true);
-    try {
-      final url = Uri.parse('${GlobalData.baseUrlOri}api/osm_address.jsp?query=${Uri.encodeComponent(q)}');
-      final response = await http.get(url, headers: {"Accept": "application/json"});
-      if (!mounted) return;
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        setState(() {
-          _osmAddressSuggestions = decoded is List ? List.from(decoded) : [];
-          _osmSearching = false;
-        });
-      } else {
-        setState(() { _osmAddressSuggestions = []; _osmSearching = false; });
-      }
-    } catch (_) {
-      setState(() { _osmAddressSuggestions = []; _osmSearching = false; });
+    final list = await _fetchOsmSuggestions(q);
+    if (!mounted) return;
+    setState(() {
+      _osmAddressSuggestions = list;
+      _osmSearching = false;
+    });
+    if (list.isEmpty && q.length >= 2) {
+      alert(globalScaffoldKey.currentContext!, 0, "Alamat tidak ditemukan. Coba kata kunci lain.", "error");
     }
   }
 
@@ -396,10 +447,12 @@ class _FrmMasterDataState extends State<FrmMasterData>
     final lat = item['lat']?.toString() ?? '';
     final lon = item['lon']?.toString() ?? '';
     final name = item['display_name'] ?? item['name'] ?? txtOsmAddress.text;
-    txtOsmAddress.text = name is String ? name : txtOsmAddress.text;
-    txtLat.text = lat;
-    txtLon.text = lon;
-    setState(() => _osmAddressSuggestions = []);
+    setState(() {
+      txtOsmAddress.text = name is String ? name : txtOsmAddress.text;
+      txtLat.text = lat;
+      txtLon.text = lon;
+      _osmAddressSuggestions = [];
+    });
   }
 
   Future<void> _saveOrUpdateOrigin() async {
@@ -476,7 +529,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   }
 
   // --- Destination Tab ---
-  static const String _destinationSaveApi = 'api/master/save_new_destination.jsp';
+  static const String _destinationSaveApi = 'api/master/save_new_destination_api.jsp';
 
   Future<void> getListDestination() async {
     try {
@@ -514,21 +567,14 @@ class _FrmMasterDataState extends State<FrmMasterData>
       return;
     }
     setState(() => _osmDestSearching = true);
-    try {
-      final url = Uri.parse('${GlobalData.baseUrlOri}api/osm_address.jsp?query=${Uri.encodeComponent(q)}');
-      final response = await http.get(url, headers: {"Accept": "application/json"});
-      if (!mounted) return;
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        setState(() {
-          _osmDestSuggestions = decoded is List ? List.from(decoded) : [];
-          _osmDestSearching = false;
-        });
-      } else {
-        setState(() { _osmDestSuggestions = []; _osmDestSearching = false; });
-      }
-    } catch (_) {
-      setState(() { _osmDestSuggestions = []; _osmDestSearching = false; });
+    final list = await _fetchOsmSuggestions(q);
+    if (!mounted) return;
+    setState(() {
+      _osmDestSuggestions = list;
+      _osmDestSearching = false;
+    });
+    if (list.isEmpty && q.length >= 2) {
+      alert(globalScaffoldKey.currentContext!, 0, "Alamat tidak ditemukan. Coba kata kunci lain.", "error");
     }
   }
 
@@ -536,10 +582,12 @@ class _FrmMasterDataState extends State<FrmMasterData>
     final lat = item['lat']?.toString() ?? '';
     final lon = item['lon']?.toString() ?? '';
     final name = item['display_name'] ?? item['name'] ?? txtDestOsmAddress.text;
-    txtDestOsmAddress.text = name is String ? name : txtDestOsmAddress.text;
-    txtDestLat.text = lat;
-    txtDestLon.text = lon;
-    setState(() => _osmDestSuggestions = []);
+    setState(() {
+      txtDestOsmAddress.text = name is String ? name : txtDestOsmAddress.text;
+      txtDestLat.text = lat;
+      txtDestLon.text = lon;
+      _osmDestSuggestions = [];
+    });
   }
 //
   Future<void> _saveOrUpdateDestination() async {
@@ -1062,6 +1110,8 @@ class _FrmMasterDataState extends State<FrmMasterData>
     Widget? suffixIcon,
     int maxLines = 1,
     String? helperText,
+    ValueChanged<String>? onChanged,
+    VoidCallback? onEditingComplete,
   }) {
     return Container(
       margin: EdgeInsets.all(12.0),
@@ -1072,6 +1122,8 @@ class _FrmMasterDataState extends State<FrmMasterData>
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
+        onChanged: onChanged,
+        onEditingComplete: onEditingComplete,
         decoration: InputDecoration(
           fillColor: readOnly ? Colors.grey.shade100 : Colors.white,
           filled: true,
@@ -1095,6 +1147,50 @@ class _FrmMasterDataState extends State<FrmMasterData>
             borderSide: BorderSide(color: Colors.orange, width: 1.5),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildOsmSuggestionList({
+    required List<dynamic> suggestions,
+    required bool searching,
+    required void Function(Map<String, dynamic> item) onSelected,
+  }) {
+    if (searching) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))),
+      );
+    }
+    if (suggestions.isEmpty) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      constraints: const BoxConstraints(maxHeight: 180),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        itemCount: suggestions.length,
+        separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
+        itemBuilder: (context, i) {
+          final raw = suggestions[i];
+          final item = (raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{});
+          final name = item['display_name'] ?? item['name'] ?? '';
+          return ListTile(
+            dense: true,
+            leading: const Icon(Icons.place, color: Colors.orange, size: 20),
+            title: Text(
+              name is String ? name : '$name',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12),
+            ),
+            onTap: () => onSelected(item),
+          );
+        },
       ),
     );
   }
@@ -1308,6 +1404,54 @@ class _FrmMasterDataState extends State<FrmMasterData>
                       ),
                     ),
                     SizedBox(height: 5),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: TextField(
+                        controller: txtOsmAddress,
+                        textInputAction: TextInputAction.search,
+                        onChanged: (q) {
+                          _osmSearchDebounce?.cancel();
+                          _osmSearchDebounce = Timer(const Duration(milliseconds: 500), () {
+                            _searchOsmAddress(q);
+                          });
+                        },
+                        onSubmitted: (q) => _searchOsmAddress(q),
+                        decoration: InputDecoration(
+                          fillColor: Colors.white,
+                          filled: true,
+                          isDense: true,
+                          labelText: 'Cari alamat (OSM)',
+                          helperText: 'Ketik alamat lalu pilih hasil, atau ambil dari peta',
+                          helperStyle: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                          suffixIcon: IconButton(
+                            icon: _osmSearching
+                                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                                : const Icon(Icons.search, color: Colors.orange),
+                            onPressed: _osmSearching ? null : () => _searchOsmAddress(txtOsmAddress.text),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.orange, width: 1.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                    _buildOsmSuggestionList(
+                      suggestions: _osmAddressSuggestions,
+                      searching: _osmSearching,
+                      onSelected: _onOsmAddressSelected,
+                    ),
+                    SizedBox(height: 5),
                     ListTile(
                       dense: true,
                       leading: Icon(Icons.map, color: Colors.orange),
@@ -1320,6 +1464,10 @@ class _FrmMasterDataState extends State<FrmMasterData>
                           setState(() {
                             txtLat.text = (res['lat'] ?? '').toString();
                             txtLon.text = (res['lon'] ?? '').toString();
+                            final addr = res['address']?.toString();
+                            if (addr != null && addr.isNotEmpty) {
+                              txtOsmAddress.text = addr;
+                            }
                           });
                         }
                       },
@@ -1453,6 +1601,29 @@ class _FrmMasterDataState extends State<FrmMasterData>
                     SizedBox(height: 5),
                     // Destination Type dihapus sesuai permintaan
                     SizedBox(height: 5),
+                    buildTextField(
+                      labelText: 'Cari alamat (OSM)',
+                      controller: txtDestOsmAddress,
+                      helperText: 'Ketik alamat lalu pilih hasil, atau ambil dari peta',
+                      onChanged: (q) {
+                        _osmDestSearchDebounce?.cancel();
+                        _osmDestSearchDebounce = Timer(const Duration(milliseconds: 500), () {
+                          _searchOsmAddressDest(q);
+                        });
+                      },
+                      suffixIcon: IconButton(
+                        icon: _osmDestSearching
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.search, color: Colors.orange),
+                        onPressed: _osmDestSearching ? null : () => _searchOsmAddressDest(txtDestOsmAddress.text),
+                      ),
+                    ),
+                    _buildOsmSuggestionList(
+                      suggestions: _osmDestSuggestions,
+                      searching: _osmDestSearching,
+                      onSelected: _onOsmDestSelected,
+                    ),
+                    SizedBox(height: 5),
                     ListTile(
                       dense: true,
                       leading: Icon(Icons.map, color: Colors.orange),
@@ -1482,7 +1653,11 @@ class _FrmMasterDataState extends State<FrmMasterData>
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                           onPressed: () async {
-                            if (txtDestCtyId.text.isEmpty && await _showConfirmDialog('Konfirmasi', 'Simpan data Destination?')) {
+                            if (txtDestCtyId.text.trim().isNotEmpty) {
+                              alert(globalScaffoldKey.currentContext!, 0, "Untuk simpan baru, kosongkan ID Destination (atau pakai Update)", "error");
+                              return;
+                            }
+                            if (await _showConfirmDialog('Konfirmasi', 'Simpan data Destination?')) {
                               _saveOrUpdateDestination();
                             }
                           },
@@ -1492,7 +1667,11 @@ class _FrmMasterDataState extends State<FrmMasterData>
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
                           onPressed: () async {
-                            if (txtDestCtyId.text.isNotEmpty && await _showConfirmDialog('Konfirmasi', 'Update data Destination?')) {
+                            if (txtDestCtyId.text.trim().isEmpty) {
+                              alert(globalScaffoldKey.currentContext!, 0, "Pilih data dari daftar dulu untuk Update", "error");
+                              return;
+                            }
+                            if (await _showConfirmDialog('Konfirmasi', 'Update data Destination?')) {
                               _saveOrUpdateDestination();
                             }
                           },
@@ -2098,6 +2277,8 @@ class _FrmMasterDataState extends State<FrmMasterData>
 
   @override
   void dispose() {
+    _osmSearchDebounce?.cancel();
+    _osmDestSearchDebounce?.cancel();
     _tabController.dispose();
     txtCpyId.dispose();
     txtCpyname.dispose();

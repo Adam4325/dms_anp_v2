@@ -132,6 +132,8 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
       globals.wh_month = "";
       globals.wh_month_year = "";
       globals.wh_month_month = "";
+      globals.wh_vhtid = ""; 
+      globals.wh_merk = "";
     });
   }
 
@@ -283,14 +285,22 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         });
   }
 
+  String _resolveWhId() {
+    if (selWareHouseID.trim().isNotEmpty) return selWareHouseID.trim();
+    if (txtIDWareHouse.text.trim().isNotEmpty) return txtIDWareHouse.text.trim();
+    if (witwarehouseid.toString().trim().isNotEmpty) {
+      return witwarehouseid.toString().trim();
+    }
+    final g = (globals.wh_id ?? '').toString().trim();
+    return g;
+  }
+
   void CreateStockOpname(String usr) async {
     try {
-      var wh_id = selWareHouseID;
+      var wh_id = _resolveWhId();
       var wh_itemid = txtItemID.text;
       var wh_partname = txtPartName.text;
       var wh_type = txtType.text;
-      var wharehouseid =
-          globals.wh_itdlinenbr != "" ? selWareHouseID : txtIDWareHouse;
       var username = usr;
       var wh_accessories = txtTypeAccessories.text;
       var wh_merk = txtMerk.text;
@@ -335,7 +345,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         alert(scafoldGlobal.currentContext!!, 0, "Item Size tidak boleh kosong",
             "error");
       } else if (wh_qty_on_hands == null || wh_qty_on_hands == "") {
-        alert(scafoldGlobal.currentContext!!, 0, "QTY On Hand tidak boleh kosong",
+        alert(scafoldGlobal.currentContext!!, 0, "QTY On Books tidak boleh kosong",
             "error");
       } else if (wh_qty_on_actual == null || wh_qty_on_actual == "") {
         alert(scafoldGlobal.currentContext!!, 0,
@@ -373,9 +383,12 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
           'wh_itemcost': wh_itemcost,
           'wh_currency_id': wh_currency_id,
           'wh_vhtid': wh_vhtid,
+          'wh_merk': wh_merk,
           'wh_genuine_no': wh_genuin_number,
           'username': usr,
-          'witwarehouseid': witwarehouseid
+          'witwarehouseid': witwarehouseid.toString().trim().isNotEmpty
+              ? witwarehouseid.toString().trim()
+              : wh_id
         };
         print(data);
         final response = await http.post(
@@ -457,12 +470,10 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
 
   void UpdateStockOpname(String usr) async {
     try {
-      var wh_id = selWareHouseID;
+      var wh_id = _resolveWhId();
       var wh_itemid = txtItemID.text;
       var wh_partname = txtPartName.text;
       var wh_type = txtType.text;
-      var wharehouseid =
-          globals.wh_itdlinenbr != "" ? selWareHouseID : txtIDWareHouse;
       var username = usr;
       var wh_accessories = txtTypeAccessories.text;
       var wh_merk = txtMerk.text;
@@ -478,7 +489,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
       var wh_typepo = txtTypePO.text;
       var wh_vhtid = txtVHTID.text;
       var wh_genuin_number = txtGenuinoNumber.text;
-      var wh_itemcost = 0; // txtItemCost.text;
+      var wh_itemcost = "0"; // txtItemCost.text;
       var wh_currency_id = txtCurrencyTypeID.text;
 
       if (wh_id == null || wh_id == "") {
@@ -493,6 +504,9 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
       } else if (wh_vhtid == null || wh_vhtid == "") {
         alert(scafoldGlobal.currentContext!!, 0, "VHTID tidak boleh kosong",
             "error");
+      }else if (wh_merk == null || wh_merk == "") {
+        alert(scafoldGlobal.currentContext!!, 0, "Merk tidak boleh kosong",
+            "error");
       } else if (wh_genuin_number == null || wh_genuin_number == "") {
         alert(scafoldGlobal.currentContext!!, 0,
             "Genuine Number tidak boleh kosong", "error");
@@ -506,7 +520,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         alert(scafoldGlobal.currentContext!!, 0, "Item Size tidak boleh kosong",
             "error");
       } else if (wh_qty_on_hands == null || wh_qty_on_hands == "") {
-        alert(scafoldGlobal.currentContext!!, 0, "QTY On Hand tidak boleh kosong",
+        alert(scafoldGlobal.currentContext!!, 0, "QTY On Books tidak boleh kosong",
             "error");
       } else if (wh_qty_on_actual == null || wh_qty_on_actual == "") {
         alert(scafoldGlobal.currentContext!!, 0,
@@ -543,11 +557,15 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
           'wh_itemcost': wh_itemcost,
           'wh_currency_id': wh_currency_id,
           'wh_vhtid': wh_vhtid,
+          'wh_merk': wh_merk,
+          'wh_item_size': wh_item_size,
           'wh_genuine_no': wh_genuin_number,
           'month': globals.wh_month_month,
           'year': globals.wh_month_year,
           'username': usr,
-          'witwarehouseid': witwarehouseid,
+          'witwarehouseid': witwarehouseid.toString().trim().isNotEmpty
+              ? witwarehouseid.toString().trim()
+              : wh_id,
         };
         print(data);
         final response = await http.post(
@@ -703,12 +721,16 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
     print(globals.wh_method);
     setState(() {
       if (globals.wh_method == "edit") {
-        txtIDWareHouse.text = globals.wh_id!;
+        final whId = (globals.wh_id ?? '').toString();
+        txtIDWareHouse.text = whId;
+        selWareHouseID = whId;
+        witwarehouseid = whId;
         txtItemID.text = globals.wh_itemid!;
         txtPartName.text = globals.wh_part_name!;
         txtType.text = globals.wh_type!;
-        txtTypeAccessories.text = globals.wh_accessories!;
-        txtMerk.text = globals.wh_merk!;
+        txtVHTID.text = globals.wh_vhtid ?? '';
+        txtTypeAccessories.text = globals.wh_accessories ?? '';
+        txtMerk.text = globals.wh_merk ?? '';
         txtItemSize.text = globals.wh_item_size!;
         txtGenuinoNumber.text = globals.wh_genuine_no ?? '';
         txtQuantityOnHands.text = globals.wh_quantity_on_hands!;
@@ -794,6 +816,8 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         onChange: (selected) {
           setState(() {
             selWareHouseID = selected.value!;
+            txtIDWareHouse.text = selected.value!;
+            witwarehouseid = selected.value!;
           });
         },
         choiceItems: S2Choice.listFrom<String, Map>(
@@ -805,7 +829,16 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
         modalFilterAuto: true,
       );
     }
-    return const SizedBox();
+    // Edit: WH ID sudah fixed dari data existing
+    return TextField(
+      readOnly: true,
+      controller: txtIDWareHouse,
+      style: TextStyle(color: Colors.grey.shade800),
+      decoration: softDecoration(
+        label: 'WH ID',
+        readOnly: true,
+      ),
+    );
   }
 
   Widget _builButtonUpdate(BuildContext context) {
@@ -1742,7 +1775,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
                       controller: txtQuantityOnHands,
                       keyboardType: TextInputType.number,
                       //focusNode: myFocusNode,
-                      decoration: softDecoration(label: 'Quantity OnHands', readOnly: true),
+                      decoration: softDecoration(label: 'Quantity On Books', readOnly: true),
                     ),
                   ),
                   Container(

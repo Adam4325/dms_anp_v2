@@ -656,7 +656,7 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
                           color: Colors.grey.shade700, fontSize: 12),
                     ),
                     SizedBox(height: 14),
-                    Text('Qty On Hand',
+                    Text('Qty On Books',
                         style: TextStyle(
                             fontSize: 12, color: Colors.grey.shade700)),
                     SizedBox(height: 4),

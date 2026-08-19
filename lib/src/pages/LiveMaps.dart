@@ -579,8 +579,7 @@ class LiveMapsState extends State<LiveMaps> with TickerProviderStateMixin {
 
   Future GetDataVehicle() async {
     try {
-      Uri myUri = Uri.parse(
-          "https://canvas.easygo-gps.co.id/MasterData/GetListSnANP?token=YW5kYWxhbnwxMjM0NQ==");
+      Uri myUri = Uri.parse("https://canvas.easygo-gps.co.id/MasterData/GetListSnANP?token=QU5EQUxBTnxBTlA2NTQzMjEq");
       var response =
           await http.post(myUri, headers: {"Accept": "application/json"});
       print(myUri);
