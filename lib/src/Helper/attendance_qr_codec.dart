@@ -159,11 +159,13 @@ class AttendanceQrResult {
   factory AttendanceQrResult.fromJson(Map<String, dynamic> json) {
     final payloadJson = json['payload'];
     final statusCode = _parseInt(json['status_code'], 500);
+    final expired = _parseBool(json['expired']) || statusCode == 410;
+    final ok = statusCode == 200 && json['status']?.toString() == 'success';
     return AttendanceQrResult(
       statusCode: statusCode,
-      success: statusCode == 200 && json['status']?.toString() == 'success',
-      expired: _parseBool(json['expired']) || statusCode == 410,
-      valid: _parseBool(json['valid']) || statusCode == 200,
+      success: ok && !expired,
+      expired: expired,
+      valid: !expired && (ok || _parseBool(json['valid'])),
       message: json['message']?.toString() ?? '',
       qrData: json['qr_data']?.toString() ?? '',
       payload: payloadJson is Map<String, dynamic>

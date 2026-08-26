@@ -33,6 +33,8 @@
     <string>Needed to access location</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Needed to access location</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Kamera dipakai untuk enrollment dan verifikasi wajah absensi.</string>
     <key>NSAppTransportSecurity</key>
     <dict>
       <key>NSAllowsArbitraryLoads</key>

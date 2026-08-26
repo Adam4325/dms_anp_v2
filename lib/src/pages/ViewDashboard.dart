@@ -29,7 +29,11 @@ import 'package:dms_anp/src/pages/ViewListRitase.dart';
 import 'package:dms_anp/src/pages/ViewPelanggaran.dart';
 import 'package:dms_anp/src/pages/ViewProfileUser.dart';
 import 'package:dms_anp/src/pages/hrd/ApvRewards.dart';
+import 'package:dms_anp/src/pages/FrmFaceEnroll.dart';
 import 'package:dms_anp/src/pages/hrd/ListAbsensiKaryawanV1.dart';
+import 'package:dms_anp/src/pages/hrd/ListApvFaceEnroll.dart';
+import 'package:dms_anp/src/pages/FrmTestScanLogkar.dart';
+import 'package:dms_anp/src/services/face_enroll_service.dart';
 import 'package:dms_anp/src/pages/hrd/frmAssset.dart';
 import 'package:dms_anp/src/pages/inventory/FrmWareHouseOpName.dart';
 import 'package:dms_anp/src/pages/inventory/ListApprovalOpname.dart';
@@ -61,6 +65,7 @@ import 'package:unique_identifier/unique_identifier.dart';
 import '../../helpers/GpsSecurityChecker.dart';
 import '../../helpers/sim_phone_guard.dart';
 import 'package:dms_anp/src/Helper/scanner_helper.dart';
+import 'package:dms_anp/src/Helper/logkar_api_service.dart';
 import 'package:dms_anp/src/services/logkar_position_background_service.dart';
 
 import '../flusbar.dart';
@@ -741,11 +746,58 @@ class _ViewDashboardState extends State<ViewDashboard>
     );
   }
 
+  Future<void> _openKaryawanAttendance() async {
+    if (!mounted) return;
+    EasyLoading.show(status: 'Cek enroll wajah...');
+    try {
+      final status = await FaceEnrollService.getStatus();
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      if (!mounted) return;
+      if (status.isApproved) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => FrmAttendance()),
+        );
+        return;
+      }
+      if (status.isPending) {
+        _showAlert(
+          globalScaffoldKey.currentContext ?? context,
+          2,
+          'Enrollment wajah menunggu approve HRD. Absensi belum bisa dipakai.',
+          'Warning',
+        );
+        return;
+      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const FrmFaceEnroll()),
+      );
+    } catch (e) {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      if (!mounted) return;
+      final cached = await FaceEnrollService.getCachedStatus();
+      if (cached != null && cached.isApproved) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => FrmAttendance()),
+        );
+        return;
+      }
+      _showAlert(
+        globalScaffoldKey.currentContext ?? context,
+        0,
+        'Koneksi terputus saat cek enroll. Coba lagi.',
+        'error',
+      );
+    }
+  }
+
   Future<void> _goToAttendanceDriverIfSimValid({bool? requireAttendanceQr}) async {
     if (!mounted) return;
-    if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
-      return;
-    }
+    // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+    //   return;
+    // }
     // QR absensi MIXER sudah di-handle di dashboard sebelum navigasi;
     // halaman attendance tidak cek QR lagi (default false).
     final needQr = requireAttendanceQr ?? false;
@@ -770,6 +822,17 @@ class _ViewDashboardState extends State<ViewDashboard>
       return;
     }
 
+    Future<void> goAttendanceAfterDashboardQr() async {
+      await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
+    }
+
+    // Absensi: cukup 1x scan Logkar Motive TM per hari.
+    if (globals.isApiLokarRUN && await LogkarApiService.hasTmCheckinToday()) {
+      debugPrint('MIXER absensi: sudah check-in Motive TM hari ini → skip scan');
+      await goAttendanceAfterDashboardQr();
+      return;
+    }
+
     final String drvid = sharedPreferences!.getString('drvid') ?? '';
     if (drvid.isEmpty) {
       final ctx = globalScaffoldKey.currentContext ?? context;
@@ -777,11 +840,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       return;
     }
 
-    Future<void> goAttendanceAfterDashboardQr() async {
-      await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
-    }
-
-    // CLOSE / SERVICE → SELALU tampilkan kamera Scan QR
+    // CLOSE / SERVICE → tampilkan kamera Scan QR
     debugPrint('MIXER unit CLOSE/SERVICE → buka Scan QR');
     final String? qrData = await openQrScanner(context);
     if (!mounted) return;
@@ -796,32 +855,32 @@ class _ViewDashboardState extends State<ViewDashboard>
       return;
     }
 
-    EasyLoading.show(status: 'Menyimpan QR Code...');
+    EasyLoading.show(status: 'Check-in Motive TM...');
     try {
       final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
       final lat = (gpsResult['latitude'] ?? 0).toString();
       final lon = (gpsResult['longitude'] ?? 0).toString();
-      final apiLokar = sharedPreferences!.getString('api_lokar') ?? '';
-      final statusCode = await _saveQrAbsen(
-        empid: drvid,
+      final phone = sharedPreferences!.getString('phone') ?? '';
+      final result = await LogkarApiService.checkInMotiveTm(
+        driverPhone: phone,
         qrData: qrData.trim(),
-        lon: lon,
-        lat: lat,
-        apiLokar: apiLokar,
+        latitude: lat,
+        longitude: lon,
       );
       if (!mounted) return;
       EasyLoading.dismiss();
 
-      if (statusCode == 200) {
+      if (result.ok) {
+        await LogkarApiService.markTmCheckinToday();
         await goAttendanceAfterDashboardQr();
       } else {
         final ctx = globalScaffoldKey.currentContext ?? context;
         _showAlert(
           ctx,
           0,
-          statusCode == null
-              ? 'Gagal menyimpan QR Code'
-              : 'Gagal menyimpan QR Code (status: $statusCode)',
+          result.message.isNotEmpty
+              ? result.message
+              : 'Gagal check-in Motive TM',
           'error',
         );
       }
@@ -831,6 +890,54 @@ class _ViewDashboardState extends State<ViewDashboard>
       }
       final ctx = globalScaffoldKey.currentContext ?? context;
       _showAlert(ctx, 0, 'Gagal memproses QR Code: $e', 'error');
+    }
+  }
+
+  /// Scan QR + POST Logkar /transporter/sync/tm (wajib sukses).
+  /// Dipakai setiap submit INLOADING.
+  Future<bool> _scanAndCheckInMotiveTm({String loadingStatus = 'Scan QR Motive TM...'}) async {
+    sharedPreferences ??= await SharedPreferences.getInstance();
+    final String? qrData = await openQrScanner(context);
+    if (!mounted) return false;
+    if (qrData == null || qrData.trim().isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 0,
+          'Scan QR Motive TM wajib dilakukan', 'error');
+      return false;
+    }
+
+    EasyLoading.show(status: loadingStatus);
+    try {
+      final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
+      final lat = (gpsResult['latitude'] ?? 0).toString();
+      final lon = (gpsResult['longitude'] ?? 0).toString();
+      final phone = sharedPreferences!.getString('phone') ?? '';
+      final result = await LogkarApiService.checkInMotiveTm(
+        driverPhone: phone,
+        qrData: qrData.trim(),
+        latitude: lat,
+        longitude: lon,
+      );
+      if (!mounted) return false;
+      EasyLoading.dismiss();
+      if (!result.ok) {
+        alert(
+          globalScaffoldKey.currentContext!,
+          0,
+          result.message.isNotEmpty
+              ? result.message
+              : 'Gagal check-in Motive TM',
+          'error',
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
+      alert(globalScaffoldKey.currentContext!, 0,
+          'Gagal check-in Motive TM: $e', 'error');
+      return false;
     }
   }
 
@@ -1352,8 +1459,21 @@ class _ViewDashboardState extends State<ViewDashboard>
               color: Colors.red,
               idKey: 29,
               title: "Apv. Reward"));
+          _anpServiceList.add(new AnpService(
+              image: Icons.face_retouching_natural,
+              color: Colors.deepOrange,
+              idKey: 37,
+              title: "Apv. Wajah"));
         }
       }
+    }
+
+    if (username == "ADMIN") {
+      _anpServiceList.add(new AnpService(
+          image: Icons.qr_code_scanner,
+          color: Colors.teal,
+          idKey: 38,
+          title: "Test Scan"));
     }
 
     if (loginname != "DRIVER") {
@@ -4747,16 +4867,17 @@ class _ViewDashboardState extends State<ViewDashboard>
       }
 
       final String statusDoMixer = item['status_do_mixer']?.toString() ?? '';
-      // Cek QR absensi hanya untuk INLOADING.
-      // OUTLOADING / OUTPOOL / INCUSTOMER / INUNLOADING / OUTUNLOADING → skip.
-      final bool skipQrAbsensiCheck = statusDoMixer == 'OUTLOADING' ||
-          statusDoMixer == 'OUTPOOL' ||
-          statusDoMixer == 'INCUSTOMER' ||
-          statusDoMixer == 'INUNLOADING' ||
-          statusDoMixer == 'OUTUNLOADING';
+      // INLOADING: setiap submit wajib scan QR → Logkar sync/tm (bukan cek flag harian).
+      // Status lain → skip scan Motive TM.
+      if (globals.isApiLokarRUN && statusDoMixer == 'INLOADING') {
+        final okTm = await _scanAndCheckInMotiveTm(
+          loadingStatus: 'Check-in Motive TM (INLOADING)...',
+        );
+        if (!okTm) {
+          return;
+        }
+        if (!mounted) return;
 
-      if (globals.isApiLokarRUN && !skipQrAbsensiCheck) {
-        EasyLoading.show(status: 'Memeriksa absensi QR...');
         try {
           final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
           final latitude = gpsResult["latitude"] ?? 0;
@@ -4767,55 +4888,34 @@ class _ViewDashboardState extends State<ViewDashboard>
           final lokarApiToken =
               sharedPreferences!.getString("lokar_api_token") ?? '';
 
-          final qrCheck = await _checkQrToday(
-            empid: drvid,
-            lon: longitude.toString(),
-            lat: latitude.toString(),
+          EasyLoading.show(status: 'Mengirim posisi...');
+          final logkarResult = await _sendLokarOrderPosition(
             apiLokar: apiLokar,
+            clientId: lokarClientId,
+            apiToken: lokarApiToken,
+            no_do: item['do_number'].toString(),
+            latitude: latitude.toString(),
+            longitude: longitude.toString(),
           );
           if (!mounted) return;
           EasyLoading.dismiss();
-
-          if (qrCheck == null ||
-              qrCheck.statusCode != 200 ||
-              !qrCheck.hasQrToday) {
-            final msg = qrCheck?.message.isNotEmpty == true
-                ? qrCheck!.message
-                : "QR absensi hari ini belum tersimpan. Silakan absen terlebih dahulu.";
-            alert(globalScaffoldKey.currentContext!, 0, msg, "error");
-            return;
-          }
-
-          if (statusDoMixer == "INLOADING") {
-            EasyLoading.show(status: 'Mengirim posisi...');
-            final logkarResult = await _sendLokarOrderPosition(
-              apiLokar: apiLokar,
-              clientId: lokarClientId,
-              apiToken: lokarApiToken,
-              no_do: item['do_number'].toString(),
-              latitude: latitude.toString(),
-              longitude: longitude.toString(),
+          // Logkar position gagal: tetap lanjut update status ke JSP
+          if (!logkarResult.ok) {
+            await _showLogkarPositionDialog(
+              success: false,
+              message: logkarResult.message,
             );
             if (!mounted) return;
-            EasyLoading.dismiss();
-            // Logkar gagal: tetap lanjut update status ke JSP
-            if (!logkarResult.ok) {
-              await _showLogkarPositionDialog(
-                success: false,
-                message: logkarResult.message,
-              );
-              if (!mounted) return;
-              print('LOGKAR position FAIL (lanjut JSP): ${logkarResult.message}');
-            } else {
-              print('LOGKAR position OK (silent): ${logkarResult.message}');
-            }
+            print('LOGKAR position FAIL (lanjut JSP): ${logkarResult.message}');
+          } else {
+            print('LOGKAR position OK (silent): ${logkarResult.message}');
           }
         } catch (e) {
           if (EasyLoading.isShow) {
             EasyLoading.dismiss();
           }
           alert(globalScaffoldKey.currentContext!, 0,
-              "Gagal memeriksa absensi QR: $e", "error");
+              "Gagal mengirim posisi Logkar: $e", "error");
           return;
         } finally {
           if (EasyLoading.isShow) {
@@ -5717,20 +5817,13 @@ class _ViewDashboardState extends State<ViewDashboard>
         if (login_type == "MIXER") {
           await _openAttendanceDriverWithQrScan();
         } else {
-          await _goToAttendanceDriverIfSimValid();
+          await _goToAttendanceDriverIfSimValid(requireAttendanceQr: true);
         }
       } else {
-        if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
-          return;
-        }
-        EasyLoading.show();
-        Timer(Duration(seconds: 1), () {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => FrmAttendance()), //KARYAWAN
-          );
-        });
+        // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+        //   return;
+        // }
+        await _openKaryawanAttendance();
       }
     } else if (anpService.idKey == 16) {
       if (loginname == "DRIVER") {
@@ -5861,6 +5954,29 @@ class _ViewDashboardState extends State<ViewDashboard>
             MaterialPageRoute(builder: (context) => FrmMasterMenu()),
           );
         });
+      } else {
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
+      }
+    } else if (anpService.idKey == 37) {
+      var isOK = globals.akses_pages == null
+          ? globals.akses_pages
+          : globals.akses_pages.where((x) => x == "HD");
+      if ((isOK != null && isOK.length > 0) || username == "ADMIN") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ListApvFaceEnroll()),
+        );
+      } else {
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
+      }
+    } else if (anpService.idKey == 38) {
+      if (username == "ADMIN") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const FrmTestScanLogkar()),
+        );
       } else {
         _showAlert(globalScaffoldKey.currentContext!, 0,
             "Anda tidak punya akses", "error");
@@ -6009,14 +6125,11 @@ class _ViewDashboardState extends State<ViewDashboard>
     });
     Timer(Duration(seconds: 1), () async {
       if (authorized == "Authorized success") {
-        if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
-          return;
-        }
+        // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+        //   return;
+        // }
         if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => FrmAttendance()),
-        );
+        await _openKaryawanAttendance();
       } else {
         alert(
           globalScaffoldKey.currentContext!,

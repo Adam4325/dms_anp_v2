@@ -568,4 +568,133 @@ class LogkarApiService {
       longitude: longitude,
     );
   }
+
+  /// Normalisasi nomor HP ke format 62...
+  static String normalizeDriverPhone(String raw) {
+    var phone = raw.trim().replaceAll(RegExp(r'[\s\-\+]'), '');
+    if (phone.isEmpty) return phone;
+    if (phone.startsWith('0')) {
+      phone = '62${phone.substring(1)}';
+    } else if (!phone.startsWith('62') && phone.length >= 9) {
+      phone = '62$phone';
+    }
+    return phone;
+  }
+
+  static String todayYmd() {
+    final now = DateTime.now();
+    final m = now.month.toString().padLeft(2, '0');
+    final d = now.day.toString().padLeft(2, '0');
+    return '${now.year}-$m-$d';
+  }
+
+  static const String prefsTmCheckinDateKey = 'logkar_tm_checkin_date';
+
+  static Future<bool> hasTmCheckinToday() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(prefsTmCheckinDateKey) ?? '';
+    return saved == todayYmd();
+  }
+
+  static Future<void> markTmCheckinToday() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(prefsTmCheckinDateKey, todayYmd());
+  }
+
+  /// API CHECK IN Motive TM — pair driver–TM via QR scan.
+  /// POST /transporter/sync/tm
+  static Future<({bool ok, String message, int? code})> checkInMotiveTm({
+    required String driverPhone,
+    required String qrData,
+    required String latitude,
+    required String longitude,
+  }) async {
+    final phone = normalizeDriverPhone(driverPhone);
+    if (phone.isEmpty) {
+      return (
+        ok: false,
+        message: 'Nomor HP driver tidak tersedia. Silakan login ulang.',
+        code: null,
+      );
+    }
+    if (qrData.trim().isEmpty) {
+      return (ok: false, message: 'QR data kosong.', code: null);
+    }
+
+    final creds = await loadCredentials();
+    if (creds == null) {
+      return (
+        ok: false,
+        message: 'Credential Logkar belum tersedia.',
+        code: null,
+      );
+    }
+
+    final base = logkarBaseUrl(creds.apiLokar);
+    if (base.isEmpty) {
+      return (ok: false, message: 'api_lokar kosong.', code: null);
+    }
+
+    final requestCode = buildRequestCode(creds.clientId, creds.apiToken);
+    final uri = Uri.parse('$base/transporter/sync/tm');
+    final bodyMap = <String, dynamic>{
+      'request_code': requestCode,
+      'driver_phone': phone,
+      'qr_data': qrData.trim(),
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+    final body = json.encode(bodyMap);
+
+    print('========== LOGKAR CHECK-IN MOTIVE TM ==========');
+    print('URL: $uri');
+    print('Authorization: ${creds.apiToken}');
+    print('Body: $body');
+    print('===============================================');
+
+    try {
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': creds.apiToken,
+        },
+        body: body,
+      );
+      print('LOGKAR sync/tm HTTP ${response.statusCode}: ${response.body}');
+
+      int? code;
+      final detail = parseResponseMessage(response.body);
+      try {
+        final decoded = json.decode(response.body);
+        if (decoded is Map) {
+          final rawCode = decoded['code'];
+          if (rawCode is int) {
+            code = rawCode;
+          } else if (rawCode != null) {
+            code = int.tryParse(rawCode.toString());
+          }
+        }
+      } catch (_) {}
+
+      final httpOk = response.statusCode >= 200 && response.statusCode < 300;
+      final codeOk = code == null || code == 200;
+      if (httpOk && codeOk) {
+        return (
+          ok: true,
+          message: detail.isNotEmpty ? detail : 'Check-in Motive TM berhasil.',
+          code: code ?? 200,
+        );
+      }
+      return (
+        ok: false,
+        message: detail.isNotEmpty
+            ? detail
+            : 'Gagal check-in Motive TM (HTTP ${response.statusCode}).',
+        code: code,
+      );
+    } catch (e) {
+      return (ok: false, message: 'Gagal check-in Motive TM: $e', code: null);
+    }
+  }
 }

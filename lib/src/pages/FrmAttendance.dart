@@ -3,8 +3,11 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/flusbar.dart';
+import 'package:dms_anp/src/pages/FaceLivenessPage.dart';
+import 'package:dms_anp/src/pages/FrmFaceEnroll.dart';
 import 'package:dms_anp/src/pages/FrmRequestAttendance.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
+import 'package:dms_anp/src/services/face_enroll_service.dart';
 import 'package:flutter/material.dart';
 import 'package:dms_anp/src/Color/hex_color.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -49,11 +52,12 @@ class FrmAttendanceState extends State<FrmAttendance> {
   TextEditingController txtAddr = new TextEditingController();
   TextEditingController txtLonLat = new TextEditingController();
 
+  FaceEnrollStatus? _faceStatus;
+  Uint8List? _enrollPhotoBytes;
+  bool _faceVerifyBusy = false;
   File? _imageProfile;
   String filePathImageProfile = "";
-  String noImage = 'iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAANlBMVEXu7u64uLjx8fHt7e21tbXQ0NC9vb3ExMTm5ubj4+O5ubnIyMjq6urf39/MzMzBwcHU1NTZ2dmQfkM8AAAE2klEQVR4nO2Y2bLrKAxFwxCPePr/n21JYBvnJLeruq5zHnqtl3gAzEZCEnk8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgK3jv62t/eXN98KbZtfOncd8O6C/8dwH/yjOO4RH26zh05XnaxiiMa/fao5fHzzLLGKfyNCxxrZfnubfZSf28SM/hOYXSvmIJf1PTlWcc1vPaNVmQn9oY3TC4GBt5ffl+H90++yRasyzfNxdJaYlLqu79ZgM656Ib9RuhdRX3KnTD5I/rrND3w/n1V2NUCifp7ENW4Nx4SvKbDDBVnVZXDyh9wlI/WdSPblIpqlxMLwpN4LC07WKrvl56nArFFV3MRk+j2+2vhFGGbQ+vDfoVsVQrI9rnRIwqbHfme23oYln9XaHNb5mS90m89TL1WmHw8rLsvq6RYfqzja3MYdNJb5ute/hHty6z9lAbxi9FmtMRd4W9zqe3r/pOZ1LHkMqGyexgzaZYN/Orjbrfe5W/9OUumfCs8EZhB9l/8mSKQi8e57Z9drr+w3uFfWNLoa3U6m7OzcTj9Lm4QTai38wPyhjFH0+FNzpopdA5XeFd4T5vIy21v10UbtbTdqldNftCiEWjxJohxxo/a48Xe9Veep86RVWpsy3doTBplDhWVs0T67B4Klyj2DdqlJiyJ+S5iySN/21+lcNmCUhn1g9npBl/pNy/rtD2Wpt2hTrd8VhYC5hvFQbx5sHikLYZzlAj3hs3v+6b2aJQHq8bLMGPdbaIp7/cpjBNOofZnwrj/Krw3C2HQvXfeZGXXq6iNiubV7Ul02nbW7erpM1QxOqGveTD5gs21Hwt81s/K/RvFHYakKTSm72s0KCTz72S+qf8yk9zKrSQ0jUWZHeFuWQb7rdhdjNJ8e5QaF6aq5X5k5dKu2bq5E6SQxwf41582XPZbFPp2JWwGbQwaNvhUPi9SKNespweo5GmKirbM05cFJpT95Lr4jTGYdMcWDKHDPNc1/VZfEGK7GOLShHRVArv1XZV2DeHQh9zjAjFsfYgeVUYVMmSVOfYaHsznbwPsfjfMd4lW3S/o1AivEaboWT8I1pqA1fvykdlwxxyOyvQ5nyxmmm1RnCldtdYo8G5yY4efkuhYpWWXecZ5apt1ZnW2/BQmHJRqjW37TcNqDJ1+RlKCNEBteTVqk3q3Dzgr3mpcBTZSc9uwyaVdzfr9Md350MLJJoe7GD0yMeLNpkvtF1v6Dh9Kdtkb/YSVfTZa6S5vfJWVaoh5VhaPNbtVojLNV/tCjWQaDzSvGe77Kndw3zmRU1CFpXD0x254We2uP2Mf2ZcEVaut3ieTpv+usK7QjWQvRmzG5ueSQPTMaCGr2iL9zwH1HPU43oCvvmMH8+aYj2upyaWkDh3Ly5UFKZFlt6bsvKHxaRFzJqLMiMfIM2gYWuyRhnWTqOaQr5zxl+l8j1yn38eVbDvVz17b+HHFunkqC5G6CR5r1bqhGXLL/TJLL2mo8+kYzxsE+QB223Kmy7MbcWdZ/z6b78Qfvyb+KGHPzrq1H78QfjaNtSv86e+92/in/i0sKF+9SfvCrnp3WdcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+B/xD/alJ5yRngQVAAAAAElFTkSuQmCC';
   final picker = ImagePicker();
-
   Uint8List? _bytesImageProfile;
   ProgressDialog? pr;
 
@@ -64,6 +68,7 @@ class FrmAttendanceState extends State<FrmAttendance> {
     });
     getSession();
     getProfileImage();
+    _loadFaceStatus();
     getListGeofenceArea(false);
     getAbsenHariIni(false);
     if (EasyLoading.isShow) {
@@ -87,8 +92,9 @@ class FrmAttendanceState extends State<FrmAttendance> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final photo = prefs.getString("photoProfile");
     if (photo != null && photo.isNotEmpty) {
-      _bytesImageProfile = Base64Decoder().convert(photo);
+      _bytesImageProfile = const Base64Decoder().convert(photo);
       filePathImageProfile = photo;
+      if (mounted) setState(() {});
     }
   }
 
@@ -96,7 +102,8 @@ class FrmAttendanceState extends State<FrmAttendance> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString("photoProfile", "");
     if (opsi == 'GALLERY') {
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+      final pickedFile =
+          await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
       if (pickedFile != null) {
         setState(() {
           _imageProfile = File(pickedFile.path);
@@ -106,7 +113,8 @@ class FrmAttendanceState extends State<FrmAttendance> {
         });
       }
     } else {
-      final pickedFile = await picker.pickImage(source: ImageSource.camera, imageQuality: 50);
+      final pickedFile =
+          await picker.pickImage(source: ImageSource.camera, imageQuality: 50);
       if (pickedFile != null) {
         setState(() {
           _imageProfile = File(pickedFile.path);
@@ -116,6 +124,18 @@ class FrmAttendanceState extends State<FrmAttendance> {
         });
       }
     }
+  }
+
+  Future<void> _loadFaceStatus() async {
+    try {
+      final status = await FaceEnrollService.getStatus();
+      if (status.isApproved && status.photoUrl.isNotEmpty) {
+        _enrollPhotoBytes =
+            await FaceEnrollService.fetchEnrollPhoto(status.photoUrl);
+      }
+      if (!mounted) return;
+      setState(() => _faceStatus = status);
+    } catch (_) {}
   }
 
   Future<Position?> _getLocation() async {
@@ -299,7 +319,6 @@ class FrmAttendanceState extends State<FrmAttendance> {
           'geo_nm': geo_nm,
           'shift': dropdownvalue,
           'is_mock': fake,
-          'photo': filePathImageProfile,
         };
         print('data param ${data}');
         final response = await http.post(urlEncode, body: data);
@@ -347,8 +366,72 @@ class FrmAttendanceState extends State<FrmAttendance> {
     return "";
   }
 
+  Future<bool> _ensureApprovedAndLive(String inorout) async {
+    FaceEnrollStatus? status = _faceStatus;
+    try {
+      status = await FaceEnrollService.getStatus();
+      if (mounted) setState(() => _faceStatus = status);
+    } catch (_) {
+      status ??= await FaceEnrollService.getCachedStatus();
+      if (status == null || !status.isApproved) {
+        alert(globalScaffoldKey.currentContext ?? context, 0,
+            'Koneksi terputus saat cek enroll. Coba lagi.', 'error');
+        return false;
+      }
+    }
+    final enroll = status;
+    if (enroll == null || !enroll.isApproved) {
+      if (enroll != null && enroll.isPending) {
+        alert(globalScaffoldKey.currentContext ?? context, 2,
+            'Enrollment wajah menunggu approve HRD', 'Warning');
+        return false;
+      }
+      if (!mounted) return false;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const FrmFaceEnroll()),
+      );
+      return false;
+    }
+    if (enroll.photoUrl.isNotEmpty) {
+      _enrollPhotoBytes ??=
+          await FaceEnrollService.fetchEnrollPhoto(enroll.photoUrl);
+    }
+    final ok = await Navigator.push<dynamic>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FaceLivenessPage(
+          mode: FaceLivenessMode.verify,
+          enrollPhotoUrl: enroll.photoUrl,
+          enrollPhotoBytes: _enrollPhotoBytes,
+        ),
+      ),
+    );
+    if (ok != true) {
+      alert(globalScaffoldKey.currentContext ?? context, 0,
+          'Verifikasi wajah ditolak atau dibatalkan', 'error');
+      return false;
+    }
+    return true;
+  }
+
   Future updatePosition(String inorout) async {
-    if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+    if (_faceVerifyBusy) {
+      return;
+    }
+    _faceVerifyBusy = true;
+    try {
+      await _updatePositionInner(inorout);
+    } finally {
+      _faceVerifyBusy = false;
+    }
+  }
+
+  Future _updatePositionInner(String inorout) async {
+    // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+    //   return;
+    // }
+    if (!await _ensureApprovedAndLive(inorout)) {
       return;
     }
 
@@ -579,6 +662,7 @@ class FrmAttendanceState extends State<FrmAttendance> {
     await _getLocation();
     await getListGeofenceArea(false);
     await getAbsenHariIni(false);
+    await _loadFaceStatus();
   }
 
   Widget _buildContent() {
@@ -587,6 +671,8 @@ class FrmAttendanceState extends State<FrmAttendance> {
       child: Column(
         children: [
           _buildPhotoSection(),
+          SizedBox(height: 20),
+          _buildFaceStatusSection(),
           SizedBox(height: 20),
           _buildInfoSection(),
           SizedBox(height: 20),
@@ -640,7 +726,7 @@ class FrmAttendanceState extends State<FrmAttendance> {
           fit: BoxFit.cover,
         ),
       );
-    } else if (filePathImageProfile != null && filePathImageProfile != "") {
+    } else if (filePathImageProfile.isNotEmpty) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.memory(
@@ -657,11 +743,56 @@ class FrmAttendanceState extends State<FrmAttendance> {
           children: [
             Icon(Icons.camera_alt, size: 50, color: Colors.grey.shade600),
             SizedBox(height: 8),
-            Text("Tap to add photo", style: TextStyle(color: Colors.grey.shade600)),
+            Text("Tap to add photo",
+                style: TextStyle(color: Colors.grey.shade600)),
           ],
         ),
       );
     }
+  }
+
+  Widget _buildFaceStatusSection() {
+    final status = _faceStatus;
+    final label = status == null
+        ? 'Memuat...'
+        : (status.isApproved
+            ? 'Wajah approved HRD'
+            : (status.isPending
+                ? 'Menunggu approve HRD'
+                : 'Belum enroll wajah'));
+    final color = status == null
+        ? Colors.grey
+        : (status.isApproved
+            ? Colors.green
+            : (status.isPending ? Colors.orange : Colors.red));
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.verified_user, color: color, size: 36),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Enrollment Wajah',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 4),
+                  Text(label, style: TextStyle(color: color)),
+                  const Text(
+                    'Check-in & check-out: kedip, wajah harus sama dengan enroll.',
+                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildInfoSection() {

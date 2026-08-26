@@ -490,7 +490,7 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
       var wh_vhtid = txtVHTID.text;
       var wh_genuin_number = txtGenuinoNumber.text;
       var wh_itemcost = "0"; // txtItemCost.text;
-      var wh_currency_id = txtCurrencyTypeID.text;
+      var wh_currency_id = txtCurrencyTypeID.text;//
 
       if (wh_id == null || wh_id == "") {
         alert(scafoldGlobal.currentContext!!, 0, "WH ID tidak boleh kosong",

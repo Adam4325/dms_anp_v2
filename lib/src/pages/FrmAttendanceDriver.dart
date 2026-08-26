@@ -423,9 +423,9 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       return;
     }
 
-    if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
-      return;
-    }
+    // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+    //   return;
+    // }
 
     if (widget.requireAttendanceQr &&
         await _scanAttendanceQrForAction(type) == null) {
@@ -493,15 +493,15 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       EasyLoading.dismiss();
     }
 
+    if (result.expired || (result.payload?.isExpired ?? false)) {
+      _showError("QR Code sudah expired, minta ADMIN/OP refresh QR baru");
+      return null;
+    }
+
     if (!result.valid || result.payload == null) {
       _showError(result.message.isNotEmpty
           ? result.message
           : "QR Code attendance tidak valid");
-      return null;
-    }
-
-    if (result.expired || result.payload!.isExpired) {
-      _showError("QR Code sudah expired, minta ADMIN/OP refresh QR baru");
       return null;
     }
 
@@ -1059,6 +1059,14 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
             ),
             SizedBox(height: 8),
             _buildAttendanceStatus(canCheckIn, canCheckOut),
+            if (widget.requireAttendanceQr) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Wajib scan QR ADMIN/OP yang masih aktif. QR expired ditolak.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              ),
+            ],
           ],
         ),
       ),
