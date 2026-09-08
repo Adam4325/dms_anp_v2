@@ -198,6 +198,7 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
         "vhtid": value['vhtid'],
         "genuine_no": value['genuine_no'],
         "genuineno": value['genuineno'],
+        "is_closed": (value['is_closed'] ?? '0').toString(),
       });
     });
     return list;
@@ -238,19 +239,25 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
   }
 
   Widget listItemBuilder(value, int index) {
+    final bool isClosed = (value['is_closed'] ?? '0').toString() == '1';
     return Card(
-      elevation: 4,
-      color: cardColor,
+      elevation: isClosed ? 1 : 4,
+      color: isClosed ? Colors.grey.shade100 : cardColor,
       shadowColor: shadowColor,
       margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: isClosed
+            ? BorderSide(color: Colors.grey.shade300, width: 1)
+            : BorderSide.none,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Container(
             padding: EdgeInsets.fromLTRB(14, 14, 14, 10),
             decoration: BoxDecoration(
-              color: Color(0xFFFFF4E6),
+              color: isClosed ? Colors.grey.shade200 : Color(0xFFFFF4E6),
               borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
             ),
             child: Row(
@@ -259,10 +266,15 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
                 Container(
                   padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: primaryOrange.withOpacity(0.15),
+                    color: isClosed
+                        ? Colors.grey.withOpacity(0.15)
+                        : primaryOrange.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.inventory_2_outlined, color: primaryOrange),
+                  child: Icon(
+                    isClosed ? Icons.check_circle_outline : Icons.inventory_2_outlined,
+                    color: isClosed ? Colors.grey.shade600 : primaryOrange,
+                  ),
                 ),
                 SizedBox(width: 12),
                 Expanded(
@@ -274,7 +286,7 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: isClosed ? Colors.grey.shade500 : Colors.black87,
                         ),
                       ),
                       SizedBox(height: 4),
@@ -282,12 +294,30 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
                         value['partname'] ?? '-',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey.shade800,
+                          color: isClosed ? Colors.grey.shade400 : Colors.grey.shade800,
                         ),
                       ),
                     ],
                   ),
                 ),
+                // Badge CLOSED
+                if (isClosed)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade500,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'CLOSED',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -305,68 +335,82 @@ class _ListInventoryDetailState extends State<ListInventoryDetail> {
               ],
             ),
           ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(10, 4, 10, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: Icon(Icons.edit_outlined, size: 15),
-                    label: Text('Select', style: TextStyle(fontSize: 11)),
-                    onPressed: () {
-                      globals.inv_ititemid = value['ititemid'];
-                      globals.inv_partname = value['partname'];
-                      globals.inv_idqty = value['idqty'];
-                      globals.inv_uomid = value['uomid'];
-                      globals.inv_itdunitcost = value['itdunitcost'];
-                      globals.inv_idtextcost = value['idtextcost'];
-                      globals.inv_itdinvtrannbr = value['itdinvtrannbr'];
-                      globals.inv_idtype = value['idtype'];
-                      globals.inv_idaccess = value['idaccess'];
-                      globals.inv_merk = value['merk'];
-                      globals.inv_sntyre = value['sntyre'];
-                      globals.inv_idrealqty = value['idrealqty'];
-                      globals.inv_itdlinenbr = value['itdlinenbr'];
-                      globals.inv_vhtid = value['vhtid'];
-                      globals.inv_genuine_no = value['genuine_no'];
-                      globals.inv_method = "edit";
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => FrmInventory(
-                            invTrxStatusBarang: widget.invTrxStatusBarang,
+          // Hanya tampilkan tombol aksi jika item belum di-close
+          if (!isClosed)
+            Padding(
+              padding: EdgeInsets.fromLTRB(10, 4, 10, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.edit_outlined, size: 15),
+                      label: Text('Select', style: TextStyle(fontSize: 11)),
+                      onPressed: () {
+                        globals.inv_ititemid = value['ititemid'];
+                        globals.inv_partname = value['partname'];
+                        globals.inv_idqty = value['idqty'];
+                        globals.inv_uomid = value['uomid'];
+                        globals.inv_itdunitcost = value['itdunitcost'];
+                        globals.inv_idtextcost = value['idtextcost'];
+                        globals.inv_itdinvtrannbr = value['itdinvtrannbr'];
+                        globals.inv_idtype = value['idtype'];
+                        globals.inv_idaccess = value['idaccess'];
+                        globals.inv_merk = value['merk'];
+                        globals.inv_sntyre = value['sntyre'];
+                        globals.inv_idrealqty = value['idrealqty'];
+                        globals.inv_itdlinenbr = value['itdlinenbr'];
+                        globals.inv_vhtid = value['vhtid'];
+                        globals.inv_genuine_no = value['genuine_no'];
+                        globals.inv_method = "edit";
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FrmInventory(
+                              invTrxStatusBarang: widget.invTrxStatusBarang,
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                    style: _orangeBtnStyle(bg: accentOrange),
+                        );
+                      },
+                      style: _orangeBtnStyle(bg: accentOrange),
+                    ),
                   ),
-                ),
-                SizedBox(width: 6),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: Icon(Icons.delete_outline, size: 15),
-                    label: Text('Delete', style: TextStyle(fontSize: 11)),
-                    onPressed: () async {
-                      await _deleteInventoryDetail(value);
-                    },
-                    style: _orangeBtnStyle(bg: Color(0xFFE07B39)),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.delete_outline, size: 15),
+                      label: Text('Delete', style: TextStyle(fontSize: 11)),
+                      onPressed: () async {
+                        await _deleteInventoryDetail(value);
+                      },
+                      style: _orangeBtnStyle(bg: Color(0xFFE07B39)),
+                    ),
                   ),
-                ),
-                SizedBox(width: 6),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: Icon(Icons.close, size: 15),
-                    label: Text('Close', style: TextStyle(fontSize: 11)),
-                    onPressed: () async {
-                      await _closeInventoryDetail(value);
-                    },
-                    style: _orangeBtnStyle(bg: Colors.grey.shade600),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.close, size: 15),
+                      label: Text('Close', style: TextStyle(fontSize: 11)),
+                      onPressed: () async {
+                        await _closeInventoryDetail(value);
+                      },
+                      style: _orangeBtnStyle(bg: Colors.grey.shade600),
+                    ),
                   ),
+                ],
+              ),
+            )
+          else
+            Padding(
+              padding: EdgeInsets.fromLTRB(14, 0, 14, 12),
+              child: Text(
+                'Item ini sudah di-close.',
+                style: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
                 ),
-              ],
+              ),
             ),
-          ),
         ],
       ),
     );
