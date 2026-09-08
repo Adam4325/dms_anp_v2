@@ -283,6 +283,20 @@ class FaceMatchHelper {
     return bestVisual;
   }
 
+  static img.Image _shiftImage(img.Image src, int dx, int dy) {
+    final w = src.width;
+    final h = src.height;
+    final out = img.Image(width: w, height: h);
+    for (var y = 0; y < h; y++) {
+      final sy = (y - dy).clamp(0, h - 1);
+      for (var x = 0; x < w; x++) {
+        final sx = (x - dx).clamp(0, w - 1);
+        out.setPixel(x, y, src.getPixel(sx, sy));
+      }
+    }
+    return out;
+  }
+
   static img.Image _gradientImage(img.Image gray) {
     final w = gray.width;
     final h = gray.height;
@@ -468,45 +482,6 @@ class FaceMatchHelper {
     norm = math.sqrt(norm);
     if (norm < 0.0001) return centered;
     return centered.map((v) => v / norm).toList();
-  }
-
-  static List<int> _histogram(img.Image src) {
-    final gray = img.grayscale(src);
-    final bins = List<int>.filled(16, 0);
-    for (var y = 0; y < gray.height; y++) {
-      for (var x = 0; x < gray.width; x++) {
-        final p = gray.getPixel(x, y);
-        final lum = ((p.r + p.g + p.b) / 3.0).round().clamp(0, 255);
-        bins[lum ~/ 16]++;
-      }
-    }
-    return bins;
-  }
-
-  static double _histCorr(List<int> a, List<int> b) {
-    final n = math.min(a.length, b.length);
-    if (n == 0) return 0;
-    var sumA = 0.0;
-    var sumB = 0.0;
-    for (var i = 0; i < n; i++) {
-      sumA += a[i];
-      sumB += b[i];
-    }
-    final meanA = sumA / n;
-    final meanB = sumB / n;
-    var num = 0.0;
-    var denA = 0.0;
-    var denB = 0.0;
-    for (var i = 0; i < n; i++) {
-      final da = a[i] - meanA;
-      final db = b[i] - meanB;
-      num += da * db;
-      denA += da * da;
-      denB += db * db;
-    }
-    final den = math.sqrt(denA * denB);
-    if (den < 0.0001) return 0;
-    return num / den;
   }
 
   static double _cosine(List<double> a, List<double> b) {
