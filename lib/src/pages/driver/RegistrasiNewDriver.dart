@@ -17,6 +17,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:awesome_select/awesome_select.dart';
 import '../../../choices.dart' as choices;
 import 'package:http/http.dart' as http;
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image/image.dart' as img;
 import '../../flusbar.dart';
 import 'dart:ui' as skia;
 import 'dart:ui' show Size;
@@ -78,6 +80,7 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
   TextEditingController txtBpjsKesehatan = new TextEditingController();
   TextEditingController txtNomorBpjsKetenagakerjaan =
   new TextEditingController();
+  TextEditingController txtNomorDarurat = new TextEditingController();
   TextEditingController txtNomorKK = new TextEditingController();
   TextEditingController txtStatusFamily = new TextEditingController();
 
@@ -121,6 +124,22 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
   int selectedCameraIdx = 0;
   String imagePath = '';
   static const int _ocrCamera = 0; // back camera (was FlutterMobileVision.CAMERA_BACK)
+  final Map<String, String> _ktpScan = {
+    'nik': '',
+    'nama': '',
+    'ttl': '',
+    'jenisKelamin': '',
+    'golDarah': '',
+    'alamat': '',
+    'rtRw': '',
+    'kelDesa': '',
+    'kecamatan': '',
+    'agama': '',
+    'status': '',
+    'pekerjaan': '',
+    'kewarganegaraan': '',
+    'berlaku': '',
+  };
   List<Map<String, dynamic>> lstVheicleType = [];
   List<Map<String, dynamic>> lstRequestNumber = [];
   List<Map<String, dynamic>> lstRefferensi = [];
@@ -205,6 +224,8 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
       txtIbuKandung.text = "";
       txtBpjsKesehatan.text = "";
       txtNomorBpjsKetenagakerjaan.text = "";
+      txtNomorDarurat.text = "";
+      _clearKtpScan();
       txtNomorKK.text = "";
       txtStatusFamily.text = "";
 
@@ -331,6 +352,11 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
             dataDriver[0]['bpjsket'] == "null"
                 ? ""
                 : dataDriver[0]['bpjsket'];
+            txtNomorDarurat.text =
+            dataDriver[0]['drvemaile'] == null ||
+                    dataDriver[0]['drvemaile'] == "null"
+                ? ""
+                : dataDriver[0]['drvemaile'];
             txtNomorKK.text =
             dataDriver[0]['nokk'] == "null" ? "" : dataDriver[0]['nokk'];
             txtPendidikan.text = dataDriver[0]['drvpendidikan'] == "null"
@@ -439,6 +465,7 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
       var ibu = txtIbuKandung.text;
       var bpjs = txtBpjsKesehatan.text;
       var bpjsket = txtNomorBpjsKetenagakerjaan.text;
+      var drvemaile = txtNomorDarurat.text;
       var nokk = txtNomorKK.text;
       //print(nokk);
       //print(txtNomorKK.text);
@@ -539,6 +566,7 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
           'ibu': ibu,
           'bpjs': bpjs,
           'bpjsket': bpjsket,
+          'drvemaile': drvemaile,
           'nokk': nokk,
           'pendidikan': pendidikan,
           'baju': baju,
@@ -667,6 +695,7 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
       var ibu = txtIbuKandung.text;
       var bpjs = txtBpjsKesehatan.text;
       var bpjsket = txtNomorBpjsKetenagakerjaan.text;
+      var drvemaile = txtNomorDarurat.text;
       var nokk = txtNomorKK.text;
       var pendidikan = txtPendidikan.text;
       var baju = txtUkuranBaju.text;
@@ -768,6 +797,7 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
           'ibu': ibu,
           'bpjs': bpjs,
           'bpjsket': bpjsket,
+          'drvemaile': drvemaile,
           'nokk': nokk,
           'pendidikan': pendidikan,
           'baju': baju,
@@ -1223,6 +1253,1016 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
   }
 
   // Custom TextField with orange theme//
+  void _clearKtpScan() {
+    _ktpScan.updateAll((key, value) => '');
+  }
+
+  List<MapEntry<String, String>> _ktpRowsOf(Map<String, String> data) {
+    const labels = <String, String>{
+      'nik': 'NIK',
+      'nama': 'Nama',
+      'ttl': 'Tempat/Tgl Lahir',
+      'jenisKelamin': 'Jenis Kelamin',
+      'golDarah': 'Gol. Darah',
+      'alamat': 'Alamat',
+      'rtRw': 'RT/RW',
+      'kelDesa': 'Kel/Desa',
+      'kecamatan': 'Kecamatan',
+      'agama': 'Agama',
+      'status': 'Status Perkawinan',
+      'pekerjaan': 'Pekerjaan',
+      'kewarganegaraan': 'Kewarganegaraan',
+      'berlaku': 'Berlaku Hingga',
+    };
+    return labels.entries
+        .map((e) => MapEntry(e.value, (data[e.key] ?? '').trim()))
+        .where((e) => e.value.isNotEmpty)
+        .toList();
+  }
+
+  List<MapEntry<String, String>> _ktpScanVisible() => _ktpRowsOf(_ktpScan);
+
+  Map<String, String> _emptyKtpMap() => {
+        'nik': '',
+        'nama': '',
+        'ttl': '',
+        'jenisKelamin': '',
+        'golDarah': '',
+        'alamat': '',
+        'rtRw': '',
+        'kelDesa': '',
+        'kecamatan': '',
+        'agama': '',
+        'status': '',
+        'pekerjaan': '',
+        'kewarganegaraan': '',
+        'berlaku': '',
+      };
+
+  String _ktpCompact(String s) =>
+      s.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+
+  int _lev(String a, String b) {
+    if (a == b) return 0;
+    if (a.isEmpty) return b.length;
+    if (b.isEmpty) return a.length;
+    final m = List.generate(a.length + 1, (i) => List<int>.filled(b.length + 1, 0));
+    for (var i = 0; i <= a.length; i++) m[i][0] = i;
+    for (var j = 0; j <= b.length; j++) m[0][j] = j;
+    for (var i = 1; i <= a.length; i++) {
+      for (var j = 1; j <= b.length; j++) {
+        final cost = a[i - 1] == b[j - 1] ? 0 : 1;
+        m[i][j] = [m[i - 1][j] + 1, m[i][j - 1] + 1, m[i - 1][j - 1] + cost]
+            .reduce((x, y) => x < y ? x : y);
+      }
+    }
+    return m[a.length][b.length];
+  }
+
+  bool _nearLabel(String compact, String target, [int maxDist = 2]) {
+    if (compact == target) return true;
+    if (compact.startsWith(target) && compact.length <= target.length + 5) {
+      return true;
+    }
+    if (target.startsWith(compact) && target.length - compact.length <= 2) {
+      return compact.length >= 4;
+    }
+    if ((compact.length - target.length).abs() > maxDist + 1) return false;
+    return _lev(compact, target) <= maxDist;
+  }
+
+  static const _ktpLabelTargets = [
+    'NIK',
+    'NAMA',
+    'TEMPATLAHIR',
+    'TEMPATGLLAHIR',
+    'FEMPATGLLAHIR',
+    'FEMPATHGLLAHIR',
+    'TTL',
+    'JENISKELAMIN',
+    'JENTSKELAMIN',
+    'GOLDARAH',
+    'ALAMAT',
+    'ALAMAE',
+    'RTRW',
+    'RTRWE',
+    'KELDESA',
+    'KELURAHAN',
+    'KECAMATAN',
+    'KECAMNATAN',
+    'AGAMA',
+    'STATUSPERKAWINAN',
+    'STATUS',
+    'PEKERJAAN',
+    'KEWARGANEGARAAN',
+    'BERLAKUHINGGA',
+    'BERLAKU',
+    'PROVINSI',
+    'KABUPATEN',
+    'KOTA',
+    'KARTUTANDAPENDUDUK',
+  ];
+
+  bool _looksLikeKtpLabel(String raw) {
+    final c = _ktpCompact(raw.split(':').first);
+    if (c.isEmpty) return true;
+    // TEMPATTGL + LAHIR tanpa huruf kecil
+    final ttlCanon = 'TEMPATTGL' 'LAHIR';
+    return _ktpLabelTargets.any((l) => _nearLabel(c, l)) ||
+        _nearLabel(c, ttlCanon) ||
+        c.contains('LAHIR');
+  }
+
+  bool _isNoiseLine(String line) {
+    final u = line.toUpperCase();
+    const junk = [
+      'ATMOS',
+      'DOLBY',
+      'WIFI',
+      'CERTIFIED',
+      'DDR',
+      'SHIFT',
+      'ENTER',
+      'INSERT',
+      'BLADE',
+      'MULTIMEDIA',
+      'NTERFACE',
+      'PERFORMANCE',
+      'TWO-WAY',
+      'FINITION',
+      'VISIONKIT',
+      'HIGH PERFORMANCE',
+      'POPUP',
+    ];
+    return junk.any((n) => u.contains(n));
+  }
+
+  String _fixNik(String raw, {bool aggressive = false}) {
+    final direct = RegExp(r'\d{16}').firstMatch(raw);
+    if (direct != null) return direct.group(0)!;
+    var token = raw.toUpperCase().replaceAll(RegExp(r'[^0-9A-Z]'), '');
+    token = token
+        .replaceAll('O', '0')
+        .replaceAll('Q', '0')
+        .replaceAll('L', '1')
+        .replaceAll('I', '1');
+    if (aggressive) {
+      token = token
+          .replaceAll('D', '0')
+          .replaceAll('Z', '2')
+          .replaceAll('S', '5')
+          .replaceAll('B', '8')
+          .replaceAll('G', '6');
+    } else {
+      token = token.replaceAll('D', '0');
+    }
+    final m = RegExp(r'\d{16}').firstMatch(token);
+    return m?.group(0) ?? '';
+  }
+
+  bool _isNikLabel(String line) {
+    final c = _ktpCompact(line.split(':').first);
+    return c == 'NIK' || _nearLabel(c, 'NIK', 1);
+  }
+
+  bool _isNamaLabelLine(String line) {
+    final left = line.split(':').first.trim();
+    final c = _ktpCompact(left);
+    return c == 'NAMA' || c == 'NAME';
+  }
+
+  bool _isTtlLine(String line) {
+    final c = _ktpCompact(line);
+    return c.contains('LAHIR') ||
+        RegExp(r'\d{1,2}[-/.]\d{1,2}[-/.]\d{4}').hasMatch(line);
+  }
+
+  Set<String> _headerPlaces(List<String> lines) {
+    final places = <String>{};
+    for (final line in lines) {
+      final u = line.toUpperCase();
+      if (!u.contains('PROVINSI') &&
+          !u.contains('KABUPATEN') &&
+          !RegExp(r'\bKOTA\b').hasMatch(u)) {
+        continue;
+      }
+      final rest = u
+          .replaceAll('PROVINSI', ' ')
+          .replaceAll('KABUPATEN', ' ')
+          .replaceAll(RegExp(r'\bKOTA\b'), ' ');
+      for (final w in rest.split(RegExp(r'[^A-Z]+'))) {
+        if (w.length >= 4) places.add(w);
+      }
+    }
+    return places;
+  }
+
+  String _validPersonName(String raw, Set<String> header) {
+    if (raw.trim().isEmpty) return '';
+    var v = raw.toUpperCase().replaceAll(RegExp(r'[^A-Z .]'), ' ');
+    v = v.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (v.isEmpty || _fixNik(v).isNotEmpty) return '';
+    if (v.contains('PROVINSI') ||
+        v.contains('KABUPATEN') ||
+        v.contains('LAHIR') ||
+        v.contains('GOL') ||
+        v.contains('JENIS') ||
+        v.contains('ALAMAT') ||
+        v.contains('PENDUDUK')) {
+      return '';
+    }
+    if (_looksLikeKtpLabel(v)) return '';
+    final words = v.split(' ').where((w) => w.length >= 2).toList();
+    if (words.isEmpty) return '';
+    if (words.every((w) => header.contains(w))) return '';
+    if (words.length == 1 && header.contains(words.first)) return '';
+    // 1 kata pendek = hampir pasti header (BOGOR), bukan nama KTP
+    if (words.length == 1 && words.first.length <= 8) return '';
+    if (!RegExp(r'[A-Z]{3,}').hasMatch(v)) return '';
+    return words.join(' ');
+  }
+
+  String _extractNikFromLines(List<String> lines) {
+    final joined = lines.join(' ');
+    var n = _fixNik(joined);
+    if (n.isNotEmpty) return n;
+    for (var i = 0; i < lines.length; i++) {
+      if (!_isNikLabel(lines[i]) && _fixNik(lines[i]).isEmpty) continue;
+      for (final idx in [i, i + 1, i - 1]) {
+        if (idx < 0 || idx >= lines.length) continue;
+        n = _fixNik(lines[idx]);
+        if (n.isEmpty) n = _fixNik(lines[idx], aggressive: true);
+        if (n.isNotEmpty) return n;
+      }
+    }
+    return _fixNik(joined, aggressive: true);
+  }
+
+  /// Nama KTP selalu setelah NIK, bukan kota di header (BOGOR).
+  String _extractNamaAfterNik(List<String> lines) {
+    final header = _headerPlaces(lines);
+    int nikIdx = -1;
+    int namaIdx = -1;
+    for (var i = 0; i < lines.length; i++) {
+      if (nikIdx < 0 &&
+          (_isNikLabel(lines[i]) || _fixNik(lines[i]).isNotEmpty)) {
+        nikIdx = i;
+      }
+      if (namaIdx < 0 && _isNamaLabelLine(lines[i])) namaIdx = i;
+    }
+
+    String? fromNamaLine;
+    if (namaIdx >= 0) {
+      final line = lines[namaIdx];
+      final colon = line.indexOf(':');
+      if (colon >= 0) {
+        fromNamaLine = _validPersonName(line.substring(colon + 1), header);
+      } else {
+        final rest = line.replaceFirst(RegExp(r'^nama\s*', caseSensitive: false), '');
+        fromNamaLine = _validPersonName(rest, header);
+      }
+    }
+    if (fromNamaLine != null && fromNamaLine.isNotEmpty) return fromNamaLine;
+
+    final scored = <({int score, String name})>[];
+    void addCand(int idx, int score) {
+      if (idx < 0 || idx >= lines.length) return;
+      if (_isNamaLabelLine(lines[idx]) || _isNikLabel(lines[idx])) return;
+      if (_isTtlLine(lines[idx]) && _ktpCompact(lines[idx]).contains('LAHIR')) {
+        return;
+      }
+      final name = _validPersonName(lines[idx], header);
+      if (name.isEmpty) return;
+      scored.add((score: score + (name.contains(' ') ? 5 : 0), name: name));
+    }
+
+    if (namaIdx >= 0) {
+      addCand(namaIdx + 1, 20);
+      addCand(namaIdx - 1, 8);
+    }
+    if (nikIdx >= 0) {
+      var after = nikIdx + 1;
+      if (after < lines.length && _isNikLabel(lines[nikIdx]) && _fixNik(lines[after]).isNotEmpty) {
+        after++;
+      }
+      if (after < lines.length && _isNamaLabelLine(lines[after])) {
+        addCand(after + 1, 25);
+      } else {
+        addCand(after, 18);
+        addCand(after + 1, 12);
+      }
+    }
+
+    if (nikIdx >= 0) {
+      final start = nikIdx;
+      final end = (namaIdx >= 0 ? namaIdx + 2 : nikIdx + 6).clamp(0, lines.length);
+      for (var i = start; i < end; i++) {
+        if (_isTtlLine(lines[i]) && i > nikIdx + 1) break;
+        addCand(i, 6);
+      }
+    }
+
+    if (scored.isEmpty) return '';
+    scored.sort((a, b) => b.score.compareTo(a.score));
+    return scored.first.name;
+  }
+
+  String _sanitizeKtp(String key, String raw) {
+    var v = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+    v = v.replaceFirst(RegExp(r'^[:.\-\s]+'), '').trim();
+    if (v.isEmpty || v == '-') return '';
+
+    switch (key) {
+      case 'nik':
+        return _fixNik(v);
+      case 'nama':
+        return _validPersonName(v, const {});
+      case 'ttl':
+        var chunk = v.toUpperCase();
+        final lahirAt = chunk.indexOf('LAHIR');
+        if (lahirAt >= 0) chunk = chunk.substring(lahirAt + 5);
+        final m = RegExp(
+                r'([A-Z]{3,}),\s*(\d{1,2}[-/.]\d{1,2}[-/.]\d{4})')
+            .firstMatch(chunk);
+        return m == null ? '' : '${m.group(1)!.trim()}, ${m.group(2)}';
+      case 'jenisKelamin':
+        final u = v.toUpperCase();
+        if (u.contains('PEREMPUAN')) return 'PEREMPUAN';
+        if (u.contains('LAKI')) return 'LAKI-LAKI';
+        return '';
+      case 'golDarah':
+        final u = v.toUpperCase().replaceAll(RegExp(r'[^ABO]'), '');
+        if (u.contains('AB')) return 'AB';
+        if (u == 'A' || u == 'B' || u == 'O') return u;
+        return '';
+      case 'rtRw':
+        final m = RegExp(r'(\d{1,3})\s*/\s*(\d{1,3})').firstMatch(v);
+        return m == null ? '' : '${m.group(1)}/${m.group(2)}';
+      case 'agama':
+        final u = v.toUpperCase();
+        for (final a in [
+          'ISLAM',
+          'KRISTEN',
+          'KATHOLIK',
+          'KATOLIK',
+          'HINDU',
+          'BUDDHA',
+          'BUDHA',
+          'KONGHUCU'
+        ]) {
+          if (u.contains(a)) return a;
+        }
+        return '';
+      case 'status':
+        final u = v.toUpperCase();
+        if (u.contains('BELUM')) return 'BELUM KAWIN';
+        if (u.contains('CERAI HIDUP')) return 'CERAI HIDUP';
+        if (u.contains('CERAI MATI')) return 'CERAI MATI';
+        if (RegExp(r'\bKAWIN\b').hasMatch(u) || u == 'KAWIN') return 'KAWIN';
+        return '';
+      case 'kewarganegaraan':
+        final u = v.toUpperCase();
+        if (u.contains('WNI')) return 'WNI';
+        if (u.contains('WNA')) return 'WNA';
+        return '';
+      case 'berlaku':
+        if (v.toUpperCase().contains('SEUMUR')) return 'SEUMUR HIDUP';
+        final m = RegExp(r'\d{1,2}[-/.]\d{1,2}[-/.]\d{4}').firstMatch(v);
+        return m?.group(0) ?? '';
+      case 'pekerjaan':
+        if (v.toUpperCase().contains('KEWARGANEGARAAN') || _looksLikeKtpLabel(v)) {
+          return '';
+        }
+        return v.toUpperCase();
+      case 'alamat':
+        if (_looksLikeKtpLabel(v) ||
+            v.toUpperCase() == 'ISLAM' ||
+            _fixNik(v).isNotEmpty) {
+          return '';
+        }
+        if (!RegExp(r'[0-9]').hasMatch(v) &&
+            !v.contains(' ') &&
+            v.length < 12) {
+          return '';
+        }
+        return v.toUpperCase();
+      case 'kelDesa':
+        if (_looksLikeKtpLabel(v) || v.contains('/')) return '';
+        return RegExp(r'[A-Z]{3,}').hasMatch(v.toUpperCase()) ? v.toUpperCase() : '';
+      case 'kecamatan':
+        if (_looksLikeKtpLabel(v) ||
+            v.contains('/') ||
+            v.toUpperCase() == 'ISLAM' ||
+            v.toUpperCase() == 'KAWIN') {
+          return '';
+        }
+        return RegExp(r'[A-Z]{3,}').hasMatch(v.toUpperCase()) ? v.toUpperCase() : '';
+      default:
+        return v;
+    }
+  }
+
+  void _setKtpIfEmpty(Map<String, String> parsed, String key, String? raw) {
+    if (raw == null || (parsed[key] ?? '').isNotEmpty) return;
+    final v = _sanitizeKtp(key, raw);
+    if (v.isNotEmpty) parsed[key] = v;
+  }
+
+  /// Label di kiri colon / awal baris. Fuzzy: AlamaE, Kecamnatan, RT/RWE.
+  String? _valueForLabel(String line, List<String> labelCompacts) {
+    final colon = line.indexOf(':');
+    if (colon >= 0) {
+      final leftC = _ktpCompact(line.substring(0, colon));
+      for (final lab in labelCompacts) {
+        if (_nearLabel(leftC, lab)) return line.substring(colon + 1).trim();
+      }
+      return null;
+    }
+    final compact = _ktpCompact(line);
+    for (final lab in labelCompacts) {
+      if (_nearLabel(compact, lab)) return '';
+      if (compact.startsWith(lab) && compact.length > lab.length + 2) {
+        final m = RegExp(r'^[A-Za-z./]{3,24}\s+(.+)$').firstMatch(line);
+        if (m != null) return m.group(1)!.trim();
+        // glued: FempatHglLahirHASIKMALAYA, 12-03-1981
+        return line;
+      }
+    }
+    return null;
+  }
+
+  bool _lineIsKtpLabel(String line) {
+    return _looksLikeKtpLabel(line.split(':').first);
+  }
+
+  String? _whichKtpField(String line, Map<String, List<String>> fieldLabels) {
+    final left = line.split(':').first;
+    final compact = _ktpCompact(left);
+    String? hit;
+    for (final e in fieldLabels.entries) {
+      for (final lab in e.value) {
+        if (_nearLabel(compact, lab) ||
+            (compact.contains('LAHIR') && e.key == 'ttl')) {
+          hit = e.key;
+          break;
+        }
+      }
+      if (hit != null) break;
+    }
+    return hit;
+  }
+
+  Map<String, String> _parseKtpLines(List<String> rawLines) {
+    final parsed = _emptyKtpMap();
+    final lines = rawLines
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty && !_isNoiseLine(e))
+        .toList();
+    final joined = lines.join('\n');
+
+    final fieldLabels = <String, List<String>>{
+      'nik': ['NIK'],
+      'nama': ['NAMA'],
+      'ttl': [
+        'TEMPATTGL' 'LAHIR',
+        'TEMPATGLLAHIR',
+        'FEMPATGLLAHIR',
+        'FEMPATHGLLAHIR',
+        'TEMPATLAHIR',
+        'TTL'
+      ],
+      'jenisKelamin': ['JENISKELAMIN', 'JENTSKELAMIN', 'JENTSKELAMINE'],
+      'golDarah': ['GOLDARAH'],
+      'alamat': ['ALAMAT', 'ALAMAE', 'ALAMA'],
+      'rtRw': ['RTRW', 'RTRWE'],
+      'kelDesa': ['KELDESA', 'KELURAHAN'],
+      'kecamatan': ['KECAMATAN', 'KECAMNATAN'],
+      'agama': ['AGAMA'],
+      'status': ['STATUSPERKAWINAN'],
+      'pekerjaan': ['PEKERJAAN'],
+      'kewarganegaraan': ['KEWARGANEGARAAN'],
+      'berlaku': ['BERLAKUHINGGA', 'BERLAKU'],
+    };
+
+    parsed['nik'] = _extractNikFromLines(lines);
+    _setKtpIfEmpty(
+        parsed,
+        'jenisKelamin',
+        RegExp(r'(LAKI[\s\-]*LAKI|PEREMPUAN)', caseSensitive: false)
+            .firstMatch(joined)
+            ?.group(1));
+    _setKtpIfEmpty(
+        parsed,
+        'agama',
+        RegExp(r'\b(ISLAM|KRISTEN|KATHOLIK|KATOLIK|HINDU|BUDDHA|BUDHA|KONGHUCU)\b',
+                caseSensitive: false)
+            .firstMatch(joined)
+            ?.group(1));
+    _setKtpIfEmpty(
+        parsed,
+        'status',
+        RegExp(r'(BELUM\s+KAWIN|CERAI\s+HIDUP|CERAI\s+MATI|\bKAWIN\b)',
+                caseSensitive: false)
+            .firstMatch(joined)
+            ?.group(0));
+    _setKtpIfEmpty(
+        parsed,
+        'kewarganegaraan',
+        RegExp(r'\b(WNI|WNA)\b', caseSensitive: false).firstMatch(joined)?.group(1));
+    _setKtpIfEmpty(
+        parsed,
+        'berlaku',
+        RegExp(r'SEUMUR\s+HIDUP', caseSensitive: false).firstMatch(joined)?.group(0));
+    for (final line in lines) {
+      _setKtpIfEmpty(parsed, 'ttl', line);
+    }
+    _setKtpIfEmpty(
+        parsed,
+        'rtRw',
+        RegExp(r'(\d{1,3})\s*/\s*(\d{1,3})').firstMatch(joined)?.group(0));
+
+    for (var i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      final key = _whichKtpField(line, fieldLabels);
+      if (key == null || key == 'nama' || (parsed[key] ?? '').isNotEmpty) continue;
+
+      var val = _valueForLabel(line, fieldLabels[key]!);
+      if (val == null) continue;
+      if (val.isNotEmpty) _setKtpIfEmpty(parsed, key, val);
+
+      if ((parsed[key] ?? '').isEmpty) {
+        final neighbors = key == 'alamat'
+            ? [i - 1, i + 1, i - 2, i + 2]
+            : [i - 1, i + 1];
+        final chunks = <String>[];
+        for (final idx in neighbors) {
+          if (idx < 0 || idx >= lines.length) continue;
+          if (_isNoiseLine(lines[idx])) continue;
+          if (_lineIsKtpLabel(lines[idx]) && key != 'ttl') continue;
+          final ok = _sanitizeKtp(key, lines[idx]);
+          if (ok.isEmpty) continue;
+          if (key == 'alamat') {
+            chunks.add(ok);
+          } else {
+            parsed[key] = ok;
+            break;
+          }
+        }
+        if (key == 'alamat' && chunks.isNotEmpty) {
+          parsed['alamat'] = chunks.toSet().join(' ');
+        }
+      }
+    }
+
+    final nama = _extractNamaAfterNik(lines);
+    if (nama.isNotEmpty) parsed['nama'] = nama;
+
+    return parsed;
+  }
+
+  Map<String, String> _parseKtpText(String raw) {
+    final lines = raw.replaceAll('\r', '\n').split('\n');
+    final a = _parseKtpLines(lines);
+    final b = _parseKtpLines(lines.reversed.toList());
+    return _scoreKtp(a) >= _scoreKtp(b) ? a : b;
+  }
+
+  int _scoreKtp(Map<String, String> d) {
+    var s = 0;
+    final hasNik = (d['nik'] ?? '').length == 16;
+    final hasNama = (d['nama'] ?? '').isNotEmpty;
+    final hasTtl = (d['ttl'] ?? '').contains(',');
+    if (hasNik) s += 15;
+    if (hasNama) s += 10;
+    if (hasTtl) s += 10;
+    if ((d['jenisKelamin'] ?? '').isNotEmpty) s += 3;
+    if ((d['alamat'] ?? '').length > 4) s += 4;
+    if ((d['agama'] ?? '').isNotEmpty) s += 3;
+    if ((d['status'] ?? '').isNotEmpty) s += 2;
+    if ((d['pekerjaan'] ?? '').isNotEmpty) s += 2;
+    if ((d['kewarganegaraan'] ?? '').isNotEmpty) s += 2;
+    if ((d['berlaku'] ?? '').isNotEmpty) s += 2;
+    if ((d['rtRw'] ?? '').contains('/')) s += 2;
+    if ((d['kelDesa'] ?? '').isNotEmpty) s += 2;
+    if ((d['kecamatan'] ?? '').isNotEmpty) s += 2;
+    // orientasi laptop-sticker jangan menang cuma karena agama+pekerjaan
+    if (!hasNik && !hasNama && !hasTtl) s = s > 6 ? 6 : s;
+    return s;
+  }
+
+  String _normalizeKtpDate(String raw) {
+    final m = RegExp(r'(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})').firstMatch(raw);
+    if (m == null) return raw;
+    final d = m.group(1)!.padLeft(2, '0');
+    final mo = m.group(2)!.padLeft(2, '0');
+    return '${m.group(3)}-$mo-$d';
+  }
+
+  /// NIK digit 7-8: hari, perempuan = hari+40.
+  String? _jkFromNik(String nik) {
+    if (nik.length != 16) return null;
+    final day = int.tryParse(nik.substring(6, 8));
+    if (day == null) return null;
+    return day > 40 ? 'FEMALE' : 'MALE';
+  }
+
+  void _applyKtpToForm(Map<String, String> d) {
+    final nama = (d['nama'] ?? '').trim();
+    if (nama.isNotEmpty) {
+      txtDriverName.text = nama;
+      txtNickName.text = nama;
+    }
+
+    final ttl = d['ttl'] ?? '';
+    if (ttl.contains(',')) {
+      final parts = ttl.split(',');
+      final tempat = parts[0].trim();
+      if (tempat.isNotEmpty) txtTempatLahir.text = tempat;
+      if (parts.length > 1) {
+        txtTglLahir.text = _normalizeKtpDate(parts[1].trim());
+      }
+    }
+
+    final addr = <String>[];
+    final alamat = (d['alamat'] ?? '').trim();
+    final rt = (d['rtRw'] ?? '').trim();
+    final kel = (d['kelDesa'] ?? '').trim();
+    final kec = (d['kecamatan'] ?? '').trim();
+    if (alamat.isNotEmpty) addr.add(alamat);
+    if (rt.isNotEmpty) addr.add('RT/RW $rt');
+    if (kel.isNotEmpty) addr.add('Kel/Desa $kel');
+    if (kec.isNotEmpty) addr.add('Kecamatan $kec');
+    if (addr.isNotEmpty) txtAddress.text = addr.join(', ');
+
+    final jk = (d['jenisKelamin'] ?? '').toUpperCase();
+    if (jk.contains('PEREMPUAN') || jk.contains('WANITA')) {
+      selJenisKelamin = 'FEMALE';
+      d['jenisKelamin'] = 'PEREMPUAN';
+    } else if (jk.contains('LAKI')) {
+      selJenisKelamin = 'MALE';
+      d['jenisKelamin'] = 'LAKI-LAKI';
+    } else {
+      final fromNik = _jkFromNik(d['nik'] ?? '');
+      if (fromNik != null) {
+        selJenisKelamin = fromNik;
+        d['jenisKelamin'] = fromNik == 'MALE' ? 'LAKI-LAKI' : 'PEREMPUAN';
+      }
+    }
+
+    final nik = (d['nik'] ?? '').trim();
+    if (nik.isNotEmpty) txtNomorKTP.text = nik;
+    if (selGolDar.isEmpty && (d['golDarah'] ?? '').isNotEmpty) {
+      selGolDar = d['golDarah']!.toUpperCase();
+    }
+  }
+
+  Future<File> _rotateKtpFile(File src, int deg) async {
+    if (deg == 0) return src;
+    final decoded = img.decodeImage(await src.readAsBytes());
+    if (decoded == null) return src;
+    var im = decoded;
+    if (im.width > 1600) {
+      im = img.copyResize(im, width: 1600);
+    }
+    im = img.copyRotate(im, angle: deg);
+    final out = File(
+        '${Directory.systemTemp.path}/ktp_${deg}_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await out.writeAsBytes(img.encodeJpg(im, quality: 90));
+    return out;
+  }
+
+  Future<String> _recognizeKtpText(File imageFile) async {
+    final inputImage = InputImage.fromFile(imageFile);
+    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+    try {
+      final recognized = await textRecognizer.processImage(inputImage).timeout(
+        Duration(seconds: 20),
+        onTimeout: () => throw TimeoutException('OCR timeout'),
+      );
+      final rows = <({double y, double x, String t})>[];
+      for (final block in recognized.blocks) {
+        for (final line in block.lines) {
+          final box = line.boundingBox;
+          rows.add((y: box.top, x: box.left, t: line.text.trim()));
+        }
+      }
+      rows.sort((a, b) {
+        if ((a.y - b.y).abs() < 14) return a.x.compareTo(b.x);
+        return a.y.compareTo(b.y);
+      });
+      if (rows.isEmpty) return recognized.text;
+      return rows.map((e) => e.t).join('\n');
+    } finally {
+      await textRecognizer.close();
+    }
+  }
+
+  Future<Map<String, String>> _ocrKtpBest(File imageFile) async {
+    final bytes = await imageFile.readAsBytes();
+    final decoded = img.decodeImage(bytes);
+    final portrait = decoded != null && decoded.height > decoded.width;
+    final angles = portrait ? [90, 270, 0, 180] : [0, 90, 180, 270];
+
+    var best = _emptyKtpMap();
+    var bestScore = -1;
+    for (final deg in angles) {
+      File fileToUse = imageFile;
+      try {
+        fileToUse = await _rotateKtpFile(imageFile, deg)
+            .timeout(Duration(seconds: 8), onTimeout: () => imageFile);
+      } catch (_) {
+        fileToUse = imageFile;
+      }
+      final text = await _recognizeKtpText(fileToUse);
+      debugPrint('KTP OCR $deg°:\n$text');
+      final parsed = _parseKtpText(text);
+      final score = _scoreKtp(parsed);
+      debugPrint('KTP score $deg°=$score $parsed');
+      if (score > bestScore) {
+        bestScore = score;
+        best = parsed;
+      }
+      if (score >= 28) break;
+    }
+    return best;
+  }
+
+  Future<void> _scanKtp() async {
+    try {
+      final picked = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 90,
+      );
+      if (picked == null) return;
+      final imageFile = File(picked.path);
+      if (filePathImageKTP.isEmpty) {
+        _imageKTP = imageFile;
+        filePathImageKTP = base64Encode(imageFile.readAsBytesSync());
+        is_edit_image_ktp = true;
+      }
+
+      EasyLoading.show(status: 'Membaca KTP (OCR)...');
+      final parsed = await _ocrKtpBest(imageFile);
+      if (!mounted) return;
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      await _showKtpResultDialog(parsed);
+    } catch (e) {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      if (mounted) {
+        alert(globalScaffoldKey.currentContext!, 0, 'Gagal scan KTP: $e',
+            'error');
+      }
+    }
+  }
+
+  Map<String, String> _previewKtp(Map<String, String> parsed) {
+    final data = _emptyKtpMap();
+    parsed.forEach((k, v) {
+      if (v.trim().isNotEmpty) data[k] = v.trim();
+    });
+    final jk = (data['jenisKelamin'] ?? '').toUpperCase();
+    if (!jk.contains('LAKI') &&
+        !jk.contains('PEREMPUAN') &&
+        !jk.contains('WANITA')) {
+      final fromNik = _jkFromNik(data['nik'] ?? '');
+      if (fromNik != null) {
+        data['jenisKelamin'] = fromNik == 'MALE' ? 'LAKI-LAKI' : 'PEREMPUAN';
+      }
+    }
+    return data;
+  }
+
+  Future<void> _showKtpResultDialog(Map<String, String> parsed) async {
+    final data = _previewKtp(parsed);
+    final rows = _ktpRowsOf(data);
+    if (rows.isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 0,
+          'Data KTP tidak terbaca. Foto ulang dengan pencahayaan lebih baik.',
+          'error');
+      return;
+    }
+    if (!mounted) return;
+
+    final action = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return Dialog(
+          insetPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.white,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.8,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.fromLTRB(18, 16, 8, 14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [primaryOrange, darkOrange],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.badge_outlined,
+                            color: Colors.white, size: 22),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Data KTP',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Cek dulu, baru masuk ke form',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.85),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx, 'close'),
+                        icon: Icon(Icons.close, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.fromLTRB(16, 10, 16, 6),
+                    itemCount: rows.length,
+                    separatorBuilder: (_, __) =>
+                        Divider(height: 1, color: Colors.grey.shade200),
+                    itemBuilder: (_, i) {
+                      final e = rows[i];
+                      return Padding(
+                        padding: EdgeInsets.symmetric(vertical: 9),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 112,
+                              child: Text(
+                                e.key,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                e.value,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.fromLTRB(14, 10, 14, 14),
+                  decoration: BoxDecoration(
+                    color: lightOrange,
+                    borderRadius:
+                        BorderRadius.vertical(bottom: Radius.circular(20)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx, 'close'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.grey.shade700,
+                            backgroundColor: Colors.white,
+                            side: BorderSide(color: Colors.grey.shade300),
+                            padding: EdgeInsets.symmetric(vertical: 11),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text('Close',
+                              style: TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx, 'ulang'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: darkOrange,
+                            backgroundColor: Colors.white,
+                            side: BorderSide(color: primaryOrange, width: 1.4),
+                            padding: EdgeInsets.symmetric(vertical: 11),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text('Ulang',
+                              style: TextStyle(fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(ctx, 'ok'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryOrange,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: EdgeInsets.symmetric(vertical: 11),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text('OK',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted) return;
+    if (action == 'ok') {
+      setState(() {
+        _clearKtpScan();
+        data.forEach((k, v) {
+          if (v.trim().isNotEmpty) _ktpScan[k] = v.trim();
+        });
+        _applyKtpToForm(_ktpScan);
+      });
+    } else if (action == 'ulang') {
+      await Future.delayed(Duration(milliseconds: 180));
+      if (mounted) await _scanKtp();
+    }
+  }
+
+  Widget _buildKtpScanSection() {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.fromLTRB(12, 4, 12, 8),
+      child: ElevatedButton.icon(
+        onPressed: _scanKtp,
+        icon: Icon(Icons.document_scanner, color: Colors.white, size: 18),
+        label: Text('Scan KTP',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryOrange,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: EdgeInsets.symmetric(vertical: 12),
+          minimumSize: Size(double.infinity, 44),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget buildTextField({
     String? labelText,
     required TextEditingController controller,
@@ -1588,6 +2628,7 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
                           },
                         ),
                       ),
+                      _buildKtpScanSection(),
                       buildTextField(
                         labelText: "Nama Pengemudi",
                         controller: txtDriverName,
@@ -1842,6 +2883,11 @@ class _RegisterNewDriverState extends State<RegisterNewDriver>
                         labelText: "Nomor BPJS Ketenagakerjaan",
                         controller: txtNomorBpjsKetenagakerjaan,
                         keyboardType: TextInputType.number,
+                      ),
+                      buildTextField(
+                        labelText: "Nomor Darurat",
+                        controller: txtNomorDarurat,
+                        keyboardType: TextInputType.phone,
                       ),
                       buildSmartSelect(
                         title: 'Status Keluarga',

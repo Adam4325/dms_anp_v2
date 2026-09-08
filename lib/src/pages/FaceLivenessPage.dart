@@ -38,13 +38,11 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
   String _hint = 'Hadapkan wajah ke dalam oval';
   bool _faceOk = false;
   bool _blinkDone = false;
-  // bool _smileDone = false;
-  // int _smileCount = 0;
-  // bool _inSmile = false;
-  // bool _wasRelaxed = true;
   bool _eyesWereOpen = false;
   bool _eyesWereClosed = false;
-  // bool _blinkFirst = true;
+  bool _screenLight = false;
+  DateTime? _faceStableSince;
+  bool _showManualCapture = false;
 
   static const Map<DeviceOrientation, int> _orientations = {
     DeviceOrientation.portraitUp: 0,
@@ -119,6 +117,8 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
     if (faces.isEmpty) {
       setState(() {
         _faceOk = false;
+        _faceStableSince = null;
+        _showManualCapture = false;
         _hint = 'Wajah tidak terdeteksi';
       });
       return;
@@ -132,42 +132,50 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
     final cy = box.center.dy / imgH;
     final minSide = math.min(imgW, imgH).toDouble();
     final faceRatio = box.width / minSide;
-    final centered = (cx - 0.5).abs() < 0.28 && (cy - 0.5).abs() < 0.32;
-    if (!centered || faceRatio < 0.22) {
+    final centered = (cx - 0.5).abs() < 0.30 && (cy - 0.5).abs() < 0.35;
+    if (!centered || faceRatio < 0.19) {
       setState(() {
         _faceOk = false;
+        _faceStableSince = null;
+        _showManualCapture = false;
         _hint = 'Dekatkan wajah ke oval';
       });
       return;
     }
     _faceOk = true;
+    _faceStableSince ??= DateTime.now();
 
-    final left = face.leftEyeOpenProbability ?? 1;
-    final right = face.rightEyeOpenProbability ?? 1;
-    final eyesOpen = left > 0.65 && right > 0.65;
-    final eyesClosed = left < 0.30 && right < 0.30;
-    if (!_blinkDone) {
-      if (eyesOpen) _eyesWereOpen = true;
-      if (_eyesWereOpen && eyesClosed) _eyesWereClosed = true;
-      if (_eyesWereOpen && _eyesWereClosed && eyesOpen) {
-        _blinkDone = true;
+    // Jika wajah stabil di oval lebih dari 3.5 detik tapi kedipan belum terdeteksi (cahaya gelap/kacamata)
+    if (!_blinkDone &&
+        DateTime.now().difference(_faceStableSince!).inMilliseconds >= 3500) {
+      if (!_showManualCapture) {
+        setState(() => _showManualCapture = true);
       }
     }
 
-    // Senyum dimatikan dulu — tinggal kedip.
-    // if (!_smileDone) {
-    //   _countSmile(face);
-    // }
+    final left = face.leftEyeOpenProbability;
+    final right = face.rightEyeOpenProbability;
+    if (left != null && right != null) {
+      final avg = (left + right) / 2.0;
+      // Lebih toleran di cahaya redup
+      final eyesOpen = avg >= 0.48 || left >= 0.52 || right >= 0.52;
+      final eyesClosed = avg <= 0.35 || (left <= 0.38 && right <= 0.38);
+      if (!_blinkDone) {
+        if (eyesOpen) _eyesWereOpen = true;
+        if (_eyesWereOpen && eyesClosed) _eyesWereClosed = true;
+        if (_eyesWereOpen && _eyesWereClosed && eyesOpen) {
+          _blinkDone = true;
+        }
+      }
+    }
 
     final nextBlink = !_blinkDone;
-    // final nextBlink = _blinkFirst ? !_blinkDone : (_smileDone && !_blinkDone);
-    // final nextSmile = _blinkFirst ? (_blinkDone && !_smileDone) : !_smileDone;
 
     if (nextBlink) {
-      setState(() => _hint = 'Kedipkan mata');
-    // } else if (nextSmile) {
-    //   setState(() => _hint = 'Senyum');
-    } else if (_blinkDone /* && _smileDone */) {
+      setState(() => _hint = _showManualCapture
+          ? 'Kedipkan mata atau tap Ambil Foto'
+          : 'Kedipkan mata');
+    } else if (_blinkDone) {
       if (_capturing) {
         return;
       }
@@ -237,13 +245,11 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
 
   Future<void> _retryAfterReject(String message) async {
     _blinkDone = false;
-    // _smileDone = false;
-    // _smileCount = 0;
-    // _inSmile = false;
-    // _wasRelaxed = true;
     _eyesWereOpen = false;
     _eyesWereClosed = false;
     _capturing = false;
+    _faceStableSince = null;
+    _showManualCapture = false;
     if (mounted) {
       setState(() => _hint = message);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -318,11 +324,31 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
         ? 'Enrollment Wajah'
         : 'Verifikasi Wajah';
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: _screenLight ? Colors.white : Colors.black,
       appBar: AppBar(
         backgroundColor: _orange,
         title: Text(title, style: const TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              setState(() => _screenLight = !_screenLight);
+            },
+            icon: Icon(
+              _screenLight ? Icons.lightbulb : Icons.lightbulb_outline,
+              color: _screenLight ? Colors.amberAccent : Colors.white,
+              size: 20,
+            ),
+            label: Text(
+              _screenLight ? 'Lampu ON' : 'Lampu Layar',
+              style: TextStyle(
+                color: _screenLight ? Colors.amberAccent : Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
       ),
       body: _error != null
           ? Center(
@@ -339,27 +365,26 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
                   fit: StackFit.expand,
                   children: [
                     CameraPreview(_controller!),
-                    CustomPaint(painter: _OvalMaskPainter()),
+                    CustomPaint(painter: _OvalMaskPainter(_screenLight)),
                     Positioned(
                       left: 20,
                       right: 20,
-                      bottom: 36,
+                      bottom: 24,
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Row(
                             children: [
                               _chip('Kedip', _blinkDone),
-                              // const SizedBox(width: 8),
-                              // _chip('Senyum', _smileDone),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.55),
+                              color: Colors.black.withValues(alpha: 0.65),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -372,6 +397,41 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
                               ),
                             ),
                           ),
+                          if (_showManualCapture && !_blinkDone && _faceOk) ...[
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black87,
+                                  elevation: 4,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                onPressed: _capturing
+                                    ? null
+                                    : () {
+                                        _blinkDone = true;
+                                        setState(() => _hint = widget.mode ==
+                                                FaceLivenessMode.verify
+                                            ? 'Mencocokkan wajah...'
+                                            : 'Mengambil foto...');
+                                        _finishCapture();
+                                      },
+                                label: const Text(
+                                  'Ambil Foto Sekarang (Cahaya Gelap)',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                icon: const Icon(Icons.camera_alt, color: _orange),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -404,9 +464,14 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
 }
 
 class _OvalMaskPainter extends CustomPainter {
+  final bool screenLight;
+
+  _OvalMaskPainter(this.screenLight);
+
   @override
   void paint(Canvas canvas, Size size) {
-    final overlay = Paint()..color = Colors.black.withValues(alpha: 0.55);
+    final overlay = Paint()
+      ..color = screenLight ? Colors.white : Colors.black.withValues(alpha: 0.55);
     final hole = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
     final oval = Rect.fromCenter(
@@ -418,12 +483,13 @@ class _OvalMaskPainter extends CustomPainter {
     hole.fillType = PathFillType.evenOdd;
     canvas.drawPath(hole, overlay);
     final border = Paint()
-      ..color = const Color(0xFFFF8C69)
+      ..color = screenLight ? const Color(0xFFFF9800) : const Color(0xFFFF8C69)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
+      ..strokeWidth = screenLight ? 4 : 3;
     canvas.drawOval(oval, border);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _OvalMaskPainter oldDelegate) =>
+      oldDelegate.screenLight != screenLight;
 }

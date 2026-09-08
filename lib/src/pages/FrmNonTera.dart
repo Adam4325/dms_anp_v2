@@ -5,7 +5,6 @@ import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/flusbar.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:flutter/material.dart';
-import 'package:dms_anp/src/Color/hex_color.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
@@ -18,6 +17,242 @@ class FrmNonTera extends StatefulWidget {
 }
 
 class FrmNonTeraState extends State<FrmNonTera> {
+  // Soft Orange Pastel Theme (design_tab.md)
+  final Color primaryOrange = Color(0xFFFF8C69);
+  final Color lightOrange = Color(0xFFFFF4E6);
+  final Color accentOrange = Color(0xFFFFB347);
+  final Color darkOrange = Color(0xFFE07B39);
+  final Color backgroundColor = Color(0xFFFFFAF5);
+  final Color cardColor = Color(0xFFFFF8F0);
+  final Color shadowColor = Color(0x20FF8C69);
+
+  InputDecoration softDecoration({
+    String? label,
+    String? hint,
+    bool readOnly = false,
+    Widget? suffixIcon,
+    Widget? prefixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      isDense: true,
+      filled: true,
+      fillColor: Colors.white,
+      labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+      hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: primaryOrange, width: 2),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+    );
+  }
+
+  ButtonStyle ntBtnStyle(Color bg) {
+    return ElevatedButton.styleFrom(
+      elevation: 0,
+      backgroundColor: bg,
+      foregroundColor: Colors.white,
+      disabledForegroundColor: Colors.white70,
+      shadowColor: Colors.transparent,
+      side: BorderSide.none,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    );
+  }
+
+  ButtonStyle ntPhotoBtnStyle() {
+    return ElevatedButton.styleFrom(
+      elevation: 0,
+      backgroundColor: primaryOrange,
+      foregroundColor: Colors.white,
+      shadowColor: Colors.transparent,
+      side: BorderSide.none,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      minimumSize: Size(double.infinity, 200),
+    );
+  }
+
+  Widget ntBtnLabel(String text, {double size = 13}) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        fontSize: size,
+      ),
+    );
+  }//
+
+  AlertDialog ntAlertDialog({
+    required String title,
+    required Widget content,
+    List<Widget> actions = const <Widget>[],
+  }) {//
+    return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: cardColor,
+      titlePadding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      title: Text(
+        title,
+        style: TextStyle(
+            color: darkOrange, fontWeight: FontWeight.w700, fontSize: 16),
+      ),
+      content: content,
+      actions: actions,
+    );
+  }
+
+  String _s(dynamic v) {
+    if (v == null) return '';
+    final t = v.toString().trim();
+    if (t.isEmpty || t == 'null') return '';
+    return t;
+  }
+
+  Widget _kv(String label, String value, {bool dense = false}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: dense ? 0 : 2),
+      child: Table(
+        columnWidths: const {
+          0: IntrinsicColumnWidth(),
+          1: FixedColumnWidth(10),
+          2: FlexColumnWidth(),
+        },
+        children: [
+          TableRow(children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(label,
+                  style: TextStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: dense ? 11 : 12)),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: Text(":",
+                  style: TextStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: dense ? 11 : 12)),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                value.isEmpty ? '-' : value,
+                style: TextStyle(
+                  color: Colors.grey.shade900,
+                  fontSize: dense ? 11 : 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ])
+        ],
+      ),
+    );
+  }
+
+  Widget _ntBtn({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+    bool expanded = true,
+  }) {
+    final btn = ElevatedButton.icon(
+      icon: Icon(icon, color: Colors.white, size: 15),
+      label: ntBtnLabel(label),
+      onPressed: onPressed,
+      style: ntBtnStyle(color),
+    );
+    return expanded ? Expanded(child: btn) : btn;
+  }
+
+  Widget _ntListCard({
+    required String title,
+    required List<Widget> rows,
+    Widget? actions,
+    bool compact = false,
+  }) {
+    final m = compact ? 6.0 : 12.0;
+    final v = compact ? 3.0 : 6.0;
+    final r = compact ? 10.0 : 14.0;
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: m, vertical: v),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(r),
+        border: Border.all(color: accentOrange.withOpacity(0.45)),
+        boxShadow: [
+          BoxShadow(
+              color: shadowColor,
+              blurRadius: compact ? 4 : 8,
+              offset: Offset(0, compact ? 1 : 3)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            width: double.infinity,
+            padding: compact
+                ? EdgeInsets.fromLTRB(10, 6, 10, 6)
+                : EdgeInsets.fromLTRB(14, 12, 14, 10),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(r),
+                topRight: Radius.circular(r),
+              ),
+            ),
+            child: Text(
+              title,
+              style: TextStyle(
+                color: darkOrange,
+                fontWeight: FontWeight.w700,
+                fontSize: compact ? 12 : 14,
+              ),
+            ),
+          ),
+          Padding(
+            padding: compact
+                ? EdgeInsets.fromLTRB(10, 4, 10, 4)
+                : EdgeInsets.fromLTRB(14, 8, 14, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: rows,
+            ),
+          ),
+          if (actions != null)
+            Padding(
+              padding: compact
+                  ? EdgeInsets.fromLTRB(8, 2, 8, 8)
+                  : EdgeInsets.fromLTRB(12, 4, 12, 12),
+              child: actions,
+            ),
+        ],
+      ),
+    );
+  }
+
   final globalScaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController txtLocation = new TextEditingController();
   TextEditingController txtLocation2 = new TextEditingController();
@@ -87,27 +322,24 @@ class FrmNonTeraState extends State<FrmNonTera> {
         },
         child: Scaffold(
           key: globalScaffoldKey,
-          backgroundColor: Color(0xFFFF8C69), // Soft orange
+          backgroundColor: backgroundColor,
           appBar: AppBar(
-              backgroundColor: Color(0xFFFF8C69), // Soft orange
+              backgroundColor: primaryOrange,
               foregroundColor: Colors.white,
+              elevation: 2,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back),
+                icon: Icon(Icons.arrow_back, color: Colors.white),
                 iconSize: 20.0,
                 onPressed: () {
                   _goBack(context);
                 },
               ),
               centerTitle: true,
-              title: Text('Non-Tera', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
-          body: Container(
-            constraints: BoxConstraints.expand(),
-            color: HexColor("#f0eff4"),
-            child: Stack(
-              children: <Widget>[
-                FrmNonTeraSubmit(context),
-              ],
-            ),
+              title: Text('Non-Tera',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600))),
+          body: SafeArea(
+            child: FrmNonTeraSubmit(context),
           ),
         ));
   }
@@ -191,105 +423,37 @@ class FrmNonTeraState extends State<FrmNonTera> {
   }
 
   Widget _buildDListDetailUnits(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings_applications, color: Colors.black),
-                ),
-                title: Text(
-                  "VHCID : ${item['vhcid']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text(
-                      "Location : ${item['locid']}\nStnk : ${item['dt_stnk']}\nPajak : ${item['dt_pajak']}\nKir : ${item['dt_kir']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
-              ),
-            ),
-          ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("Add"),
-                  onPressed: () async {
-                    Navigator.of(context).pop(false);
-                    setState(() {
-                      txtVHCID.text = item['vhcid'].toString();
-                      txtLocation.text = item['locid'].toString();
-                      if (dropdownvalue == "STNK") {
-                        txtLastValueDate.text = item['dt_stnk'].toString();
-                      } else if (dropdownvalue == "PAJAK") {
-                        txtLastValueDate.text = item['dt_pajak'].toString();
-                      } else if (dropdownvalue == "KIR") {
-                        txtLastValueDate.text = item['dt_kir'].toString();
-                      } else {
-                        txtLastValueDate.text = "";
-                      }
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Color(0xFFFF8C69), // Soft orange
-                      foregroundColor: Colors.white,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-                )),
-                // SizedBox(width: 10),
-                // Expanded(
-                //     child: ElevatedButton.icon(
-                //       icon: Icon(
-                //         Icons.close,
-                //         color: Colors.white,
-                //         size: 15.0,
-                //       ),
-                //       label: Text("Close"),
-                //       onPressed: () async {
-                //         Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                //       },
-                //       style: ElevatedButton.styleFrom(
-                //           elevation: 0.0,
-                //           backgroundColor: Color(0xFFFF8C69), // Soft orange
-                //                foregroundColor: Colors.white,
-                //           padding:
-                //           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                //           textStyle:
-                //           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                //     )),
-              ]),
-            ),
+    return _ntListCard(
+      compact: true,
+      title: "VHCID : ${_s(item['vhcid'])}",
+      rows: [
+        _kv("Location", _s(item['locid']), dense: true),
+        _kv("Stnk", _s(item['dt_stnk']), dense: true),
+        _kv("Pajak", _s(item['dt_pajak']), dense: true),
+        _kv("Kir", _s(item['dt_kir']), dense: true),
+      ],
+      actions: Row(
+        children: [
+          _ntBtn(
+            icon: Icons.add_circle_outline,
+            label: "Add",
+            color: primaryOrange,
+            onPressed: () {
+              Navigator.of(context).pop(false);
+              setState(() {
+                txtVHCID.text = item['vhcid'].toString();
+                txtLocation.text = item['locid'].toString();
+                if (dropdownvalue == "STNK") {
+                  txtLastValueDate.text = item['dt_stnk'].toString();
+                } else if (dropdownvalue == "PAJAK") {
+                  txtLastValueDate.text = item['dt_pajak'].toString();
+                } else if (dropdownvalue == "KIR") {
+                  txtLastValueDate.text = item['dt_kir'].toString();
+                } else {
+                  txtLastValueDate.text = "";
+                }
+              });
+            },
           ),
         ],
       ),
@@ -297,205 +461,113 @@ class FrmNonTeraState extends State<FrmNonTera> {
   }
 
   Widget _buildDListDetailNonTera(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                leading: Container(
-                  padding: EdgeInsets.only(right: 12.0),
-                  decoration: new BoxDecoration(
-                      border: new Border(
-                          right: new BorderSide(
-                              width: 1.0, color: Colors.black45))),
-                  child: Icon(Icons.settings_applications, color: Colors.black),
+    return _ntListCard(
+      compact: true,
+      title: "VHCID : ${_s(item['vhcid'])}",
+      rows: [
+        _kv("Request Date", _s(item['date']), dense: true),
+        _kv("Tera Type ID", _s(item['typeid']), dense: true),
+        _kv("Last Value", _s(item['lastvalue']), dense: true),
+        _kv("Next Value", _s(item['nextvalue']), dense: true),
+        _kv("Amount", _s(item['amount']), dense: true),
+        _kv("Locid", _s(item['locid']), dense: true),
+        _kv("Status", _s(item['status']), dense: true),
+      ],
+      actions: Row(
+        children: [
+          _ntBtn(
+            icon: Icons.close,
+            label: "Close",
+            color: Colors.redAccent,
+            onPressed: () async {
+              Navigator.of(context).pop(false);
+              showDialog(
+                context: globalScaffoldKey.currentContext!,
+                builder: (context) => ntAlertDialog(
+                  title: 'Information',
+                  content: const Text("Close data non-tera?"),
+                  actions: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.check, color: Colors.white, size: 16),
+                      label: ntBtnLabel("Submit"),
+                      style: ntBtnStyle(primaryOrange),
+                      onPressed: () async {
+                        Navigator.of(globalScaffoldKey.currentContext!)
+                            .pop(false);
+                        await Future.delayed(Duration(seconds: 1));
+                        SharedPreferences prefs =
+                            await SharedPreferences.getInstance();
+                        var user_id = prefs.getString("name");
+                        var nmnbr = item['nmnbr'];
+                        var vhcid = item['vhcid'];
+                        if (nmnbr == null || nmnbr == "") {
+                          alert(context, 2,
+                              "Number Non-tera tidak boleh kosong", "warning");
+                        } else if (vhcid == null || vhcid == "") {
+                          alert(context, 2, "VHCID tidak boleh kosong",
+                              "warning");
+                        } else {
+                          await closeNonTera(user_id!, nmnbr, vhcid);
+                        }
+                      },
+                    ),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.close, color: Colors.white, size: 16),
+                      label: ntBtnLabel("Cancel"),
+                      style: ntBtnStyle(Colors.grey.shade500),
+                      onPressed: () async {
+                        Navigator.of(context).pop(false);
+                        reset_save();
+                      },
+                    ),
+                  ],
                 ),
-                title: Text(
-                  "VHCID : ${item['vhcid']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text(
-                      "Request Date : ${item['date']}"
-                      "\nTera Type ID : ${item['typeid']}"
-                      "\nLast Value : ${item['lastvalue']}"
-                      "\nNext Value : ${item['nextvalue']}"
-                      "\nAmount : ${item['amount']}"
-                      "\nLocid : ${item['locid']}"
-                      "\nStatus : ${item['status']}",
-                      style: TextStyle(color: Colors.black)),
-                ]),
-              ),
-            ),
+              );
+            },
           ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.no_accounts,
-                    color: Colors.redAccent,
-                    size: 15.0,
-                  ),
-                  label: Text("Close"),
-                  onPressed: () async {
-                    Navigator.of(context).pop(false);
-                    showDialog(
-                      context: globalScaffoldKey.currentContext!,
-                      builder: (context) => new AlertDialog(
-                        title: new Text('Information'),
-                        content: new Text("Close data non-tera?"),
-                        actions: <Widget>[
-                          new ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 24.0,
-                            ),
-                            label: Text("Submit"),
-                            onPressed: () async {
-                              //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                              Navigator.of(globalScaffoldKey.currentContext!)
-                                  .pop(false);
-                              await Future.delayed(Duration(seconds: 1));
-                              SharedPreferences prefs =
-                                  await SharedPreferences.getInstance();
-                              var user_id = prefs.getString("name");
-                              var nmnbr = item['nmnbr'];
-                              var vhcid = item['vhcid'];
-                              if (nmnbr == null || nmnbr == "") {
-                                alert(
-                                    context,
-                                    2,
-                                    "Number Non-tera tidak boleh kosong",
-                                    "warning");
-                              } else if (vhcid == null || vhcid == "") {
-                                alert(context, 2, "VHCID tidak boleh kosong",
-                                    "warning");
-                              } else {
-                                await closeNonTera(user_id!, nmnbr, vhcid);
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0.0,
-                                backgroundColor: Color(0xFFFF8C69), // Soft orange
-                      foregroundColor: Colors.white,
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 0),
-                                textStyle: TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-                          ),
-                          new ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.save,
-                              color: Colors.white,
-                              size: 24.0,
-                            ),
-                            label: Text("Cancel"),
-                            onPressed: () async {
-                              Navigator.of(context).pop(false);
-                              reset_save();
-                            },
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0.0,
-                                backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                foregroundColor: Colors.white,
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 0),
-                                textStyle: TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.redAccent,
-                      foregroundColor: Colors.white,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-                )),
-                SizedBox(width: 10),
-                Expanded(
-                    child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.remove_red_eye,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: Text("View"),
-                  onPressed: () async {
-                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                    is_view = true;
-                    setState(() {
-                      filePathImageFRONT = item['photo_front'] != null
-                          ? item['photo_front']
-                          : "";
-                      filePathImageRIGHT = item['photo_right'] != null
-                          ? item['photo_right']
-                          : "";
-                      filePathImageLEFT =
-                          item['photo_left'] != null ? item['photo_left'] : "";
-                      filePathImageREAR =
-                          item['photo_rear'] != null ? item['photo_rear'] : "";
-                      filePathImageUPLOAD = item['photo_nontera'] != null
-                          ? item['photo_nontera']
-                          : "";
-                      filePathImageSTNK = item['photo_stnk'] != null
-                          ? item['photo_stnk']
-                          : "";
-                      filePathImageKIR = item['photo_kir'] != null
-                          ? item['photo_kir']
-                          : "";
-                      filePathImageBAINT = item['photo_baint'] != null
-                          ? item['photo_baint']
-                          : "";
-                      filePathImageBAIEXT = item['photo_baext'] != null
-                          ? item['photo_baext']
-                          : "";
-                      filePathImageCEKFISIK = item['photo_cekfisisk'] != null
-                          ? item['photo_cekfisisk']
-                          : "";
-                      filePathImageSURAT2 = item['photo_surat2'] != null
-                          ? item['photo_surat2']
-                          : "";
-                      filePathImageFRONTCOMPLETE = item['photo_surat2'] != null
-                          ? item['photo_surat2']
-                          : "";
-                      txtLastValueDate.text = item['lastvalue'];
-                      txtLocation.text = item['locid'];
-                      txtNmDate.text = item['date'];
-                      txtVHCID.text = item['vhcid'];
-                      dropdownvalue = item['typeid'];
-                      nama_type = dropdownvalue;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Color(0xFFFF8C69), // Soft orange
-                      foregroundColor: Colors.white,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-                )),
-              ]),
-            ),
+          const SizedBox(width: 8),
+          _ntBtn(
+            icon: Icons.remove_red_eye,
+            label: "View",
+            color: primaryOrange,
+            onPressed: () {
+              Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+              is_view = true;
+              setState(() {
+                filePathImageFRONT =
+                    item['photo_front'] != null ? item['photo_front'] : "";
+                filePathImageRIGHT =
+                    item['photo_right'] != null ? item['photo_right'] : "";
+                filePathImageLEFT =
+                    item['photo_left'] != null ? item['photo_left'] : "";
+                filePathImageREAR =
+                    item['photo_rear'] != null ? item['photo_rear'] : "";
+                filePathImageUPLOAD = item['photo_nontera'] != null
+                    ? item['photo_nontera']
+                    : "";
+                filePathImageSTNK =
+                    item['photo_stnk'] != null ? item['photo_stnk'] : "";
+                filePathImageKIR =
+                    item['photo_kir'] != null ? item['photo_kir'] : "";
+                filePathImageBAINT =
+                    item['photo_baint'] != null ? item['photo_baint'] : "";
+                filePathImageBAIEXT =
+                    item['photo_baext'] != null ? item['photo_baext'] : "";
+                filePathImageCEKFISIK = item['photo_cekfisisk'] != null
+                    ? item['photo_cekfisisk']
+                    : "";
+                filePathImageSURAT2 =
+                    item['photo_surat2'] != null ? item['photo_surat2'] : "";
+                filePathImageFRONTCOMPLETE =
+                    item['photo_surat2'] != null ? item['photo_surat2'] : "";
+                txtLastValueDate.text = item['lastvalue'];
+                txtLocation.text = item['locid'];
+                txtNmDate.text = item['date'];
+                txtVHCID.text = item['vhcid'];
+                dropdownvalue = item['typeid'];
+                nama_type = dropdownvalue;
+              });
+            },
           ),
         ],
       ),
@@ -503,120 +575,118 @@ class FrmNonTeraState extends State<FrmNonTera> {
   }
 
   Widget listDataUnits(BuildContext context) {
-    return SingleChildScrollView(
-      //shrinkWrap: true,
-      padding: EdgeInsets.all(2.0),
-      clipBehavior: Clip.antiAlias,
+    final size = MediaQuery.of(context).size;
+    return SizedBox(
+      width: size.width,
+      height: size.height * 0.7,
       child: Column(
         children: [
-          Container(
-            margin: EdgeInsets.all(10.0),
-            child: TextField(
-              readOnly: false,
-              cursorColor: Colors.black,
-              style: TextStyle(color: Colors.grey.shade800),
-              controller: txtSearchVehicle,
-              keyboardType: TextInputType.text,
-              decoration: new InputDecoration(
-                  suffixIcon: IconButton(
-                    icon: new Image.asset(
-                      "assets/img/search.png",
-                      width: 32.0,
-                      height: 32.0,
-                    ),
-                    onPressed: () async {
-                      if(is_view==false){
-                        if (txtSearchVehicle.text != null &&
-                            txtSearchVehicle.text != "") {
-                          await getListDataUnits(true, txtSearchVehicle.text);
-                        }
-                      }
-
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: txtSearchVehicle,
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (value) async {
+                    if (is_view == false && value.trim().isNotEmpty) {
+                      await getListDataUnits(true, value);
+                    }
+                  },
+                  decoration: softDecoration(
+                    label: "VHCID",
+                    hint: "Cari VHCID",
+                    prefixIcon: Icon(Icons.search, color: primaryOrange, size: 20),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () async {
+                  if (is_view == false &&
+                      txtSearchVehicle.text.trim().isNotEmpty) {
+                    await getListDataUnits(true, txtSearchVehicle.text);
+                  }
+                },
+                style: ntBtnStyle(primaryOrange),
+                child: ntBtnLabel("Search"),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: dataListUnits.isEmpty
+                ? Center(
+                    child: Text("Data unit tidak di temukan",
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                  )
+                : ListView.builder(
+                    itemCount: dataListUnits.length,
+                    itemBuilder: (context, index) {
+                      return _buildDListDetailUnits(dataListUnits[index], index);
                     },
                   ),
-                  fillColor: HexColor("FFF6F1BF"),
-                  filled: true,
-                  isDense: true,
-                  labelText: "VHCID",
-                  contentPadding: EdgeInsets.all(5.0),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(25.0)))),
-            ),
           ),
-          Container(
-              height: MediaQuery.of(context)
-                  .size
-                  .height, // Change as per your requirement
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  padding: const EdgeInsets.all(2.0),
-                  itemCount: dataListUnits == null ? 0 : dataListUnits.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return _buildDListDetailUnits(dataListUnits[index], index);
-                  })),
         ],
       ),
     );
   }
 
   Widget listDataNonTera(BuildContext context) {
-    return SingleChildScrollView(
-      //shrinkWrap: true,
-      padding: EdgeInsets.all(2.0),
-      clipBehavior: Clip.antiAlias,
+    final size = MediaQuery.of(context).size;
+    return SizedBox(
+      width: size.width,
+      height: size.height * 0.7,
       child: Column(
         children: [
-          Container(
-            margin: EdgeInsets.all(10.0),
-            child: TextField(
-              readOnly: false,
-              cursorColor: Colors.black,
-              style: TextStyle(color: Colors.grey.shade800),
-              controller: txtSearchVehicle,
-              keyboardType: TextInputType.text,
-              decoration: new InputDecoration(
-                  suffixIcon: IconButton(
-                    icon: new Image.asset(
-                      "assets/img/search.png",
-                      width: 32.0,
-                      height: 32.0,
-                    ),
-                    onPressed: () async {
-                      if (txtSearchVehicleNontera.text != null &&
-                          txtSearchVehicleNontera.text != "") {
-                        await getListDataNonTera(
-                            true, txtSearchVehicleNontera.text);
-                      }
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: txtSearchVehicleNontera,
+                  cursorColor: primaryOrange,
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (value) async {
+                    if (value.trim().isNotEmpty) {
+                      await getListDataNonTera(true, value);
+                    }
+                  },
+                  decoration: softDecoration(
+                    label: "VHCID",
+                    hint: "Cari VHCID",
+                    prefixIcon: Icon(Icons.search, color: primaryOrange, size: 20),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () async {
+                  if (txtSearchVehicleNontera.text.trim().isNotEmpty) {
+                    await getListDataNonTera(true, txtSearchVehicleNontera.text);
+                  }
+                },
+                style: ntBtnStyle(primaryOrange),
+                child: ntBtnLabel("Search"),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: dataListNonTera.isEmpty
+                ? Center(
+                    child: Text("Data non-tera tidak di temukan",
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                  )
+                : ListView.builder(
+                    itemCount: dataListNonTera.length,
+                    itemBuilder: (context, index) {
+                      return _buildDListDetailNonTera(
+                          dataListNonTera[index], index);
                     },
                   ),
-                  fillColor: HexColor("FFF6F1BF"),
-                  filled: true,
-                  isDense: true,
-                  labelText: "VHCID",
-                  contentPadding: EdgeInsets.all(5.0),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(25.0)))),
-            ),
           ),
-          Container(
-              height: MediaQuery.of(context)
-                  .size
-                  .height, // Change as per your requirement
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  padding: const EdgeInsets.all(2.0),
-                  itemCount:
-                      dataListNonTera == null ? 0 : dataListNonTera.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return _buildDListDetailNonTera(
-                        dataListNonTera[index], index);
-                  })),
         ],
       ),
     );
@@ -628,51 +698,29 @@ class FrmNonTeraState extends State<FrmNonTera> {
     try {
       await showDialog(
         context: contexs,
-        builder: (BuildContext dialogContext) => AlertDialog(
-          title: Text('Information'),
-          content: Text("Get Picture"),
-          actions: <Widget>[
+        builder: (BuildContext dialogContext) => ntAlertDialog(
+          title: 'Information',
+          content: const Text("Get Picture"),
+          actions: [
             ElevatedButton.icon(
-              icon: Icon(
-                Icons.camera_alt_outlined,
-                color: Colors.white,
-                size: 20.0,
-              ),
-              label: Text("Camera"),
+              icon: const Icon(Icons.camera_alt_outlined,
+                  color: Colors.white, size: 16),
+              label: ntBtnLabel("Camera"),
+              style: ntBtnStyle(primaryOrange),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
                 await getPicture(namaPhoto, 'CAMERA');
               },
-              style: ElevatedButton.styleFrom(
-                  elevation: 0.0,
-                  backgroundColor: Color(0xFFFF8C69), // Soft orange
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                  textStyle: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white)),
             ),
             ElevatedButton.icon(
-              icon: Icon(
-                Icons.photo_library,
-                color: Colors.white,
-                size: 20.0,
-              ),
-              label: Text("Gallery"),
+              icon: const Icon(Icons.photo_library,
+                  color: Colors.white, size: 16),
+              label: ntBtnLabel("Gallery"),
+              style: ntBtnStyle(accentOrange),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
                 await getPicture(namaPhoto, 'GALLERY');
               },
-              style: ElevatedButton.styleFrom(
-                  elevation: 0.0,
-                  backgroundColor: Color(0xFFFF8C69), // Soft orange
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                  textStyle: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white)),
             ),
           ],
         ),
@@ -1142,18 +1190,46 @@ class FrmNonTeraState extends State<FrmNonTera> {
 
   Widget FrmNonTeraSubmit(BuildContext context) {
     return Container(
-        padding: EdgeInsets.fromLTRB(1.0, 1.0, 1.0, 1.0),
+        margin: EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: cardColor,
+          boxShadow: [
+            BoxShadow(color: shadowColor, blurRadius: 10, offset: Offset(0, 4)),
+          ],
+        ),
         child: ListView(children: <Widget>[
           Container(
-              padding: EdgeInsets.all(10.0),
-              child: Card(
-                  elevation: 2.0,
-                  shadowColor: Color(0x802196F3),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(children: <Widget>[
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.assignment_outlined, color: primaryOrange, size: 24),
+                SizedBox(width: 12),
+                Text('Form Non-Tera',
+                    style: TextStyle(
+                      color: darkOrange,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    )),
+              ],
+            ),
+          ),
+          Column(children: <Widget>[
                     Container(
-                      margin: EdgeInsets.only(
-                          left: 20, top: 2, right: 20, bottom: 5),
+                      margin: EdgeInsets.all(12),
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -1163,7 +1239,8 @@ class FrmNonTeraState extends State<FrmNonTera> {
                             child: DropdownButton(
                               isExpanded: true,
                               value: dropdownvalue,
-                              icon: const Icon(Icons.keyboard_arrow_down),
+                              icon: Icon(Icons.keyboard_arrow_down,
+                                  color: primaryOrange),
                               items: itemsType.map((String items) {
                                 return DropdownMenuItem(
                                   value: items,
@@ -1211,7 +1288,7 @@ class FrmNonTeraState extends State<FrmNonTera> {
                       ),
                     ),
                     Container(
-                      margin: EdgeInsets.all(10.0),
+                      margin: EdgeInsets.all(12.0),
                       child: DateTimePicker(
                         //type: DateTimePickerType.dateTimeSeparate,
                         dateMask: 'yyyy-MM-dd',
@@ -1219,7 +1296,7 @@ class FrmNonTeraState extends State<FrmNonTera> {
                         //initialValue: _initialValue,
                         firstDate: DateTime(1950),
                         lastDate: DateTime(2100),
-                        icon: Icon(Icons.event),
+                        icon: Icon(Icons.event, color: primaryOrange),
                         dateLabelText: 'Request Date',
                         selectableDayPredicate: (date) {
                           return true;
@@ -1233,15 +1310,15 @@ class FrmNonTeraState extends State<FrmNonTera> {
                       ),
                     ),
                     Container(
-                      margin: EdgeInsets.only(
-                          left: 20, top: 20, right: 20, bottom: 5),
+                      margin: EdgeInsets.all(12.0),
                       child: TextField(
                         controller: txtVHCID,
                         readOnly: true,
-                        decoration: new InputDecoration(
-                            border: new OutlineInputBorder(
-                                borderSide: new BorderSide(color: Colors.teal)),
-                            hintText: 'VHCID',
+                        cursorColor: primaryOrange,
+                        style: TextStyle(color: Colors.black87, fontSize: 14),
+                        decoration: softDecoration(
+                            label: 'VHCID',
+                            hint: 'VHCID',
                             suffixIcon: IconButton(
                               onPressed: () async {
                                 if (dropdownvalue == "Pilih Type" ||
@@ -1256,127 +1333,101 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                   await getListDataUnits(false, "");
                                   Timer(Duration(seconds: 1), () {
                                     showDialog(
-                                        context:
-                                            globalScaffoldKey.currentContext!,
+                                        context: context,
                                         builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: Text('List Units'),
+                                          return ntAlertDialog(
+                                            title: 'List Units',
                                             content: listDataUnits(context),
-                                            actions: <Widget>[
-                                              new TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(
-                                                            globalScaffoldKey
-                                                                .currentContext!)
-                                                        .pop(false);
-                                                  },
-                                                  child: new Text('Close')),
+                                            actions: [
+                                              ElevatedButton.icon(
+                                                icon: const Icon(Icons.close,
+                                                    color: Colors.white,
+                                                    size: 16),
+                                                label: ntBtnLabel("Close"),
+                                                style: ntBtnStyle(accentOrange),
+                                                onPressed: () {
+                                                  Navigator.of(context)
+                                                      .pop(false);
+                                                },
+                                              ),
                                             ],
                                           );
                                         });
                                   });
                                 }
                               },
-                              icon: Icon(Icons.search),
+                              icon: Icon(Icons.search, color: primaryOrange),
                             ),
-                            labelText: 'VHCID',
-                            prefixIcon: const Icon(
+                            prefixIcon: Icon(
                               Icons.car_rental,
-                              color: Colors.blueAccent,
-                            ),
-                            prefixText: ' ',
-                            //suffixText: 'USD',
-                            suffixStyle: const TextStyle(color: Colors.green)),
+                              color: primaryOrange,
+                            )),
                       ),
                     ),
                     if (is_edit == true) ...[
                       Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 2, right: 20, bottom: 5),
+                        margin: EdgeInsets.all(12.0),
                         child: TextField(
                           readOnly: true,
                           controller: txtLastValue,
-                          decoration: new InputDecoration(
-                              border: new OutlineInputBorder(
-                                  borderSide:
-                                      new BorderSide(color: Colors.teal)),
-                              hintText: 'Last Value',
-                              labelText: 'Last Value',
-                              prefixIcon: const Icon(
+                          cursorColor: primaryOrange,
+                          style: TextStyle(color: Colors.black87, fontSize: 14),
+                          decoration: softDecoration(
+                              hint: 'Last Value',
+                              label: 'Last Value',
+                              prefixIcon: Icon(
                                 Icons.date_range,
-                                color: Colors.blueAccent,
-                              ),
-                              prefixText: ' ',
-                              //suffixText: 'USD',
-                              suffixStyle:
-                                  const TextStyle(color: Colors.green)),
+                                color: primaryOrange,
+                              )),
                         ),
                       ),
                       Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 2, right: 20, bottom: 20),
+                        margin: EdgeInsets.all(12.0),
                         child: TextField(
                           controller: txtNextValue,
-                          decoration: new InputDecoration(
-                              border: new OutlineInputBorder(
-                                  borderSide:
-                                      new BorderSide(color: Colors.teal)),
-                              hintText: 'Location',
-                              labelText: 'Location',
-                              prefixIcon: const Icon(
+                          cursorColor: primaryOrange,
+                          style: TextStyle(color: Colors.black87, fontSize: 14),
+                          decoration: softDecoration(
+                              hint: 'Location',
+                              label: 'Location',
+                              prefixIcon: Icon(
                                 Icons.book,
-                                color: Colors.blueAccent,
-                              ),
-                              prefixText: ' ',
-                              //suffixText: 'USD',
-                              suffixStyle:
-                                  const TextStyle(color: Colors.green)),
+                                color: primaryOrange,
+                              )),
                         ),
                       ),
                       Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 20, right: 20, bottom: 5),
+                        margin: EdgeInsets.all(12.0),
                         child: TextField(
                           controller: txtLocation2,
                           readOnly: true,
-                          decoration: new InputDecoration(
-                              border: new OutlineInputBorder(
-                                  borderSide:
-                                      new BorderSide(color: Colors.teal)),
-                              hintText: 'Location',
-                              labelText: 'Location',
-                              prefixIcon: const Icon(
+                          cursorColor: primaryOrange,
+                          style: TextStyle(color: Colors.black87, fontSize: 14),
+                          decoration: softDecoration(
+                              hint: 'Location',
+                              label: 'Location',
+                              prefixIcon: Icon(
                                 Icons.pin_drop,
-                                color: Colors.blueAccent,
-                              ),
-                              prefixText: ' ',
-                              //suffixText: 'USD',
-                              suffixStyle:
-                                  const TextStyle(color: Colors.green)),
+                                color: primaryOrange,
+                              )),
                         ),
                       ),
                     ],
                     if (is_edit == false) ...[
                       Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 2, right: 20, bottom: 5),
+                        margin: EdgeInsets.all(12.0),
                         child: TextField(
                           readOnly: true,
                           controller: txtLastValueDate,
-                          decoration: new InputDecoration(
-                              border: new OutlineInputBorder(
-                                  borderSide:
-                                      new BorderSide(color: Colors.teal)),
-                              hintText: 'Last Value',
-                              labelText: 'Last Value',
-                              prefixIcon: const Icon(
+                          cursorColor: primaryOrange,
+                          style: TextStyle(color: Colors.black87, fontSize: 14),
+                          decoration: softDecoration(
+                              hint: 'Last Value',
+                              label: 'Last Value',
+                              prefixIcon: Icon(
                                 Icons.date_range,
-                                color: Colors.blueAccent,
-                              ),
-                              prefixText: ' ',
-                              //suffixText: 'USD',
-                              suffixStyle:
-                                  const TextStyle(color: Colors.green)),
+                                color: primaryOrange,
+                              )),
                         ),
                       ),
                       // Container(
@@ -1428,29 +1479,19 @@ class FrmNonTeraState extends State<FrmNonTera> {
                       //   ),
                       // ),
                       Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 20, right: 20, bottom: 5),
+                        margin: EdgeInsets.all(12.0),
                         child: TextField(
                           controller: txtLocation,
                           readOnly: false,
-                          decoration: new InputDecoration(
-                              border: new OutlineInputBorder(
-                                  borderSide:
-                                      new BorderSide(color: Colors.teal)),
-                              hintText: 'Location',
-                              // suffixIcon: IconButton(
-                              //   onPressed: () {},
-                              //   icon: Icon(Icons.search),
-                              // ),
-                              labelText: 'Location',
-                              prefixIcon: const Icon(
+                          cursorColor: primaryOrange,
+                          style: TextStyle(color: Colors.black87, fontSize: 14),
+                          decoration: softDecoration(
+                              hint: 'Location',
+                              label: 'Location',
+                              prefixIcon: Icon(
                                 Icons.pin_drop,
-                                color: Colors.blueAccent,
-                              ),
-                              prefixText: ' ',
-                              //suffixText: 'USD',
-                              suffixStyle:
-                                  const TextStyle(color: Colors.green)),
+                                color: primaryOrange,
+                              )),
                         ),
                       ),
                     ],
@@ -1521,19 +1562,11 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                 color: Colors.white,
                                 size: 20.0,
                               ),
-                              label: Text("Photo ${nama_type} to Upload", style: TextStyle(fontSize: 14)),
+                              label: ntBtnLabel("Photo ${nama_type} to Upload", size: 14),
                               onPressed: () async {
                                 await getImageFromCamera(context, "UPLOAD");
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                minimumSize: Size(double.infinity, 200),
-                              ),
+                              style: ntPhotoBtnStyle(),
                             ),
                           ),
                         ),
@@ -1600,19 +1633,11 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                           color: Colors.white,
                                           size: 20.0,
                                         ),
-                                        label: Text("Photo front", style: TextStyle(fontSize: 14)),
+                                        label: ntBtnLabel("Photo front", size: 14),
                                         onPressed: () async {
                                           await getImageFromCamera(context, "FRONT");
                                         },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                          foregroundColor: Colors.white,
-                                          elevation: 0,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                          ),
-                                          minimumSize: Size(double.infinity, 200),
-                                        ),
+                                        style: ntPhotoBtnStyle(),
                                       ),
                                     ),
                         ),
@@ -1679,19 +1704,11 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                           color: Colors.white,
                                           size: 20.0,
                                         ),
-                                        label: Text("Photo right", style: TextStyle(fontSize: 14)),
+                                        label: ntBtnLabel("Photo right", size: 14),
                                         onPressed: () async {
                                           await getImageFromCamera(context, "RIGHT");
                                         },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                          foregroundColor: Colors.white,
-                                          elevation: 0,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                          ),
-                                          minimumSize: Size(double.infinity, 200),
-                                        ),
+                                        style: ntPhotoBtnStyle(),
                                       ),
                                     ),
                         ),
@@ -1758,19 +1775,11 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                           color: Colors.white,
                                           size: 20.0,
                                         ),
-                                        label: Text("Photo left", style: TextStyle(fontSize: 14)),
+                                        label: ntBtnLabel("Photo left", size: 14),
                                         onPressed: () async {
                                           await getImageFromCamera(context, "LEFT");
                                         },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                          foregroundColor: Colors.white,
-                                          elevation: 0,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                          ),
-                                          minimumSize: Size(double.infinity, 200),
-                                        ),
+                                        style: ntPhotoBtnStyle(),
                                       ),
                                     ),
                         ),
@@ -1837,19 +1846,11 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                           color: Colors.white,
                                           size: 20.0,
                                         ),
-                                        label: Text("Photo rear", style: TextStyle(fontSize: 14)),
+                                        label: ntBtnLabel("Photo rear", size: 14),
                                         onPressed: () async {
                                           await getImageFromCamera(context, "REAR");
                                         },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                          foregroundColor: Colors.white,
-                                          elevation: 0,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                          ),
-                                          minimumSize: Size(double.infinity, 200),
-                                        ),
+                                        style: ntPhotoBtnStyle(),
                                       ),
                                     ),
                         ),
@@ -1917,19 +1918,11 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                 color: Colors.white,
                                 size: 20.0,
                               ),
-                              label: Text("Photo bagian depan mobil beserta supir", style: TextStyle(fontSize: 14)),
+                              label: ntBtnLabel("Photo bagian depan mobil beserta supir", size: 14),
                               onPressed: () async {
                                 await getImageFromCamera(context, "FRONT-COMPLETE");
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                minimumSize: Size(double.infinity, 200),
-                              ),
+                              style: ntPhotoBtnStyle(),
                             ),
                           ),
                         ),
@@ -1997,19 +1990,11 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                 color: Colors.white,
                                 size: 20.0,
                               ),
-                              label: Text("Photo cek fisik", style: TextStyle(fontSize: 14)),
+                              label: ntBtnLabel("Photo cek fisik", size: 14),
                               onPressed: () async {
                                 await getImageFromCamera(context, "CEKFISIK");
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                minimumSize: Size(double.infinity, 200),
-                              ),
+                              style: ntPhotoBtnStyle(),
                             ),
                           ),
                         ),
@@ -2077,19 +2062,11 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                 color: Colors.white,
                                 size: 20.0,
                               ),
-                              label: Text("Photo BA Internal cek fisik", style: TextStyle(fontSize: 14)),
+                              label: ntBtnLabel("Photo BA Internal cek fisik", size: 14),
                               onPressed: () async {
                                 await getImageFromCamera(context, "BAINT");
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                minimumSize: Size(double.infinity, 200),
-                              ),
+                              style: ntPhotoBtnStyle(),
                             ),
                           ),
                         ),
@@ -2157,19 +2134,11 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                 color: Colors.white,
                                 size: 20.0,
                               ),
-                              label: Text("Photo BA External", style: TextStyle(fontSize: 14)),
+                              label: ntBtnLabel("Photo BA External", size: 14),
                               onPressed: () async {
                                 await getImageFromCamera(context, "BAEXT");
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                minimumSize: Size(double.infinity, 200),
-                              ),
+                              style: ntPhotoBtnStyle(),
                             ),
                           ),
                         ),
@@ -2244,27 +2213,18 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                 color: Colors.white,
                                 size: 20.0,
                               ),
-                              label: Text("Photo Kartu kir beserta Surat / Kertas kir", style: TextStyle(fontSize: 14)),
+                              label: ntBtnLabel("Photo Kartu kir beserta Surat / Kertas kir", size: 14),
                               onPressed: () async {
                                 print('KIR !!!');
                                 await getImageFromCamera(context, "SURAT2");
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                minimumSize: Size(double.infinity, 200),
-                              ),
+                              style: ntPhotoBtnStyle(),
                             ),
                           ),
                       ),
                     )],//SURAT2
                     Container(
-                        margin: EdgeInsets.only(
-                            left: 20, top: 5, right: 20, bottom: 0),
+                        margin: EdgeInsets.fromLTRB(12, 8, 12, 16),
                         child: Row(children: <Widget>[
                           if (is_view == false) ...[
                             Expanded(
@@ -2272,23 +2232,24 @@ class FrmNonTeraState extends State<FrmNonTera> {
                               icon: Icon(
                                 Icons.save,
                                 color: Colors.white,
-                                size: 24.0,
+                                size: 20.0,
                               ),
-                              label: Text("Save"),
+                              label: ntBtnLabel("Save", size: 14),
                               onPressed: () async {
                                 showDialog(
                                   context: globalScaffoldKey.currentContext!,
-                                  builder: (context) => new AlertDialog(
-                                    title: new Text('Information'),
-                                    content: new Text("Submit non-tera?"),
-                                    actions: <Widget>[
-                                      new ElevatedButton.icon(
+                                  builder: (context) => ntAlertDialog(
+                                    title: 'Information',
+                                    content: const Text("Submit non-tera?"),
+                                    actions: [
+                                      ElevatedButton.icon(
                                         icon: Icon(
                                           Icons.check,
                                           color: Colors.white,
-                                          size: 24.0,
+                                          size: 16.0,
                                         ),
-                                        label: Text("Submit"),
+                                        label: ntBtnLabel("Submit"),
+                                        style: ntBtnStyle(primaryOrange),
                                         onPressed: () async {
                                           //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                                           Navigator.of(globalScaffoldKey
@@ -2354,49 +2315,25 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                             await saveNonTera(user_id);
                                           }
                                         },
-                                        style: ElevatedButton.styleFrom(
-                                            elevation: 0.0,
-                                            backgroundColor: Color(0xFFFF8C69), // Soft orange
-                      foregroundColor: Colors.white,
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 5, vertical: 0),
-                                            textStyle: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold)),
                                       ),
-                                      new ElevatedButton.icon(
+                                      ElevatedButton.icon(
                                         icon: Icon(
-                                          Icons.save,
+                                          Icons.close,
                                           color: Colors.white,
-                                          size: 24.0,
+                                          size: 16.0,
                                         ),
-                                        label: Text("Cancel"),
+                                        label: ntBtnLabel("Cancel"),
+                                        style: ntBtnStyle(Colors.grey.shade500),
                                         onPressed: () async {
                                           Navigator.of(context).pop(false);
                                           reset_save();
                                         },
-                                        style: ElevatedButton.styleFrom(
-                                            elevation: 0.0,
-                                            backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                foregroundColor: Colors.white,
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 5, vertical: 0),
-                                            textStyle: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold)),
                                       ),
                                     ],
                                   ),
                                 );
                               },
-                              style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: Colors.blue,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  textStyle: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold)),
+                              style: ntBtnStyle(primaryOrange),
                             ))
                           ],
                           if (is_view == true) ...[
@@ -2405,9 +2342,9 @@ class FrmNonTeraState extends State<FrmNonTera> {
                               icon: Icon(
                                 Icons.cancel,
                                 color: Colors.white,
-                                size: 24.0,
+                                size: 20.0,
                               ),
-                              label: Text("Reset"),
+                              label: ntBtnLabel("Reset", size: 14),
                               onPressed: () async {
                                 setState(() {
                                   is_view = false;
@@ -2415,15 +2352,7 @@ class FrmNonTeraState extends State<FrmNonTera> {
                                 reset_save();
                                 reset_update();
                               },
-                              style: ElevatedButton.styleFrom(
-                                  elevation: 0.0,
-                                  backgroundColor: Color(0xFFFF8C69), // Soft orange
-                                foregroundColor: Colors.white,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  textStyle: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold)),
+                              style: ntBtnStyle(Colors.grey.shade500),
                             ))
                           ],
                           SizedBox(
@@ -2432,44 +2361,42 @@ class FrmNonTeraState extends State<FrmNonTera> {
                           Expanded(
                               child: ElevatedButton.icon(
                             icon: Icon(
-                              Icons.details,
+                              Icons.list_alt,
                               color: Colors.white,
-                              size: 24.0,
+                              size: 20.0,
                             ),
-                            label: Text("Detail Non-tera"),
+                            label: ntBtnLabel("Detail Non-tera", size: 14),
                             onPressed: () async {
                               await getListDataNonTera(false, "");
                               Timer(Duration(seconds: 1), () {
                                 showDialog(
-                                    context: globalScaffoldKey.currentContext!,
+                                    context: context,
                                     builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: Text('List Non-tera'),
+                                      return ntAlertDialog(
+                                        title: 'List Non-tera',
                                         content: listDataNonTera(context),
-                                        actions: <Widget>[
-                                          new TextButton(
-                                              onPressed: () {
-                                                Navigator.of(globalScaffoldKey
-                                                        .currentContext!)
-                                                    .pop(false);
-                                              },
-                                              child: new Text('Close')),
+                                        actions: [
+                                          ElevatedButton.icon(
+                                            icon: const Icon(Icons.close,
+                                                color: Colors.white, size: 16),
+                                            label: ntBtnLabel("Close"),
+                                            style: ntBtnStyle(accentOrange),
+                                            onPressed: () {
+                                              Navigator.of(context).pop(false);
+                                            },
+                                          ),
                                         ],
                                       );
                                     });
                               });
                             },
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0.0,
-                                backgroundColor: Colors.orange,
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 0),
-                                textStyle: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.bold)),
+                            style: ntBtnStyle(accentOrange),
                           )),
-                        ]))
-                  ])))
-        ]));
+                        ]),
+                      ),
+          ]),
+        ]),
+    );
   }
 
   void getSession() async {

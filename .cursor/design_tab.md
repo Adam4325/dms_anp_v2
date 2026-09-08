@@ -224,6 +224,8 @@ Widget tireBtnLabel(String text) {
 
 ## 5. List Card / Row
 
+Detail lengkap (dialog list, search row, card, button putih): **[design_list.md](design_list.md)**
+
 **Buang** icon gear (`Icons.settings_applications`).
 
 Pakai card modern (header orange + key/value):
@@ -306,5 +308,6 @@ Saat merombak tab:
 - Inventory list tab: `ListInventoryTransNew.dart`
 - Tyre tabs (SERAH TERIMA / OPNAME / LIST TMS / FINISH): `FrmServiceTire.dart`
 - Service Request PM tabs (CREATE SR / SERAH TERIMA / OPNAME / FOREMAN / PROSES / QC): `FrmServiceRequestOprPM.dart`
+- Non-Tera form: `FrmNonTera.dart`
 
 Saat membuat tab baru atau merapikan modul lain, **salin pola dari file di atas** dan patuhi dokumen ini.

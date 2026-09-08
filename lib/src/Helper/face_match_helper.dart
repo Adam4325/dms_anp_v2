@@ -21,7 +21,7 @@ class FaceMatchResult {
 /// Bandingkan wajah live vs foto enroll.
 /// Threshold longgar karena enroll/verify beda cahaya, senyum, dan kamera depan.
 class FaceMatchHelper {
-  static const double matchThreshold = 0.36;
+  static const double matchThreshold = 0.45;
 
   static Future<FaceMatchResult> compareLiveToEnroll({
     required File liveFile,
@@ -93,7 +93,12 @@ class FaceMatchHelper {
         );
       }
 
-      final score = _bestScore(enrollCrop, liveCrop);
+      final score = _calculateMatchScore(
+        enrollCrop,
+        liveCrop,
+        enrollFace,
+        liveFace,
+      );
       if (score >= matchThreshold) {
         return FaceMatchResult(
           matched: true,
@@ -105,7 +110,7 @@ class FaceMatchHelper {
         matched: false,
         score: score,
         message:
-            'Wajah tidak sesuai foto enroll. Absensi ditolak.\n(skor ${score.toStringAsFixed(2)})',
+            'Wajah tidak sesuai foto enroll (skor ${(score * 100).toInt()}%). Absensi ditolak.',
       );
     } finally {
       await detector.close();
@@ -120,21 +125,216 @@ class FaceMatchHelper {
     return img.copyResize(src, width: src.width, height: src.height);
   }
 
-  static double _bestScore(img.Image enrollCrop, img.Image liveCrop) {
-    final variants = <img.Image>[
-      liveCrop,
-      img.flipHorizontal(_copy(liveCrop)),
-    ];
-    var best = 0.0;
-    final enrollVec = _toVector(enrollCrop);
-    final enrollHist = _histogram(enrollCrop);
-    for (final live in variants) {
-      final cosine = _cosine(enrollVec, _toVector(live));
-      final hist = _histCorr(enrollHist, _histogram(live));
-      final mixed = (cosine * 0.65) + (hist * 0.35);
-      best = math.max(best, math.max(cosine, mixed));
+  /// Evaluasi gabungan: Geometri Landmark (proporsi wajah) + Visual Gradient & Zona
+  static double _calculateMatchScore(
+    img.Image enrollCrop,
+    img.Image liveCrop,
+    Face? enrollFace,
+    Face? liveFace,
+  ) {
+    final visualScore = _compareVisual(enrollCrop, liveCrop);
+    final geomScore = _landmarkSimilarity(enrollFace, liveFace);
+
+    // Jika proporsi geometris landmark berbeda signifikan (< 0.45), tolak (orang berbeda)
+    if (geomScore < 0.45) {
+      return visualScore * 0.4;
     }
-    return best;
+
+    if (enrollFace != null && liveFace != null) {
+      return (visualScore * 0.60) + (geomScore * 0.40);
+    }
+    return visualScore;
+  }
+
+  /// Bandingkan proporsi geometris landmark (jarak mata, hidung, mulut)
+  /// Sangat efektif membedakan Orang A vs Orang B karena proporsi tulang wajah tiap orang unik.
+  static double _landmarkSimilarity(Face? a, Face? b) {
+    if (a == null || b == null) return 1.0;
+
+    final aLeftEye = a.landmarks[FaceLandmarkType.leftEye]?.position;
+    final aRightEye = a.landmarks[FaceLandmarkType.rightEye]?.position;
+    final aNose = a.landmarks[FaceLandmarkType.noseBase]?.position;
+    final aMouthLeft = a.landmarks[FaceLandmarkType.leftMouth]?.position;
+    final aMouthRight = a.landmarks[FaceLandmarkType.rightMouth]?.position;
+
+    final bLeftEye = b.landmarks[FaceLandmarkType.leftEye]?.position;
+    final bRightEye = b.landmarks[FaceLandmarkType.rightEye]?.position;
+    final bNose = b.landmarks[FaceLandmarkType.noseBase]?.position;
+    final bMouthLeft = b.landmarks[FaceLandmarkType.leftMouth]?.position;
+    final bMouthRight = b.landmarks[FaceLandmarkType.rightMouth]?.position;
+
+    if (aLeftEye == null ||
+        aRightEye == null ||
+        bLeftEye == null ||
+        bRightEye == null) {
+      return 1.0; // Skip jika landmark mata tidak lengkap
+    }
+
+    final aEyeDist = aLeftEye.distanceTo(aRightEye).toDouble();
+    final bEyeDist = bLeftEye.distanceTo(bRightEye).toDouble();
+    if (aEyeDist < 8 || bEyeDist < 8) return 1.0;
+
+    var diffSum = 0.0;
+    var count = 0;
+
+    // 1. Rasio jarak mata ke hidung vs jarak antar mata
+    if (aNose != null && bNose != null) {
+      final aEyeMidX = (aLeftEye.x + aRightEye.x) / 2.0;
+      final aEyeMidY = (aLeftEye.y + aRightEye.y) / 2.0;
+      final aNoseDist = math.sqrt(
+          math.pow(aNose.x - aEyeMidX, 2) + math.pow(aNose.y - aEyeMidY, 2));
+      final aRatio = aNoseDist / aEyeDist;
+
+      final bEyeMidX = (bLeftEye.x + bRightEye.x) / 2.0;
+      final bEyeMidY = (bLeftEye.y + bRightEye.y) / 2.0;
+      final bNoseDist = math.sqrt(
+          math.pow(bNose.x - bEyeMidX, 2) + math.pow(bNose.y - bEyeMidY, 2));
+      final bRatio = bNoseDist / bEyeDist;
+
+      final maxR = math.max(aRatio, bRatio);
+      if (maxR > 0) {
+        diffSum += (aRatio - bRatio).abs() / maxR;
+        count++;
+      }
+    }
+
+    // 2. Rasio lebar mulut vs jarak antar mata
+    if (aMouthLeft != null &&
+        aMouthRight != null &&
+        bMouthLeft != null &&
+        bMouthRight != null) {
+      final aMouthWidth = aMouthLeft.distanceTo(aMouthRight).toDouble();
+      final bMouthWidth = bMouthLeft.distanceTo(bMouthRight).toDouble();
+      final aRatio = aMouthWidth / aEyeDist;
+      final bRatio = bMouthWidth / bEyeDist;
+
+      final maxR = math.max(aRatio, bRatio);
+      if (maxR > 0) {
+        diffSum += (aRatio - bRatio).abs() / maxR;
+        count++;
+      }
+    }
+
+    // 3. Rasio proporsi bounding box (lebar / tinggi wajah)
+    final aBoxRatio = a.boundingBox.width / math.max(1, a.boundingBox.height);
+    final bBoxRatio = b.boundingBox.width / math.max(1, b.boundingBox.height);
+    final maxBox = math.max(aBoxRatio, bBoxRatio);
+    if (maxBox > 0) {
+      diffSum += (aBoxRatio - bBoxRatio).abs() / maxBox;
+      count++;
+    }
+
+    if (count == 0) return 1.0;
+    final avgDiff = diffSum / count;
+    // Rata-rata perbedaan > 18% berarti geometri wajah sangat berbeda
+    return (1.0 - (avgDiff * 2.8)).clamp(0.0, 1.0);
+  }
+
+  /// Ekstraksi fitur kontur/gradien bebas pencahayaan & perbandingan zona (mata, hidung, mulut)
+  static double _compareVisual(img.Image enrollCrop, img.Image liveCrop) {
+    final enrollResized = img.copyResize(enrollCrop, width: 64, height: 64);
+    final liveResized = img.copyResize(liveCrop, width: 64, height: 64);
+
+    final enrollGray = img.grayscale(enrollResized);
+    final liveGray = img.grayscale(liveResized);
+
+    // Citra gradien mengisolasi garis mata, alis, hidung, dan bibir tanpa terpengaruh pencahayaan
+    final enrollGrad = _gradientImage(enrollGray);
+    final enrollFull = _toVector(enrollGrad);
+    final enrollEyes = _toVectorSub(enrollGrad, 6, 8, 52, 22);
+    final enrollNose = _toVectorSub(enrollGrad, 14, 22, 36, 20);
+    final enrollMouth = _toVectorSub(enrollGrad, 10, 38, 44, 20);
+
+    final variants = <img.Image>[
+      liveGray,
+      img.flipHorizontal(_copy(liveGray)),
+    ];
+
+    var bestVisual = 0.0;
+
+    for (final vGray in variants) {
+      for (final dy in [0, -2, 2]) {
+        for (final dx in [0, -2, 2]) {
+          final shifted =
+              (dx == 0 && dy == 0) ? vGray : _shiftImage(vGray, dx, dy);
+          final liveGrad = _gradientImage(shifted);
+
+          final cosFull = _cosine(enrollFull, _toVector(liveGrad));
+          final cosEyes =
+              _cosine(enrollEyes, _toVectorSub(liveGrad, 6, 8, 52, 22));
+          final cosNose =
+              _cosine(enrollNose, _toVectorSub(liveGrad, 14, 22, 36, 20));
+          final cosMouth =
+              _cosine(enrollMouth, _toVectorSub(liveGrad, 10, 38, 44, 20));
+
+          // Penalti ketat: Jika zona mata tidak mirip (< 0.18), bukan orang yang sama
+          if (cosEyes < 0.18) continue;
+
+          final zoneScore =
+              (cosEyes * 0.50) + (cosNose * 0.25) + (cosMouth * 0.25);
+          final score = (cosFull * 0.40) + (zoneScore * 0.60);
+
+          if (score > bestVisual) {
+            bestVisual = score;
+          }
+        }
+      }
+    }
+    return bestVisual;
+  }
+
+  static img.Image _gradientImage(img.Image gray) {
+    final w = gray.width;
+    final h = gray.height;
+    final out = img.Image(width: w, height: h);
+    for (var y = 1; y < h - 1; y++) {
+      for (var x = 1; x < w - 1; x++) {
+        final pL = gray.getPixel(x - 1, y).r;
+        final pR = gray.getPixel(x + 1, y).r;
+        final pT = gray.getPixel(x, y - 1).r;
+        final pB = gray.getPixel(x, y + 1).r;
+        final dx = (pR - pL).abs();
+        final dy = (pB - pT).abs();
+        final mag = ((dx + dy) * 1.5).round().clamp(0, 255);
+        out.setPixelRgb(x, y, mag, mag, mag);
+      }
+    }
+    return out;
+  }
+
+  static List<double> _toVectorSub(
+      img.Image src, int startX, int startY, int w, int h) {
+    final raw = <double>[];
+    final endX = math.min(src.width, startX + w);
+    final endY = math.min(src.height, startY + h);
+    var minL = 255.0;
+    var maxL = 0.0;
+    for (var y = startY; y < endY; y++) {
+      for (var x = startX; x < endX; x++) {
+        final p = src.getPixel(x, y);
+        final lum = (p.r + p.g + p.b) / 3.0;
+        raw.add(lum);
+        if (lum < minL) minL = lum;
+        if (lum > maxL) maxL = lum;
+      }
+    }
+    if (raw.isEmpty) return const [];
+    final span = (maxL - minL).abs() < 1 ? 1.0 : (maxL - minL);
+    var sum = 0.0;
+    for (var i = 0; i < raw.length; i++) {
+      raw[i] = (raw[i] - minL) / span;
+      sum += raw[i];
+    }
+    final mean = sum / raw.length;
+    var norm = 0.0;
+    final centered = List<double>.generate(raw.length, (i) {
+      final v = raw[i] - mean;
+      norm += v * v;
+      return v;
+    });
+    norm = math.sqrt(norm);
+    if (norm < 0.0001) return centered;
+    return centered.map((v) => v / norm).toList();
   }
 
   static img.Image? _decodeOriented(Uint8List bytes) {

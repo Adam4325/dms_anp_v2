@@ -373,12 +373,9 @@ class FrmAttendanceState extends State<FrmAttendance> {
       if (mounted) setState(() => _faceStatus = status);
     } catch (_) {
       status ??= await FaceEnrollService.getCachedStatus();
-      if (status == null || !status.isApproved) {
-        alert(globalScaffoldKey.currentContext ?? context, 0,
-            'Koneksi terputus saat cek enroll. Coba lagi.', 'error');
-        return false;
-      }
     }
+    status ??= await FaceEnrollService.getCachedStatus();
+
     final enroll = status;
     if (enroll == null || !enroll.isApproved) {
       if (enroll != null && enroll.isPending) {
@@ -386,6 +383,18 @@ class FrmAttendanceState extends State<FrmAttendance> {
             'Enrollment wajah menunggu approve HRD', 'Warning');
         return false;
       }
+      if (enroll != null && enroll.isRejected) {
+        alert(globalScaffoldKey.currentContext ?? context, 0,
+            'Enrollment wajah ditolak HRD: ${enroll.rejectNote.isNotEmpty ? enroll.rejectNote : 'Silakan enroll ulang.'}', 'error');
+        if (!mounted) return false;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const FrmFaceEnroll()),
+        );
+        return false;
+      }
+      alert(globalScaffoldKey.currentContext ?? context, 0,
+          'Wajah belum terdaftar di sistem. Silakan lakukan enrollment wajah.', 'error');
       if (!mounted) return false;
       Navigator.pushReplacement(
         context,
@@ -409,7 +418,7 @@ class FrmAttendanceState extends State<FrmAttendance> {
     );
     if (ok != true) {
       alert(globalScaffoldKey.currentContext ?? context, 0,
-          'Verifikasi wajah ditolak atau dibatalkan', 'error');
+          'Verifikasi wajah belum berhasil. Gunakan Lampu Layar jika gelap lalu coba lagi.', 'error');
       return false;
     }
     return true;

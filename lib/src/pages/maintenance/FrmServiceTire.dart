@@ -2810,47 +2810,75 @@ class _FrmServiceTireState extends State<FrmServiceTire>
     // );
   }
 
+  Future<List<Map<String, dynamic>>> _fetchItemList(String search,
+      {int isBarcode = 0}) async {
+    final method = METHOD_DETAIL == "PURCHASE-ORDER"
+        ? "list-purchase-order-v1"
+        : "list-items-v1";
+    final url = Uri.parse(
+        "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=$method"
+        "&warehouseid=${Uri.encodeQueryComponent('${globals.from_ware_house}')}"
+        "&search=${Uri.encodeQueryComponent(search)}"
+        "&katalog=${Uri.encodeQueryComponent('$selKatalog')}"
+        "&is_barcode=$isBarcode"
+        "&status_apr=${Uri.encodeQueryComponent('$status_apr')}"
+        "&service_typeid=${Uri.encodeQueryComponent('$service_typeid')}"
+        "&merk=${Uri.encodeQueryComponent('$pm_merk')}"
+        "&vhttype=${Uri.encodeQueryComponent('$pm_vhttype')}"
+        "&wonumber=${Uri.encodeQueryComponent('$wonumberopname')}"
+        "&srnumber=${Uri.encodeQueryComponent('$srnumberopname')}");
+    print(url);
+    final response =
+        await http.get(url, headers: {"Accept": "application/json"});
+    if (response.statusCode != 200) {
+      throw Exception("Gagal load data item");
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) {
+      dataListItemSearch = [];
+      return dataListItemSearch;
+    }
+    dataListItemSearch = decoded
+        .map((dynamic e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+    return dataListItemSearch;
+  }
+
   Future getListDataItem(bool isload, String search, int is_barcode) async {
     try {
       EasyLoading.show();
-      var urlBase = "";
-      if (METHOD_DETAIL == "PURCHASE-ORDER") {
-        urlBase =
-            "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-purchase-order-v1&warehouseid=${globals.from_ware_house}&search=${search}&katalog=${selKatalog}&is_barcode=${is_barcode}&status_apr=${status_apr}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
-      } else {
-        urlBase =
-            "${BASE_URL}api/inventory/list_item_sr_katalog.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=${search}&katalog=${selKatalog}&is_barcode=${is_barcode}&status_apr=${status_apr}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
-      }
-      var url = urlBase;
-
-      var urlData = Uri.parse(url);
-      //var encoded = Uri.encodeFull(urlData);
-      print(urlData);
-      Uri myUri = urlData;
-      var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
-      if (response.statusCode == 200) {
-        //print(jsonDecode(response.body));
+      final list = await _fetchItemList(search, isBarcode: is_barcode);
+      if (mounted) {
         setState(() {
-          dataListItemSearch = (jsonDecode(response.body) as List)
-              .map((dynamic e) => e as Map<String, dynamic>)
-              .toList();
+          dataListItemSearch = list;
         });
-      } else {
-        alert(globalScaffoldKey.currentContext!, 0, "Gagal load data item",
-            "error");
-      }
-      if (EasyLoading.isShow) {
-        EasyLoading.dismiss();
       }
     } catch (e) {
       alert(globalScaffoldKey.currentContext!, 0, "Client, Load data item",
           "error");
       print(e.toString());
+    } finally {
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
     }
+  }
+
+  Future<void> _openItemSearchDialog({String search = ''}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    if (!mounted) return;
+    txtSearchPartname.text = search;
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return _ItemSearchDialog(
+          initialSearch: search,
+          searchController: txtSearchPartname,
+          onSearch: (q) => _fetchItemList(q),
+          itemBuilder: (item, index) => _buildDListDetailItem(item, index),
+        );
+      },
+    );
   }
 
   Widget listDataSrOpname(BuildContext context) {
@@ -3171,6 +3199,56 @@ class _FrmServiceTireState extends State<FrmServiceTire>
         ],
       ),
     );
+  }
+
+  String _katalogTitleOf(String kode) {
+    final k = kode.trim();
+    if (k.isEmpty) return '';
+    for (final e in lstVKatalog) {
+      final v = (e['value']?.toString() ?? '').trim();
+      if (v == k) {
+        final t = (e['title']?.toString() ?? '').trim();
+        return t.isEmpty ? k : t;
+      }
+    }
+    return k;
+  }
+
+  String _katalogChoiceTitle(Map item) {
+    final t = (item['title']?.toString() ?? '').trim();
+    final v = (item['value']?.toString() ?? '').trim();
+    if (t.isNotEmpty) return t;
+    return v;
+  }
+
+  String _resolveKatalogValue(String itpid) {
+    final kode = itpid.trim();
+    if (kode.isEmpty) return selKatalog;
+    for (final e in lstVKatalog) {
+      final v = (e['value']?.toString() ?? '').trim();
+      if (v == kode) return v;
+    }
+    String? best;
+    for (final e in lstVKatalog) {
+      final v = (e['value']?.toString() ?? '').trim();
+      if (v.isNotEmpty && (kode == v || kode.startsWith(v))) {
+        if (best == null || v.length > best.length) best = v;
+      }
+    }
+    return best ?? kode;
+  }
+
+  void _ensureKatalogChoice(String kode) {
+    if (kode.isEmpty) return;
+    final exists =
+        lstVKatalog.any((e) => (e['value']?.toString() ?? '').trim() == kode);
+    if (!exists) {
+      lstVKatalog = [
+        ...lstVKatalog,
+        {'value': kode, 'title': kode},
+      ];
+      lstVKatalogTemp = lstVKatalog;
+    }
   }
 
   Future<String> getMenuKatalog() async {
@@ -4539,75 +4617,66 @@ class _FrmServiceTireState extends State<FrmServiceTire>
   }
 
   Widget _buildDListDetailItem(dynamic item, int index) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: _tireListCard(
-        title: "Item ID : ${_s(item['item_id'])}",
-        rows: [
-          _kv('Partname', _s(item['part_name'])),
-          _kv('Type', _s(item['type'])),
-          _kv('Merk', _s(item['merk'])),
-          _kv('QTY', _s(item['quantity'])),
-          _kv('ID ACCESS', _s(item['accessories'])),
-          _kv('UOM', _s(item['uom_id'])),
-          _kv('ITEM SIZE', _s(item['item_size'])),
-          _kv('VHTID', _s(item['vhtid'])),
-          _kv('LOCID', _s(item['ware_house'])),
-          _kv('GENUINO', _s(item['genuine_no'])),
-        ],
-        actions: Row(children: <Widget>[
+    return _tireListCard(
+      compact: true,
+      title: "Item ID : ${_s(item['item_id'])}",
+      rows: [
+        _kv("Partname", _s(item['part_name']), dense: true),
+        _kv("Type", _s(item['type']), dense: true),
+        _kv("Merk", _s(item['merk']), dense: true),
+        _kv("Quantity Stock Akhir", _s(item['quantity']), dense: true),
+        _kv("ID ACCESS", _s(item['accessories']), dense: true),
+        _kv("UOM", _s(item['uom_id']), dense: true),
+        _kv("ITEM SIZE", _s(item['item_size']), dense: true),
+        _kv("VHTID", _s(item['vhtid']), dense: true),
+      ],
+      actions: Row(
+        children: [
           _tireBtn(
-            icon: Icons.edit,
+            icon: Icons.check_circle_outline,
             label: "Pilih",
             color: primaryOrange,
-            onPressed: () async {
-              Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-              //print(item);
+            onPressed: () {
+              Navigator.of(context, rootNavigator: true).pop(false);
               if (service_typeid == "PM1" ||
                   service_typeid == "PM2" ||
                   service_typeid == "PM3") {
-                txtOpnameQty.text = item['quantity'];
+                txtOpnameQty.text = item['quantity']?.toString() ?? '';
               }
-              txtItemID.text = item['item_id'];
-              txtPartName.text = item['part_name'];
-              txtItemSize.text = item['item_size'];
-              txtTypeID.text = item['type'];
-              txtTypeAccess.text = item['accessories'];
-              txtGenuineNoOpname.text = item['genuine_no'];
-              txtOpnameMerk.text = item['merk'];
-              var itpid = item['itpid'];
-              selKatalog = itpid;
-              print('itpid ${itpid}');
-              if (tab_name == "FORMAN_OR_PROSES") {
-                status_apr = "APR";
-              } else {
-                status_apr = "NEW";
-              }
-
-              var nKatalog =
-                  lstVKatalog.where((e) => e['value'] == selKatalog).single;
-
+              final itpid = (item['itpid'] ?? '').toString().trim();
               setState(() {
-                nama_katalog = "(${nKatalog['title']})";
+                txtItemID.text = item['item_id']?.toString() ?? '';
+                txtPartName.text = item['part_name']?.toString() ?? '';
+                txtItemSize.text = item['item_size']?.toString() ?? '';
+                txtTypeID.text = item['type']?.toString() ?? '';
+                txtTypeAccess.text = item['accessories']?.toString() ?? '';
+                txtGenuineNoOpname.text = item['genuine_no']?.toString() ?? '';
+                txtOpnameMerk.text = item['merk']?.toString() ?? '';
+                if (itpid.isNotEmpty) {
+                  selKatalog = _resolveKatalogValue(itpid);
+                  _ensureKatalogChoice(selKatalog);
+                }
+                nama_katalog = selKatalog.isEmpty
+                    ? ''
+                    : '(${_katalogTitleOf(selKatalog)})';
+                if (tab_name == "FORMAN_OR_PROSES") {
+                  status_apr = "APR";
+                } else {
+                  status_apr = "NEW";
+                }
               });
-              print(status_apr);
-              print(nKatalog['title']);
-              //print(lstVKatalog);
             },
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 8),
           _tireBtn(
             icon: Icons.close,
             label: "Close",
             color: accentOrange,
-            onPressed: () async {
-              Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-              setState(() {
-                nama_katalog = "";
-              });
+            onPressed: () {
+              Navigator.of(context, rootNavigator: true).pop(false);
             },
           ),
-        ]),
+        ],
       ),
     );
   }
@@ -4919,47 +4988,30 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               ),
               Container(
                 margin: EdgeInsets.all(12.0),
-                child: SmartSelect<String?>.single(
+                child: SmartSelect<String>.single(
+                key: ValueKey('katalog-$selKatalog-${lstVKatalog.length}'),
                 title: 'Katalog ${nama_katalog}',
                 selectedValue: selKatalog,
                 placeholder: 'Pilih satu',
                 onChange: (selected) async {
-                  SharedPreferences prefs =
-                      await SharedPreferences.getInstance();
-                  // Navigator.of(context,
-                  //     rootNavigator: true)
-                  //     .pop();
-
+                  final val = selected.value ?? '';
                   setState(() {
-                    selKatalog = selected.value!;
-                    nama_katalog = "";
+                    selKatalog = val;
+                    nama_katalog = selKatalog.isEmpty
+                        ? ''
+                        : '(${_katalogTitleOf(selKatalog)})';
                   });
-                  if (selKatalog == null || selKatalog == '') {
+                  if (selKatalog.isEmpty) {
                     alert(globalScaffoldKey.currentContext!, 0,
                         "Katalog ID Kosong", "error");
-                  } else {
-                    getListDataItem(true, txtPartName.text, 0);
-                    await Future.delayed(Duration(milliseconds: 1));
-                    if (dataListItemSearch.length > 0) {
-                      Timer(Duration(seconds: 1), () {
-                        showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (BuildContext context) {
-                              return tireAlertDialog(
-              title: 'List Detail Mechanic',
-              content: listDataSearchItem(context),
-                              );
-                            });
-                      });
-                    }
+                    return;
                   }
+                  await _openItemSearchDialog(search: txtPartName.text);
                 },
-
                 choiceItems: S2Choice.listFrom<String, Map>(
                     source: lstVKatalog,
-                    value: (index, item) => item['value'],
-                    title: (index, item) => item['title']),
-                //choiceGrouped: true,
+                    value: (index, item) => item['value']?.toString() ?? '',
+                    title: (index, item) => _katalogChoiceTitle(item)),
                 modalFilter: true,
                 modalFilterAuto: true,
               ),
@@ -5006,23 +5058,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
                                   txtPartName.text = "";
-                                  getListDataItem(true, txtPartName.text, 0);
-                                  await Future.delayed(
-                                      Duration(milliseconds: 1));
-                                  if (dataListItemSearch.length > 0) {
-                                    Timer(Duration(seconds: 1), () {
-                                      print('Show dialog');
-                                      showDialog(
-                                          context:
-                                              globalScaffoldKey.currentContext!,
-                                          builder: (BuildContext context) {
-                                            return tireAlertDialog(
-              title: 'List Detail Item',
-              content: listDataSearchItem(context),
-                                            );
-                                          });
-                                    });
-                                  }
+                                  await _openItemSearchDialog(search: '');
                                 },
                                 style: tireBtnStyle(primaryOrange),
                               ),
@@ -7132,30 +7168,30 @@ class _FrmServiceTireState extends State<FrmServiceTire>
     return t;
   }
 
-  Widget _kv(String label, String value) {
+  Widget _kv(String label, String value, {bool dense = false}) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 2),
+      padding: EdgeInsets.symmetric(vertical: dense ? 0 : 2),
       child: Table(
         columnWidths: const {
           0: IntrinsicColumnWidth(),
-          1: FixedColumnWidth(14),
+          1: FixedColumnWidth(10),
           2: FlexColumnWidth(),
         },
         children: [
           TableRow(children: [
             Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                label,
-                style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
-              ),
+              child: Text(label,
+                  style: TextStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: dense ? 11 : 12)),
             ),
             Align(
               alignment: Alignment.center,
-              child: Text(
-                ":",
-                style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
-              ),
+              child: Text(":",
+                  style: TextStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: dense ? 11 : 12)),
             ),
             Align(
               alignment: Alignment.centerRight,
@@ -7163,7 +7199,7 @@ class _FrmServiceTireState extends State<FrmServiceTire>
                 value.isEmpty ? '-' : value,
                 style: TextStyle(
                   color: Colors.grey.shade900,
-                  fontSize: 12,
+                  fontSize: dense ? 11 : 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -7194,18 +7230,22 @@ class _FrmServiceTireState extends State<FrmServiceTire>
     required String title,
     required List<Widget> rows,
     Widget? actions,
+    bool compact = false,
   }) {
+    final m = compact ? 6.0 : 12.0;
+    final v = compact ? 3.0 : 6.0;
+    final r = compact ? 10.0 : 14.0;
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+      margin: EdgeInsets.symmetric(horizontal: m, vertical: v),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(r),
         border: Border.all(color: accentOrange.withOpacity(0.45)),
         boxShadow: [
           BoxShadow(
             color: shadowColor,
-            blurRadius: 8,
-            offset: Offset(0, 3),
+            blurRadius: compact ? 4 : 8,
+            offset: Offset(0, compact ? 1 : 3),
           ),
         ],
       ),
@@ -7214,12 +7254,14 @@ class _FrmServiceTireState extends State<FrmServiceTire>
         children: <Widget>[
           Container(
             width: double.infinity,
-            padding: EdgeInsets.fromLTRB(14, 12, 14, 10),
+            padding: compact
+                ? EdgeInsets.fromLTRB(10, 6, 10, 6)
+                : EdgeInsets.fromLTRB(14, 12, 14, 10),
             decoration: BoxDecoration(
               color: lightOrange,
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(14),
-                topRight: Radius.circular(14),
+                topLeft: Radius.circular(r),
+                topRight: Radius.circular(r),
               ),
             ),
             child: Text(
@@ -7227,12 +7269,14 @@ class _FrmServiceTireState extends State<FrmServiceTire>
               style: TextStyle(
                 color: darkOrange,
                 fontWeight: FontWeight.w700,
-                fontSize: 14,
+                fontSize: compact ? 12 : 14,
               ),
             ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(14, 8, 14, 6),
+            padding: compact
+                ? EdgeInsets.fromLTRB(10, 4, 10, 4)
+                : EdgeInsets.fromLTRB(14, 8, 14, 6),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: rows,
@@ -7240,7 +7284,9 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           ),
           if (actions != null)
             Padding(
-              padding: EdgeInsets.fromLTRB(12, 4, 12, 12),
+              padding: compact
+                  ? EdgeInsets.fromLTRB(8, 2, 8, 8)
+                  : EdgeInsets.fromLTRB(12, 4, 12, 12),
               child: actions,
             ),
         ],
@@ -7314,6 +7360,241 @@ class _FrmServiceTireState extends State<FrmServiceTire>
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ItemSearchDialog extends StatefulWidget {
+  final String initialSearch;
+  final TextEditingController searchController;
+  final Future<List<Map<String, dynamic>>> Function(String search) onSearch;
+  final Widget Function(Map<String, dynamic> item, int index) itemBuilder;
+
+  const _ItemSearchDialog({
+    required this.initialSearch,
+    required this.searchController,
+    required this.onSearch,
+    required this.itemBuilder,
+  });
+
+  @override
+  State<_ItemSearchDialog> createState() => _ItemSearchDialogState();
+}
+
+class _ItemSearchDialogState extends State<_ItemSearchDialog> {
+  List<Map<String, dynamic>> _items = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.searchController.text = widget.initialSearch;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _load(widget.initialSearch);
+    });
+  }
+
+  Future<void> _load(String query) async {
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
+    try {
+      final result = await widget.onSearch(query);
+      if (!mounted) return;
+      setState(() {
+        _items = result;
+        _loading = false;
+        if (result.isEmpty) {
+          _error = "Data part tidak di temukan";
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _items = [];
+        _loading = false;
+        _error = "Gagal load data item";
+      });
+    }
+  }
+
+  static const Color _primary = Color(0xFFFF8C69);
+  static const Color _light = Color(0xFFFFF4E6);
+  static const Color _accent = Color(0xFFFFB347);
+  static const Color _dark = Color(0xFFE07B39);
+  static const Color _card = Color(0xFFFFF8F0);
+
+  ButtonStyle get _whiteBtn => ElevatedButton.styleFrom(
+        elevation: 0,
+        backgroundColor: _primary,
+        foregroundColor: Colors.white,
+        disabledForegroundColor: Colors.white70,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      );
+
+  Widget _whiteLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        fontSize: 13,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: _card,
+      titlePadding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      title: Row(
+        children: [
+          const Icon(Icons.inventory_2_outlined, color: _dark, size: 22),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'List Detail Item',
+              style: TextStyle(
+                color: _dark,
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          if (!_loading)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: _light,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${_items.length}',
+                style: const TextStyle(
+                  color: _primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+        ],
+      ),
+      content: SizedBox(
+        width: size.width,
+        height: size.height * 0.7,
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: widget.searchController,
+                    cursorColor: _primary,
+                    style: TextStyle(color: Colors.grey.shade800, fontSize: 14),
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (value) => _load(value),
+                    decoration: InputDecoration(
+                      labelText: "Partname",
+                      hintText: "Cari partname / item id",
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white,
+                      labelStyle:
+                          TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                      hintStyle:
+                          TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 12),
+                      prefixIcon:
+                          const Icon(Icons.search, color: _primary, size: 20),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            const BorderSide(color: _primary, width: 2),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () => _load(widget.searchController.text),
+                  style: _whiteBtn,
+                  child: _whiteLabel("Search"),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: _loading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: _primary),
+                    )
+                  : _items.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.search_off,
+                                  size: 40, color: Colors.grey.shade400),
+                              const SizedBox(height: 8),
+                              Text(
+                                _error ?? "Data part tidak di temukan",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          itemCount: _items.length,
+                          itemBuilder: (context, index) {
+                            return widget.itemBuilder(_items[index], index);
+                          },
+                        ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        ElevatedButton.icon(
+          icon: const Icon(Icons.close, color: Colors.white, size: 16),
+          label: _whiteLabel("Close"),
+          style: ElevatedButton.styleFrom(
+            elevation: 0,
+            backgroundColor: _accent,
+            foregroundColor: Colors.white,
+            disabledForegroundColor: Colors.white70,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
     );
   }
 }

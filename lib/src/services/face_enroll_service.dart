@@ -66,18 +66,25 @@ class FaceEnrollService {
 
   static Future<Map<String, String>> _sessionIds() async {
     final prefs = await SharedPreferences.getInstance();
+    String kryid = (prefs.getString('kryid') ?? '').trim();
+    if (kryid.toLowerCase() == 'null' || kryid.toLowerCase() == 'undefined') {
+      kryid = '';
+    }
+    String imeiid = (prefs.getString('androidID') ?? '').trim();
+    if (imeiid.toLowerCase() == 'null' || imeiid.toLowerCase() == 'undefined') {
+      imeiid = '';
+    }
     return {
-      'kryid': prefs.getString('kryid') ?? '',
+      'kryid': kryid,
       'username': prefs.getString('username') ?? '',
       'namakry': prefs.getString('name') ?? '',
-      'imeiid': prefs.getString('androidID') ?? '',
+      'imeiid': imeiid,
     };
   }
 
   /// GET dengan koneksi baru + retry. Hindari keep-alive yang putus
   /// ("Connection closed before full header was received").
   static Future<http.Response> _httpGet(Uri uri, {int tries = 3}) async {
-    Object? last;
     for (var i = 0; i < tries; i++) {
       final client = http.Client();
       try {
@@ -87,8 +94,7 @@ class FaceEnrollService {
               'Connection': 'close',
             })
             .timeout(const Duration(seconds: 15));
-      } catch (e) {
-        last = e;
+      } catch (_) {
         await Future.delayed(Duration(milliseconds: 350 * (i + 1)));
       } finally {
         client.close();
@@ -100,7 +106,10 @@ class FaceEnrollService {
   static Future<void> _saveStatusCache(FaceEnrollStatus status) async {
     final prefs = await SharedPreferences.getInstance();
     final ids = await _sessionIds();
-    await prefs.setString(_kCacheKry, ids['kryid'] ?? '');
+    final key = (ids['kryid'] ?? '').isNotEmpty
+        ? ids['kryid']!
+        : (ids['imeiid'] ?? '');
+    await prefs.setString(_kCacheKry, key);
     await prefs.setString(
       _kCacheJson,
       json.encode({
@@ -121,8 +130,10 @@ class FaceEnrollService {
   static Future<FaceEnrollStatus?> getCachedStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final ids = await _sessionIds();
-    final kry = ids['kryid'] ?? '';
-    if (kry.isEmpty || (prefs.getString(_kCacheKry) ?? '') != kry) {
+    final key = (ids['kryid'] ?? '').isNotEmpty
+        ? ids['kryid']!
+        : (ids['imeiid'] ?? '');
+    if (key.isEmpty || (prefs.getString(_kCacheKry) ?? '') != key) {
       return null;
     }
     final raw = prefs.getString(_kCacheJson);
@@ -234,6 +245,12 @@ class FaceEnrollService {
         throw Exception('Response enroll tidak valid');
       }
       final parsed = FaceEnrollStatus.fromJson(root);
+      if (parsed.isNone && allowCacheOnError) {
+        final cached = await getCachedStatus();
+        if (cached != null && cached.isApproved) {
+          return cached;
+        }
+      }
       await _saveStatusCache(parsed);
       if (parsed.isApproved && parsed.photoUrl.isNotEmpty) {
         fetchEnrollPhoto(parsed.photoUrl);

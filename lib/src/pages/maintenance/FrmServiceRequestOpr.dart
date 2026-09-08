@@ -9746,7 +9746,7 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
                 ),
               ),
               SmartSelect<String>.single(
-                title: 'Katalog',
+                title: 'Katalog${selKatalog == null || selKatalog == '' ? '' : ' (${lstVKatalog.firstWhere((e) => e['value'] == selKatalog, orElse: () => {'title': selKatalog})['title']})'}',
                 selectedValue: selKatalog,
                 placeholder: 'Pilih satu',
                 onChange: (selected) {

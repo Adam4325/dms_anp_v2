@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -766,6 +766,27 @@ class _ViewDashboardState extends State<ViewDashboard>
           2,
           'Enrollment wajah menunggu approve HRD. Absensi belum bisa dipakai.',
           'Warning',
+        );
+        return;
+      }
+      if (status.isRejected) {
+        _showAlert(
+          globalScaffoldKey.currentContext ?? context,
+          0,
+          'Enrollment wajah ditolak HRD: ${status.rejectNote.isNotEmpty ? status.rejectNote : 'Silakan enroll ulang.'}',
+          'error',
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const FrmFaceEnroll()),
+        );
+        return;
+      }
+      final cached = await FaceEnrollService.getCachedStatus();
+      if (cached != null && cached.isApproved) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => FrmAttendance()),
         );
         return;
       }

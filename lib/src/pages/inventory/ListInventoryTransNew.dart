@@ -33,7 +33,81 @@ List<Map<String, dynamic>> lstInvOrderNumberTemp2 = [];
 List<Map<String, dynamic>> lstSearchInvOrderNumber = [];
 var selInvOrderNumber = '';
 
-class _BottomSheetContentListWo extends StatelessWidget {
+List<Map<String, dynamic>> _cloneWoList(List<Map<String, dynamic>> src) {
+  return src.map((e) => Map<String, dynamic>.from(e)).toList();
+}
+
+void _setWoSource(List<Map<String, dynamic>> data) {
+  lstInvOrderNumberTemp = _cloneWoList(data);
+  lstInvOrderNumber = _cloneWoList(data);
+}
+
+void _restoreWoList() {
+  lstInvOrderNumber = _cloneWoList(lstInvOrderNumberTemp);
+}
+
+String _woListLabel(Map<String, dynamic> row) {
+  final id = row['id']?.toString().trim() ?? '';
+  final text = row['text']?.toString().trim() ?? '';
+  if (text.isNotEmpty && text != 'null') return text;
+  final nopol = row['nopol']?.toString().trim() ?? '';
+  if (nopol.isNotEmpty && nopol != 'null') return '$id - $nopol';
+  return id;
+}
+
+List<Map<String, dynamic>> _filterWoList(String value) {
+  final query = value.trim().toLowerCase();
+  if (query.isEmpty) {
+    return _cloneWoList(lstInvOrderNumberTemp);
+  }
+  return lstInvOrderNumberTemp.where((e) {
+    final id = e['id']?.toString().trim().toLowerCase() ?? '';
+    final text = e['text']?.toString().trim().toLowerCase() ?? '';
+    return id.contains(query) || text.contains(query);
+  }).toList();
+}
+
+class _BottomSheetContentListWo extends StatefulWidget {
+  final Future<void> Function() onRefresh;
+
+  const _BottomSheetContentListWo({required this.onRefresh});
+
+  @override
+  State<_BottomSheetContentListWo> createState() =>
+      _BottomSheetContentListWoState();
+}
+
+class _BottomSheetContentListWoState extends State<_BottomSheetContentListWo> {
+  bool _refreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    lstInvOrderNumber = _filterWoList(txtSearchWoNumber.text);
+  }
+
+  void _applySearch(String value) {
+    setState(() {
+      lstInvOrderNumber = _filterWoList(value);
+    });
+  }
+
+  Future<void> _refresh() async {
+    if (_refreshing) return;
+    setState(() => _refreshing = true);
+    txtSearchWoNumber.clear();
+    try {
+      await widget.onRefresh();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _refreshing = false;
+          lstInvOrderNumber = _filterWoList('');
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -42,25 +116,40 @@ class _BottomSheetContentListWo extends StatelessWidget {
         children: [
           SizedBox(
             height: 50,
-            child: Center(
-              child: Text(
-                "List Wo. Number",
-                textAlign: TextAlign.center,
-              ),
+            child: Row(
+              children: [
+                const SizedBox(width: 48),
+                const Expanded(
+                  child: Text(
+                    "List Wo. Number",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                IconButton(
+                  tooltip: "Refresh",
+                  onPressed: _refreshing ? null : _refresh,
+                  icon: _refreshing
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh, color: Color(0xFFFF8C69)),
+                ),
+              ],
             ),
           ),
           const Divider(thickness: 1),
           Container(
             margin: EdgeInsets.all(12.0),
             child: TextField(
-              onChanged: (value) {
-                //filterSearchResultsDriver(value);
-              },
+              onChanged: _applySearch,
               controller: txtSearchWoNumber,
-              cursorColor: Color(0xFFFF8C69), // ✅ Orange cursor
+              cursorColor: Color(0xFFFF8C69),
               style: TextStyle(color: Colors.black87, fontSize: 14),
               decoration: InputDecoration(
-                fillColor: Colors.white, // ✅ White background
+                fillColor: Colors.white,
                 filled: true,
                 isDense: true,
                 labelText: "Search",
@@ -71,7 +160,7 @@ class _BottomSheetContentListWo extends StatelessWidget {
                 contentPadding:
                     EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12), // ✅ Modern radius
+                  borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
                 ),
                 enabledBorder: OutlineInputBorder(
@@ -81,7 +170,7 @@ class _BottomSheetContentListWo extends StatelessWidget {
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
-                      color: Color(0xFFFF8C69), width: 2), // ✅ Orange focus
+                      color: Color(0xFFFF8C69), width: 2),
                 ),
               ),
             ),
@@ -101,13 +190,9 @@ class _BottomSheetContentListWo extends StatelessWidget {
                     child: Container(
                       margin: EdgeInsets.symmetric(vertical: 4),
                       child: ListTile(
-                        //leading: icon,
-                        title: Text("${lstInvOrderNumber[index]['id']}"),
+                        title: Text(_woListLabel(lstInvOrderNumber[index])),
                       ),
                     ));
-                // return ListTile(
-                //   title: Text("Demo ${index}"),
-                // );
               },
             ),
           ),
@@ -373,38 +458,8 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
     }
   }
 
-  void _searchWoNumber() {
-    List<Map<String, dynamic>> dummyListDataWo2 = [];
-    if (txtSearchWoNumber.text != "" && txtSearchWoNumber.text != null) {
-      if (txtSearchWoNumber.text.length >= 3) {
-        for (var i = 0; i < lstInvOrderNumberTemp.length; i++) {
-          var dtC = lstInvOrderNumberTemp[i]['id'].toLowerCase().toString();
-          //print("${dtC} => ${txtSearchCabangNameCHK.text.toLowerCase().toString()}");
-          if (dtC.contains(txtSearchWoNumber.text.toLowerCase().toString())) {
-            //print(dtC);
-            dummyListDataWo2.add({
-              "id": lstInvOrderNumberTemp[i]['id'].toString(),
-              "text": lstInvOrderNumberTemp[i]['text']
-            });
-          }
-        }
-      }
-      if (dummyListDataWo2.length > 0) {
-        if (mounted) {
-          setState(() {
-            lstInvOrderNumber = [];
-            lstInvOrderNumber = dummyListDataWo2;
-          });
-        }
-      } else {
-        lstInvOrderNumber = lstInvOrderNumberTemp;
-      }
-      return;
-    }
-  }
-
   Future<void> _showModalListWo(BuildContext context) async {
-    //selInvOrderNumber
+    txtSearchWoNumber.clear();
     await getListDataToWo();
     if (!mounted) {
       return;
@@ -412,7 +467,7 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
     showModalBottomSheet<void>(
       context: context,
       builder: (context) {
-        return _BottomSheetContentListWo();
+        return _BottomSheetContentListWo(onRefresh: getListDataToWo);
       },
     );
   }
@@ -442,7 +497,6 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
       getSession();
     });
     _tabController.addListener(_handleTabSelection);
-    txtSearchWoNumber.addListener(_searchWoNumber);
     print(lstInvOrderNumberTemp);
     //Future.delayed(Duration(milliseconds: 50));
     // if(globals.inv_back_page_detail!="" && globals.inv_back_page_detail!=null) {
@@ -564,7 +618,7 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                       child: Text('List Tyre')),
                 ],
               ),
-              title: Text('Detail Inventory',
+              title: Text('Inventory',
                   style: TextStyle(
                       color: Colors.white, fontWeight: FontWeight.w600)),
             ),
@@ -685,28 +739,60 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
 
   Future getListDataToWo() async {
     try {
-      if (lstInvOrderNumberTemp.isNotEmpty) {
-        return;
-      }
       EasyLoading.show();
+      await MasterDataCache.clear("inventory:list_wo");
 
       var url =
           "${GlobalData.baseUrl}api/inventory/refference_master.jsp?method=list_wo";
-
-      final data = await MasterDataCache.getJsonList(
-        cacheKey: "inventory:list_wo",
-        url: url,
-        headers: {"Accept": "application/json", "Connection": "Keep-Alive"},
+      print(url);
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {"Accept": "application/json", "Connection": "close"},
       );
-      setState(() {
-        lstInvOrderNumber = _toMapList(data);
-
-        lstInvOrderNumberTemp = lstInvOrderNumber;
-      });
+      if (response.statusCode == 200) {
+        var body = response.body.trim();
+        final start = body.indexOf('[');
+        final end = body.lastIndexOf(']');
+        if (start >= 0 && end > start) {
+          body = body.substring(start, end + 1);
+        }
+        final decoded = body.isEmpty ? [] : jsonDecode(body);
+        final data = decoded is List ? decoded : <dynamic>[];
+        final parsed = _toMapList(data).map((e) {
+          final row = Map<String, dynamic>.from(e);
+          row['id'] = row['id']?.toString().trim() ?? '';
+          row['text'] = row['text']?.toString().trim() ?? '';
+          return row;
+        }).toList();
+        if (mounted) {
+          setState(() {
+            _setWoSource(parsed);
+          });
+        } else {
+          _setWoSource(parsed);
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _setWoSource([]);
+          });
+        } else {
+          _setWoSource([]);
+        }
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Gagal load data To WO", "error");
+      }
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
     } catch (e) {
+      if (mounted) {
+        setState(() {
+          _setWoSource([]);
+        });
+      } else {
+        _setWoSource([]);
+      }
       alert(globalScaffoldKey.currentContext!, 0, "Client, Load data To WO",
           "error");
       print(e.toString());
@@ -857,6 +943,35 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
     try {
       EasyLoading.show();
 
+      final wo = inv_order_number.trim();
+      if (_requiresWoNumber(inv_type) && wo.isEmpty) {
+        alert(globalScaffoldKey.currentContext!, 0,
+            "WO Number tidak boleh kosong", "error");
+        if (EasyLoading.isShow) {
+          EasyLoading.dismiss();
+        }
+        return;
+      }
+      if (wo.isNotEmpty) {
+        final checkUri = Uri.parse(
+            "${GlobalData.baseUrl}api/inventory/refference_master.jsp?method=validate_wo&wonumber=$wo");
+        print(checkUri);
+        final checkResp = await http.get(checkUri,
+            headers: {"Accept": "application/json", "Connection": "close"});
+        if (checkResp.statusCode == 200) {
+          final checkBody = json.decode(checkResp.body.trim());
+          if (checkBody is Map && checkBody['ok'] != true) {
+            alert(globalScaffoldKey.currentContext!, 0,
+                checkBody['message']?.toString() ?? "WO Number $wo sudah finish",
+                "error");
+            if (EasyLoading.isShow) {
+              EasyLoading.dismiss();
+            }
+            return;
+          }
+        }
+      }
+
       var url =
           "${GlobalData.baseUrl}api/inventory/inventory_transaction.jsp?method=create-inv-trx&inv_date=${inv_date}"
           "&vendorid=${vendorid}&inv_type=${inv_type}&inv_from_wh=${inv_from_wh}&inv_to_wh=${inv_to_wh}&inv_order_number=${inv_order_number}&inv_to_customer=${inv_to_customer}&notes=${notes}&userid=${userid}&locid=${locid}";
@@ -909,36 +1024,54 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
     try {
       EasyLoading.show();
 
-      var url =
-          "${GlobalData.baseUrl}api/inventory/approve_transaction_inventory.jsp?act=approve&inv_trx_type=${inv_trx_type}&wo_number=${wo_number}&inv_trx_number=${inv_trx_number}&from_ware_house=${from_ware_house}&to_warehouse=${to_warehouse}&userid=${username}&locid=${locid}";
+      final uri = Uri.parse(
+              "${GlobalData.baseUrl}api/inventory/approve_transaction_inventory.jsp")
+          .replace(queryParameters: {
+        "act": "approve",
+        "inv_trx_type": inv_trx_type,
+        "wo_number": wo_number,
+        "inv_trx_number": inv_trx_number,
+        "from_ware_house": from_ware_house,
+        "to_warehouse": to_warehouse,
+        "userid": username,
+        "locid": locid,
+      });
 
-      var urlData = Uri.parse(url);
-      //var encoded = Uri.encodeFull(urlData);
-      print(urlData);
-      Uri myUri = urlData;
-      var response = await http.get(myUri,
-          headers: {"Accept": "application/json", "Connection": "Keep-Alive"});
+      print(uri);
+      final response = await http
+          .get(
+            uri,
+            headers: {"Accept": "application/json", "Connection": "close"},
+          )
+          .timeout(const Duration(seconds: 90));
       print(response.statusCode);
       if (response.statusCode == 200) {
-        var message = json.decode(response.body)["message"];
+        var body = response.body.trim();
+        final start = body.indexOf('{');
+        final end = body.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+          body = body.substring(start, end + 1);
+        }
+        final decoded = json.decode(body);
+        final message = decoded is Map ? decoded["message"] : body;
         if (message.toString().contains("Approve Success")) {
-          alert(globalScaffoldKey.currentContext!, 1, message, "success");
+          alert(globalScaffoldKey.currentContext!, 1, message.toString(), "success");
           paginatorGlobalKey.currentState?.changeState(
               pageLoadFuture: sendInventoryDataRequest, resetState: true);
         } else {
-          alert(globalScaffoldKey.currentContext!, 0, message, "error");
+          alert(globalScaffoldKey.currentContext!, 0, message.toString(), "error");
         }
       } else {
-        alert(globalScaffoldKey.currentContext!, 0, "Gagal approve transaction",
-            "error");
-      }
-      if (EasyLoading.isShow) {
-        EasyLoading.dismiss();
+        var body = response.body.trim();
+        if (body.length > 180) body = body.substring(0, 180);
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Gagal approve transaction (${response.statusCode}) $body", "error");
       }
     } catch ($e) {
       alert(globalScaffoldKey.currentContext!, 0,
           "failed approve transaction ${$e.toString()})", "error");
       print($e.toString());
+    } finally {
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
@@ -1004,75 +1137,42 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
     await getListDataToWo();
     if (!mounted) return;
 
-    setState(() {
-      var itemID = scanResult;
-      if (itemID != null && itemID != '') {
-        if (lstInvOrderNumber.length > 0) {
-          var dataFind = lstInvOrderNumber.where((x) => x['id'] == itemID);
-          lstInvOrderNumber = [];
-          var isFound = false;
-          if (dataFind.isNotEmpty) {
-            for (var i = 0; i < dataFind.length; i++) {
-              lstInvOrderNumber.add(dataFind.elementAt(i));
-              isFound = true;
-            }
-          }
-          if (isFound == true) {
-            setState(() {
-              selInvOrderNumber = itemID;
-              txtWoNumberID.text = itemID;
-            });
-          } else {
-            alert(globalScaffoldKey.currentContext!, 3, "WO Number tidak di temukan!", "Info");
-          }
-        } else {
-          alert(globalScaffoldKey.currentContext!, 3, "WO Number tidak di temukan!", "Info");
-        }
-      } else {
-        alert(globalScaffoldKey.currentContext!, 3, "WO Number tidak di temukan!", "Info");
-      }
-    });
+    final itemID = scanResult.trim();
+    final dataFind = lstInvOrderNumberTemp.where((x) =>
+        x['id'].toString().trim().toLowerCase() == itemID.toLowerCase());
+    if (dataFind.isNotEmpty) {
+      setState(() {
+        selInvOrderNumber = dataFind.first['id'].toString().trim();
+        txtWoNumberID.text = selInvOrderNumber;
+        _restoreWoList();
+      });
+    } else {
+      setState(() {
+        _restoreWoList();
+      });
+      alert(globalScaffoldKey.currentContext!, 3,
+          "WO Number tidak di temukan!", "Info");
+    }
   }
 
   Future scanQRCodeWODev() async {
     await getListDataToWo();
     if (!mounted) return;
 
-    setState(() {
-      scanResult = "ANWO23013311";
-
-      ///print("scanResult : $scanResult");
-      if (scanResult != null) {
-        var itemID = scanResult;
-        if (itemID != null && itemID != '') {
-          if (lstInvOrderNumber.length > 0) {
-            var dataFind = lstInvOrderNumber
-                .where((x) => x['id'] == itemID); //ANWO20012584
-            lstInvOrderNumber = [];
-            var isFound = false;
-            if (dataFind.isNotEmpty) {
-              for (var i = 0; i < dataFind.length; i++) {
-                lstInvOrderNumber.add(dataFind.elementAt(i));
-                isFound = true;
-              }
-            }
-            if (isFound == true) {
-              setState(() {
-                selInvOrderNumber = itemID;
-                txtWoNumberID.text = itemID;
-              });
-            }
-            print(lstInvOrderNumber);
-          }
-        } else {
-          alert(globalScaffoldKey.currentContext!, 3,
-              "WO Number tidak di temukan!", "Info");
-        }
-      } else {
-        alert(globalScaffoldKey.currentContext!, 0, "Scan WO Number gagal!",
-            "error");
-      }
-    });
+    final itemID = "ANWO23013311";
+    final dataFind = lstInvOrderNumberTemp.where((x) =>
+        x['id'].toString().trim().toLowerCase() == itemID.toLowerCase());
+    if (dataFind.isNotEmpty) {
+      setState(() {
+        selInvOrderNumber = dataFind.first['id'].toString().trim();
+        txtWoNumberID.text = selInvOrderNumber;
+        _restoreWoList();
+      });
+    } else {
+      setState(_restoreWoList);
+      alert(globalScaffoldKey.currentContext!, 3,
+          "WO Number tidak di temukan!", "Info");
+    }
   }
 
   var array_list_smart = []; //list disable
@@ -1118,8 +1218,7 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                   array_list_smart = [];
                   print(selTrxType);
                   readOnlyWo = false;
-                  lstInvOrderNumber = [];
-                  lstInvOrderNumber = lstInvOrderNumberTemp;
+                  _restoreWoList();
                   if (selTrxType == 'IR-W' || selTrxType == 'IS-W') {
                     selInvToCustomer = '';
                     selInvOrderNumber = '';
@@ -1305,76 +1404,119 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                   if (IsScanWo == true) {
                     showDialog(
                       context: context,
-                      builder: (context) => new AlertDialog(
+                      builder: (dialogCtx) => AlertDialog(
+                        backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        backgroundColor: cardColor,
-                        title: new Text('Information',
-                            style: TextStyle(
-                              color: darkOrange,
-                              fontWeight: FontWeight.w600,
-                            )),
-                        content: new Text("Scan WO Number?"),
-                        actions: <Widget>[
-                          new ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.cancel,
-                              color: Colors.white,
-                              size: 18.0,
+                        titlePadding: EdgeInsets.fromLTRB(20, 18, 12, 0),
+                        contentPadding: EdgeInsets.fromLTRB(20, 12, 20, 8),
+                        actionsPadding: EdgeInsets.fromLTRB(16, 4, 16, 16),
+                        title: Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: lightOrange,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.qr_code_scanner,
+                                  color: darkOrange, size: 22),
                             ),
-                            label: Text("Cancel"),
-                            onPressed: () {
-                              Navigator.of(context).pop(false);
-                              setState(() {
-                                IsScanWo = false;
-                                selInvOrderNumber = "";
-                                txtWoNumberID.text = "";
-                                lstInvOrderNumber = lstInvOrderNumberTemp;
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                                elevation: 2.0,
-                                backgroundColor: Colors.grey.shade500,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Scan Barcode',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: darkOrange,
+                                  fontSize: 17,
                                 ),
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
-                                textStyle: TextStyle(
-                                    fontSize: 10, fontWeight: FontWeight.w600)),
+                              ),
+                            ),
+                          ],
+                        ),
+                        content: Text(
+                          'Scan WO Number via barcode / QR code?',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade700,
+                            height: 1.35,
                           ),
-                          new ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.search,
-                              color: Colors.white,
-                              size: 18.0,
-                            ),
-                            label: Text("Scan WO?"),
-                            onPressed: () async {
-                              Navigator.of(context).pop(false);
-                              setState(() {
-                                selInvOrderNumber = "";
-                                txtWoNumberID.text = "";
-                              });
-                              scanQRCodeWO();
-                              if (IsScanWo == true) { //
-                                setState(() {
-                                  IsScanWo = false;
-                                });
-                                print("IsScanWo ${IsScanWo}");
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                                elevation: 2.0,
-                                backgroundColor: primaryOrange,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                        ),
+                        actions: [
+                          Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  icon: Icon(Icons.qr_code_scanner,
+                                      color: Colors.white, size: 20),
+                                  label: Text(
+                                    'Scan By Barcode',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  onPressed: () async {
+                                    Navigator.of(dialogCtx).pop(false);
+                                    setState(() {
+                                      selInvOrderNumber = "";
+                                      txtWoNumberID.text = "";
+                                    });
+                                    scanQRCodeWO();
+                                    if (IsScanWo == true) {
+                                      setState(() {
+                                        IsScanWo = false;
+                                      });
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    elevation: 0,
+                                    backgroundColor: primaryOrange,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
                                 ),
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
-                                textStyle: TextStyle(
-                                    fontSize: 10, fontWeight: FontWeight.w600)),
+                              ),
+                              SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  icon: Icon(Icons.close,
+                                      color: Colors.white, size: 20),
+                                  label: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(dialogCtx).pop(false);
+                                    setState(() {
+                                      IsScanWo = false;
+                                      selInvOrderNumber = "";
+                                      txtWoNumberID.text = "";
+                                      _restoreWoList();
+                                    });
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    elevation: 0,
+                                    backgroundColor: Colors.grey.shade500,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -1496,6 +1638,11 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                         (selInvVendorID == '' || selInvVendorID == null)) {
                       alert(globalScaffoldKey.currentContext!, 2,
                           "Vendor ID tidak boleh kosong", "warning");
+                    } else if (_requiresWoNumber(selTrxType ?? '') &&
+                        _s(selInvOrderNumber).isEmpty &&
+                        _s(txtWoNumberID.text).isEmpty) {
+                      alert(globalScaffoldKey.currentContext!, 2,
+                          "WO Number tidak boleh kosong", "warning");
                     } else {
                       showDialog(
                         context: context,
@@ -2143,6 +2290,13 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
     return t;
   }
 
+  bool _requiresWoNumber(String type) {
+    final t = type.trim().toUpperCase();
+    return t == 'IS-M' || t == 'IS-B' || t == 'IR-M';
+  }
+
+  bool _isIrType(String type) => type.trim().toUpperCase().startsWith('IR-');
+
   Widget _kv(String label, String value) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 2),
@@ -2342,7 +2496,8 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                   label: 'Cancel',
                   color: Colors.grey.shade500,
                   onPressed: () {
-                    if (_s(value['wo_number']).isEmpty) {
+                    if (_requiresWoNumber(_s(value['inv_trx_type'])) &&
+                        _s(value['wo_number']).isEmpty) {
                       alert(globalScaffoldKey.currentContext!, 0,
                           "WO Number tidak boleh kosong", "error");
                     } else if (_s(value['inv_trx_number']).isEmpty) {
@@ -2394,16 +2549,18 @@ class _ListInventoryTransNewState extends State<ListInventoryTransNew>
                   label: 'Approve',
                   color: darkOrange,
                   onPressed: () {
-                    if (_s(value['wo_number']).isEmpty) {
+                    if (_requiresWoNumber(_s(value['inv_trx_type'])) &&
+                        _s(value['wo_number']).isEmpty) {
                       alert(globalScaffoldKey.currentContext!, 0,
                           "WO Number tidak boleh kosong", "error");
                     } else if (_s(value['inv_trx_number']).isEmpty) {
                       alert(globalScaffoldKey.currentContext!, 0,
                           "Trx Number tidak boleh kosong", "error");
                     } else if (_s(value['inv_trx_type']).isEmpty) {
-                      alert(globalScaffoldKey.currentContext!, 0,
+                      alert(globalScaffoldKey.currentContext!, 0,////
                           "Type tidak boleh kosong", "error");
-                    } else if (_s(value['from_ware_house']).isEmpty) {
+                    } else if (!_isIrType(_s(value['inv_trx_type'])) &&
+                        _s(value['from_ware_house']).isEmpty) {
                       alert(globalScaffoldKey.currentContext!, 0,
                           "WH ID tidak boleh kosong", "error");
                     } else if (_s(value['locid']).isEmpty) {

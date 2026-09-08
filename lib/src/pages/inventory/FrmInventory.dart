@@ -1341,7 +1341,8 @@ class _FrmInventoryState extends State<FrmInventory> {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,//
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
         decoration: BoxDecoration(//
           color: bgColor,
           borderRadius: BorderRadius.circular(10),
@@ -1403,38 +1404,71 @@ class _FrmInventoryState extends State<FrmInventory> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Information',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text('Filter by name or Scan item ID?'),
-                        const SizedBox(height: 16),
                         Row(
                           children: [
-                            Expanded(
-                              child: _solidActionButton(
-                                icon: Icons.qr_code_scanner,
-                                label: 'Scan QRCode',
-                                bgColor: primaryOrange,
-                                onTap: () {
-                                  Navigator.of(routeCtx).pop('scan');
-                                },
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: lightOrange,
+                                shape: BoxShape.circle,
                               ),
+                              child: Icon(Icons.qr_code_scanner,
+                                  color: darkOrange, size: 22),
                             ),
                             const SizedBox(width: 10),
-                            Expanded(
-                              child: _solidActionButton(
-                                icon: Icons.search,
-                                label: 'Search By Name',
-                                bgColor: accentOrange,//
-                                onTap: () {
-                                  Navigator.of(routeCtx).pop('search');
-                                },
+                            const Expanded(
+                              child: Text(
+                                'Search Barcode',
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.w700),
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Scan item ID via barcode / QR, atau cari by name.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade700,
+                            height: 1.35,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: _solidActionButton(
+                            icon: Icons.qr_code_scanner,
+                            label: 'Scan By Barcode',
+                            bgColor: primaryOrange,
+                            onTap: () {
+                              Navigator.of(routeCtx).pop('scan');
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: _solidActionButton(
+                            icon: Icons.search,
+                            label: 'Search By Name',
+                            bgColor: accentOrange,
+                            onTap: () {
+                              Navigator.of(routeCtx).pop('search');
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: _solidActionButton(
+                            icon: Icons.close,
+                            label: 'Cancel',
+                            bgColor: Colors.grey.shade500,
+                            onTap: () {
+                              Navigator.of(routeCtx).pop();
+                            },
+                          ),
                         ),
                       ],
                     ),

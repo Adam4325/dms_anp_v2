@@ -1050,11 +1050,15 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     List<Widget> actions = const <Widget>[],
   }) {
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       backgroundColor: cardColor,
+      titlePadding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       title: Text(
         title,
-        style: TextStyle(color: darkOrange, fontWeight: FontWeight.w600),
+        style: TextStyle(color: darkOrange, fontWeight: FontWeight.w700, fontSize: 16),
       ),
       content: content,
       actions: actions,
@@ -1736,6 +1740,85 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     status_apr = "NEW";
   }
 
+  String _katalogTitleOf(String kode) {
+    final k = kode.trim();
+    if (k.isEmpty) return '';
+    for (final e in lstVKatalog) {
+      final v = (e['value']?.toString() ?? '').trim();
+      if (v == k) {
+        final t = (e['title']?.toString() ?? '').trim();
+        return t.isEmpty ? k : t;
+      }
+    }
+    return k;
+  }
+
+  String _katalogChoiceTitle(Map item) {
+    final t = (item['title']?.toString() ?? '').trim();
+    final v = (item['value']?.toString() ?? '').trim();
+    if (t.isNotEmpty) return t;
+    return v;
+  }
+
+  String _resolveKatalogValue(String itpid) {
+    final kode = itpid.trim();
+    if (kode.isEmpty) return selKatalog;
+    for (final e in lstVKatalog) {
+      final v = (e['value']?.toString() ?? '').trim();
+      if (v == kode) return v;
+    }
+    String? best;
+    for (final e in lstVKatalog) {
+      final v = (e['value']?.toString() ?? '').trim();
+      if (v.isNotEmpty && (kode == v || kode.startsWith(v))) {
+        if (best == null || v.length > best.length) best = v;
+      }
+    }
+    return best ?? kode;
+  }
+
+  void _ensureKatalogChoice(String kode) {
+    if (kode.isEmpty) return;
+    final exists =
+        lstVKatalog.any((e) => (e['value']?.toString() ?? '').trim() == kode);
+    if (!exists) {
+      lstVKatalog = [
+        ...lstVKatalog,
+        {'value': kode, 'title': kode},
+      ];
+      lstVKatalogTemp = lstVKatalog;
+    }
+  }
+
+  void _applySparepartSelection(dynamic item, {String? itemIdOverride}) {
+    final itpid = (item['itpid'] ?? '').toString().trim();
+    setState(() {
+      if (service_typeid == "PM1" ||
+          service_typeid == "PM2" ||
+          service_typeid == "PM3") {
+        final qty = item['quantity'];
+        if (qty != null && qty.toString().isNotEmpty) {
+          txtOpnameQty.text = qty.toString();
+        }
+      }
+      final itemId =
+          (itemIdOverride ?? item['item_id']?.toString() ?? '').trim();
+      final partName = (item['part_name']?.toString() ?? '').trim();
+      txtItemID.text = itemId;
+      txtPartName.text = partName;
+      txtItemSize.text = item['item_size']?.toString() ?? '';
+      txtTypeID.text = item['type']?.toString() ?? '';
+      txtTypeAccess.text = item['accessories']?.toString() ?? '';
+      txtGenuineNoOpname.text = item['genuine_no']?.toString() ?? '';
+      txtOpnameMerk.text = item['merk']?.toString() ?? '';
+      if (itpid.isNotEmpty) {
+        selKatalog = _resolveKatalogValue(itpid);
+        _ensureKatalogChoice(selKatalog);
+      }
+      nama_katalog = selKatalog.isEmpty ? '' : '(${_katalogTitleOf(selKatalog)})';
+    });
+  }
+
   void resetTeksFinish() {
     fnVHCID = '';
     fnFITTYREID = '';
@@ -2201,12 +2284,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         List result = json.decode(response.body);
         //print(result.length);
         if (result != null && result.length > 0) {
-          txtItemID.text = itemid;
-          txtPartName.text = result[0]['part_name'];
-          txtTypeID.text = result[0]['type'];
-          txtTypeAccess.text = result[0]['accessories'];
-          txtGenuineNoOpname.text = result[0]['genuine_no'];
-          txtOpnameMerk.text = result[0]['merk'];
+          _applySparepartSelection(result[0], itemIdOverride: itemid);
           myFocusNode.requestFocus();
         } else {
           alert(globalScaffoldKey.currentContext!, 2,
@@ -2716,7 +2794,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   //                       color: Colors.white,
   //                       size: 24.0,
   //                     ),
-  //                     label: Text("Ok"),
+  //                     label: pmBtnLabel("Ok"),
   //                     onPressed: () {
   //                       Navigator.of(context, rootNavigator: true).pop();
   //                       resetTeksFinishOpnameDetail();
@@ -2920,7 +2998,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         if (isQtyZero && selectedItemQuantity == 0) {
@@ -3045,7 +3123,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeksFinishOpname();
@@ -3163,7 +3241,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeksFinishOpname();
@@ -3988,48 +4066,77 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     }
   }
 
+  Future<List<Map<String, dynamic>>> _fetchItemList(String search,
+      {int isBarcode = 0}) async {
+    final method = METHOD_DETAIL == "PURCHASE-ORDER"
+        ? "list-purchase-order-v1"
+        : "list-items-v1";
+    final url = Uri.parse(
+        "${BASE_URL}api/inventory/list_item_sr_katalog_new.jsp?method=$method"
+        "&warehouseid=${Uri.encodeQueryComponent('${globals.from_ware_house}')}"
+        "&search=${Uri.encodeQueryComponent(search)}"
+        "&katalog=${Uri.encodeQueryComponent('$selKatalog')}"
+        "&is_barcode=$isBarcode"
+        "&status_apr=${Uri.encodeQueryComponent('$status_apr')}"
+        "&service_typeid=${Uri.encodeQueryComponent('$service_typeid')}"
+        "&merk=${Uri.encodeQueryComponent('$pm_merk')}"
+        "&vhttype=${Uri.encodeQueryComponent('$pm_vhttype')}"
+        "&wonumber=${Uri.encodeQueryComponent('$wonumberopname')}"
+        "&srnumber=${Uri.encodeQueryComponent('$srnumberopname')}");
+    print("list_item_sr_katalog_new");
+    print(url);
+    final response =
+        await http.get(url, headers: {"Accept": "application/json"});
+    if (response.statusCode != 200) {
+      throw Exception("Gagal load data item");
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) {
+      dataListItemSearch = [];
+      return dataListItemSearch;
+    }
+    dataListItemSearch = decoded
+        .map((dynamic e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+    return dataListItemSearch;
+  }
+
   Future getListDataItem(bool isload, String search, int is_barcode) async {
     try {
       EasyLoading.show();
-      var urlBase = "";
-      if (METHOD_DETAIL == "PURCHASE-ORDER") {
-        urlBase =
-            "${BASE_URL}api/inventory/list_item_sr_katalog_new.jsp?method=list-purchase-order-v1&warehouseid=${globals.from_ware_house}&search=${search}&katalog=${selKatalog}&is_barcode=${is_barcode}&status_apr=${status_apr}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
-      } else {
-        urlBase =
-            "${BASE_URL}api/inventory/list_item_sr_katalog_new.jsp?method=list-items-v1&warehouseid=${globals.from_ware_house}&search=${search}&katalog=${selKatalog}&is_barcode=${is_barcode}&status_apr=${status_apr}&service_typeid=${service_typeid}&merk=${pm_merk}&vhttype=${pm_vhttype}&wonumber=${wonumberopname}&srnumber=${srnumberopname}";
-      }
-      var url = urlBase;
-
-      var urlData = Uri.parse(url);
-      //var encoded = Uri.encodeFull(urlData);
-      print("list_item_sr_katalog_new");
-      print(urlData);
-      Uri myUri = urlData;
-      var response =
-          await http.get(myUri, headers: {"Accept": "application/json"});
-      if (response.statusCode == 200) {
-        //print(jsonDecode(response.body));
+      final list = await _fetchItemList(search, isBarcode: is_barcode);
+      if (mounted) {
         setState(() {
-          dataListItemSearch = (jsonDecode(response.body) as List)
-              .map((dynamic e) => e as Map<String, dynamic>)
-              .toList();
+          dataListItemSearch = list;
         });
-      } else {
-        alert(globalScaffoldKey.currentContext!, 0, "Gagal load data item",
-            "error");
-      }
-      if (EasyLoading.isShow) {
-        EasyLoading.dismiss();
       }
     } catch (e) {
       alert(globalScaffoldKey.currentContext!, 0, "Client, Load data item",
           "error");
       print(e.toString());
+    } finally {
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
     }
+  }
+
+  Future<void> _openItemSearchDialog({String search = ''}) async {
+    // Info dialog / EasyLoading overlay must finish popping first.
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    if (!mounted) return;
+    txtSearchPartname.text = search;
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return _ItemSearchDialog(
+          initialSearch: search,
+          searchController: txtSearchPartname,
+          onSearch: (q) => _fetchItemList(q),
+          itemBuilder: (item, index) => _buildDListDetailItem(item, index),
+        );
+      },
+    );
   }
 
   Future getListDataListMechanic(String wodwonumber) async {
@@ -4214,7 +4321,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeks();
@@ -4334,7 +4441,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () async {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeks();
@@ -4457,7 +4564,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () async {
                         Navigator.of(context, rootNavigator: true).pop();
                         resetTeks();
@@ -4563,7 +4670,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         getJSONDataFinish(true, "");
@@ -4670,7 +4777,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         getJSONDataFinish(true, "");
@@ -4775,7 +4882,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         getJSONDataFinish(true, "");
@@ -4874,7 +4981,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         getJSONData(true, '');
@@ -4972,7 +5079,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         getJSONData(true, '');
@@ -5086,7 +5193,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         setState(() {
@@ -5203,7 +5310,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 24.0,
                       ),
-                      label: Text("Ok"),
+                      label: pmBtnLabel("Ok"),
                       onPressed: () {
                         Navigator.of(context, rootNavigator: true).pop();
                         setState(() {
@@ -5819,7 +5926,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         color: Colors.white,
         size: 15.0,
       ),
-      label: Text("Pilih item"),
+      label: pmBtnLabel("Pilih item"),
       onPressed: () async {
         // print(collTyreNumber
         //     .where((x) => x['tyrenumber'] == item['tyrenumber'])
@@ -5908,7 +6015,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     color: Colors.white,
                     size: 20.0,
                   ),
-                  label: Text("Close", style: TextStyle(color: Colors.white)),
+                  label: pmBtnLabel("Close"),
                   onPressed: () {
                     Navigator.of(context).pop(false);
                   },
@@ -5926,7 +6033,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     color: Colors.white,
                     size: 20.0,
                   ),
-                  label: Text("Add Ban", style: TextStyle(color: Colors.white)),
+                  label: pmBtnLabel("Add Ban"),
                   onPressed: () async {
                     var isOK = globals.akses_pages == null
                         ? globals.akses_pages
@@ -6016,7 +6123,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     color: Colors.white,
                     size: 20.0,
                   ),
-                  label: Text("Submit", style: TextStyle(color: Colors.white)),
+                  label: pmBtnLabel("Submit"),
                   onPressed: () async {
                     Navigator.of(context).pop(false);
                     var isOK = globals.akses_pages == null
@@ -6114,7 +6221,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             color: Colors.white,
             size: 15.0,
           ),
-          label: Text("Pilih"),
+          label: pmBtnLabel("Pilih"),
           onPressed: () async {
             Navigator.of(globalScaffoldKey.currentContext!).pop(false);
             fnFITTYREID = item['iditemid'];
@@ -6200,7 +6307,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 20.0,
                     ),
-                    label: Text("Close"),
+                    label: pmBtnLabel("Close"),
                     onPressed: () {
                       Navigator.of(context).pop(false);
                     },
@@ -6217,7 +6324,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 20.0,
                     ),
-                    label: Text("Save"),
+                    label: pmBtnLabel("Save"),
                     onPressed: () async {
                       Navigator.of(context).pop(false);
                       var isOK = globals.akses_pages == null
@@ -6267,7 +6374,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             color: Colors.white,
             size: 15.0,
           ),
-          label: Text("Pilih"),
+          label: pmBtnLabel("Pilih"),
           onPressed: () async {
             Navigator.of(globalScaffoldKey.currentContext!).pop(false);
             fnFITTYREID = item['iditemid'];
@@ -6353,7 +6460,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 20.0,
                     ),
-                    label: Text("Close"),
+                    label: pmBtnLabel("Close"),
                     onPressed: () {
                       Navigator.of(context).pop(false);
                     },
@@ -6370,7 +6477,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 20.0,
                     ),
-                    label: Text("Save"),
+                    label: pmBtnLabel("Save"),
                     onPressed: () async {
                       Navigator.of(context).pop(false);
                       var isOK = globals.akses_pages == null
@@ -6425,7 +6532,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             color: Colors.white,
             size: 15.0,
           ),
-          label: Text("Add"),
+          label: pmBtnLabel("Add"),
           onPressed: () async {
             Navigator.of(globalScaffoldKey.currentContext!).pop(false);
             showDialog(
@@ -6453,7 +6560,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 20.0,
                     ),
-                    label: Text("Add"),
+                    label: pmBtnLabel("Add"),
                     onPressed: () async {
                       Navigator.of(context).pop(false);
                       setState(() {
@@ -6488,7 +6595,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 20.0,
                     ),
-                    label: Text("Close"),
+                    label: pmBtnLabel("Close"),
                     onPressed: () async {
                       Navigator.of(context).pop(false);
                     },
@@ -6519,7 +6626,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             color: Colors.white,
             size: 15.0,
           ),
-          label: Text("Delete"),
+          label: pmBtnLabel("Delete"),
           onPressed: () async {
             Navigator.of(globalScaffoldKey.currentContext!).pop(false);
             showDialog(
@@ -6547,7 +6654,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 20.0,
                     ),
-                    label: Text("Delete Ban"),
+                    label: pmBtnLabel("Delete Ban"),
                     onPressed: () async {
                       //Navigator.of(context).pop(false);
                       var isOK = globals.akses_pages == null
@@ -6593,7 +6700,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 20.0,
                     ),
-                    label: Text("Close"),
+                    label: pmBtnLabel("Close"),
                     onPressed: () async {
                       Navigator.of(context).pop(false);
                     },
@@ -6627,7 +6734,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     color: Colors.white,
                     size: 15.0,
                   ),
-                  label: Text("Delete"),
+                  label: pmBtnLabel("Delete"),
                   onPressed: () async {
                     Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                     showDialog(
@@ -6655,7 +6762,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               color: Colors.white,
                               size: 20.0,
                             ),
-                            label: Text("Submit"),
+                            label: pmBtnLabel("Submit"),
                             onPressed: () async {
                               Navigator.of(context).pop(false);
                               setState(() {
@@ -6680,7 +6787,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               color: Colors.white,
                               size: 20.0,
                             ),
-                            label: Text("Close"),
+                            label: pmBtnLabel("Close"),
                             onPressed: () async {
                               Navigator.of(context).pop(false);
                             },
@@ -6714,7 +6821,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             color: Colors.white,
             size: 15.0,
           ),
-          label: Text("Cancel"),
+          label: pmBtnLabel("Cancel"),
           onPressed: () async {
             listItemApprove = [];
             dummylistBanTms = [];
@@ -6738,7 +6845,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             color: Colors.white,
             size: 15.0,
           ),
-          label: Text("Cancel"),
+          label: pmBtnLabel("Cancel"),
           onPressed: () async {
             listItemApprove = [];
             dummylistBanTmsQC = [];
@@ -6770,14 +6877,17 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
 
   Widget _buildDListTempOpnameDetails(dynamic item, int index) {
     return _pmListCard(
+      compact: true,
       title: "Item ID : ${_s(item['item_id'])}",
       rows: [
-        _kv('Partname', _s(item['part_name'])),
-        _kv('Qty', _s(item['quantity'])),
-        _kv('Merk', _s(item['part_name'])),
-        _kv('IDType.', _s(item['type'])),
-        _kv('Accessories.', _s(item['accessories'])),
-        _kv('Genuine No.', _s(item['genuine_no'])),
+        _kv("Partname", _s(item['part_name']), dense: true),
+        _kv("Type", _s(item['type']), dense: true),
+        _kv("Merk", _s(item['merk']), dense: true),
+        _kv("Quantity Stock Akhir", _s(item['quantity']), dense: true),
+        _kv("ID ACCESS", _s(item['accessories']), dense: true),
+        _kv("UOM", _s(item['uom_id']), dense: true),
+        _kv("ITEM SIZE", _s(item['item_size']), dense: true),
+        _kv("VHTID", _s(item['vhtid']), dense: true),
       ],
       actions: buildButtonDeleteDetailOpname(item),
     );
@@ -6885,7 +6995,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 15.0,
                       ),
-                      label: Text("Close"),
+                      label: pmBtnLabel("Close"),
                       onPressed: () async {
                         Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                       },
@@ -6907,7 +7017,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 15.0,
                       ),
-                      label: Text("Edit"),
+                      label: pmBtnLabel("Edit"),
                       onPressed: () async {
                         print('Edit Proses');
                         Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -6982,7 +7092,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                                   color: Colors.white,
                                                   size: 15.0,
                                                 ),
-                                                label: Text("Close"),
+                                                label: pmBtnLabel("Close"),
                                                 onPressed: () async {
                                                   Navigator.of(globalScaffoldKey
                                                       .currentContext!)
@@ -7008,7 +7118,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                                   color: Colors.white,
                                                   size: 15.0,
                                                 ),
-                                                label: Text("Update"),
+                                                label: pmBtnLabel("Update"),
                                                 onPressed: () async {
                                                   print('Edit Proses');
                                                   Navigator.of(globalScaffoldKey
@@ -7131,7 +7241,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 15.0,
                       ),
-                      label: Text("Close"),
+                      label: pmBtnLabel("Close"),
                       onPressed: () async {
                         Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                       },
@@ -7153,7 +7263,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         color: Colors.white,
                         size: 15.0,
                       ),
-                      label: Text("Edit"),
+                      label: pmBtnLabel("Edit"),
                       onPressed: () async {
                         print('Edit QC');
                         Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -7228,7 +7338,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                                   color: Colors.white,
                                                   size: 15.0,
                                                 ),
-                                                label: Text("Close"),
+                                                label: pmBtnLabel("Close"),
                                                 onPressed: () async {
                                                   Navigator.of(globalScaffoldKey
                                                       .currentContext!)
@@ -7254,7 +7364,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                                   color: Colors.white,
                                                   size: 15.0,
                                                 ),
-                                                label: Text("Update"),
+                                                label: pmBtnLabel("Update"),
                                                 onPressed: () async {
                                                   print('Edit Proses');
                                                   Navigator.of(globalScaffoldKey
@@ -7300,106 +7410,30 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   }
 
   Widget _buildDListDetailOpname(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                title: Text(
-                  "Katalog : ${item['katalog']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("ItemID : ${item['itemid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("TypID : ${item['idtype']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Genuino: ${item['genuineno']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Merk: ${item['merk']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Partname: ${item['partname']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Item Size: ${item['item_size']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("QTY: ${item['qty']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  )
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
-              ),
-            ),
-          ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(
-                children: <Widget>[
-                  buildDeleteOpnameDetail(context, item),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  Expanded(
-                      child: ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 15.0,
-                        ),
-                        label: Text("Close"),
-                        onPressed: () async {
-                          Navigator.of(globalScaffoldKey.currentContext!)
-                              .pop(false);
-                        },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0.0,
-                            backgroundColor: Colors.orangeAccent,
-                            padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                            textStyle: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
-                      ))
-                ],
-              ),
-            ),
+    return _pmListCard(
+      compact: true,
+      title:
+          "Katalog : ${_katalogTitleOf((item['katalog'] ?? item['itpid'] ?? '').toString())}",
+      rows: [
+        _kv("ItemID", _s(item['itemid']), dense: true),
+        _kv("TypID", _s(item['idtype']), dense: true),
+        _kv("Genuino", _s(item['genuineno']), dense: true),
+        _kv("Merk", _s(item['merk']), dense: true),
+        _kv("Partname", _s(item['partname']), dense: true),
+        _kv("Item Size", _s(item['item_size']), dense: true),
+        _kv("QTY", _s(item['qty']), dense: true),
+      ],
+      actions: Row(
+        children: [
+          buildDeleteOpnameDetail(context, item),
+          const SizedBox(width: 8),
+          _pmBtn(
+            icon: Icons.close,
+            label: "Close",
+            color: accentOrange,
+            onPressed: () {
+              Navigator.of(context, rootNavigator: true).pop(false);
+            },
           ),
         ],
       ),
@@ -7407,177 +7441,79 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   }
 
   Widget _buildDListDetailOpnameSr(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                title: Text(
-                  "SR Number : ${item['srnumber']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
+    return _pmListCard(
+      compact: true,
+      title: "SR Number : ${_s(item['srnumber'])}",
+      rows: [
+        _kv("SR DateTime", _fmtDt(item['requestdate']), dense: true),
+        _kv("VHCID", _s(item['vhcid']), dense: true),
+        _kv("LOCID", _s(item['srlocid']), dense: true),
+        _kv("DRV. NAME", _s(item['drvname']), dense: true),
+        _kv("NOTES", _s(item['srnotes']), dense: true),
+      ],
+      actions: Row(
+        children: [
+          _pmBtn(
+            icon: Icons.add_circle_outline,
+            label: "Add",
+            color: primaryOrange,
+            onPressed: () async {
+              Navigator.of(context, rootNavigator: true).pop(false);
+              service_typeid = item['srtypeid']?.toString() ?? '';
+              pm_locid = item['srlocid']?.toString() ?? '';
+              txtOpnameVHCID.text = item['vhcid'].toString();
+              txtOpnameWONUMBER.text = item['srnumber'].toString();
+              wonumberopname = item['wodwonbr']?.toString() ?? '';
+              srnumberopname = item['srnumber']?.toString() ?? '';
+              pm_merk = '';
+              pm_vhttype = '';
+              if (service_typeid == "PM1" ||
+                  service_typeid == "PM2" ||
+                  service_typeid == "PM3") {
+                pm_merk = item['manufacturer']?.toString() ?? '';
+                pm_vhttype = item['vhttype']?.toString() ?? '';
+              }
+              await getMenuKatalog();
+              showDialog(
+                context: context,
+                builder: (context) => pmAlertDialog(
+                  title: 'Information',
+                  content: const Text("Save Opname ?"),
+                  actions: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.save, color: Colors.white, size: 16),
+                      label: pmBtnLabel("Save Opname"),
+                      style: pmBtnStyle(primaryOrange),
+                      onPressed: () async {
+                        Navigator.of(context, rootNavigator: true).pop(false);
+                        createOpname();
+                      },
+                    ),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.close, color: Colors.white, size: 16),
+                      label: pmBtnLabel("Close"),
+                      style: pmBtnStyle(accentOrange),
+                      onPressed: () async {
+                        Navigator.of(context, rootNavigator: true).pop(false);
+                        setState(() {
+                          wonumberopname = "";
+                          txtOpnameVHCID.text = "";
+                        });
+                      },
+                    ),
+                  ],
                 ),
-                subtitle: Wrap(children: <Widget>[
-                  Text(
-                      "SR DateTime : ${DateFormat("yyyy-MM-dd HH:mm:ss").parse(item['requestdate'], false)}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  // Text("Original SR Number : ${item['orisrnumber']}",
-                  //     style: TextStyle(color: Colors.black)),
-                  // Divider(
-                  //   color: Colors.transparent,
-                  //   height: 0,
-                  // ),
-                  Text("VHCID : ${item['vhcid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("LOCID : ${item['srlocid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("DRV. NAME: ${item['drvname']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("NOTES: ${item['srnotes']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  )
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
-              ),
-            ),
+              );
+            },
           ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                Expanded(
-                    child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.edit,
-                        color: Colors.white,
-                        size: 15.0,
-                      ),
-                      label: Text("Add"),
-                      onPressed: () async {
-                        Navigator.of(context).pop(false);
-                        txtOpnameVHCID.text = item['vhcid'].toString();
-                        txtOpnameWONUMBER.text = item['srnumber'].toString();
-                        wonumberopname = item['wodwonbr'].toString();
-                        showDialog(
-                          context: globalScaffoldKey.currentContext!,
-                          builder: (context) => new AlertDialog(
-                            title: new Text('Information'),
-                            content: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Container(
-                                  margin: EdgeInsets.all(10.0),
-                                  child: Text("Save Opname ?"),
-                                ),
-                              ],
-                            ),
-                            actions: <Widget>[
-                              new ElevatedButton.icon(
-                                icon: Icon(
-                                  Icons.save,
-                                  color: Colors.white,
-                                  size: 20.0,
-                                ),
-                                label: Text("Save Opname ?"),
-                                onPressed: () async {
-                                  Navigator.of(context).pop(false);
-                                  print('save opname');
-                                  createOpname();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 0.0,
-                                    backgroundColor: primaryOrange,
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 0),
-                                    textStyle: TextStyle(
-                                        fontSize: 10, fontWeight: FontWeight.bold)),
-                              ),
-                              new ElevatedButton.icon(
-                                icon: Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 20.0,
-                                ),
-                                label: Text("Close"),
-                                onPressed: () async {
-                                  Navigator.of(context).pop(false);
-                                  setState(() {
-                                    wonumberopname = "";
-                                    txtOpnameVHCID.text = "";
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    elevation: 0.0,
-                                    backgroundColor: Colors.orangeAccent,
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 0),
-                                    textStyle: TextStyle(
-                                        fontSize: 10, fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: primaryOrange,
-                          padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    )),
-                SizedBox(width: 10),
-                Expanded(
-                    child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 15.0,
-                      ),
-                      label: Text("Close"),
-                      onPressed: () async {
-                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.orangeAccent,
-                          padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    )),
-              ]),
-            ),
+          const SizedBox(width: 8),
+          _pmBtn(
+            icon: Icons.close,
+            label: "Close",
+            color: accentOrange,
+            onPressed: () {
+              Navigator.of(context, rootNavigator: true).pop(false);
+            },
           ),
         ],
       ),
@@ -7585,127 +7521,38 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   }
 
   Widget _buildDListDetailItem(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                title: Text(
-                  "Item ID : ${item['item_id']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("Partname : ${item['part_name']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Type : ${item['type']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Merk : ${item['merk']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("ID ACCESS : ${item['accessories']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("UOM: ${item['uom_id']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("ITEM SIZE: ${item['item_size']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("VHTID: ${item['vhtid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  )
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
-              ),
-            ),
+    return _pmListCard(
+      compact: true,
+      title: "Item ID : ${_s(item['item_id'])}",
+      rows: [
+        _kv("Partname", _s(item['part_name']), dense: true),
+        _kv("Type", _s(item['type']), dense: true),
+        _kv("Merk", _s(item['merk']), dense: true),
+        _kv("Quantity Stock Akhir", _s(item['quantity']), dense: true),
+        _kv("ID ACCESS", _s(item['accessories']), dense: true),
+        _kv("UOM", _s(item['uom_id']), dense: true),
+        _kv("ITEM SIZE", _s(item['item_size']), dense: true),
+        _kv("VHTID", _s(item['vhtid']), dense: true),
+      ],
+      actions: Row(
+        children: [
+          _pmBtn(
+            icon: Icons.check_circle_outline,
+            label: "Pilih",
+            color: primaryOrange,
+            onPressed: () {
+              Navigator.of(context, rootNavigator: true).pop(false);
+              _applySparepartSelection(item);
+            },
           ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                Expanded(
-                    child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.edit,
-                        color: Colors.white,
-                        size: 15.0,
-                      ),
-                      label: Text("Pilih"),
-                      onPressed: () async {
-                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                        //print(item);
-                        txtItemID.text = item['item_id'];
-                        txtPartName.text = item['part_name'];
-                        txtItemSize.text = item['item_size'];
-                        txtTypeID.text = item['type'];
-                        txtTypeAccess.text = item['accessories'];
-                        txtGenuineNoOpname.text = item['genuine_no'];
-                        txtOpnameMerk.text = item['merk'];
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: primaryOrange,
-                          padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    )),
-                SizedBox(width: 10),
-                Expanded(
-                    child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 15.0,
-                      ),
-                      label: Text("Close"),
-                      onPressed: () async {
-                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.orangeAccent,
-                          padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    )),
-              ]),
-            ),
+          const SizedBox(width: 8),
+          _pmBtn(
+            icon: Icons.close,
+            label: "Close",
+            color: accentOrange,
+            onPressed: () {
+              Navigator.of(context, rootNavigator: true).pop(false);
+            },
           ),
         ],
       ),
@@ -7822,7 +7669,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             color: Colors.white,
             size: 15.0,
           ),
-          label: Text("Delete"),
+          label: pmBtnLabel("Delete"),
           onPressed: () async {
             Navigator.of(globalScaffoldKey.currentContext!).pop(false);
             showDialog(
@@ -7837,7 +7684,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 24.0,
                     ),
-                    label: Text("Close"),
+                    label: pmBtnLabel("Close"),
                     onPressed: () async {
                       //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                       Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -7855,7 +7702,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 24.0,
                     ),
-                    label: Text("Delete"),
+                    label: pmBtnLabel("Delete"),
                     onPressed: () async {
                       print('show');
                       Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -7900,7 +7747,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             color: Colors.white,
             size: 15.0,
           ),
-          label: Text("Delete"),
+          label: pmBtnLabel("Delete"),
           onPressed: () async {
             Navigator.of(globalScaffoldKey.currentContext!).pop(false);
             showDialog(
@@ -7915,7 +7762,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 24.0,
                     ),
-                    label: Text("Close"),
+                    label: pmBtnLabel("Close"),
                     onPressed: () async {
                       //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                       Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -7933,7 +7780,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 24.0,
                     ),
-                    label: Text("Delete"),
+                    label: pmBtnLabel("Delete"),
                     onPressed: () async {
                       print('show');
                       Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -7978,7 +7825,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             color: Colors.white,
             size: 15.0,
           ),
-          label: Text("Delete"),
+          label: pmBtnLabel("Delete"),
           onPressed: () async {
             Navigator.of(globalScaffoldKey.currentContext!).pop(false);
             showDialog(
@@ -7993,7 +7840,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 24.0,
                     ),
-                    label: Text("Close"),
+                    label: pmBtnLabel("Close"),
                     onPressed: () async {
                       //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                       Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -8011,7 +7858,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 24.0,
                     ),
-                    label: Text("Delete"),
+                    label: pmBtnLabel("Delete"),
                     onPressed: () async {
                       print('show');
                       Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -8056,7 +7903,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             color: Colors.white,
             size: 15.0,
           ),
-          label: Text("Delete"),
+          label: pmBtnLabel("Delete"),
           onPressed: () async {
             Navigator.of(globalScaffoldKey.currentContext!).pop(false);
             showDialog(
@@ -8071,7 +7918,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 24.0,
                     ),
-                    label: Text("Close"),
+                    label: pmBtnLabel("Close"),
                     onPressed: () async {
                       //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                       Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -8089,7 +7936,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 24.0,
                     ),
-                    label: Text("Delete"),
+                    label: pmBtnLabel("Delete"),
                     onPressed: () async {
                       print('show');
                       Navigator.of(globalScaffoldKey.currentContext!).pop(false);
@@ -8211,90 +8058,114 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   }
 
   Widget listDataOpnameDetail(BuildContext context) {
-    return SingleChildScrollView(
-      //shrinkWrap: true,
-      padding: EdgeInsets.all(2.0),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          Container(
-              height: MediaQuery.of(context)
-                  .size
-                  .height, // Change as per your requirement
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  padding: const EdgeInsets.all(2.0),
-                  itemCount: dataListOpnameDetail == null
-                      ? 0
-                      : dataListOpnameDetail.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return _buildDListDetailOpname(
-                        dataListOpnameDetail[index], index);
-                  }))
-        ],
-      ),
+    final size = MediaQuery.of(context).size;
+    return SizedBox(
+      width: size.width,
+      height: size.height * 0.62,
+      child: dataListOpnameDetail.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.search_off, size: 40, color: Colors.grey.shade400),
+                  const SizedBox(height: 8),
+                  Text(
+                    "tidak ada data yang di temukan",
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.only(bottom: 4),
+              itemCount: dataListOpnameDetail.length,
+              itemBuilder: (context, index) {
+                return _buildDListDetailOpname(
+                    dataListOpnameDetail[index], index);
+              },
+            ),
     );
   }
 
   Widget listDataSrOpname(BuildContext context) {
-    return SingleChildScrollView(
-      //shrinkWrap: true,
-      padding: EdgeInsets.all(2.0),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          Container(
-            margin: EdgeInsets.all(10.0),
-            child: TextField(
-              readOnly: false,
-              cursorColor: Colors.black,
-              style: TextStyle(color: Colors.grey.shade800),
-              controller: txtSearchVehicleSr,
-              keyboardType: TextInputType.text,
-              decoration: softDecoration(
-                  label: "VHCID",
-                  prefixIcon: Icon(Icons.search, color: primaryOrange),
-                  suffixIcon: IconButton(
-                    icon: new Image.asset(
-                      "assets/img/search.png",
-                      width: 32.0,
-                      height: 32.0,
+    final size = MediaQuery.of(context).size;
+    return StatefulBuilder(
+      builder: (context, setDialogState) {
+        final items = List<Map<String, dynamic>>.from(dataListSrOpname);
+        Future<void> _reload(String raw) async {
+          final q = raw.trim();
+          if (q.isEmpty || METHOD_DETAIL != '') return;
+          await getListDataSr(true, q.split('/')[0]);
+          if (context.mounted) setDialogState(() {});
+        }
+
+        return SizedBox(
+          width: size.width,
+          height: size.height * 0.7,
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: txtSearchVehicleSr,
+                      cursorColor: primaryOrange,
+                      style:
+                          TextStyle(color: Colors.grey.shade800, fontSize: 14),
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: _reload,
+                      decoration: softDecoration(
+                        label: "VHCID",
+                        hint: "Cari VHCID",
+                        prefixIcon:
+                            Icon(Icons.search, color: primaryOrange, size: 20),
+                      ),
                     ),
-                    onPressed: () async {
-                      if (txtSearchVehicleSr.text != null &&
-                          txtSearchVehicleSr.text != "" &&
-                          METHOD_DETAIL == '') {
-                        var vhcid =
-                        txtSearchVehicleSr.text.split('/')[0].toString();
-                        print(vhcid);
-                        await getListDataSr(true, vhcid);
-                      }
-                    },
                   ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => _reload(txtSearchVehicleSr.text),
+                    style: pmBtnStyle(primaryOrange),
+                    child: pmBtnLabel("Search"),
+                  ),
+                ],
               ),
-            ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: items.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.search_off,
+                                size: 40, color: Colors.grey.shade400),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Data SR tidak di temukan",
+                              style: TextStyle(
+                                  color: Colors.grey.shade600, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        key: ValueKey('sr-opname-${items.length}'),
+                        padding: const EdgeInsets.only(bottom: 4),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          if (index < 0 || index >= items.length) {
+                            return const SizedBox.shrink();
+                          }
+                          return _buildDListDetailOpnameSr(
+                              items[index], index);
+                        },
+                      ),
+              ),
+            ],
           ),
-          Container(
-              height: MediaQuery.of(context)
-                  .size
-                  .height, // Change as per your requirement
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  padding: const EdgeInsets.all(2.0),
-                  itemCount:
-                  dataListSrOpname == null ? 0 : dataListSrOpname.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return _buildDListDetailOpnameSr(
-                        dataListSrOpname[index], index);
-                  }))
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -8611,41 +8482,101 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   }
 
   Widget setupAlertDialoagContainerOpnamDetail(BuildContext context) {
-    return SingleChildScrollView(
-      //shrinkWrap: true,
-      padding: EdgeInsets.all(2.0),
-      clipBehavior: Clip.antiAlias,
+    final size = MediaQuery.of(context).size;
+    final items = List<Map<String, dynamic>>.from(dataListItemSearch);
+    return SizedBox(
+      width: size.width,
+      height: size.height * 0.62,
       child: Column(
         children: [
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: Row(children: <Widget>[
-                buildButtonOpnameDetail(context, dataListItemSearch)
-              ]),
-            ),
+          Row(
+            children: [
+              buildButtonOpnameDetail(context, dataListItemSearch),
+            ],
           ),
-          Container(
-              height: MediaQuery.of(context)
-                  .size
-                  .height, // Change as per your requirement
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  padding: const EdgeInsets.all(2.0),
-                  itemCount: dataListItemSearch == null
-                      ? 0
-                      : dataListItemSearch.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return _buildDListTempOpnameDetails(
-                        dataListItemSearch[index], index);
-                  })),
+          const SizedBox(height: 8),
+          Expanded(
+            child: items.isEmpty
+                ? Center(
+                    child: Text(
+                      "tidak ada data yang di temukan",
+                      style:
+                          TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    ),
+                  )
+                : ListView.builder(
+                    key: ValueKey('opname-detail-${items.length}'),
+                    padding: const EdgeInsets.only(bottom: 4),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      if (index < 0 || index >= items.length) {
+                        return const SizedBox.shrink();
+                      }
+                      return _buildDListTempOpnameDetails(items[index], index);
+                    },
+                  ),
+          ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showOpnameDetailDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: cardColor,
+          titlePadding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+          actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          title: Row(
+            children: [
+              Icon(Icons.inventory_2_outlined, color: darkOrange, size: 22),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'List Item',
+                  style: TextStyle(
+                    color: Color(0xFFE07B39),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: lightOrange,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${dataListItemSearch.length}',
+                  style: TextStyle(
+                    color: primaryOrange,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: setupAlertDialoagContainerOpnamDetail(context),
+          actions: [
+            ElevatedButton.icon(
+              icon: const Icon(Icons.close, color: Colors.white, size: 16),
+              label: pmBtnLabel("Close"),
+              style: pmBtnStyle(accentOrange),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -8881,7 +8812,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           color: Colors.white,
                           size: 15.0,
                         ),
-                        label: Text("Cancel"),
+                        label: pmBtnLabel("Cancel"),
                         onPressed: () async {
                           resetTeks();
                           setState(() {
@@ -8904,7 +8835,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           color: Colors.white,
                           size: 15.0,
                         ),
-                        label: Text("${btnSubmitText}"),
+                        label: pmBtnLabel("${btnSubmitText}"),
                         onPressed: () async {
                           if (is_edit_req != null && is_edit_req == true) {
                             showDialog(
@@ -8919,7 +8850,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                       color: Colors.white,
                                       size: 20.0,
                                     ),
-                                    label: Text("No"),
+                                    label: pmBtnLabel("No"),
                                     onPressed: () {
                                       Navigator.of(context).pop(false);
                                     },
@@ -8938,7 +8869,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                       color: Colors.white,
                                       size: 20.0,
                                     ),
-                                    label: Text("Ok"),
+                                    label: pmBtnLabel("Ok"),
                                     onPressed: () async {
                                       Navigator.of(context).pop(false);
                                       var isOK = globals.akses_pages == null
@@ -8990,7 +8921,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                           color: Colors.white,
                                           size: 24.0,
                                         ),
-                                        label: Text("pilih"),
+                                        label: pmBtnLabel("pilih"),
                                         onPressed: () async {
                                           //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                                           Navigator.of(
@@ -9029,7 +8960,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                           color: Colors.white,
                                           size: 24.0,
                                         ),
-                                        label: Text("Save"),
+                                        label: pmBtnLabel("Save"),
                                         onPressed: () {
                                           fnVHCID = txtVehicleId.text;
                                           print("VEHICL ID ${fnVHCID}");
@@ -9088,7 +9019,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                         color: Colors.white,
                                         size: 20.0,
                                       ),
-                                      label: Text("No"),
+                                      label: pmBtnLabel("No"),
                                       onPressed: () {
                                         Navigator.of(context).pop(false);
                                       },
@@ -9107,7 +9038,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                         color: Colors.white,
                                         size: 20.0,
                                       ),
-                                      label: Text("Ok"),
+                                      label: pmBtnLabel("Ok"),
                                       onPressed: () async {
                                         Navigator.of(context).pop(false);
                                         var isOK = globals.akses_pages == null
@@ -9160,7 +9091,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           color: Colors.white,
                           size: 15.0,
                         ),
-                        label: Text("Detail List Ban"),
+                        label: pmBtnLabel("Detail List Ban"),
                         onPressed: () async {
                           var value = txtSrTypeId.text;
                           if (value != null && value != '') {
@@ -9717,7 +9648,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Cancel"),
+                    label: pmBtnLabel("Cancel"),
                     onPressed: () async {
                       await DeleteDraft();
                       print('Delete');
@@ -9737,7 +9668,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Submit"),
+                    label: pmBtnLabel("Submit"),
                     onPressed: () async {
                       if (txtCabangIdCHK.text == null ||
                           txtCabangIdCHK.text == '') {
@@ -9776,7 +9707,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                     color: Colors.white,
                                     size: 24.0,
                                   ),
-                                  label: Text("Cancel"),
+                                  label: pmBtnLabel("Cancel"),
                                   onPressed: () {
                                     Navigator.of(context, rootNavigator: true)
                                         .pop();
@@ -9797,7 +9728,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                     color: Colors.white,
                                     size: 24.0,
                                   ),
-                                  label: Text("Ok"),
+                                  label: pmBtnLabel("Ok"),
                                   onPressed: () async {
                                     Navigator.of(context, rootNavigator: true)
                                         .pop();
@@ -9926,11 +9857,21 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           //await Future.delayed(Duration(milliseconds: 2));
                           Timer(Duration(seconds: 1), () {
                             showDialog(
-                                context: globalScaffoldKey.currentContext!,
+                                context: context,
                                 builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('List Detail SR'),
+                                  return pmAlertDialog(
+                                    title: 'List Detail SR',
                                     content: listDataSrOpname(context),
+                                    actions: [
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.close,
+                                            color: Colors.white, size: 16),
+                                        label: pmBtnLabel("Close"),
+                                        style: pmBtnStyle(accentOrange),
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(),
+                                      ),
+                                    ],
                                   );
                                 });
                           });
@@ -9959,41 +9900,28 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               SmartSelect<String>.single(
-                title: 'Katalog',
+                key: ValueKey('katalog-$selKatalog-${lstVKatalog.length}'),
+                title: 'Katalog ${nama_katalog}',
                 selectedValue: selKatalog,
                 placeholder: 'Pilih satu',
-                onChange: (selected) {
+                onChange: (selected) async {
                   final val = selected.value;
                   setState(() {
-                    selKatalog = val;
+                    selKatalog = val ?? '';
+                    nama_katalog = selKatalog.isEmpty
+                        ? ''
+                        : '(${_katalogTitleOf(selKatalog)})';
                   });
                   if (val == null || val == '') {
                     alert(globalScaffoldKey.currentContext!, 0, "Katalog ID Kosong", "error");
                     return;
                   }
-                  getListDataItem(true, txtPartName.text, 0);
-                  Future.delayed(Duration(milliseconds: 50), () {
-                    if (dataListItemSearch.length > 0) {
-                      showDialog(
-                        context: globalScaffoldKey.currentContext!,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('List Detail Mechanic'),
-                            content: listDataSearchItem(context),
-                          );
-                        },
-                      );
-                    }
-                  });
+                  await _openItemSearchDialog(search: txtPartName.text);
                 },
-                // onChange: (selected) =>
-                //     setState(() => {
-                //       selKatalog = selected.value
-                //     }),
                 choiceItems: S2Choice.listFrom<String, Map>(
                     source: lstVKatalog,
-                    value: (index, item) => item['value'],
-                    title: (index, item) => item['title']),
+                    value: (index, item) => item['value']?.toString() ?? '',
+                    title: (index, item) => _katalogChoiceTitle(item)),
                 //choiceGrouped: true,
                 modalFilter: true,
                 modalFilterAuto: true,
@@ -10035,59 +9963,13 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                   color: Colors.white,
                                   size: 24.0,
                                 ),
-                                label: Text("Searh Partname"),
+                                label: pmBtnLabel("Searh Partname"),
                                 onPressed: () async {
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
-                                  //getItemByPartname();
-                                  // if (selKatalog == null ||
-                                  //     selKatalog == '') {
-                                  //   alert(globalScaffoldKey.currentContext!, 0,
-                                  //       "Katalog tidak boleh kosong", "error");
-                                  // }else{
-                                  //
-                                  // }
                                   txtPartName.text = "";
-                                  // if(status_apr=="APR"){
-                                  //   getListDataItem(true, item_id_apr, 0);
-                                  //   await Future.delayed(
-                                  //       Duration(milliseconds: 1));
-                                  //   if (dataListItemSearch.length > 0) {
-                                  //     print(dataListItemSearch[0]);
-                                  //     setState(() {
-                                  //       txtItemID.text = dataListItemSearch[0]['item_id'];
-                                  //       txtPartName.text = dataListItemSearch[0]['part_name'];
-                                  //       txtItemSize.text = dataListItemSearch[0]['item_size'];
-                                  //       txtTypeID.text = dataListItemSearch[0]['type'];
-                                  //       txtTypeAccess.text = dataListItemSearch[0]['accessories'];
-                                  //       txtGenuineNoOpname.text = dataListItemSearch[0]['genuine_no'];
-                                  //       txtOpnameMerk.text = dataListItemSearch[0]['merk'];
-                                  //     });
-                                  //   }else{
-                                  //     alert(globalScaffoldKey.currentContext!, 2,
-                                  //         "Data part tidak di temukan", "warning");
-                                  //   }
-                                  // }else{
-                                  //
-                                  // }
-                                  getListDataItem(true, txtPartName.text, 0);
-                                  await Future.delayed(
-                                      Duration(milliseconds: 1));
-                                  if (dataListItemSearch.length > 0) {
-                                    Timer(Duration(seconds: 1), () {
-                                      print('Show dialog');
-                                      showDialog(
-                                          context:
-                                          globalScaffoldKey.currentContext!,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title: Text('List Detail Item'),
-                                              content:
-                                              listDataSearchItem(context),
-                                            );
-                                          });
-                                    });
-                                  }
+                                  await _openItemSearchDialog(
+                                      search: txtPartName.text);
                                 },
                                 style: ElevatedButton.styleFrom(
                                     elevation: 0.0,
@@ -10105,7 +9987,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                   color: Colors.white,
                                   size: 24.0,
                                 ),
-                                label: Text("Scan Code"),
+                                label: pmBtnLabel("Scan Code"),
                                 onPressed: () async {
                                   Navigator.of(context, rootNavigator: true)
                                       .pop();
@@ -10316,7 +10198,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   //     color: Colors.white,
                   //     size: 15.0,
                   //   ),
-                  //   label: Text("Cancel"),
+                  //   label: pmBtnLabel("Cancel"),
                   //   onPressed: () async {
                   //     print('cancel');
                   //   },
@@ -10336,7 +10218,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           color: Colors.white,
                           size: 15.0,
                         ),
-                        label: Text("Create"),
+                        label: pmBtnLabel("Create"),
                         onPressed: () async {
                           print(fnWONUMBER);
                           print("METHOD_DETAIL ${METHOD_DETAIL}");
@@ -10359,7 +10241,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                         color: Colors.white,
                                         size: 24.0,
                                       ),
-                                      label: Text("Cancel"),
+                                      label: pmBtnLabel("Cancel"),
                                       onPressed: () async {
                                         Navigator.of(context, rootNavigator: true)
                                             .pop();
@@ -10380,7 +10262,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                         color: Colors.white,
                                         size: 24.0,
                                       ),
-                                      label: Text("Ok"),
+                                      label: pmBtnLabel("Ok"),
                                       onPressed: () async {
                                         Navigator.of(context, rootNavigator: true)
                                             .pop();
@@ -10413,7 +10295,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                         color: Colors.white,
                                         size: 24.0,
                                       ),
-                                      label: Text("Cancel"),
+                                      label: pmBtnLabel("Cancel"),
                                       onPressed: () async {
                                         Navigator.of(context, rootNavigator: true)
                                             .pop();
@@ -10434,7 +10316,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                         color: Colors.white,
                                         size: 24.0,
                                       ),
-                                      label: Text("Ok"),
+                                      label: pmBtnLabel("Ok"),
                                       onPressed: () async {
                                         Navigator.of(context, rootNavigator: true)
                                             .pop();
@@ -10467,7 +10349,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                         color: Colors.white,
                                         size: 24.0,
                                       ),
-                                      label: Text("Cancel"),
+                                      label: pmBtnLabel("Cancel"),
                                       onPressed: () async {
                                         Navigator.of(context, rootNavigator: true)
                                             .pop();
@@ -10488,7 +10370,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                         color: Colors.white,
                                         size: 24.0,
                                       ),
-                                      label: Text("Ok"),
+                                      label: pmBtnLabel("Ok"),
                                       onPressed: () async {
                                         Navigator.of(context, rootNavigator: true)
                                             .pop();
@@ -10526,7 +10408,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           color: Colors.white,
                           size: 15.0,
                         ),
-                        label: Text("List Detail"),
+                        label: pmBtnLabel("List Detail"),
                         onPressed: () async {
                           print("Button List Detail Opname");
                           //txtOpnameVHCID.text = 'B 9474 YU/B 9474 YU'; //DEV
@@ -10548,7 +10430,54 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                   context: context,
                                   builder: (BuildContext context) {
                                     return AlertDialog(
-                                        title: Text('List Detail'),
+                                        insetPadding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 24),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(16)),
+                                        backgroundColor: cardColor,
+                                        titlePadding: const EdgeInsets.fromLTRB(
+                                            16, 16, 16, 0),
+                                        contentPadding: const EdgeInsets.fromLTRB(
+                                            12, 12, 12, 8),
+                                        actionsPadding: const EdgeInsets.fromLTRB(
+                                            12, 0, 12, 12),
+                                        title: Row(
+                                          children: [
+                                            Icon(Icons.inventory_2_outlined,
+                                                color: darkOrange, size: 22),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'List Detail',
+                                                style: TextStyle(
+                                                  color: darkOrange,
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 3),
+                                              decoration: BoxDecoration(
+                                                color: lightOrange,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                '${dataListOpnameDetail.length}',
+                                                style: TextStyle(
+                                                  color: primaryOrange,
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                         content: listDataOpnameDetail(context),
                                         actions: <Widget>[
                                           Flex(
@@ -10561,8 +10490,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                                       color: Colors.white,
                                                       size: 15.0,
                                                     ),
-                                                    label: Text(
-                                                        "Approve"), //Approve Opname
+                                                    label: pmBtnLabel("Approve"), //Approve Opname
                                                     onPressed: () async {
                                                       //selEstimasi = "1";
                                                       //id_header=88;
@@ -10630,8 +10558,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                                                     color: Colors.white,
                                                                     size: 20.0,
                                                                   ),
-                                                                  label:
-                                                                  Text("Approve"),
+                                                                  label: pmBtnLabel("Approve"),
                                                                   onPressed: () async {
                                                                     Navigator.of(
                                                                         context)
@@ -10669,7 +10596,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                                                     color: Colors.white,
                                                                     size: 20.0,
                                                                   ),
-                                                                  label: Text("Close"),
+                                                                  label: pmBtnLabel("Close"),
                                                                   onPressed: () async {
                                                                     Navigator.of(
                                                                         context)
@@ -10749,7 +10676,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       color: Colors.white,
                       size: 15.0,
                     ),
-                    label: Text("Clear", style: TextStyle(color: Colors.white)),
+                    label: pmBtnLabel("Clear"),
                     onPressed: () async {
                       setState(() {
                         btnNameCreatePR = "Create PR";
@@ -11089,14 +11016,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   //print(dataListItemSearch);
                 }
 
-                showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('List Item'),
-                        content: setupAlertDialoagContainerOpnamDetail(context),
-                      );
-                    });
+                await _showOpnameDetailDialog(context);
               },
               style: ElevatedButton.styleFrom(
                   elevation: 0.0,
@@ -11113,7 +11033,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 color: Colors.white,
                 size: 15.0,
               ),
-              label: Text("Cancel", style: TextStyle(color: Colors.white)),
+              label: pmBtnLabel("Cancel"),
               onPressed: () async {
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
@@ -11160,7 +11080,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 color: Colors.white,
                 size: 15.0,
               ),
-              label: Text("WO Start", style: TextStyle(color: Colors.white)),//
+              label: pmBtnLabel("WO Start"),//
               onPressed: () async {
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
@@ -11346,7 +11266,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   color: Colors.white,
                   size: 15.0,
                 ),
-                label: Text("Edit"),
+                label: pmBtnLabel("Edit"),
                 onPressed: () async {
                   showDialog(
                     context: globalScaffoldKey.currentContext!,
@@ -11426,7 +11346,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 color: Colors.white,
                 size: 15.0,
               ),
-              label: Text("Edit"),
+              label: pmBtnLabel("Edit"),
               onPressed: () async {
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
@@ -11490,7 +11410,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 color: Colors.white,
                 size: 15.0,
               ),
-              label: Text("Cancel"),
+              label: pmBtnLabel("Cancel"),
               onPressed: () async {
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
@@ -11537,7 +11457,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 color: Colors.white,
                 size: 15.0,
               ),
-              label: Text("Start"),
+              label: pmBtnLabel("Start"),
               onPressed: () async {
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
@@ -11722,7 +11642,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   color: Colors.white,
                   size: 15.0,
                 ),
-                label: Text("Edit"),
+                label: pmBtnLabel("Edit"),
                 onPressed: () async {
                   showDialog(
                     context: globalScaffoldKey.currentContext!,
@@ -11864,8 +11784,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                         color: Colors.white,
                                         size: 16.0,
                                       ),
-                                      label: Text("Close",
-                                          style: TextStyle(color: Colors.white)),
+                                      label: pmBtnLabel("Close"),
                                       onPressed: () {
                                         Navigator.of(context).pop(false);
                                       },
@@ -11909,23 +11828,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         listSRNumberOpnameDetail = item['srnumber'];
                         listOpnameVHCID = item['vhcid'];
                       }
-                      showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16)),
-                              backgroundColor: cardColor,
-                              title: Text(
-                                'List Item',
-                                style: TextStyle(
-                                    color: darkOrange,
-                                    fontWeight: FontWeight.w600),
-                              ), //PROSES
-                              content:
-                                  setupAlertDialoagContainerOpnamDetail(context),
-                            );
-                          });
+                      await _showOpnameDetailDialog(context);
                     },
                     style: pmBtnStyle(accentOrange),
                   ),
@@ -12072,7 +11975,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           color: Colors.white,
           size: 15.0,
         ),
-        label: Text("Approve", style: TextStyle(color: Colors.white)),
+        label: pmBtnLabel("Approve"),
         onPressed: () async {
           showDialog(
             context: globalScaffoldKey.currentContext!,
@@ -12161,7 +12064,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           color: Colors.white,
           size: 15.0,
         ),
-        label: Text("Approve", style: TextStyle(color: Colors.white)),
+        label: pmBtnLabel("Approve"),
         onPressed: () async {
           showDialog(
             context: globalScaffoldKey.currentContext!,
@@ -12252,7 +12155,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           color: Colors.white,
           size: 15.0,
         ),
-        label: Text("Approve", style: TextStyle(color: Colors.white)),
+        label: pmBtnLabel("Approve"),
         onPressed: () async {
           showDialog(
             context: globalScaffoldKey.currentContext!,
@@ -12447,7 +12350,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         child: Text('QC')),
                   ],
                 ),
-                title: Text('Service Request',
+                title: Text('Service Request 2',
                     style: TextStyle(
                         color: Colors.white, fontWeight: FontWeight.w600)),
               ),
@@ -12469,6 +12372,241 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               ),
             )),
       ),
+    );
+  }
+}
+
+class _ItemSearchDialog extends StatefulWidget {
+  final String initialSearch;
+  final TextEditingController searchController;
+  final Future<List<Map<String, dynamic>>> Function(String search) onSearch;
+  final Widget Function(Map<String, dynamic> item, int index) itemBuilder;
+
+  const _ItemSearchDialog({
+    required this.initialSearch,
+    required this.searchController,
+    required this.onSearch,
+    required this.itemBuilder,
+  });
+
+  @override
+  State<_ItemSearchDialog> createState() => _ItemSearchDialogState();
+}
+
+class _ItemSearchDialogState extends State<_ItemSearchDialog> {
+  List<Map<String, dynamic>> _items = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.searchController.text = widget.initialSearch;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _load(widget.initialSearch);
+    });
+  }
+
+  Future<void> _load(String query) async {
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
+    try {
+      final result = await widget.onSearch(query);
+      if (!mounted) return;
+      setState(() {
+        _items = result;
+        _loading = false;
+        if (result.isEmpty) {
+          _error = "Data part tidak di temukan";
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _items = [];
+        _loading = false;
+        _error = "Gagal load data item";
+      });
+    }
+  }
+
+  static const Color _primary = Color(0xFFFF8C69);
+  static const Color _light = Color(0xFFFFF4E6);
+  static const Color _accent = Color(0xFFFFB347);
+  static const Color _dark = Color(0xFFE07B39);
+  static const Color _card = Color(0xFFFFF8F0);
+
+  ButtonStyle get _whiteBtn => ElevatedButton.styleFrom(
+        elevation: 0,
+        backgroundColor: _primary,
+        foregroundColor: Colors.white,
+        disabledForegroundColor: Colors.white70,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      );
+
+  Widget _whiteLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        fontSize: 13,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: _card,
+      titlePadding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      title: Row(
+        children: [
+          const Icon(Icons.inventory_2_outlined, color: _dark, size: 22),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'List Detail Item',
+              style: TextStyle(
+                color: _dark,
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          if (!_loading)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: _light,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${_items.length}',
+                style: const TextStyle(
+                  color: _primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+        ],
+      ),
+      content: SizedBox(
+        width: size.width,
+        height: size.height * 0.7,
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: widget.searchController,
+                    cursorColor: _primary,
+                    style: TextStyle(color: Colors.grey.shade800, fontSize: 14),
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (value) => _load(value),
+                    decoration: InputDecoration(
+                      labelText: "Partname",
+                      hintText: "Cari partname / item id",
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white,
+                      labelStyle:
+                          TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                      hintStyle:
+                          TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 12),
+                      prefixIcon:
+                          const Icon(Icons.search, color: _primary, size: 20),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            const BorderSide(color: _primary, width: 2),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () => _load(widget.searchController.text),
+                  style: _whiteBtn,
+                  child: _whiteLabel("Search"),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: _loading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: _primary),
+                    )
+                  : _items.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.search_off,
+                                  size: 40, color: Colors.grey.shade400),
+                              const SizedBox(height: 8),
+                              Text(
+                                _error ?? "Data part tidak di temukan",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          itemCount: _items.length,
+                          itemBuilder: (context, index) {
+                            return widget.itemBuilder(_items[index], index);
+                          },
+                        ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        ElevatedButton.icon(
+          icon: const Icon(Icons.close, color: Colors.white, size: 16),
+          label: _whiteLabel("Close"),
+          style: ElevatedButton.styleFrom(
+            elevation: 0,
+            backgroundColor: _accent,
+            foregroundColor: Colors.white,
+            disabledForegroundColor: Colors.white70,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
     );
   }
 }

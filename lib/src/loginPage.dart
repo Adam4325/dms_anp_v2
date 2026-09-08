@@ -269,7 +269,14 @@ class _LoginPageState extends State<LoginPage> {
             return true;
           })();
           var status_karyawan = result["data"][0]["status_karyawan"];
-          var kryid = result["data"][0]["kryid"];
+          var rawKry = result["data"][0]["kryid"];
+          String kryid = '';
+          if (rawKry != null) {
+            final s = rawKry.toString().trim();
+            if (s.isNotEmpty && s.toLowerCase() != 'null' && s.toLowerCase() != 'undefined') {
+              kryid = s;
+            }
+          }
           var login_type = result["data"][0]["login_type"];
           var api_lokar = result["data"][0]["api_lokar"];
           var lokar_client_id = result["data"][0]["lokar_client_id"];
