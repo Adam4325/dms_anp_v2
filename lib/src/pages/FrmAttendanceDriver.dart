@@ -65,6 +65,7 @@ class GeofenceArea {
   double latitude;
   double longitude;
   double radius;
+  String address;
 
   GeofenceArea({
     this.geoId = 0,
@@ -72,6 +73,7 @@ class GeofenceArea {
     this.latitude = 0.0,
     this.longitude = 0.0,
     this.radius = 0.0,
+    this.address = "",
   });
 
   factory GeofenceArea.fromJson(Map<String, dynamic> json) {
@@ -81,6 +83,7 @@ class GeofenceArea {
       latitude: double.tryParse(json['lat'].toString()) ?? 0.0,
       longitude: double.tryParse(json['lon'].toString()) ?? 0.0,
       radius: double.tryParse(json['radius'].toString()) ?? 0.0,
+      address: json['address']?.toString() ?? "",
     );
   }
 }
@@ -89,9 +92,11 @@ class FrmAttendanceDriver extends StatefulWidget {
   FrmAttendanceDriver({
     Key? key,
     this.requireAttendanceQr = false,
+    this.statusUnit,
   }) : super(key: key);
 
   final bool requireAttendanceQr;
+  final String? statusUnit;
 
   @override
   FrmAttendanceDriverState createState() => FrmAttendanceDriverState();
@@ -107,6 +112,10 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
   Position? userLocation;
   List<GeofenceArea> geofenceAreas = [];
   AttendanceInfo attendanceInfo = AttendanceInfo();
+
+  // Unit Status & QR requirement
+  bool _isOngoingUnit = false;
+  bool get _needsAttendanceQr => widget.requireAttendanceQr && !_isOngoingUnit;
 
   // Photo
   File? photoFile;
@@ -155,10 +164,20 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
 
   Future<void> _loadUserSession() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    final savedStatus = prefs.getString("status_unit") ?? "";
+    final currentStatus =
+        ((widget.statusUnit ?? "").isNotEmpty ? widget.statusUnit! : savedStatus)
+            .toUpperCase();
     setState(() {
       namaKaryawan = prefs.getString("name") ?? "";
       androidID = prefs.getString("androidID") ?? "";
+      if (currentStatus.contains("ONGOING")) {
+        _isOngoingUnit = true;
+      }
     });
+    if (_isOngoingUnit) {
+      debugPrint("FrmAttendanceDriver: Unit status ONGOING ($currentStatus) -> scan QR dibypass");
+    }
   }
 
   Future<void> _loadStoredPhoto() async {
@@ -226,9 +245,58 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
 
       if (response.statusCode == 200) {
         List<dynamic> jsonList = json.decode(response.body);
+        List<GeofenceArea> loadedGeofences =
+            jsonList.map((json) => GeofenceArea.fromJson(json)).toList();
+
+        // Load approved transit DO locations
+        try {
+          String transitUrl =
+              "${GlobalData.baseUrlOri}mobile/api/driver/send_location_pool_do.jsp"
+              "?method=list_approved_transit&drvid=$driverId";
+          final transitResp = await http.get(Uri.parse(transitUrl), headers: {
+            "Accept": "application/json"
+          }).timeout(Duration(seconds: 10));
+
+          if (transitResp.statusCode == 200) {
+            final dynamic transitData = json.decode(transitResp.body);
+            List<dynamic> list = [];
+            if (transitData is List) {
+              list = transitData;
+            } else if (transitData is Map && transitData['data'] is List) {
+              list = transitData['data'];
+            }
+            for (var item in list) {
+              if (item is Map) {
+                final double lat =
+                    double.tryParse(item['lat']?.toString() ?? '0') ?? 0.0;
+                final double lon =
+                    double.tryParse(item['lon']?.toString() ?? '0') ?? 0.0;
+                if (lat != 0.0 && lon != 0.0) {
+                  final String poolName =
+                      item['nama_pool']?.toString() ?? 'Transit DO';
+                  final String wonbr = item['wonumber']?.toString() ?? '';
+                  final int transitId =
+                      int.tryParse(item['id']?.toString() ?? '0') ?? 99999;
+                  final String transitAddr =
+                      item['address']?.toString() ?? '';
+                  loadedGeofences.add(GeofenceArea(
+                    geoId: transitId,
+                    name: "$poolName (DO: $wonbr)",
+                    latitude: lat,
+                    longitude: lon,
+                    radius: 1000.0,
+                    address: transitAddr,
+                  ));
+                }
+              }
+            }
+          }
+        } catch (e) {
+          print("Error loading transit DO geofence: $e");
+        }
+
         setState(() {
-          geofenceAreas =
-              jsonList.map((json) => GeofenceArea.fromJson(json)).toList();
+          geofenceAreas = loadedGeofences;
         });
         print("Loaded ${geofenceAreas.length} geofence areas");
       } else {
@@ -427,7 +495,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
     //   return;
     // }
 
-    if (widget.requireAttendanceQr &&
+    if (_needsAttendanceQr &&
         await _scanAttendanceQrForAction(type) == null) {
       return;
     }
@@ -462,7 +530,10 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
           return;
         }
       } else {
-        addressController.text = selectedGeofence.name;
+        address = selectedGeofence.address.isNotEmpty
+            ? selectedGeofence.address
+            : selectedGeofence.name;
+        addressController.text = address;
       }
 
       if (EasyLoading.isShow) {
@@ -514,7 +585,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
   }
 
   bool _hasValidQrForSubmit(String type) {
-    if (!widget.requireAttendanceQr) {
+    if (!_needsAttendanceQr) {
       return true;
     }
 
@@ -544,8 +615,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         return geo;
       }
 
-      if (distance <= geo.radius && geo.radius < shortestDistance) {
-        shortestDistance = geo.radius;
+      if (distance <= geo.radius && distance < shortestDistance) {
+        shortestDistance = distance.toDouble();
         nearestGeofence = geo;
       }
     }
@@ -635,7 +706,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       };
 
       final qrPayload = _attendanceQrPayload;
-      if (widget.requireAttendanceQr && qrPayload != null) {
+      if (_needsAttendanceQr && qrPayload != null) {
         data.addAll({
           'qr_data': _attendanceQrRawData,
           'qr_issuer': qrPayload.issuer,
@@ -1059,7 +1130,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
             ),
             SizedBox(height: 8),
             _buildAttendanceStatus(canCheckIn, canCheckOut),
-            if (widget.requireAttendanceQr) ...[
+            if (_needsAttendanceQr) ...[
               const SizedBox(height: 8),
               Text(
                 'Wajib scan QR ADMIN/OP yang masih aktif. QR expired ditolak.',

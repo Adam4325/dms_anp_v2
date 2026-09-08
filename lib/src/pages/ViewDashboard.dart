@@ -21,6 +21,7 @@ import 'package:dms_anp/src/pages/FrmSetKmByDriver.dart';
 import 'package:dms_anp/src/pages/MapAddress.dart';
 import 'package:dms_anp/src/pages/MapHistory.dart';
 import 'package:dms_anp/src/pages/driver/FrmStoring.dart';
+import 'package:dms_anp/src/pages/driver/FrmSendLocationPoolDo.dart';
 import 'package:dms_anp/src/pages/driver/ListDriverInspeksi.dart';
 import 'package:dms_anp/src/pages/driver/RegistrasiNewDriver.dart';
 import 'package:dms_anp/src/pages/ViewListDo.dart';
@@ -188,8 +189,40 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   String _attendanceQrRole() => username == "ADMIN" ? "ADMIN" : "OP";
 
+  /// Cek apakah status unit saat ini mengandung "ONGOING"
+  /// (contoh format tampilan dashboard: "B 9871 KIN/ ONGOING" atau "B 9871 KIN ONGOING").
+  /// Jika ONGOING, driver TIDAK PERLU scan QR code.
+  bool _isStatusUnitOngoing([String? extraStatus]) {
+    if ((extraStatus ?? '').toUpperCase().contains('ONGOING')) {
+      return true;
+    }
+    if (status_unit.toUpperCase().contains('ONGOING')) {
+      return true;
+    }
+    if (vhcid_units.toUpperCase().contains('ONGOING')) {
+      return true;
+    }
+    for (var i = data.length - 1; i >= 0; i--) {
+      final item = data[i];
+      if (item is Map && item['name'] == 'status_unit') {
+        final st = (item['status'] ?? '').toString().toUpperCase();
+        final nopol = (item['nopol'] ?? '').toString().toUpperCase();
+        if (st.contains('ONGOING') || nopol.contains('ONGOING')) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /// CLOSE atau SERVICE → wajib Scan QR sebelum absensi MIXER.
+  /// Jika ONGOING (cth "B 9871 KIN/ ONGOING") → tidak wajib QR.
   bool _isDriverStatusUnitRequireQr([String? rawStatus]) {
+    if (_isStatusUnitOngoing(rawStatus)) {
+      debugPrint('Driver status unit ONGOING -> scan QR TIDAK diperlukan');
+      return false;
+    }
+
     var status = (rawStatus ?? '').trim().toUpperCase();
 
     if (status.isEmpty) {
@@ -271,9 +304,17 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   Future<bool> _shouldRequireAttendanceQr() async {
+    if (_isStatusUnitOngoing()) {
+      debugPrint('Driver status_unit ONGOING ($status_unit) -> scan QR TIDAK diperlukan');
+      return false;
+    }
     final status = await _fetchStatusUnitRaw();
+    if (_isStatusUnitOngoing(status)) {
+      debugPrint('Driver status API ONGOING ($status) -> scan QR TIDAK diperlukan');
+      return false;
+    }
     final needQr = _isDriverStatusUnitRequireQr(status);
-    debugPrint('MIXER requireAttendanceQr=$needQr (status="$status")');
+    debugPrint('requireAttendanceQr=$needQr (status="$status", status_unit="$status_unit")');
     return needQr;
   }
 
@@ -736,11 +777,13 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   void _navigateToAttendanceDriver({bool requireAttendanceQr = true}) {
+    final bool isOngoing = _isStatusUnitOngoing();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (context) => FrmAttendanceDriver(
-          requireAttendanceQr: requireAttendanceQr,
+          requireAttendanceQr: isOngoing ? false : requireAttendanceQr,
+          statusUnit: status_unit,
         ),
       ),
     );
@@ -833,12 +876,18 @@ class _ViewDashboardState extends State<ViewDashboard>
     sharedPreferences ??= await SharedPreferences.getInstance();
     login_type = sharedPreferences!.getString('login_type') ?? login_type;
 
-    // QR absensi MIXER wajib jika status unit CLOSE atau SERVICE — scan di dashboard,
-    // lalu masuk FrmAttendanceDriver tanpa cek QR lagi di halaman absensi.
+    // QR absensi MIXER wajib jika status unit CLOSE atau SERVICE.
+    // Jika ONGOING (cth: "B 9871 KIN/ ONGOING") → tidak perlu scan QR!
+    if (_isStatusUnitOngoing()) {
+      debugPrint('Driver status_unit ONGOING ($status_unit) -> langsung absensi tanpa Scan QR');
+      await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
+      return;
+    }
+
     final requireQr = await _shouldRequireAttendanceQr();
     if (!mounted) return;
     if (!requireQr) {
-      debugPrint('MIXER skip Scan QR (bukan CLOSE/SERVICE)');
+      debugPrint('skip Scan QR (ONGOING atau bukan CLOSE/SERVICE)');
       await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
       return;
     }
@@ -1417,6 +1466,11 @@ class _ViewDashboardState extends State<ViewDashboard>
           color: Colors.red,
           idKey: 19,
           title: "Storing"));
+      _anpServiceList.add(new AnpService(
+          image: Icons.add_location_alt_outlined,
+          color: Colors.deepOrange,
+          idKey: 39,
+          title: "Send Location"));
     }
 
     if (loginname != "DRIVER") {
@@ -1548,6 +1602,21 @@ class _ViewDashboardState extends State<ViewDashboard>
           color: Colors.deepOrange,
           idKey: 35,
           title: "Aduan"));
+    }
+
+    if (loginname != "DRIVER") {
+      final isCsAdmin = (globals.akses_pages != null &&
+              globals.akses_pages
+                  .where((x) => x == "CS" || x == "OP")
+                  .isNotEmpty) ||
+          username == "ADMIN";
+      if (isCsAdmin) {
+        _anpServiceList.add(new AnpService(
+            image: Icons.map_outlined,
+            color: Colors.deepOrange,
+            idKey: 39,
+            title: "List Transit DO"));
+      }
     }
   }
 
@@ -3693,6 +3762,8 @@ class _ViewDashboardState extends State<ViewDashboard>
           status_unit = data[i]['status'] == null
               ? ''
               : nopol + data[i]['status'].toString().toUpperCase();
+          sharedPreferences?.setString('status_unit', status_unit);
+          sharedPreferences?.setString('vhcid_units', vhcid_units);
         } else if (data[i]['name'] == 'sim') {
           fromSIM = data[i]['from'] == null
               ? ''
@@ -5835,10 +5906,14 @@ class _ViewDashboardState extends State<ViewDashboard>
       login_type = sharedPreferences!.getString('login_type') ?? login_type;
       if (loginname == "DRIVER" &&
           _normalizedStatusKaryawan() == "DRIVER") {
-        if (login_type == "MIXER") {
+        if (_isStatusUnitOngoing()) {
+          debugPrint('DRIVER status_unit ONGOING ($status_unit) -> absensi tanpa scan QR');
+          await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
+        } else if (login_type == "MIXER") {
           await _openAttendanceDriverWithQrScan();
         } else {
-          await _goToAttendanceDriverIfSimValid(requireAttendanceQr: true);
+          final requireQr = await _shouldRequireAttendanceQr();
+          await _goToAttendanceDriverIfSimValid(requireAttendanceQr: requireQr);
         }
       } else {
         // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
@@ -6014,6 +6089,18 @@ class _ViewDashboardState extends State<ViewDashboard>
         _showAlert(
             globalScaffoldKey.currentContext!, 0, "Akses ditolak", "error");
       }
+    } else if (anpService.idKey == 39) {
+      final bool isCsAdmin =
+          username == "ADMIN" || getAkses("CS") || getAkses("OP");
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FrmSendLocationPoolDo(
+            isCsAdmin: isCsAdmin,
+            doList: data_list_do,
+          ),
+        ),
+      );
     } else {
       final ctx = globalScaffoldKey.currentContext!;
       if (ctx != null) {
