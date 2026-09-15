@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -42,6 +43,8 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
   bool _screenLight = false;
   DateTime? _faceStableSince;
   bool _showManualCapture = false;
+  int _countdown = 0;
+  Timer? _countdownTimer;
 
   static const Map<DeviceOrientation, int> _orientations = {
     DeviceOrientation.portraitUp: 0,
@@ -98,7 +101,7 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
   }
 
   Future<void> _onFrame(CameraImage image) async {
-    if (_busy || _capturing || _controller == null) return;
+    if (_busy || _capturing || _controller == null || _countdown > 0) return;
     _busy = true;
     try {
       final input = _toInputImage(image);
@@ -113,6 +116,7 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
   }
 
   void _evaluateFaces(List<Face> faces, int imgW, int imgH) {
+    if (_countdown > 0 || _capturing) return;
     if (faces.isEmpty) {
       setState(() {
         _faceOk = false;
@@ -143,10 +147,20 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
     }
     _faceOk = true;
     _faceStableSince ??= DateTime.now();
+    final stableMs =
+        DateTime.now().difference(_faceStableSince!).inMilliseconds;
 
-    // Jika wajah stabil di oval lebih dari 3.5 detik tapi kedipan belum terdeteksi (cahaya gelap/kacamata)
-    if (!_blinkDone &&
-        DateTime.now().difference(_faceStableSince!).inMilliseconds >= 3500) {
+    // Jeda stabilisasi: wajah harus berada di oval minimal 1.5 detik agar user tidak terburu-buru
+    if (stableMs < 1500) {
+      final remainingSec = ((1500 - stableMs) / 1000).ceil();
+      setState(() {
+        _hint = 'Posisikan wajah di dalam oval... (${remainingSec}s)';
+      });
+      return;
+    }
+
+    // Jika wajah stabil di oval lebih dari 4 detik tapi kedipan belum terdeteksi (cahaya gelap/kacamata)
+    if (!_blinkDone && stableMs >= 4000) {
       if (!_showManualCapture) {
         setState(() => _showManualCapture = true);
       }
@@ -173,37 +187,52 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
     if (nextBlink) {
       setState(() => _hint = _showManualCapture
           ? 'Kedipkan mata atau tap Ambil Foto'
-          : 'Kedipkan mata');
+          : 'Silakan kedipkan mata perlahan');
     } else if (_blinkDone) {
       if (_capturing) {
         return;
       }
-      _capturing = true;
-      setState(() => _hint = widget.mode == FaceLivenessMode.verify
-          ? 'Mencocokkan wajah...'
-          : 'Mengambil foto...');
-      _finishCapture();
+      if (widget.mode == FaceLivenessMode.enroll) {
+        _startEnrollCountdown();
+      } else {
+        _capturing = true;
+        setState(() => _hint = 'Mencocokkan wajah...');
+        _finishCapture();
+      }
     } else {
       setState(() => _hint = 'Tahan wajah di oval');
     }
   }
 
-  // void _countSmile(Face face) {
-  //   final smile = face.smilingProbability ?? 0;
-  //   final smiling = smile > 0.50;
-  //   final relaxed = smile < 0.40;
-  //   if (relaxed) {
-  //     _inSmile = false;
-  //     _wasRelaxed = true;
-  //   } else if (smiling && !_inSmile && _wasRelaxed) {
-  //     _inSmile = true;
-  //     _wasRelaxed = false;
-  //     _smileCount++;
-  //     if (_smileCount >= 1) {
-  //       _smileDone = true;
-  //     }
-  //   }
-  // }
+  void _startEnrollCountdown() {
+    if (_capturing) return;
+    _capturing = true;
+    _countdown = 2; // Countdown 2 detik agar tidak kaget & mata terbuka
+    setState(() {
+      _hint = 'Kedipan terdeteksi! Tahan posisi... ($_countdown)';
+    });
+
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_countdown > 1) {
+        setState(() {
+          _countdown--;
+          _hint = 'Tahan posisi! Foto diambil dalam $_countdown...';
+        });
+      } else {
+        timer.cancel();
+        setState(() {
+          _countdown = 0;
+          _hint = 'Mengambil foto...';
+        });
+        _finishCapture();
+      }
+    });
+  }
 
   Future<void> _finishCapture() async {
     if (_controller == null) return;
@@ -215,8 +244,18 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
       if (!mounted || _controller == null) return;
       final file = await _controller!.takePicture();
       if (widget.mode == FaceLivenessMode.enroll) {
-        if (mounted) Navigator.of(context).pop(file.path);
-        return;
+        if (!mounted) return;
+        final bool? confirmed = await _showPhotoPreviewDialog(file.path);
+        if (confirmed == true) {
+          if (mounted) Navigator.of(context).pop(file.path);
+          return;
+        } else {
+          try {
+            await File(file.path).delete();
+          } catch (_) {}
+          await _resetDetectionForRetry();
+          return;
+        }
       }
       setState(() => _hint = 'Mencocokkan dengan foto enroll...');
       final match = await FaceMatchHelper.compareLiveToEnroll(
@@ -240,6 +279,125 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
       }
       await _restartStream();
     }
+  }
+
+  Future<bool?> _showPhotoPreviewDialog(String path) async {
+    return showModalBottomSheet<bool>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Pratinjau Foto Wajah',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Pastikan wajah Anda terlihat jelas, tidak buram, dan mata terbuka.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Colors.black54),
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  width: 170,
+                  height: 220,
+                  decoration: BoxDecoration(
+                    color: Colors.black12,
+                    border: Border.all(color: _orange, width: 2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Image.file(
+                    File(path),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red.shade700,
+                        side: BorderSide(color: Colors.red.shade300),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(ctx, false),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text(
+                        'Foto Ulang',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _orange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(ctx, true),
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: const Text(
+                        'Gunakan Foto',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _resetDetectionForRetry() async {
+    _blinkDone = false;
+    _eyesWereOpen = false;
+    _eyesWereClosed = false;
+    _capturing = false;
+    _countdown = 0;
+    _faceStableSince = null;
+    _showManualCapture = false;
+    if (mounted) {
+      setState(() => _hint = 'Posisikan kembali wajah ke dalam oval');
+    }
+    await _restartStream();
   }
 
   Future<void> _retryAfterReject(String message) async {
@@ -312,6 +470,7 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _controller?.dispose();
     _detector?.close();
     super.dispose();
@@ -365,6 +524,27 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
                   children: [
                     CameraPreview(_controller!),
                     CustomPaint(painter: _OvalMaskPainter(_screenLight)),
+                    if (_countdown > 0)
+                      Center(
+                        child: Container(
+                          width: 90,
+                          height: 90,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.75),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: _orange, width: 4),
+                          ),
+                          child: Text(
+                            '$_countdown',
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
                     Positioned(
                       left: 20,
                       right: 20,
@@ -414,11 +594,13 @@ class _FaceLivenessPageState extends State<FaceLivenessPage> {
                                     ? null
                                     : () {
                                         _blinkDone = true;
-                                        setState(() => _hint = widget.mode ==
-                                                FaceLivenessMode.verify
-                                            ? 'Mencocokkan wajah...'
-                                            : 'Mengambil foto...');
-                                        _finishCapture();
+                                        if (widget.mode == FaceLivenessMode.enroll) {
+                                          _startEnrollCountdown();
+                                        } else {
+                                          _capturing = true;
+                                          setState(() => _hint = 'Mencocokkan wajah...');
+                                          _finishCapture();
+                                        }
                                       },
                                 label: const Text(
                                   'Ambil Foto Sekarang (Cahaya Gelap)',

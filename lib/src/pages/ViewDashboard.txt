@@ -6,8 +6,8 @@ import 'package:dms_anp/helpers/database_helper.dart';
 import 'package:dms_anp/src/Helper/AnpService.dart';
 import 'package:dms_anp/src/Helper/app_navigator_key.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
+import 'package:dms_anp/src/Helper/attendance_qr_codec.dart';
 import 'package:dms_anp/src/Helper/constant.dart';
-import 'package:dms_anp/src/Helper/scanner_helper.dart';
 import 'package:dms_anp/src/loginPage.dart';
 import 'package:dms_anp/src/model/NotificationData.dart';
 import 'package:dms_anp/src/model/banner_anp.dart';
@@ -21,6 +21,7 @@ import 'package:dms_anp/src/pages/FrmSetKmByDriver.dart';
 import 'package:dms_anp/src/pages/MapAddress.dart';
 import 'package:dms_anp/src/pages/MapHistory.dart';
 import 'package:dms_anp/src/pages/driver/FrmStoring.dart';
+import 'package:dms_anp/src/pages/driver/FrmSendLocationPoolDo.dart';
 import 'package:dms_anp/src/pages/driver/ListDriverInspeksi.dart';
 import 'package:dms_anp/src/pages/driver/RegistrasiNewDriver.dart';
 import 'package:dms_anp/src/pages/ViewListDo.dart';
@@ -29,11 +30,16 @@ import 'package:dms_anp/src/pages/ViewListRitase.dart';
 import 'package:dms_anp/src/pages/ViewPelanggaran.dart';
 import 'package:dms_anp/src/pages/ViewProfileUser.dart';
 import 'package:dms_anp/src/pages/hrd/ApvRewards.dart';
+import 'package:dms_anp/src/pages/FrmFaceEnroll.dart';
 import 'package:dms_anp/src/pages/hrd/ListAbsensiKaryawanV1.dart';
+import 'package:dms_anp/src/pages/hrd/ListApvFaceEnroll.dart';
+import 'package:dms_anp/src/pages/FrmTestScanLogkar.dart';
+import 'package:dms_anp/src/services/face_enroll_service.dart';
 import 'package:dms_anp/src/pages/hrd/frmAssset.dart';
 import 'package:dms_anp/src/pages/inventory/FrmWareHouseOpName.dart';
 import 'package:dms_anp/src/pages/inventory/ListApprovalOpname.dart';
 import 'package:dms_anp/src/pages/inventory/ListInventoryTransNew.dart';
+import 'package:dms_anp/src/pages/maintenance/FrmAppItem.dart';
 import 'package:dms_anp/src/pages/maintenance/FrmServiceRequestTms.dart';
 import 'package:dms_anp/src/pages/maintenance/ViewListWoMCN.dart';
 import 'package:dms_anp/src/pages/mekanik/DailyMekanikCheckScreenP2H.dart';
@@ -51,16 +57,22 @@ import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:progress_dialog_null_safe/progress_dialog_null_safe.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 // qrscan deprecated - using mobile_scanner; scan stubbed until integrated
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:unique_identifier/unique_identifier.dart';
 import '../../helpers/GpsSecurityChecker.dart';
+import '../../helpers/sim_phone_guard.dart';
+import 'package:dms_anp/src/Helper/scanner_helper.dart';
+import 'package:dms_anp/src/Helper/logkar_api_service.dart';
+import 'package:dms_anp/src/services/logkar_position_background_service.dart';
 
 import '../flusbar.dart';
 import 'FrmAttendanceDriver.dart';
-import 'FrmMasterData.dart';
+import 'master/FrmMasterMenu.dart';
 import 'FrmNonTera.dart';
 import 'FrmSetKmByDoMixer.dart';
 import 'LiveMaps.dart';
@@ -101,7 +113,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   String _identifier = '';
   List<AnpService> _anpServiceList = [];
 
-  // ✅ ADDED: Variables untuk menu management
+  // âœ… ADDED: Variables untuk menu management
   List<AnpService> _mainMenuList = []; // Menu utama (max 8)
   List<AnpService> _additionalMenuList = []; // Menu tambahan
   static const int MAX_MAIN_MENU = 7; // 7 menu + 1 "More" = 8 total
@@ -150,13 +162,14 @@ class _ViewDashboardState extends State<ViewDashboard>
   int _aduanNotifCount = 0;
   Timer? _aduanNotifTimer;
 
-  // ✅ ADDED: Orange Soft Color Scheme
+  // âœ… ADDED: Orange Soft Color Scheme
   static const Color primaryOrange = Color(0xFFFF8A50);
   static const Color lightOrange = Color(0xFFFFB085);
   static const Color paleOrange = Color(0xFFFFF0E6);
   static const Color darkOrange = Color(0xFFE65100);
   static const Color accentOrange = Color(0xFFFF7043);
-  static final String _informasiApiUrl = GlobalData.baseUrl + 'api/informasi.jsp?method=informasi-driver-v1';
+  static final String _informasiApiUrl =
+      GlobalData.baseUrl + 'api/informasi.jsp?method=informasi-driver-v1';
 
   final ScrollController _runningTextScrollController = ScrollController();
   Timer? _runningTextTimer;
@@ -170,7 +183,354 @@ class _ViewDashboardState extends State<ViewDashboard>
   bool _isRunningInfoAllowedRole() => true;
   String _runningInfoTypeForRole() {
     final role = _normalizedStatusKaryawan();
-    return (role == 'DRIVER' || role == 'KARYAWAN') ? role : 'ALL';//
+    return (role == 'DRIVER' || role == 'KARYAWAN') ? role : 'ALL'; //
+  }
+
+  bool _canManageAttendanceQr() => username == "ADMIN" || getAkses("OP");
+
+  String _attendanceQrRole() => username == "ADMIN" ? "ADMIN" : "OP";
+
+  /// Cek apakah status unit saat ini mengandung "ONGOING"
+  /// (contoh format tampilan dashboard: "B 9871 KIN/ ONGOING" atau "B 9871 KIN ONGOING").
+  /// Jika ONGOING, driver TIDAK PERLU scan QR code.
+  bool _isStatusUnitOngoing([String? extraStatus]) {
+    if ((extraStatus ?? '').toUpperCase().contains('ONGOING')) {
+      return true;
+    }
+    if (status_unit.toUpperCase().contains('ONGOING')) {
+      return true;
+    }
+    if (vhcid_units.toUpperCase().contains('ONGOING')) {
+      return true;
+    }
+    for (var i = data.length - 1; i >= 0; i--) {
+      final item = data[i];
+      if (item is Map && item['name'] == 'status_unit') {
+        final st = (item['status'] ?? '').toString().toUpperCase();
+        final nopol = (item['nopol'] ?? '').toString().toUpperCase();
+        if (st.contains('ONGOING') || nopol.contains('ONGOING')) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /// CLOSE atau SERVICE → wajib Scan QR sebelum absensi MIXER.
+  /// Jika ONGOING (cth "B 9871 KIN/ ONGOING") → tidak wajib QR.
+  bool _isDriverStatusUnitRequireQr([String? rawStatus]) {
+    if (_isStatusUnitOngoing(rawStatus)) {
+      debugPrint('Driver status unit ONGOING -> scan QR TIDAK diperlukan');
+      return false;
+    }
+
+    var status = (rawStatus ?? '').trim().toUpperCase();
+
+    if (status.isEmpty) {
+      for (var i = data.length - 1; i >= 0; i--) {
+        final item = data[i];
+        if (item is Map && item['name'] == 'status_unit') {
+          status = (item['status']?.toString() ?? '').trim().toUpperCase();
+          break;
+        }
+      }
+    }
+    if (status.isEmpty) {
+      status = status_unit.trim().toUpperCase();
+    }
+
+    // ONGOING → tidak wajib QR
+    if (status.contains('ONGOING')) {
+      return false;
+    }
+    // CLOSE / SERVICE / kosong (tidak ada BUJ) → wajib QR
+    if (status.isEmpty ||
+        status == 'CLOSE' ||
+        status.endsWith('CLOSE') ||
+        status.contains('CLOSE') ||
+        status == 'SERVICE' ||
+        status.endsWith('SERVICE') ||
+        status.contains('SERVICE')) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Ambil status unit terbaru dari API (langsung dipakai, tidak andalkan list `data` lama).
+  Future<String> _fetchStatusUnitRaw() async {
+    try {
+      sharedPreferences ??= await SharedPreferences.getInstance();
+      final vhcid = sharedPreferences!.getString('vhcid') ?? '';
+      final drvid = sharedPreferences!.getString('drvid') ?? '';
+      final url =
+          '${GlobalData.baseUrlProd}api/detail_info.jsp?method=status_unit_new&vhcid=$vhcid&drvid=$drvid';
+      debugPrint('MIXER status_unit_new: $url');
+      final response =
+          await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
+      if (response.statusCode != 200) {
+        return '';
+      }
+      final dynamic result = json.decode(response.body);
+      if (result is! Map) {
+        return '';
+      }
+      final statusCode = result['status_code']?.toString() ?? '';
+      if (statusCode != '200') {
+        return '';
+      }
+      final status = (result['status'] ?? '').toString().trim();
+      final nopol = (result['nopol'] ?? '').toString();
+      if (mounted) {
+        setState(() {
+          data.removeWhere(
+              (e) => e is Map && e['name'] == 'status_unit');
+          data.add({
+            'name': 'status_unit',
+            'from': '',
+            'to': '',
+            'status': status,
+            'nopol': nopol,
+          });
+          status_unit = status.isEmpty
+              ? ''
+              : '${nopol.isEmpty ? '' : '$nopol '}${status.toUpperCase()}';
+        });
+      }
+      debugPrint('MIXER status_unit raw="$status" display="$status_unit"');
+      return status;
+    } catch (e) {
+      debugPrint('MIXER fetch status_unit failed: $e');
+      return '';
+    }
+  }
+
+  Future<bool> _shouldRequireAttendanceQr() async {
+    if (_isStatusUnitOngoing()) {
+      debugPrint('Driver status_unit ONGOING ($status_unit) -> scan QR TIDAK diperlukan');
+      return false;
+    }
+    final status = await _fetchStatusUnitRaw();
+    if (_isStatusUnitOngoing(status)) {
+      debugPrint('Driver status API ONGOING ($status) -> scan QR TIDAK diperlukan');
+      return false;
+    }
+    final needQr = _isDriverStatusUnitRequireQr(status);
+    debugPrint('requireAttendanceQr=$needQr (status="$status", status_unit="$status_unit")');
+    return needQr;
+  }
+
+  Future<AttendanceQrResult> _createAttendanceQrData() {
+    final issuer = username.trim().isNotEmpty ? username : firstName;
+    return AttendanceQrCodec.create(
+      issuer: issuer,
+      role: _attendanceQrRole(),
+    );
+  }
+
+  int _remainingQrSeconds(DateTime expiresAt) {
+    final remaining = expiresAt.difference(DateTime.now().toUtc()).inSeconds;
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  Future<void> _showAttendanceQrSheet() async {
+    if (!_canManageAttendanceQr()) {
+      _showAlert(globalScaffoldKey.currentContext ?? context, 0,
+          "Anda tidak punya akses", "error");
+      return;
+    }
+
+    EasyLoading.show(status: 'Generate QR Code...');
+    final initialQr = await _createAttendanceQrData();
+    if (EasyLoading.isShow) {
+      EasyLoading.dismiss();
+    }
+    if (!initialQr.success ||
+        initialQr.qrData.isEmpty ||
+        initialQr.payload == null) {
+      _showAlert(
+        globalScaffoldKey.currentContext ?? context,
+        0,
+        initialQr.message.isNotEmpty
+            ? initialQr.message
+            : "Gagal generate QR Code",
+        "error",
+      );
+      return;
+    }
+
+    String qrData = initialQr.qrData;
+    DateTime expiresAt = initialQr.payload!.expiresAt;
+    int remainingSeconds = _remainingQrSeconds(expiresAt);
+    Timer? countdownTimer;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            countdownTimer ??= Timer.periodic(Duration(seconds: 1), (_) {
+              final nextRemaining = _remainingQrSeconds(expiresAt);
+              setSheetState(() {
+                remainingSeconds = nextRemaining;
+              });
+            });
+
+            final isExpired = remainingSeconds <= 0;
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 18, 20, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: primaryOrange.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(Icons.qr_code_2,
+                              color: primaryOrange, size: 28),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "QR Attendance",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                "Scan code untuk driver attendance",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 18),
+                    Container(
+                      padding: EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isExpired
+                            ? Colors.grey.shade100
+                            : primaryOrange.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: isExpired
+                              ? Colors.grey.shade300
+                              : primaryOrange.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Opacity(
+                        opacity: isExpired ? 0.35 : 1,
+                        child: QrImageView(
+                          data: qrData,
+                          version: QrVersions.auto,
+                          size: 240,
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 14),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isExpired
+                            ? Colors.red.withValues(alpha: 0.1)
+                            : Colors.green.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        isExpired
+                            ? "Expired - refresh QR Code"
+                            : "Expired dalam ${remainingSeconds}s",
+                        style: TextStyle(
+                          color: isExpired ? Colors.red : Colors.green,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: Icon(Icons.refresh, color: Colors.white),
+                        label: Text(
+                          "Refresh QR Code",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        onPressed: () async {
+                          EasyLoading.show(status: 'Refresh QR Code...');
+                          final nextQr = await _createAttendanceQrData();
+                          if (EasyLoading.isShow) {
+                            EasyLoading.dismiss();
+                          }
+                          if (!nextQr.success ||
+                              nextQr.qrData.isEmpty ||
+                              nextQr.payload == null) {
+                            _showAlert(
+                              globalScaffoldKey.currentContext ?? context,
+                              0,
+                              nextQr.message.isNotEmpty
+                                  ? nextQr.message
+                                  : "Gagal refresh QR Code",
+                              "error",
+                            );
+                            return;
+                          }
+                          setSheetState(() {
+                            qrData = nextQr.qrData;
+                            expiresAt = nextQr.payload!.expiresAt;
+                            remainingSeconds =
+                                _remainingQrSeconds(nextQr.payload!.expiresAt);
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryOrange,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    countdownTimer?.cancel();
   }
 
   bool _showAduanMenuItem() {
@@ -292,7 +652,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       final response = await http.get(uri);
       if (response.statusCode == 200) {
         // Optional: log response
-        print('update-imeiid response: ${response.body}');//
+        print('update-imeiid response: ${response.body}'); //
       } else {
         print('update-imeiid error status: ${response.statusCode}');
       }
@@ -319,9 +679,9 @@ class _ViewDashboardState extends State<ViewDashboard>
     if (lon != null) params['lon'] = lon;
     if (lat != null) params['lat'] = lat;
     if (apiLokar != null) params['api_lokar'] = apiLokar;
-    final uri = Uri.parse(
-            '${GlobalData.baseUrlProd}api/absensi/qr_code_updated.jsp')
-        .replace(queryParameters: params);
+    final uri =
+        Uri.parse('${GlobalData.baseUrlProd}api/absensi/qr_code_updated.jsp')
+            .replace(queryParameters: params);
     print('save_qr_absen url: ${uri.toString()}');
     final response = await http.get(uri);
     if (response.statusCode != 200) {
@@ -334,13 +694,14 @@ class _ViewDashboardState extends State<ViewDashboard>
     return _parseStatusCode(body['status_code']);
   }
 
-  Future<({int? statusCode, bool isQrCode})?> _checkQrAbsen(String empid) async {
+  Future<({int? statusCode, bool isQrCode})?> _checkQrAbsen(
+      String empid) async {
     if (!globals.isApiLokarRUN) {
       return (statusCode: 200, isQrCode: false);
     }
-    final uri = Uri.parse(
-            '${GlobalData.baseUrlProd}api/absensi/qr_code_updated.jsp')
-        .replace(queryParameters: {
+    final uri =
+        Uri.parse('${GlobalData.baseUrlProd}api/absensi/qr_code_updated.jsp')
+            .replace(queryParameters: {
       'method': 'check_qr_absen',
       'empid': empid,
     });
@@ -408,7 +769,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       return value;
     }
     if (value is String) {
-      return value.toLowerCase() == 'true';//
+      return value.toLowerCase() == 'true'; //
     }
     if (value is num) {
       return value != 0;
@@ -416,75 +777,182 @@ class _ViewDashboardState extends State<ViewDashboard>
     return false;
   }
 
-  void _navigateToAttendanceDriver() {
+  void _navigateToAttendanceDriver({bool requireAttendanceQr = true}) {
+    final bool isOngoing = _isStatusUnitOngoing();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => FrmAttendanceDriver()),
+      MaterialPageRoute(
+        builder: (context) => FrmAttendanceDriver(
+          requireAttendanceQr: isOngoing ? false : requireAttendanceQr,
+          statusUnit: status_unit,
+        ),
+      ),
     );
+  }
+
+  Future<void> _openKaryawanAttendance() async {
+    if (!mounted) return;
+    EasyLoading.show(status: 'Cek enroll wajah...');
+    try {
+      final status = await FaceEnrollService.getStatus();
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      if (!mounted) return;
+      if (status.isApproved) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => FrmAttendance()),
+        );
+        return;
+      }
+      if (status.isPending) {
+        _showAlert(
+          globalScaffoldKey.currentContext ?? context,
+          2,
+          'Enrollment wajah menunggu approve HRD. Absensi belum bisa dipakai.',
+          'Warning',
+        );
+        return;
+      }
+      if (status.isRejected) {
+        _showAlert(
+          globalScaffoldKey.currentContext ?? context,
+          0,
+          'Enrollment wajah ditolak HRD: ${status.rejectNote.isNotEmpty ? status.rejectNote : 'Silakan enroll ulang.'}',
+          'error',
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const FrmFaceEnroll()),
+        );
+        return;
+      }
+      final cached = await FaceEnrollService.getCachedStatus();
+      if (cached != null && cached.isApproved) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => FrmAttendance()),
+        );
+        return;
+      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const FrmFaceEnroll()),
+      );
+    } catch (e) {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      if (!mounted) return;
+      final cached = await FaceEnrollService.getCachedStatus();
+      if (cached != null && cached.isApproved) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => FrmAttendance()),
+        );
+        return;
+      }
+      _showAlert(
+        globalScaffoldKey.currentContext ?? context,
+        0,
+        'Koneksi terputus saat cek enroll. Coba lagi.',
+        'error',
+      );
+    }
+  }
+
+  Future<void> _goToAttendanceDriverIfSimValid({bool? requireAttendanceQr}) async {
+    if (!mounted) return;
+    // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+    //   return;
+    // }
+    // QR absensi MIXER sudah di-handle di dashboard sebelum navigasi;
+    // halaman attendance tidak cek QR lagi (default false).
+    final needQr = requireAttendanceQr ?? false;
+    if (!mounted) return;
+    _navigateToAttendanceDriver(requireAttendanceQr: needQr);
   }
 
   Future<void> _openAttendanceDriverWithQrScan() async {
     if (!mounted) return;
 
+    // Pastikan login_type dari prefs (hindari state kosong)
     sharedPreferences ??= await SharedPreferences.getInstance();
-    final String drvid = sharedPreferences!.getString("drvid") ?? '';
+    login_type = sharedPreferences!.getString('login_type') ?? login_type;
+
+    // QR absensi MIXER wajib jika status unit CLOSE atau SERVICE.
+    // Jika ONGOING (cth: "B 9871 KIN/ ONGOING") → tidak perlu scan QR!
+    if (_isStatusUnitOngoing()) {
+      debugPrint('Driver status_unit ONGOING ($status_unit) -> langsung absensi tanpa Scan QR');
+      await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
+      return;
+    }
+
+    final requireQr = await _shouldRequireAttendanceQr();
+    if (!mounted) return;
+    if (!requireQr) {
+      debugPrint('skip Scan QR (ONGOING atau bukan CLOSE/SERVICE)');
+      await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
+      return;
+    }
+
+    Future<void> goAttendanceAfterDashboardQr() async {
+      await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
+    }
+
+    // Absensi: cukup 1x scan Logkar Motive TM per hari.
+    if (globals.isApiLokarRUN && await LogkarApiService.hasTmCheckinToday()) {
+      debugPrint('MIXER absensi: sudah check-in Motive TM hari ini → skip scan');
+      await goAttendanceAfterDashboardQr();
+      return;
+    }
+
+    final String drvid = sharedPreferences!.getString('drvid') ?? '';
     if (drvid.isEmpty) {
       final ctx = globalScaffoldKey.currentContext ?? context;
-      _showAlert(ctx, 0, "Data driver tidak ditemukan", "error");
+      _showAlert(ctx, 0, 'Data driver tidak ditemukan', 'error');
+      return;
+    }
+
+    // CLOSE / SERVICE → tampilkan kamera Scan QR
+    debugPrint('MIXER unit CLOSE/SERVICE → buka Scan QR');
+    final String? qrData = await openQrScanner(context);
+    if (!mounted) return;
+    if (qrData == null || qrData.trim().isEmpty) {
+      final ctx = globalScaffoldKey.currentContext ?? context;
+      _showAlert(ctx, 0, 'Scan QR Code wajib dilakukan', 'error');
       return;
     }
 
     if (!globals.isApiLokarRUN) {
-      _navigateToAttendanceDriver();
+      await goAttendanceAfterDashboardQr();
       return;
     }
 
-    EasyLoading.show(status: 'Memeriksa QR Code...');
+    EasyLoading.show(status: 'Check-in Motive TM...');
     try {
-      final checkResult = await _checkQrAbsen(drvid);
-      if (!mounted) return;
-      EasyLoading.dismiss();
-
-      if (checkResult != null &&
-          checkResult.statusCode == 200 &&
-          checkResult.isQrCode) {
-        _navigateToAttendanceDriver();
-        return;
-      }
-
-      final String? qrData = await openQrScanner(context);
-      if (qrData == null || qrData.trim().isEmpty) {
-        final ctx = globalScaffoldKey.currentContext ?? context;
-        _showAlert(ctx, 0, "Scan QR Code wajib dilakukan", "error");
-        return;
-      }
-
-      EasyLoading.show(status: 'Menyimpan QR Code...');
       final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
-      final lat = (gpsResult["latitude"] ?? 0).toString();
-      final lon = (gpsResult["longitude"] ?? 0).toString();
-      final apiLokar = sharedPreferences!.getString("api_lokar") ?? '';
-      final statusCode = await _saveQrAbsen(
-        empid: drvid,
+      final lat = (gpsResult['latitude'] ?? 0).toString();
+      final lon = (gpsResult['longitude'] ?? 0).toString();
+      final phone = sharedPreferences!.getString('phone') ?? '';
+      final result = await LogkarApiService.checkInMotiveTm(
+        driverPhone: phone,
         qrData: qrData.trim(),
-        lon: lon,
-        lat: lat,
-        apiLokar: apiLokar,
+        latitude: lat,
+        longitude: lon,
       );
       if (!mounted) return;
       EasyLoading.dismiss();
 
-      if (statusCode == 200) {
-        _navigateToAttendanceDriver();
+      if (result.ok) {
+        await LogkarApiService.markTmCheckinToday();
+        await goAttendanceAfterDashboardQr();
       } else {
         final ctx = globalScaffoldKey.currentContext ?? context;
         _showAlert(
           ctx,
           0,
-          statusCode == null
-              ? "Gagal menyimpan QR Code"
-              : "Gagal menyimpan QR Code (status: $statusCode)",
-          "error",
+          result.message.isNotEmpty
+              ? result.message
+              : 'Gagal check-in Motive TM',
+          'error',
         );
       }
     } catch (e) {
@@ -492,7 +960,55 @@ class _ViewDashboardState extends State<ViewDashboard>
         EasyLoading.dismiss();
       }
       final ctx = globalScaffoldKey.currentContext ?? context;
-      _showAlert(ctx, 0, "Gagal memproses QR Code: $e", "error");
+      _showAlert(ctx, 0, 'Gagal memproses QR Code: $e', 'error');
+    }
+  }
+
+  /// Scan QR + POST Logkar /transporter/sync/tm (wajib sukses).
+  /// Dipakai setiap submit INLOADING.
+  Future<bool> _scanAndCheckInMotiveTm({String loadingStatus = 'Scan QR Motive TM...'}) async {
+    sharedPreferences ??= await SharedPreferences.getInstance();
+    final String? qrData = await openQrScanner(context);
+    if (!mounted) return false;
+    if (qrData == null || qrData.trim().isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 0,
+          'Scan QR Motive TM wajib dilakukan', 'error');
+      return false;
+    }
+
+    EasyLoading.show(status: loadingStatus);
+    try {
+      final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
+      final lat = (gpsResult['latitude'] ?? 0).toString();
+      final lon = (gpsResult['longitude'] ?? 0).toString();
+      final phone = sharedPreferences!.getString('phone') ?? '';
+      final result = await LogkarApiService.checkInMotiveTm(
+        driverPhone: phone,
+        qrData: qrData.trim(),
+        latitude: lat,
+        longitude: lon,
+      );
+      if (!mounted) return false;
+      EasyLoading.dismiss();
+      if (!result.ok) {
+        alert(
+          globalScaffoldKey.currentContext!,
+          0,
+          result.message.isNotEmpty
+              ? result.message
+              : 'Gagal check-in Motive TM',
+          'error',
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
+      alert(globalScaffoldKey.currentContext!, 0,
+          'Gagal check-in Motive TM: $e', 'error');
+      return false;
     }
   }
 
@@ -544,7 +1060,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       loginname = sharedPreferences!.getString("loginname") ?? '';
       statusKaryawanInfo =
           sharedPreferences!.getString("status_karyawan") ?? '';
-      login_type = sharedPreferences!.getString("login_type") ?? '';//
+      login_type = sharedPreferences!.getString("login_type") ?? ''; //
 
       ismixer = sharedPreferences!.getString("ismixer") ?? 'false';
 
@@ -602,6 +1118,12 @@ class _ViewDashboardState extends State<ViewDashboard>
     if (_sessionLogoutInProgress) {
       return;
     }
+    // Mixer sedang kirim posisi Logkar: jangan logout otomatis (prefs.clear akan matikan service).
+    if (await LogkarPositionBackgroundService.shouldBlockAutoLogout()) {
+      print(
+          'cekIsActiveUser: skip auto logout (Logkar mixer position tracking aktif)');
+      return;
+    }
     _sessionLogoutInProgress = true;
     _sessionActiveTimer?.cancel();
     NotificationService().stopPolling();
@@ -624,7 +1146,80 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
   }
 
-  void _setupMenuItems() {
+  String _menuOrderPrefKey() =>
+      'dashboard_menu_order_${username.trim().toUpperCase()}';
+
+  bool _shouldSplitMenus() =>
+      (username == "ADMIN" || getAkses("OP")) &&
+      _anpServiceList.length > MAX_MAIN_MENU;
+
+  void _applySavedMenuOrder() {
+    final saved = sharedPreferences?.getStringList(_menuOrderPrefKey());
+    if (saved == null || saved.isEmpty) {
+      return;
+    }
+
+    final orderMap = <int, int>{};
+    for (var i = 0; i < saved.length; i++) {
+      final id = int.tryParse(saved[i]);
+      if (id != null) {
+        orderMap[id] = i;
+      }
+    }
+    if (orderMap.isEmpty) {
+      return;
+    }
+
+    final known = <AnpService>[];
+    final unknown = <AnpService>[];
+    for (final item in _anpServiceList) {
+      final id = item.idKey;
+      if (id != null && orderMap.containsKey(id)) {
+        known.add(item);
+      } else {
+        unknown.add(item);
+      }
+    }
+    known.sort((a, b) => orderMap[a.idKey!]!.compareTo(orderMap[b.idKey!]!));
+    _anpServiceList
+      ..clear()
+      ..addAll(known)
+      ..addAll(unknown);
+  }
+
+  Future<void> _saveMenuOrder(List<AnpService> ordered) async {
+    final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
+    final ids = ordered
+        .where((e) => e.idKey != null && e.idKey != 999)
+        .map((e) => e.idKey.toString())
+        .toList();
+    await prefs.setStringList(_menuOrderPrefKey(), ids);
+    sharedPreferences = prefs;
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _anpServiceList
+        ..clear()
+        ..addAll(ordered);
+      _organizeMenus();
+    });
+  }
+
+  Future<void> _resetMenuOrder() async {
+    final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
+    await prefs.remove(_menuOrderPrefKey());
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _anpServiceList.clear();
+      _setupMenuItemsWithoutOrder();
+      _organizeMenus();
+    });
+  }
+
+  void _setupMenuItemsWithoutOrder() {
     _anpServiceList.add(new AnpService(
         image: loginname == "DRIVER" ? Icons.location_on : Icons.location_on,
         color: AnpPalette.menuRide,
@@ -738,6 +1333,22 @@ class _ViewDashboardState extends State<ViewDashboard>
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages
+              .where((x) => (x == "MT" || username == "ADMIN"));
+      if (isOK != null) {
+        if (isOK.length > 0) {
+          _anpServiceList.add(new AnpService(
+              image: Icons.fact_check_outlined,
+              color: Colors.orange,
+              idKey: 40,
+              title: "Apv WO"));
+        }
+      }
+    }
+
+    if (loginname != "DRIVER") {
+      var isOK = globals.akses_pages == null
+          ? globals.akses_pages
+          : globals.akses_pages
               .where((x) => (x == "IN" || x == "TY" || username == "ADMIN"));
       if (isOK != null) {
         if (isOK.length > 0) {
@@ -761,7 +1372,7 @@ class _ViewDashboardState extends State<ViewDashboard>
               image: Icons.today_outlined,
               color: Colors.red,
               idKey: 14,
-              title: "Inventory")); //INI
+              title: "Inventory"));
         }
       }
     }
@@ -790,18 +1401,12 @@ class _ViewDashboardState extends State<ViewDashboard>
           title: "Absen ADV"));
     }
 
-    // if (username == "ADMIN" || isMenuForeman == true) {
-    //
-    // }
-
     var isOK2 = globals.akses_pages == null
         ? globals.akses_pages
         : globals.akses_pages.where(
             (x) => (x == "IN" || username == "ADMIN" || isMenuForeman == true));
     if (isOK2 != null) {
       if (isOK2.length > 0) {
-        print("isMenuForeman");
-        print(isMenuForeman);
         _anpServiceList.add(new AnpService(
             image: Icons.inventory,
             color: Colors.green,
@@ -810,19 +1415,11 @@ class _ViewDashboardState extends State<ViewDashboard>
       }
     }
 
-    // if (isMenuForeman == true) {
-    //   _anpServiceList.add(new AnpService(
-    //       image: Icons.inventory,
-    //       color: Colors.green,
-    //       idKey: 27,
-    //       title: "Inv. Foreman"));
-    // }
-
     if (loginname != "DRIVER") {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
-          : globals.akses_pages.where((x) =>
-              (x == "TI" || username == "ADMIN"));
+          : globals.akses_pages
+              .where((x) => (x == "TI" || username == "ADMIN"));
       if (isOK != null) {
         if (isOK.length > 0) {
           _anpServiceList.add(new AnpService(
@@ -886,6 +1483,11 @@ class _ViewDashboardState extends State<ViewDashboard>
           color: Colors.red,
           idKey: 19,
           title: "Storing"));
+      _anpServiceList.add(new AnpService(
+          image: Icons.add_location_alt_outlined,
+          color: Colors.deepOrange,
+          idKey: 39,
+          title: "Send Location"));
     }
 
     if (loginname != "DRIVER") {
@@ -949,8 +1551,21 @@ class _ViewDashboardState extends State<ViewDashboard>
               color: Colors.red,
               idKey: 29,
               title: "Apv. Reward"));
+          _anpServiceList.add(new AnpService(
+              image: Icons.face_retouching_natural,
+              color: Colors.deepOrange,
+              idKey: 37,
+              title: "Apv. Wajah"));
         }
       }
+    }
+
+    if (username == "ADMIN") {
+      _anpServiceList.add(new AnpService(
+          image: Icons.qr_code_scanner,
+          color: Colors.teal,
+          idKey: 38,
+          title: "Test Scan"));
     }
 
     if (loginname != "DRIVER") {
@@ -994,7 +1609,7 @@ class _ViewDashboardState extends State<ViewDashboard>
             image: Icons.storage,
             color: Colors.blue.shade700,
             idKey: 32,
-            title: "Mst Data"));
+            title: "Master"));
       }
     }
 
@@ -1006,11 +1621,30 @@ class _ViewDashboardState extends State<ViewDashboard>
           title: "Aduan"));
     }
 
-    // ✅ ADDED: Pisahkan menu untuk ADMIN/OP
+    if (loginname != "DRIVER") {
+      final isCsAdmin = (globals.akses_pages != null &&
+              globals.akses_pages
+                  .where((x) => x == "CS" || x == "OP")
+                  .isNotEmpty) ||
+          username == "ADMIN";
+      if (isCsAdmin) {
+        _anpServiceList.add(new AnpService(
+            image: Icons.map_outlined,
+            color: Colors.deepOrange,
+            idKey: 39,
+            title: "List Transit DO"));
+      }
+    }
+  }
+
+  void _setupMenuItems() {
+    _anpServiceList.clear();
+    _setupMenuItemsWithoutOrder();
+    _applySavedMenuOrder();
     _organizeMenus();
   }
 
-  // ✅ ADDED: Function untuk memisahkan menu utama dan tambahan
+  // âœ… ADDED: Function untuk memisahkan menu utama dan tambahan
   void _organizeMenus() {
     _mainMenuList.clear();
     _additionalMenuList.clear();
@@ -1033,6 +1667,208 @@ class _ViewDashboardState extends State<ViewDashboard>
       // Jika bukan ADMIN/OP atau menu tidak lebih dari 7, tampilkan semua
       _mainMenuList = _anpServiceList;
     }
+  }
+
+  void _showMenuCustomizer() {
+    if (_anpServiceList.length < 2) {
+      return;
+    }
+
+    final editable = List<AnpService>.from(_anpServiceList);
+    final splitMenus = _shouldSplitMenus();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.85,
+              minChildSize: 0.5,
+              maxChildSize: 0.95,
+              builder: (context, scrollController) {
+                return Column(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.fromLTRB(16, 16, 8, 12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [primaryOrange, darkOrange],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(20)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.reorder, color: Colors.white),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Atur Menu',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  await _resetMenuOrder();
+                                  if (sheetContext.mounted) {
+                                    Navigator.pop(sheetContext);
+                                  }
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(this.context)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Urutan menu direset ke default'),
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: Text(
+                                  'Reset',
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.close, color: Colors.white),
+                                onPressed: () => Navigator.pop(sheetContext),
+                              ),
+                            ],
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(top: 4),
+                            child: Text(
+                              splitMenus
+                                  ? 'Drag untuk ubah urutan. $MAX_MAIN_MENU menu pertama tampil di Menu Utama.'
+                                  : 'Drag untuk ubah urutan menu.',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ReorderableListView.builder(
+                        scrollController: scrollController,
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        itemCount: editable.length,
+                        onReorder: (oldIndex, newIndex) {
+                          setModalState(() {
+                            if (newIndex > oldIndex) {
+                              newIndex -= 1;
+                            }
+                            final item = editable.removeAt(oldIndex);
+                            editable.insert(newIndex, item);
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          final service = editable[index];
+                          final isMainSlot =
+                              splitMenus && index < MAX_MAIN_MENU;
+                          return Card(
+                            key: ValueKey('menu_${service.idKey}'),
+                            margin: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 4),
+                            child: ListTile(
+                              leading: Container(
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: (service.color ?? Colors.grey)
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  service.image,
+                                  color: service.color,
+                                  size: 22,
+                                ),
+                              ),
+                              title: Text(
+                                service.title ?? '',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              subtitle: splitMenus
+                                  ? Text(
+                                      isMainSlot
+                                          ? 'Menu Utama'
+                                          : 'Menu Tambahan',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: isMainSlot
+                                            ? darkOrange
+                                            : Colors.grey.shade600,
+                                      ),
+                                    )
+                                  : null,
+                              trailing: ReorderableDragStartListener(
+                                index: index,
+                                child: Icon(
+                                  Icons.drag_handle,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    SafeArea(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryOrange,
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            onPressed: () async {
+                              await _saveMenuOrder(editable);
+                              if (sheetContext.mounted) {
+                                Navigator.pop(sheetContext);
+                              }
+                              if (mounted) {
+                                ScaffoldMessenger.of(this.context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Urutan menu disimpan'),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Text(
+                              'Simpan',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
 
   void _setupBannerItems() {
@@ -1343,7 +2179,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   void _setupNotifications() {
-    print('🔍 DEBUG: Setting up notifications in ViewDashboard...');
+    print('ðŸ” DEBUG: Setting up notifications in ViewDashboard...');
     _notificationSubscription?.cancel();
     _dialogDebounceTimer?.cancel();
     _notificationService.resetService();
@@ -1351,7 +2187,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     _notificationSubscription = _notificationService.notificationStream.listen(
       (notifications) {
         print(
-            '🔍 DEBUG: Stream received ${notifications.length} notifications');
+            'ðŸ” DEBUG: Stream received ${notifications.length} notifications');
         setState(() {
           _notifications = notifications;
         });
@@ -1363,15 +2199,15 @@ class _ViewDashboardState extends State<ViewDashboard>
         }
       },
       onError: (error) {
-        print('❌ ERROR: Stream error: $error');
+        print('âŒ ERROR: Stream error: $error');
       },
       onDone: () {
-        print('🔍 DEBUG: Stream done');
+        print('ðŸ” DEBUG: Stream done');
       },
     );
 
     _notificationService.startNotificationTimer(intervalSeconds: 30);
-    print('🔍 DEBUG: Notification setup completed');
+    print('ðŸ” DEBUG: Notification setup completed');
   }
 
   void _showLatestNotification(List<NotificationData> notifications) {
@@ -1386,7 +2222,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
 
     if (newNotification != null) {
-      print('🔍 DEBUG: Showing new notification: ${newNotification.id}');
+      print('ðŸ” DEBUG: Showing new notification: ${newNotification.id}');
       _shownNotificationIds.add(newNotification.id);
       _showNotificationDialog(newNotification);
     }
@@ -1394,15 +2230,15 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   void _showNotificationDialog(NotificationData notification) {
     print(
-        '🔍 DEBUG: Attempting to show notification dialog for ID: ${notification.id}');
+        'ðŸ” DEBUG: Attempting to show notification dialog for ID: ${notification.id}');
 
     if (_isDialogShowing) {
-      print('⚠️ WARNING: Dialog already showing, skipping...');
+      print('âš ï¸ WARNING: Dialog already showing, skipping...');
       return;
     }
 
     if (!mounted || context == null) {
-      print('❌ ERROR: Context not available for dialog');
+      print('âŒ ERROR: Context not available for dialog');
       return;
     }
 
@@ -1502,19 +2338,19 @@ class _ViewDashboardState extends State<ViewDashboard>
         _isDialogShowing = false;
       });
 
-      print('✅ SUCCESS: Dialog shown successfully');
+      print('âœ… SUCCESS: Dialog shown successfully');
     } catch (e) {
-      print('❌ ERROR: Failed to show dialog: $e');
+      print('âŒ ERROR: Failed to show dialog: $e');
       _isDialogShowing = false;
     }
   }
 
   void _handleNotificationTap(NotificationData notification) async {
-    print('🔍 DEBUG: Handling notification tap for: ${notification.id}');
+    print('ðŸ” DEBUG: Handling notification tap for: ${notification.id}');
     try {
       await _notificationService.sendNotificationResponse(notification);
       _notificationService.removeNotification(notification.id);
-      print('✅ SUCCESS: Notification handled successfully');
+      print('âœ… SUCCESS: Notification handled successfully');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Notifikasi telah ditandai sebagai dibaca'),
@@ -1525,7 +2361,7 @@ class _ViewDashboardState extends State<ViewDashboard>
         ),
       );
     } catch (e) {
-      print('❌ ERROR: Exception in _handleNotificationTap: $e');
+      print('âŒ ERROR: Exception in _handleNotificationTap: $e');
     }
   }
 
@@ -1566,7 +2402,7 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   @override
   void dispose() {
-    print('🔍 DEBUG: ViewDashboard dispose called');
+    print('ðŸ” DEBUG: ViewDashboard dispose called');
     _notificationSubscription?.cancel();
     timer?.cancel();
     _runningTextTimer?.cancel();
@@ -1647,7 +2483,8 @@ class _ViewDashboardState extends State<ViewDashboard>
     try {
       final response = await http.get(Uri.parse(_informasiApiUrl));
       if (response.statusCode != 200) {
-        throw Exception('Gagal mengambil data informasi (${response.statusCode})');
+        throw Exception(
+            'Gagal mengambil data informasi (${response.statusCode})');
       }
 
       final decoded = json.decode(response.body);
@@ -1721,8 +2558,8 @@ class _ViewDashboardState extends State<ViewDashboard>
   String _buildRunningInfoText() {
     if (_runningInfoItems.isEmpty) return 'Tidak ada informasi terbaru';
 
-    final baseText = _runningInfoItems.join('     •     ');
-    return '$baseText     •     $baseText';
+    final baseText = _runningInfoItems.join('     â€¢     ');
+    return '$baseText     â€¢     $baseText';
   }
 
   void _showRunningInfoDialog() {
@@ -1872,7 +2709,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                               Positioned(
                                 top: 0,
                                 bottom: 0,
-                                left: constraints.maxWidth * _shineAnimation.value,
+                                left: constraints.maxWidth *
+                                    _shineAnimation.value,
                                 width: constraints.maxWidth * 0.5,
                                 child: Transform(
                                   alignment: Alignment.center,
@@ -1906,7 +2744,7 @@ class _ViewDashboardState extends State<ViewDashboard>
           colors: [
             primaryOrange,
             accentOrange
-          ], // ✅ UPDATED: Orange soft gradient
+          ], // âœ… UPDATED: Orange soft gradient
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1961,7 +2799,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                         fontSize: 12,
                       ),
                     ),
-                    // ✅ ADDED: Badge untuk ADMIN/OP
+                    // âœ… ADDED: Badge untuk ADMIN/OP
                     if (username == "ADMIN" || getAkses("OP")) ...[
                       SizedBox(width: 8),
                       Container(
@@ -2120,12 +2958,13 @@ class _ViewDashboardState extends State<ViewDashboard>
               Container(
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color:
-                      primaryOrange.withOpacity(0.1), // ✅ UPDATED: Orange theme
+                  color: primaryOrange
+                      .withOpacity(0.1), // âœ… UPDATED: Orange theme
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.apps,
-                    color: primaryOrange, size: 20), // ✅ UPDATED: Orange theme
+                    color: primaryOrange,
+                    size: 20), // âœ… UPDATED: Orange theme
               ),
               SizedBox(width: 12),
               Text(
@@ -2137,6 +2976,16 @@ class _ViewDashboardState extends State<ViewDashboard>
                 ),
               ),
               Spacer(),
+              if (_anpServiceList.length > 1)
+                IconButton(
+                  tooltip: 'Atur Menu',
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(),
+                  icon: Icon(Icons.edit, color: primaryOrange, size: 20),
+                  onPressed: _showMenuCustomizer,
+                ),
+              if (_anpServiceList.length > 1 && _additionalMenuList.isNotEmpty)
+                SizedBox(width: 4),
               // ✅ ADDED: Indicator untuk menu tambahan
               if (_additionalMenuList.isNotEmpty)
                 Container(
@@ -2207,7 +3056,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   Widget _buildMenuCard(AnpService service) {
-    // ✅ UPDATED: Special styling untuk menu "More"
+    // âœ… UPDATED: Special styling untuk menu "More"
     bool isMoreMenu = service.idKey == 999;
 
     return GestureDetector(
@@ -2255,7 +3104,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                       top: -8,
                       child: _buildNewMenuBadge(),
                     ),
-                  // ✅ ADDED: Badge untuk menu "More"
+                  // âœ… ADDED: Badge untuk menu "More"
                   if (isMoreMenu && _additionalMenuList.isNotEmpty)
                     Positioned(
                       right: -2,
@@ -2288,7 +3137,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                       right: -2,
                       top: -2,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(8),
@@ -2331,7 +3181,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     );
   }
 
-  // ✅ ADDED: Function untuk menampilkan menu tambahan
+  // âœ… ADDED: Function untuk menampilkan menu tambahan
   void _showMoreMenuModal() {
     showModalBottomSheet(
       context: context,
@@ -2877,12 +3727,13 @@ class _ViewDashboardState extends State<ViewDashboard>
               Container(
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color:
-                      primaryOrange.withOpacity(0.1), // ✅ UPDATED: Orange theme
+                  color: primaryOrange
+                      .withOpacity(0.1), // âœ… UPDATED: Orange theme
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.info_outline,
-                    color: primaryOrange, size: 20), // ✅ UPDATED: Orange theme
+                    color: primaryOrange,
+                    size: 20), // âœ… UPDATED: Orange theme
               ),
               SizedBox(width: 12),
               Text(
@@ -2928,6 +3779,8 @@ class _ViewDashboardState extends State<ViewDashboard>
           status_unit = data[i]['status'] == null
               ? ''
               : nopol + data[i]['status'].toString().toUpperCase();
+          sharedPreferences?.setString('status_unit', status_unit);
+          sharedPreferences?.setString('vhcid_units', vhcid_units);
         } else if (data[i]['name'] == 'sim') {
           fromSIM = data[i]['from'] == null
               ? ''
@@ -2956,13 +3809,13 @@ class _ViewDashboardState extends State<ViewDashboard>
     return Column(
       children: [
         _buildInfoItem(Icons.directions_car, 'Status Unit/QR Pertamina',
-            status_unit, primaryOrange, // ✅ UPDATED: Orange theme
+            status_unit, primaryOrange, // âœ… UPDATED: Orange theme
             onTap: () => _navigateToPhotoUnits("STATUS_UNIT", vhcid_units)),
         _buildInfoItem(
             Icons.card_membership, 'SIM', '${fromSIM}-${toSIM}', Colors.green,
             onTap: () => _navigateToPhoto("SIM")),
         _buildInfoItem(Icons.assignment, 'STNK', '${fromSTNK}-${toSTNK}',
-            accentOrange, // ✅ UPDATED: Orange theme
+            accentOrange, // âœ… UPDATED: Orange theme
             onTap: () => _navigateToPhoto("STNK")),
         _buildInfoItem(
             Icons.confirmation_number, 'KIR', '${fromKir}-${toKir}', Colors.red,
@@ -2991,7 +3844,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       children: [
         if (loginname == "MECHANIC")
           _buildInfoItem(Icons.handyman, 'Outstanding Jobs', out_standing_jobs,
-              primaryOrange, // ✅ UPDATED: Orange theme
+              primaryOrange, // âœ… UPDATED: Orange theme
               onTap: () => _navigateToWoMCN()),
         _buildInfoItem(Icons.work, 'Storing', storing, primaryOrange,
             onTap: () => _navigateToListAbsensi('storing')),
@@ -3069,6 +3922,10 @@ class _ViewDashboardState extends State<ViewDashboard>
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(18),
+            topRight: Radius.circular(18),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.shade300,
@@ -3087,6 +3944,7 @@ class _ViewDashboardState extends State<ViewDashboard>
               index: 0,
               badge: countNotif,
             ),
+            if (_canManageAttendanceQr()) _buildAttendanceQrNavItem(),
             _buildBottomNavItem(
               icon: Icons.pin_drop_outlined,
               activeIcon: Icons.pin_drop,
@@ -3100,6 +3958,50 @@ class _ViewDashboardState extends State<ViewDashboard>
               index: 2,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttendanceQrNavItem() {
+    return Flexible(
+      child: GestureDetector(
+        onTap: _showAttendanceQrSheet,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.qr_code_scanner,
+                  color: Colors.grey.shade600,
+                  size: 20,
+                ),
+              ),
+              SizedBox(height: 2),
+              Flexible(
+                child: Text(
+                  "QRATT",
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.normal,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center, //
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -3182,7 +4084,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                     decoration: BoxDecoration(
                       color: isActive
                           ? primaryOrange
-                              .withOpacity(0.1) // ✅ UPDATED: Orange theme
+                              .withOpacity(0.1) // âœ… UPDATED: Orange theme
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -3190,7 +4092,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                       isActive ? activeIcon : icon,
                       color: isActive
                           ? primaryOrange
-                          : Colors.grey.shade600, // ✅ UPDATED: Orange theme
+                          : Colors.grey.shade600, // âœ… UPDATED: Orange theme
                       size: 20,
                     ),
                   ),
@@ -3229,7 +4131,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                     fontSize: 9,
                     color: isActive
                         ? primaryOrange
-                        : Colors.grey.shade600, // ✅ UPDATED: Orange theme
+                        : Colors.grey.shade600, // âœ… UPDATED: Orange theme
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                   ),
                   maxLines: 1,
@@ -3270,7 +4172,7 @@ class _ViewDashboardState extends State<ViewDashboard>
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: primaryOrange, // ✅ UPDATED: Orange theme
+                color: primaryOrange, // âœ… UPDATED: Orange theme
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Row(
@@ -3325,12 +4227,12 @@ class _ViewDashboardState extends State<ViewDashboard>
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: primaryOrange.withOpacity(
-                                    0.1), // ✅ UPDATED: Orange theme
+                                    0.1), // âœ… UPDATED: Orange theme
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(Icons.notifications,
                                   color: primaryOrange,
-                                  size: 20), // ✅ UPDATED: Orange theme
+                                  size: 20), // âœ… UPDATED: Orange theme
                             ),
                             title: Text(
                               notification.note_verifikasi ?? 'No Title',
@@ -3382,7 +4284,8 @@ class _ViewDashboardState extends State<ViewDashboard>
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: Row(
             children: [
-              Icon(Icons.star, color: primaryOrange), // ✅ UPDATED: Orange theme
+              Icon(Icons.star,
+                  color: primaryOrange), // âœ… UPDATED: Orange theme
               SizedBox(width: 8),
               Text('Detail Points'),
             ],
@@ -3411,11 +4314,11 @@ class _ViewDashboardState extends State<ViewDashboard>
                         margin: EdgeInsets.only(bottom: 8),
                         decoration: BoxDecoration(
                           color: primaryOrange
-                              .withOpacity(0.1), // ✅ UPDATED: Orange theme
+                              .withOpacity(0.1), // âœ… UPDATED: Orange theme
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: primaryOrange
-                                  .withOpacity(0.3)), // ✅ UPDATED: Orange theme
+                              color: primaryOrange.withOpacity(
+                                  0.3)), // âœ… UPDATED: Orange theme
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3470,12 +4373,12 @@ class _ViewDashboardState extends State<ViewDashboard>
                                   padding: EdgeInsets.all(4),
                                   decoration: BoxDecoration(
                                     color: primaryOrange.withOpacity(
-                                        0.2), // ✅ UPDATED: Orange theme
+                                        0.2), // âœ… UPDATED: Orange theme
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Icon(Icons.star,
                                       color: primaryOrange,
-                                      size: 16), // ✅ UPDATED: Orange theme
+                                      size: 16), // âœ… UPDATED: Orange theme
                                 ),
                                 SizedBox(width: 8),
                                 Text(
@@ -3483,7 +4386,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color:
-                                        darkOrange, // ✅ UPDATED: Orange theme
+                                        darkOrange, // âœ… UPDATED: Orange theme
                                   ),
                                 ),
                               ],
@@ -3513,7 +4416,7 @@ class _ViewDashboardState extends State<ViewDashboard>
             ElevatedButton(
               child: Text('Cek Reward'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: primaryOrange, // ✅ UPDATED: Orange theme
+                backgroundColor: primaryOrange, // âœ… UPDATED: Orange theme
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
@@ -3544,79 +4447,76 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   Future<bool> _onWillPop() async {
     return (await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        titlePadding: EdgeInsets.fromLTRB(24, 24, 24, 10),
-        contentPadding: EdgeInsets.fromLTRB(24, 10, 24, 20),
-        actionsPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-
-        title: Row(
-          children: [
-            Icon(Icons.logout, color: Color(0xFFFF8C42)),
-            SizedBox(width: 10),
-            Text(
-              'Keluar Aplikasi',
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            titlePadding: EdgeInsets.fromLTRB(24, 24, 24, 10),
+            contentPadding: EdgeInsets.fromLTRB(24, 10, 24, 20),
+            actionsPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            title: Row(
+              children: [
+                Icon(Icons.logout, color: Color(0xFFFF8C42)),
+                SizedBox(width: 10),
+                Text(
+                  'Keluar Aplikasi',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'Apakah Anda yakin ingin keluar dari aplikasi?',
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+                fontSize: 14,
+                color: Colors.black54,
               ),
             ),
-          ],
-        ),
-
-        content: Text(
-          'Apakah Anda yakin ingin keluar dari aplikasi?',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.black54,
-          ),
-        ),
-
-        actions: [
-          // Tombol Tidak
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.grey,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+            actions: [
+              // Tombol Tidak
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text('Tidak'),
               ),
-            ),
-            child: Text('Tidak'),
-          ),
 
-          // Tombol Ya
-          ElevatedButton(
-            onPressed: () async {
-              SharedPreferences preferences =
-              await SharedPreferences.getInstance();
-              await preferences.clear();
+              // Tombol Ya
+              ElevatedButton(
+                onPressed: () async {
+                  SharedPreferences preferences =
+                      await SharedPreferences.getInstance();
+                  await preferences.clear();
 
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
                     (Route<dynamic> route) => false,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFFF8C42), // Orange soft
-              elevation: 2,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFFFF8C42), // Orange soft
+                  elevation: 2,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Ya',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-            ),
-            child: Text(
-              'Ya',
-              style: TextStyle(color: Colors.white),
-            ),
+            ],
           ),
-        ],
-      ),
-    )) ??
+        )) ??
         false;
   }
 
@@ -3630,9 +4530,9 @@ class _ViewDashboardState extends State<ViewDashboard>
             content: Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text('Tidak',style: TextStyle(color: Colors.black38))
-              ),
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child:
+                      Text('Tidak', style: TextStyle(color: Colors.black38))),
               ElevatedButton(
                 onPressed: () async {
                   SharedPreferences preferences =
@@ -3649,7 +4549,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                 ),
-                child: Text('Ya',style: TextStyle(color: Colors.white)),
+                child: Text('Ya', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -3681,7 +4581,7 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   void _showAlert(
       BuildContext? ctx, int type, String message, String colorInfo) {
-    if (ctx != null) alert(ctx, type, message, colorInfo);//
+    if (ctx != null) alert(ctx, type, message, colorInfo); //
   }
 
   void _navigateToWoMCN() {
@@ -3743,34 +4643,190 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
   }
 
-  int? _parseBujNumericId(String bujnbr) {
-    final digits = bujnbr.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.isEmpty) {
-      return null;
+  String _logkarBaseUrl(String apiLokar) {
+    final trimmed = apiLokar.trim();
+    if (trimmed.isEmpty) {
+      return trimmed;
     }
-    return int.tryParse(digits);
+    return trimmed.endsWith('/')
+        ? trimmed.substring(0, trimmed.length - 1)
+        : trimmed;
   }
 
-  Future<bool> _sendLokarOrderPosition({
+  int? _parseDoIdFromJson(dynamic body) {
+    if (body == null) {
+      return null;
+    }
+    if (body is int) {
+      return body > 0 ? body : null;
+    }
+    if (body is num) {
+      final value = body.toInt();
+      return value > 0 ? value : null;
+    }
+    if (body is String) {
+      final parsed = int.tryParse(body.trim());
+      if (parsed != null && parsed > 0) {
+        return parsed;
+      }
+      return null;
+    }
+    // Response Logkar: "data": [ { "do_id": 59332, ... } ]
+    if (body is List) {
+      for (final item in body) {
+        final parsed = _parseDoIdFromJson(item);
+        if (parsed != null && parsed > 0) {
+          return parsed;
+        }
+      }
+      return null;
+    }
+    if (body is Map) {
+      final candidates = <dynamic>[
+        body['do_id'],
+        body['doId'],
+        body['id'],
+      ];
+      final data = body['data'];
+      if (data is Map) {
+        candidates.add(data['do_id']);
+        candidates.add(data['doId']);
+        candidates.add(data['id']);
+      } else if (data is List && data.isNotEmpty) {
+        final first = data.first;
+        if (first is Map) {
+          candidates.add(first['do_id']);
+          candidates.add(first['doId']);
+          candidates.add(first['id']);
+        }
+        candidates.add(data);
+      }
+      for (final c in candidates) {
+        final parsed = _parseDoIdFromJson(c);
+        if (parsed != null && parsed > 0) {
+          return parsed;
+        }
+      }
+      if (data != null) {
+        return _parseDoIdFromJson(data);
+      }
+    }
+    return null;
+  }
+
+  String _buildLogkarRequestCode(String clientId, String apiToken) {
+    final raw = '#$clientId#$apiToken#';
+    return sha256.convert(utf8.encode(raw)).toString();
+  }
+
+  Future<int?> _getLogkarDoId({
     required String apiLokar,
-    required String requestCode,
-    required String bujnbr,
+    required String clientId,
+    required String apiToken,
+    required String doNo,
+  }) async {
+    if (doNo.trim().isEmpty) {
+      print('logkar do_no kosong');
+      return null;
+    }
+    final base = _logkarBaseUrl(apiLokar);
+    if (base.isEmpty) {
+      return null;
+    }
+    final requestCode = _buildLogkarRequestCode(clientId, apiToken);
+    final uri = Uri.parse('$base/orders/do/get');
+    final body = json.encode({
+      'do_no': doNo,
+      'request_code': requestCode,
+    });//
+    print('logkar get do_id url: $uri');
+    print('logkar get do_id body: $body');
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': apiToken,
+      },
+      body: body,
+    );
+    print('logkar get do_id response: ${response.statusCode} ${response.body}');
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return null;
+    }
+    try {
+      final dynamic decoded = json.decode(response.body);
+      final doId = _parseDoIdFromJson(decoded);
+      if (doId == null || doId <= 0) {
+        print('logkar do_id tidak ditemukan untuk do_no: $doNo');
+      }
+      return doId;
+    } catch (e) {
+      print('logkar parse do_id error: $e');
+      return null;
+    }
+  }
+
+  String _parseLogkarResponseMessage(String body) {
+    if (body.trim().isEmpty) {
+      return '';
+    }
+    try {
+      final dynamic decoded = json.decode(body);
+      if (decoded is Map) {
+        final status = decoded['status']?.toString() ?? '';
+        final data = decoded['data']?.toString() ?? '';
+        final code = decoded['code']?.toString() ?? '';
+        final accessTime = decoded['accessTime']?.toString() ?? '';
+        final parts = <String>[];
+        if (status.isNotEmpty) parts.add('Status: $status');
+        if (data.isNotEmpty) parts.add('Data: $data');
+        if (code.isNotEmpty) parts.add('Code: $code');
+        if (accessTime.isNotEmpty) parts.add('Waktu: $accessTime');
+        if (parts.isNotEmpty) {
+          return parts.join('\n');
+        }
+      }
+    } catch (_) {}
+    return body;
+  }
+
+  Future<({bool ok, String message})> _sendLokarOrderPosition({
+    required String apiLokar,
+    required String clientId,
+    required String apiToken,
+    required String no_do,
     required String latitude,
     required String longitude,
   }) async {
     if (apiLokar.trim().isEmpty) {
-      print('api_lokar kosong');
-      return false;
+      return (ok: false, message: 'URL API Logkar kosong.');
     }
-    final doId = _parseBujNumericId(bujnbr);
-    if (doId == null) {
-      print('bujnbr tidak valid: $bujnbr');
-      return false;
+    if (clientId.trim().isEmpty || apiToken.trim().isEmpty) {
+      return (
+        ok: false,
+        message:
+            'Client ID atau API Token Logkar belum tersedia. Silakan login ulang.',
+      );
     }
-    final base = apiLokar.endsWith('/')
-        ? apiLokar.substring(0, apiLokar.length - 1)
-        : apiLokar;
-    final uri = Uri.parse('$base/integration-api/transporter/order/position');
+    if (no_do.trim().isEmpty) {
+      return (ok: false, message: 'Nomor DO kosong.');
+    }
+    final doId = await _getLogkarDoId(
+      apiLokar: apiLokar,
+      clientId: clientId,
+      apiToken: apiToken,
+      doNo: no_do,
+    );
+    if (doId == null || doId <= 0) {
+      return (
+        ok: false,
+        message:
+            'do_id Logkar tidak ditemukan untuk DO:\n$no_do\n\nPastikan DO sudah terdaftar di Logkar.',
+      );
+    }
+    final base = _logkarBaseUrl(apiLokar);
+    final uri = Uri.parse('$base/transporter/order/position');
+    final requestCode = _buildLogkarRequestCode(clientId, apiToken);
     final body = json.encode({
       'request_code': requestCode,
       'do_id': doId,
@@ -3779,13 +4835,69 @@ class _ViewDashboardState extends State<ViewDashboard>
     });
     print('lokar position url: $uri');
     print('lokar position body: $body');
-    final response = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: body,
+    try {
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': apiToken,
+        },
+        body: body,
+      );
+      print('lokar position response: ${response.statusCode} ${response.body}');
+      final detail = _parseLogkarResponseMessage(response.body);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return (
+          ok: true,
+          message:
+              'Posisi berhasil dikirim ke Logkar.\n\nDO: $no_do\ndo_id: $doId\nLat: $latitude\nLon: $longitude${detail.isNotEmpty ? '\n\n$detail' : ''}',
+        );
+      }
+      return (
+        ok: false,
+        message:
+            'Gagal mengirim posisi ke Logkar.\n\nDO: $no_do\ndo_id: $doId\nHTTP: ${response.statusCode}${detail.isNotEmpty ? '\n\n$detail' : ''}',
+      );
+    } catch (e) {
+      return (
+        ok: false,
+        message:
+            'Gagal mengirim posisi ke Logkar.\n\nDO: $no_do\ndo_id: $doId\nError: $e',
+      );
+    }
+  }
+
+  Future<void> _showLogkarPositionDialog({
+    required bool success,
+    required String message,
+  }) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Row(
+          children: [
+            Icon(
+              success ? Icons.check_circle_outline : Icons.error_outline,
+              color: success ? Colors.green : Colors.red,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child:
+                  Text(success ? 'Logkar Position' : 'Logkar Position Gagal'),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(child: Text(message)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
-    print('lokar position response: ${response.statusCode} ${response.body}');
-    return response.statusCode >= 200 && response.statusCode < 300;
   }
 
   void _handleScheduleActionMixer(dynamic item) async {
@@ -3805,15 +4917,29 @@ class _ViewDashboardState extends State<ViewDashboard>
                             : "Close DO";
     try {
       if (items.toString() == "OUTUNLOADING") {
+        final logkarNoDo = item['do_number']?.toString() ?? '';
+        if (logkarNoDo.isNotEmpty) {
+          sharedPreferences ??= await SharedPreferences.getInstance();
+          await sharedPreferences!.setString('logkar_mixer_no_do', logkarNoDo);
+        }
         GetVhcidDo();
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => ViewListDoMixer()),
+            MaterialPageRoute(
+              builder: (context) => ViewListDoMixer(logkarNoDo: logkarNoDo),
+            ),
           );
         });
         return;
       } else if (items.toString().toUpperCase() == "CLOSE DO") {
+        final logkarNoDo = item['do_number']?.toString().trim() ?? '';
+        if (logkarNoDo.isNotEmpty) {
+          sharedPreferences ??= await SharedPreferences.getInstance();
+          await sharedPreferences!.setString('logkar_mixer_no_do', logkarNoDo);
+          await sharedPreferences!.setString('do_maps', logkarNoDo);
+          print('LOGKAR save android do_number (Close DO)=$logkarNoDo');
+        }
         GetVhcidDo();
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
@@ -3841,56 +4967,64 @@ class _ViewDashboardState extends State<ViewDashboard>
         return;
       }
 
-      if (globals.isApiLokarRUN) {
-        EasyLoading.show(status: 'Memeriksa absensi QR...');
+      // no_do Logkar = item['do_number'] (sama yang dikirim ke update_status_do_mixerv2.jsp)
+      final String androidDoNumber = item['do_number']?.toString().trim() ?? '';
+      if (androidDoNumber.isNotEmpty) {
+        await sharedPreferences!.setString('logkar_mixer_no_do', androidDoNumber);
+        await sharedPreferences!.setString('do_maps', androidDoNumber);
+        print('LOGKAR save android do_number=$androidDoNumber');
+      }
+
+      final String statusDoMixer = item['status_do_mixer']?.toString() ?? '';
+      // INLOADING: setiap submit wajib scan QR → Logkar sync/tm (bukan cek flag harian).
+      // Status lain → skip scan Motive TM.
+      if (globals.isApiLokarRUN && statusDoMixer == 'INLOADING') {
+        final okTm = await _scanAndCheckInMotiveTm(
+          loadingStatus: 'Check-in Motive TM (INLOADING)...',
+        );
+        if (!okTm) {
+          return;
+        }
+        if (!mounted) return;
+
         try {
           final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
           final latitude = gpsResult["latitude"] ?? 0;
           final longitude = gpsResult["longitude"] ?? 0;
           final apiLokar = sharedPreferences!.getString("api_lokar") ?? '';
+          final lokarClientId =
+              sharedPreferences!.getString("lokar_client_id") ?? '';
+          final lokarApiToken =
+              sharedPreferences!.getString("lokar_api_token") ?? '';
 
-          final qrCheck = await _checkQrToday(
-            empid: drvid,
-            lon: longitude.toString(),
-            lat: latitude.toString(),
+          EasyLoading.show(status: 'Mengirim posisi...');
+          final logkarResult = await _sendLokarOrderPosition(
             apiLokar: apiLokar,
+            clientId: lokarClientId,
+            apiToken: lokarApiToken,
+            no_do: item['do_number'].toString(),
+            latitude: latitude.toString(),
+            longitude: longitude.toString(),
           );
           if (!mounted) return;
           EasyLoading.dismiss();
-
-          if (qrCheck == null ||
-              qrCheck.statusCode != 200 ||
-              !qrCheck.hasQrToday) {
-            final msg = qrCheck?.message.isNotEmpty == true
-                ? qrCheck!.message
-                : "QR absensi hari ini belum tersimpan. Silakan absen terlebih dahulu.";
-            alert(globalScaffoldKey.currentContext!, 0, msg, "error");
-            return;
-          }
-
-          if (item['status_do_mixer'].toString() == "INLOADING") {
-            EasyLoading.show(status: 'Mengirim posisi...');
-            final sent = await _sendLokarOrderPosition(
-              apiLokar: apiLokar,
-              requestCode: item['do_number'].toString(),
-              bujnbr: item['bujnbr'].toString(),
-              latitude: latitude.toString(),
-              longitude: longitude.toString(),
+          // Logkar position gagal: tetap lanjut update status ke JSP
+          if (!logkarResult.ok) {
+            await _showLogkarPositionDialog(
+              success: false,
+              message: logkarResult.message,
             );
             if (!mounted) return;
-            EasyLoading.dismiss();
-            if (!sent) {
-              alert(globalScaffoldKey.currentContext!, 0,
-                  "Gagal mengirim posisi ke Lokar", "error");
-              return;
-            }
+            print('LOGKAR position FAIL (lanjut JSP): ${logkarResult.message}');
+          } else {
+            print('LOGKAR position OK (silent): ${logkarResult.message}');
           }
         } catch (e) {
           if (EasyLoading.isShow) {
             EasyLoading.dismiss();
           }
           alert(globalScaffoldKey.currentContext!, 0,
-              "Gagal memeriksa absensi QR: $e", "error");
+              "Gagal mengirim posisi Logkar: $e", "error");
           return;
         } finally {
           if (EasyLoading.isShow) {
@@ -3923,22 +5057,49 @@ class _ViewDashboardState extends State<ViewDashboard>
         return;
       }
 
+      EasyLoading.show(status: 'Memproses update status DO mixer...'); //
+
       var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
+      if (!mounted) {
+        return;
+      }
       // var latitude = -6.453855; //gpsResult["latitude"] ?? 0;
       // var longitude = 106.8677426; //gpsResult["longitude"] ?? 0;
 
       var latitude = gpsResult["latitude"] ?? 0;
       var longitude = gpsResult["longitude"] ?? 0;
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      var api_lokar = prefs.getString("api_lokar");
-      var baseURL = GlobalData.baseUrl +
-          "api/do_mixer/update_status_do_mixerv2.jsp?method=update-status-do-mixer&api_lokar=${api_lokar}&do_number=${item['do_number']}&bujnbr=${item['bujnbr']}"
-              "&status_do_mixer=${item['status_do_mixer']}&latitude=${latitude}&longitude=${longitude}&bujdestination=${item['bujdestination']}&userid=${loginname}";
-      print(baseURL);
-      var encoded = Uri.encodeFull(baseURL);
-      Uri myUri = Uri.parse(encoded);
+      var api_lokar = prefs.getString("api_lokar") ?? '';
+      // Pastikan no_do Logkar = do_number dari Android (bukan dlodetail)
+      final String doNumberAndroid = item['do_number']?.toString().trim() ?? '';
+      final String bujnbrAndroid = item['bujnbr']?.toString().trim() ?? '';
+      final String statusMixer = item['status_do_mixer']?.toString() ?? '';
+      final String bujDest = item['bujdestination']?.toString() ?? '';
+      if (doNumberAndroid.isNotEmpty) {
+        await prefs.setString('logkar_mixer_no_do', doNumberAndroid);
+        await prefs.setString('do_maps', doNumberAndroid);
+      }
+      // Pakai queryParameters agar do_number tidak rusak karena encode api_lokar
+      final Uri myUri = Uri.parse(
+              '${GlobalData.baseUrl}api/do_mixer/update_status_do_mixerv2.jsp')
+          .replace(queryParameters: {
+        'method': 'update-status-do-mixer',
+        'api_lokar': api_lokar,
+        'do_number': doNumberAndroid,
+        'bujnbr': bujnbrAndroid,
+        'status_do_mixer': statusMixer,
+        'latitude': latitude.toString(),
+        'longitude': longitude.toString(),
+        'bujdestination': bujDest,
+        'userid': loginname?.toString() ?? '',
+      });
+      print('LOGKAR JSP url: $myUri');
+      print('LOGKAR JSP do_number(android)=$doNumberAndroid bujnbr=$bujnbrAndroid');
       var response =
           await http.get(myUri, headers: {"Accept": "application/json"});
+      if (!mounted) {
+        return;
+      }
 
       if (response.statusCode == 200) {
         var result = json.decode(response.body);
@@ -4027,13 +5188,13 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   void _handleMenuTap(AnpService anpService) async {
-    // ✅ ADDED: Handle menu "More"
+    // âœ… ADDED: Handle menu "More"
     if (anpService.idKey == 999) {
       _showMoreMenuModal();
       return;
     }
 
-    // ✅ Original menu handling logic remains the same
+    // âœ… Original menu handling logic remains the same
 
     if (anpService.idKey == 1) {
       print("MAPS ${loginname}");
@@ -4042,9 +5203,9 @@ class _ViewDashboardState extends State<ViewDashboard>
         EasyLoading.show();
         //var tokenAuth =GlobalData.token_vts;// new GenerateTokenAuth();
         // var _tokens = await tokenAuth.GetTokenEasyGo("easygo".toString(), pr);
-        // print("🔍 Token result driver: ${_tokens}");
-        // print("🔍 Token length: ${_tokens?.length}");
-        // print("🔍 Token type: ${_tokens.runtimeType}");
+        // print("ðŸ” Token result driver: ${_tokens}");
+        // print("ðŸ” Token length: ${_tokens?.length}");
+        // print("ðŸ” Token type: ${_tokens.runtimeType}");
         var _tokens = GlobalData.token_vts;
         if (_tokens != "" && _tokens != null) {
           SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -4079,9 +5240,9 @@ class _ViewDashboardState extends State<ViewDashboard>
             //var tokenAuth = new GenerateTokenAuth();
             var _tokens = GlobalData.token_vts;
             // await tokenAuth.GetTokenEasyGo("easygo".toString(), pr);
-            // print("🔍 Token result: ${_tokens}");
-            // print("🔍 Token length: ${_tokens?.length}");
-            // print("🔍 Token type: ${_tokens.runtimeType}");
+            // print("ðŸ” Token result: ${_tokens}");
+            // print("ðŸ” Token length: ${_tokens?.length}");
+            // print("ðŸ” Token type: ${_tokens.runtimeType}");
             if (_tokens != "" && _tokens != null) {
               SharedPreferences prefs = await SharedPreferences.getInstance();
               prefs.setString("page", "dashboard");
@@ -4316,7 +5477,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
                         backgroundColor:
-                            primaryOrange, // ✅ UPDATED: Orange theme
+                            primaryOrange, // âœ… UPDATED: Orange theme
                         padding:
                             EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                         textStyle: TextStyle(
@@ -4448,11 +5609,10 @@ class _ViewDashboardState extends State<ViewDashboard>
       }
     } else if (anpService.idKey == 25) {
       if (loginname != "DRIVER") {
-
         final hasAksesPO = globals.akses_pages != null &&
             globals.akses_pages.where((x) => x == "PO").isNotEmpty;
         if (hasAksesPO || username == "ADMIN") {
-        //if ((hasAksesPO && username == "ADMIN") || (hasAksesPO && username == "ADMIN")) {
+          //if ((hasAksesPO && username == "ADMIN") || (hasAksesPO && username == "ADMIN")) {
           if (!EasyLoading.isShow) {
             EasyLoading.show();
           }
@@ -4528,8 +5688,8 @@ class _ViewDashboardState extends State<ViewDashboard>
         var isOK = globals.akses_pages == null
             ? globals.akses_pages
             : globals.akses_pages
-            .where((x) => (x == "HD" || username == "ADMIN"));
-        if(isOK.length>0){
+                .where((x) => (x == "HD" || username == "ADMIN"));
+        if (isOK.length > 0) {
           Timer(Duration(seconds: 1), () {
             Navigator.pushReplacement(
               context,
@@ -4539,7 +5699,6 @@ class _ViewDashboardState extends State<ViewDashboard>
             );
           });
         }
-
       } else {
         _showAlert(globalScaffoldKey.currentContext!, 0,
             "Anda tidak punya akses", "error");
@@ -4694,6 +5853,33 @@ class _ViewDashboardState extends State<ViewDashboard>
               "error");
         }
       }
+    } else if (anpService.idKey == 40) {
+      if (loginname == "DRIVER") {
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
+      } else {
+        var isOK = globals.akses_pages == null
+            ? globals.akses_pages
+            : globals.akses_pages
+                .where((x) => x == "ST" || username == "ADMIN");
+        if (isOK != null) {
+          if (isOK.length > 0) {
+            EasyLoading.show();
+            Timer(Duration(seconds: 1), () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const FrmAppItem()),
+              );
+            });
+          } else {
+            _showAlert(globalScaffoldKey.currentContext!, 0,
+                "Access Not Allowed", "error");
+          }
+        } else {
+          _showAlert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+              "error");
+        }
+      }
     } else if (anpService.idKey == 31) {
       if (loginname == "DRIVER") {
         alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
@@ -4712,10 +5898,10 @@ class _ViewDashboardState extends State<ViewDashboard>
             sharedPreferences!.setString("tire_drvid", "");
             sharedPreferences!.setString("tire_vhcid", "");
             await DatabaseHelper.instance.deleteItemLogsAll();
-            Timer(Duration(seconds: 1), () {
+            Timer(Duration(seconds: 1), () {//
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => FrmServiceTire()),
+                MaterialPageRoute(builder: (context) => FrmServiceTire()),//
               );
             });
           } else {
@@ -4758,16 +5944,26 @@ class _ViewDashboardState extends State<ViewDashboard>
         }
       }
     } else if (anpService.idKey == 15) {
-      if (loginname == "DRIVER") {
-        await _openAttendanceDriverWithQrScan();
+      // DRIVER + status_karyawan DRIVER → FrmAttendanceDriver
+      // status_karyawan KARYAWAN (selain itu) → FrmAttendance
+      sharedPreferences ??= await SharedPreferences.getInstance();
+      login_type = sharedPreferences!.getString('login_type') ?? login_type;
+      if (loginname == "DRIVER" &&
+          _normalizedStatusKaryawan() == "DRIVER") {
+        if (_isStatusUnitOngoing()) {
+          debugPrint('DRIVER status_unit ONGOING ($status_unit) -> absensi tanpa scan QR');
+          await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
+        } else if (login_type == "MIXER") {
+          await _openAttendanceDriverWithQrScan();
+        } else {
+          final requireQr = await _shouldRequireAttendanceQr();
+          await _goToAttendanceDriverIfSimValid(requireAttendanceQr: requireQr);
+        }
       } else {
-        EasyLoading.show();
-        Timer(Duration(seconds: 1), () {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => FrmAttendance()),//KARYAWAN///
-          );
-        });
+        // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+        //   return;
+        // }
+        await _openKaryawanAttendance();
       }
     } else if (anpService.idKey == 16) {
       if (loginname == "DRIVER") {
@@ -4892,12 +6088,35 @@ class _ViewDashboardState extends State<ViewDashboard>
           EasyLoading.show();
         }
         Timer(Duration(seconds: 1), () {
+          EasyLoading.dismiss();
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-                builder: (context) => FrmMasterData()), //ApprovedDriverRequest
+            MaterialPageRoute(builder: (context) => FrmMasterMenu()),
           );
         });
+      } else {
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
+      }
+    } else if (anpService.idKey == 37) {
+      var isOK = globals.akses_pages == null
+          ? globals.akses_pages
+          : globals.akses_pages.where((x) => x == "HD");
+      if ((isOK != null && isOK.length > 0) || username == "ADMIN") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ListApvFaceEnroll()),
+        );
+      } else {
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses", "error");
+      }
+    } else if (anpService.idKey == 38) {
+      if (username == "ADMIN") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const FrmTestScanLogkar()),
+        );
       } else {
         _showAlert(globalScaffoldKey.currentContext!, 0,
             "Anda tidak punya akses", "error");
@@ -4914,6 +6133,18 @@ class _ViewDashboardState extends State<ViewDashboard>
         _showAlert(
             globalScaffoldKey.currentContext!, 0, "Akses ditolak", "error");
       }
+    } else if (anpService.idKey == 39) {
+      final bool isCsAdmin =
+          username == "ADMIN" || getAkses("CS") || getAkses("OP");
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FrmSendLocationPoolDo(
+            isCsAdmin: isCsAdmin,
+            doList: data_list_do,
+          ),
+        ),
+      );
     } else {
       final ctx = globalScaffoldKey.currentContext!;
       if (ctx != null) {
@@ -4926,7 +6157,7 @@ class _ViewDashboardState extends State<ViewDashboard>
             content: new Text("ON Progress"),
             actions: <Widget>[
               new TextButton(
-                // ✅ UPDATED: Use TextButton instead of FlatButton
+                // âœ… UPDATED: Use TextButton instead of FlatButton
                 onPressed: () async {
                   Navigator.of(context).pop(true);
                 },
@@ -5044,12 +6275,13 @@ class _ViewDashboardState extends State<ViewDashboard>
           authenticated ? "Authorized success" : "Failed to authenticate";
       print(authorized);
     });
-    Timer(Duration(seconds: 1), () {
+    Timer(Duration(seconds: 1), () async {
       if (authorized == "Authorized success") {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => FrmAttendance()),
-        );
+        // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
+        //   return;
+        // }
+        if (!mounted) return;
+        await _openKaryawanAttendance();
       } else {
         alert(
           globalScaffoldKey.currentContext!,
@@ -5107,6 +6339,26 @@ class _ViewDashboardState extends State<ViewDashboard>
     });
   }
 
+  void _syncLogkarMixerTracking() async {
+    sharedPreferences ??= await SharedPreferences.getInstance();
+    final mixerLoginType =
+        sharedPreferences!.getString('login_type') ?? login_type;
+    if (mixerLoginType != 'MIXER' || !globals.isApiLokarRUN) {
+      await LogkarPositionBackgroundService.stop();
+      return;
+    }
+    await sharedPreferences!.setBool('is_api_lokar_run', globals.isApiLokarRUN);
+    if (data_list_do.isNotEmpty) {
+      final noDo = data_list_do.first['do_number']?.toString() ?? '';
+      if (noDo.isNotEmpty) {
+        await sharedPreferences!.setString('logkar_mixer_no_do', noDo);
+      }
+    } else {
+      await sharedPreferences!.remove('logkar_mixer_no_do');
+    }
+    await LogkarPositionBackgroundService.syncTrackingState();
+  }
+
   void GetListDo() async {
     try {
       final JsonDecoder _decoder = new JsonDecoder();
@@ -5124,6 +6376,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       setState(() {
         if (response.statusCode == 200) {
           data_list_do = json.decode(response.body);
+          _syncLogkarMixerTracking();
         }
         print("data_list_do");
         print(data_list_do);
@@ -5142,7 +6395,7 @@ class _ViewDashboardState extends State<ViewDashboard>
         _onWillPop();
       },
       child: Scaffold(
-        backgroundColor: paleOrange, // ✅ UPDATED: Orange soft background
+        backgroundColor: paleOrange, // âœ… UPDATED: Orange soft background
         key: globalScaffoldKey,
         body: Column(
           children: [

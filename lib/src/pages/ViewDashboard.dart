@@ -39,6 +39,7 @@ import 'package:dms_anp/src/pages/hrd/frmAssset.dart';
 import 'package:dms_anp/src/pages/inventory/FrmWareHouseOpName.dart';
 import 'package:dms_anp/src/pages/inventory/ListApprovalOpname.dart';
 import 'package:dms_anp/src/pages/inventory/ListInventoryTransNew.dart';
+import 'package:dms_anp/src/pages/maintenance/FrmAppItem.dart';
 import 'package:dms_anp/src/pages/maintenance/FrmServiceRequestTms.dart';
 import 'package:dms_anp/src/pages/maintenance/ViewListWoMCN.dart';
 import 'package:dms_anp/src/pages/mekanik/DailyMekanikCheckScreenP2H.dart';
@@ -1211,420 +1212,173 @@ class _ViewDashboardState extends State<ViewDashboard>
     if (!mounted) {
       return;
     }
-    setState(() {
-      _anpServiceList.clear();
-      _setupMenuItemsWithoutOrder();
-      _organizeMenus();
-    });
-  }
-
-  void _setupMenuItemsWithoutOrder() {
-    _anpServiceList.add(new AnpService(
-        image: loginname == "DRIVER" ? Icons.location_on : Icons.location_on,
-        color: AnpPalette.menuRide,
-        idKey: 1,
-        title: loginname == "DRIVER" ? "Maps" : "Maps"));
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "OP" || username == "ADMIN"));
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          _anpServiceList.add(new AnpService(
-              image: Icons.play_arrow,
-              color: Colors.red,
-              idKey: 22,
-              title: "Playback"));
-        }
-      }
-    }
-
-    _anpServiceList.add(new AnpService(
-        image: Icons.add_chart,
-        color: AnpPalette.menuCar,
-        idKey: 2,
-        title: "Do Diterima"));
-
-    _anpServiceList.add(new AnpService(
-        image: Icons.closed_caption,
-        color: AnpPalette.menuBluebird,
-        idKey: 3,
-        title: "Close Do"));
-
-    _anpServiceList.add(new AnpService(
-        image: Icons.bubble_chart,
-        color: AnpPalette.menuFood,
-        idKey: 4,
-        title: "Ritase"));
-
-    _anpServiceList.add(new AnpService(
-        image: (loginname == 'DRIVER'
-            ? Icons.drive_eta_rounded
-            : Icons.electric_car_outlined),
-        color: AnpPalette.menuDeals,
-        idKey: 5,
-        title: (loginname == 'DRIVER' ? "Antrian" : "New Driver")));
-
-    _anpServiceList.add(new AnpService(
-        image: Icons.bar_chart,
-        color: AnpPalette.menuPulsa,
-        idKey: 6,
-        title: "Perform"));
-
-    _anpServiceList.add(new AnpService(
-        image: Icons.alarm_on,
-        color: AnpPalette.menuDeals,
-        idKey: 7,
-        title: "Violation"));
-
-    _anpServiceList.add(new AnpService(
-        image: Icons.queue,
-        color: AnpPalette.menuSend,
-        idKey: 8,
-        title: "Others"));
-
-    if (username == "ADMIN" ||
-        username == "NURIZKI" ||
-        ismixer == "true" ||
-        getAkses("OP")) {
-      _anpServiceList.add(new AnpService(
-          image: Icons.work_outlined,
-          color: Colors.red,
-          idKey: 23,
-          title: "P2H"));
-    }
-
-    if (loginname != "DRIVER") {
-      _anpServiceList.add(new AnpService(
-          image: Icons.work_outlined,
-          color: Colors.red,
-          idKey: 24,
-          title: "P2H Tools"));
-    }
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages.where((x) =>
-              (x == "OP" || x == "MT" || username == "ADMIN") && x != "MK");
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          _anpServiceList.add(new AnpService(
-              image: Icons.car_repair,
-              color: Colors.red,
-              idKey: 11,
-              title: "Moving Unit"));
-        }
-      }
-    }
-
-    if (loginname != "DRIVER") {
-      _anpServiceList.add(new AnpService(
-          image: Icons.home_repair_service_outlined,
-          color: Colors.red,
-          idKey: 12,
-          title: "SR"));
-    }
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "IN" || x == "TY" || username == "ADMIN"));
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          _anpServiceList.add(new AnpService(
-              image: Icons.donut_large,
-              color: Colors.red,
-              idKey: 31,
-              title: "Tyre"));
-        }
-      }
-    }
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "IN" || username == "ADMIN"));
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          _anpServiceList.add(new AnpService(
-              image: Icons.today_outlined,
-              color: Colors.red,
-              idKey: 14,
-              title: "Inventory"));
-        }
-      }
-    }
-
-    if (loginname != "DRIVER") {
-      _anpServiceList.add(new AnpService(
-          image: Icons.fingerprint,
-          color: Colors.red,
-          idKey: 15,
-          title: "Absensi"));
-    }
-
-    if (loginname == "DRIVER") {
-      _anpServiceList.add(new AnpService(
-          image: Icons.fingerprint,
-          color: Colors.red,
-          idKey: 15,
-          title: "Absensi"));
-    }
-
-    if (loginname != "DRIVER") {
-      _anpServiceList.add(new AnpService(
-          image: Icons.fingerprint_rounded,
-          color: Colors.green,
-          idKey: 20,
-          title: "Absen ADV"));
-    }
-
-    var isOK2 = globals.akses_pages == null
-        ? globals.akses_pages
-        : globals.akses_pages.where(
-            (x) => (x == "IN" || username == "ADMIN" || isMenuForeman == true));
-    if (isOK2 != null) {
-      if (isOK2.length > 0) {
-        _anpServiceList.add(new AnpService(
-            image: Icons.inventory,
-            color: Colors.green,
-            idKey: 27,
-            title: "Inv. Foreman"));
-      }
-    }
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "TI" || username == "ADMIN"));
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          _anpServiceList.add(new AnpService(
-              image: Icons.web_asset,
-              color: Colors.red,
-              idKey: 16,
-              title: "Edp/Aset"));
-        }
-      }
-    }
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "IN" || username == "ADMIN"));
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          _anpServiceList.add(new AnpService(
-              image: Icons.room_preferences,
-              color: Colors.red,
-              idKey: 17,
-              title: "WH. Opname"));
-        }
-      }
-    }
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "ST" || username == "ADMIN"));
-      if (isOK != null && isOK.length > 0) {
-        _anpServiceList.add(new AnpService(
-            image: Icons.approval,
-            color: Colors.red,
-            idKey: 34,
-            title: "Apr. Opname"));
-      }
-    }
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "OP" || username == "ADMIN"));
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          _anpServiceList.add(new AnpService(
-              image: Icons.credit_card,
-              color: Colors.red,
-              idKey: 21,
-              title: "Non-Tera"));
-        }
-      }
-    }
-
-    if (loginname == "DRIVER") {
-      _anpServiceList.add(new AnpService(
-          image: Icons.handyman,
-          color: Colors.red,
-          idKey: 19,
-          title: "Storing"));
-      _anpServiceList.add(new AnpService(
-          image: Icons.add_location_alt_outlined,
-          color: Colors.deepOrange,
-          idKey: 39,
-          title: "Send Location"));
-    }
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "PO" || username == "ADMIN"));
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          _anpServiceList.add(new AnpService(
-              image: Icons.point_of_sale,
-              color: Colors.red,
-              idKey: 25,
-              title: "PO"));
-        }
-      }
-    }
-
-    if (loginname != "DRIVER") {
-      var isOKPb = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "IR" || username == "ADMIN"));
-      if (isOKPb != null) {
-        if (isOKPb.length > 0) {
-          _anpServiceList.add(AnpService(
-              image: Icons.receipt_long,
-              color: Colors.deepPurple,
-              idKey: 36,
-              title: "PR",
-              badgeNewSince: DateTime(2026, 6, 3)));
-        }
-      }
-    }
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "HD" || username == "ADMIN"));
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          _anpServiceList.add(new AnpService(
-              image: Icons.person_outline,
-              color: Colors.red,
-              idKey: 28,
-              title: "Req. Driver"));
-        }
-      }
-    }
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "HD" || username == "ADMIN"));
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          _anpServiceList.add(new AnpService(
-              image: Icons.card_giftcard,
-              color: Colors.red,
-              idKey: 29,
-              title: "Apv. Reward"));
-          _anpServiceList.add(new AnpService(
-              image: Icons.face_retouching_natural,
-              color: Colors.deepOrange,
-              idKey: 37,
-              title: "Apv. Wajah"));
-        }
-      }
-    }
-
-    if (username == "ADMIN") {
-      _anpServiceList.add(new AnpService(
-          image: Icons.qr_code_scanner,
-          color: Colors.teal,
-          idKey: 38,
-          title: "Test Scan"));
-    }
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "MK" || username == "ADMIN"));
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          _anpServiceList.add(new AnpService(
-              image: FontAwesomeIcons.delicious,
-              color: Colors.red,
-              idKey: 30,
-              title: "Open DO"));
-        }
-      }
-    }
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "MK" || username == "ADMIN"));
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          _anpServiceList.add(new AnpService(
-              image: FontAwesomeIcons.delicious,
-              color: Colors.red,
-              idKey: 33,
-              title: "Open DO NC"));
-        }
-      }
-    }
-
-    if (loginname != "DRIVER") {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages
-              .where((x) => (x == "MK" || username == "ADMIN"));
-      if (isOK != null && isOK.length > 0) {
-        _anpServiceList.add(new AnpService(
-            image: Icons.storage,
-            color: Colors.blue.shade700,
-            idKey: 32,
-            title: "Master"));
-      }
-    }
-
-    if (_showAduanMenuItem()) {
-      _anpServiceList.add(AnpService(
-          image: Icons.support_agent,
-          color: Colors.deepOrange,
-          idKey: 35,
-          title: "Aduan"));
-    }
-
-    if (loginname != "DRIVER") {
-      final isCsAdmin = (globals.akses_pages != null &&
-              globals.akses_pages
-                  .where((x) => x == "CS" || x == "OP")
-                  .isNotEmpty) ||
-          username == "ADMIN";
-      if (isCsAdmin) {
-        _anpServiceList.add(new AnpService(
-            image: Icons.map_outlined,
-            color: Colors.deepOrange,
-            idKey: 39,
-            title: "List Transit DO"));
-      }
-    }
+    _setupMenuItems();
   }
 
   void _setupMenuItems() {
     _anpServiceList.clear();
-    _setupMenuItemsWithoutOrder();
-    _applySavedMenuOrder();
-    _organizeMenus();
+    _fetchMenusFromApi();
+  }
+
+  IconData _resolveMenuIcon(String? iconName) {
+    if (iconName == null || iconName.isEmpty) return Icons.widgets_outlined;
+    final name = iconName.trim().toLowerCase();
+    switch (name) {
+      case 'bubble_chart':
+        return Icons.bubble_chart;
+      case 'drive_eta_rounded':
+        return Icons.drive_eta_rounded;
+      case 'electric_car_outlined':
+        return Icons.electric_car_outlined;
+      case 'bar_chart':
+        return Icons.bar_chart;
+      case 'alarm_on':
+        return Icons.alarm_on;
+      case 'queue':
+        return Icons.queue;
+      case 'work_outlined':
+        return Icons.work_outlined;
+      case 'car_repair':
+        return Icons.car_repair;
+      case 'home_repair_service_outlined':
+        return Icons.home_repair_service_outlined;
+      case 'fact_check_outlined':
+        return Icons.fact_check_outlined;
+      case 'donut_large':
+        return Icons.donut_large;
+      case 'today_outlined':
+        return Icons.today_outlined;
+      case 'fingerprint':
+        return Icons.fingerprint;
+      case 'fingerprint_rounded':
+        return Icons.fingerprint_rounded;
+      case 'inventory':
+        return Icons.inventory;
+      case 'web_asset':
+        return Icons.web_asset;
+      case 'room_preferences':
+        return Icons.room_preferences;
+      case 'approval':
+        return Icons.approval;
+      case 'credit_card':
+        return Icons.credit_card;
+      case 'handyman':
+        return Icons.handyman;
+      case 'add_location_alt_outlined':
+        return Icons.add_location_alt_outlined;
+      case 'point_of_sale':
+        return Icons.point_of_sale;
+      case 'receipt_long':
+        return Icons.receipt_long;
+      case 'person_outline':
+        return Icons.person_outline;
+      case 'card_giftcard':
+        return Icons.card_giftcard;
+      case 'face_retouching_natural':
+        return Icons.face_retouching_natural;
+      case 'qr_code_scanner':
+        return Icons.qr_code_scanner;
+      case 'delicious':
+        return FontAwesomeIcons.delicious;
+      case 'storage':
+        return Icons.storage;
+      case 'support_agent':
+        return Icons.support_agent;
+      case 'map_outlined':
+        return Icons.map_outlined;
+      case 'play_arrow':
+        return Icons.play_arrow;
+      case 'add_chart':
+        return Icons.add_chart;
+      case 'closed_caption':
+        return Icons.closed_caption;
+      case 'location_on':
+        return Icons.location_on;
+      default:
+        return Icons.widgets_outlined;
+    }
+  }
+
+  Color _resolveMenuColor(String? colorHex, Color fallback) {
+    if (colorHex == null || colorHex.isEmpty) return fallback;
+    try {
+      String hex = colorHex.replaceAll('#', '').trim();
+      if (hex.length == 6) hex = 'FF' + hex;
+      return Color(int.parse(hex, radix: 16));
+    } catch (_) {
+      return fallback;
+    }
+  }//
+
+  Future<void> _fetchMenusFromApi() async {
+    final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
+
+    // 1. Coba baca dari cache lokal terlebih dahulu agar tampilan instan muncul
+    final cached = prefs.getString('cached_mobile_menus_${username}_$loginname');
+    if (cached != null && cached.isNotEmpty && _anpServiceList.isEmpty) {
+      try {
+        final res = jsonDecode(cached);
+        if (res['data'] is List && (res['data'] as List).isNotEmpty) {
+          _applyDynamicMenuList(res['data']);
+        }
+      } catch (_) {}
+    }
+
+    // 2. Tarik data realtime dari database melalui API
+    try {
+      final roles = globals.akses_pages?.join(',') ?? '';
+      final url = Uri.parse(
+        "${GlobalData.baseUrl}api/menu/api_menu_dashboard.jsp?method=list-user-menus"
+        "&username=${Uri.encodeComponent(username)}"
+        "&loginname=${Uri.encodeComponent(loginname)}"
+        "&roles=${Uri.encodeComponent(roles)}"
+        "&ismixer=${ismixer == 'true' ? 'true' : 'false'}"
+        "&isforeman=${isMenuForeman ? 'true' : 'false'}",
+      );
+      final response = await http.get(url).timeout(const Duration(seconds: 7));
+      if (response.statusCode == 200) {
+        final res = jsonDecode(response.body);
+        if (res['status_code'] == '200' && res['data'] is List) {
+          final List dynamicList = res['data'];
+          if (dynamicList.isNotEmpty) {
+            await prefs.setString(
+              'cached_mobile_menus_${username}_$loginname',
+              response.body,
+            );
+            _applyDynamicMenuList(dynamicList);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching dynamic menus from API: $e");
+    }
+  }
+
+  void _applyDynamicMenuList(List dynamicList) {
+    final List<AnpService> fetchedServices = [];
+    for (var item in dynamicList) {
+      final int idKey =
+          int.tryParse(item['id_key']?.toString() ?? '0') ?? 0;
+      final String title = item['title']?.toString() ?? '';
+      final String iconName = item['icon']?.toString() ?? '';
+      final String colorHex = item['color']?.toString() ?? '#FF6600';
+      if (idKey > 0 && title.isNotEmpty) {
+        fetchedServices.add(AnpService(
+          image: _resolveMenuIcon(iconName),
+          color: _resolveMenuColor(colorHex, primaryOrange),
+          idKey: idKey,
+          title: title,
+        ));
+      }
+    }
+    if (fetchedServices.isNotEmpty && mounted) {
+      setState(() {
+        _anpServiceList.clear();
+        _anpServiceList.addAll(fetchedServices);
+        _applySavedMenuOrder();
+        _organizeMenus();
+      });
+    }
   }
 
   // âœ… ADDED: Function untuk memisahkan menu utama dan tambahan
@@ -2348,6 +2102,41 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
   }
 
+  String? _customBgUrl;
+
+  Future<void> _loadSavedBackground() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? cached = prefs.getString('bg_mobile_url');
+      if (cached != null && cached.isNotEmpty && mounted) {
+        setState(() {
+          _customBgUrl = cached;
+        });
+      }
+      final url = '${GlobalData.baseUrl}api/menu/api_bg_mobile.jsp?method=get-active-bg';
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 4));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status_code'] == '200' && data['data'] != null) {
+          String urlPic = data['data']['url_picture'] ?? '';
+          if (urlPic.isNotEmpty) {
+            String fullUrl = urlPic.startsWith('http')
+                ? urlPic
+                : '${GlobalData.baseUrlOri}$urlPic';
+            await prefs.setString('bg_mobile_url', fullUrl);
+            if (mounted && fullUrl != _customBgUrl) {
+              setState(() {
+                _customBgUrl = fullUrl;
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error load bg dashboard: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -2372,6 +2161,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     _checkBiometric();
     _getAvailableBiometric();
     GetListDo();
+    _loadSavedBackground();
     //print('widget_isMenuForeman ${widget.widget_isMenuForeman}');
     Future.delayed(Duration(milliseconds: 1000), () {
       if (mounted) {
@@ -2725,17 +2515,18 @@ class _ViewDashboardState extends State<ViewDashboard>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            primaryOrange,
-            accentOrange
-          ], // âœ… UPDATED: Orange soft gradient
+            primaryOrange.withOpacity(0.90),
+            accentOrange.withOpacity(0.85),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: primaryOrange.withOpacity(0.3),
-            blurRadius: 10,
+            color: primaryOrange.withOpacity(0.25),
+            blurRadius: 12,
             offset: Offset(0, 5),
           ),
         ],
@@ -2923,13 +2714,14 @@ class _ViewDashboardState extends State<ViewDashboard>
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        color: Colors.white.withOpacity(0.78),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 10,
-            offset: Offset(0, 5),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -3046,20 +2838,22 @@ class _ViewDashboardState extends State<ViewDashboard>
       onTap: () => _handleMenuTap(service),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isMoreMenu
+              ? Colors.white.withOpacity(0.85)
+              : Colors.white.withOpacity(0.60),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isMoreMenu
-                ? primaryOrange.withOpacity(0.5)
-                : Colors.grey.shade200,
-            width: isMoreMenu ? 2 : 1,
+                ? primaryOrange.withOpacity(0.6)
+                : Colors.white.withOpacity(0.85),
+            width: isMoreMenu ? 2 : 1.2,
           ),
           boxShadow: [
             BoxShadow(
               color: isMoreMenu
                   ? primaryOrange.withOpacity(0.2)
-                  : Colors.grey.shade100,
-              blurRadius: isMoreMenu ? 8 : 5,
+                  : Colors.black.withOpacity(0.02),
+              blurRadius: isMoreMenu ? 8 : 4,
               offset: Offset(0, 2),
             ),
           ],
@@ -3357,13 +3151,14 @@ class _ViewDashboardState extends State<ViewDashboard>
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        color: Colors.white.withOpacity(0.78),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 10,
-            offset: Offset(0, 5),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -3425,13 +3220,14 @@ class _ViewDashboardState extends State<ViewDashboard>
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        color: Colors.white.withOpacity(0.78),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 10,
-            offset: Offset(0, 5),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -3692,13 +3488,14 @@ class _ViewDashboardState extends State<ViewDashboard>
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        color: Colors.white.withOpacity(0.78),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 10,
-            offset: Offset(0, 5),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -4139,6 +3936,8 @@ class _ViewDashboardState extends State<ViewDashboard>
       GetListDo();
       fetchPoints();
     });
+    _fetchMenusFromApi();
+    _loadSavedBackground();
   }
 
   void _showNotificationList() {
@@ -5836,6 +5635,33 @@ class _ViewDashboardState extends State<ViewDashboard>
               "error");
         }
       }
+    } else if (anpService.idKey == 40) {
+      if (loginname == "DRIVER") {
+        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+            "error");
+      } else {
+        var isOK = globals.akses_pages == null
+            ? globals.akses_pages
+            : globals.akses_pages
+                .where((x) => x == "ST" || username == "ADMIN");
+        if (isOK != null) {
+          if (isOK.length > 0) {
+            EasyLoading.show();
+            Timer(Duration(seconds: 1), () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const FrmAppItem()),
+              );
+            });
+          } else {
+            _showAlert(globalScaffoldKey.currentContext!, 0,
+                "Access Not Allowed", "error");
+          }
+        } else {
+          _showAlert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
+              "error");
+        }
+      }
     } else if (anpService.idKey == 31) {
       if (loginname == "DRIVER") {
         alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
@@ -6003,7 +5829,7 @@ class _ViewDashboardState extends State<ViewDashboard>
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => FrmStoring()),
+            MaterialPageRoute(builder: (context) => FrmStoring()),//
           );
         });
       } else {
@@ -6351,30 +6177,44 @@ class _ViewDashboardState extends State<ViewDashboard>
         _onWillPop();
       },
       child: Scaffold(
-        backgroundColor: paleOrange, // âœ… UPDATED: Orange soft background
+        backgroundColor: _customBgUrl != null && _customBgUrl!.isNotEmpty
+            ? Colors.transparent
+            : paleOrange,
         key: globalScaffoldKey,
-        body: Column(
-          children: [
-            SizedBox(height: 25),
-            _buildProfileHeader(), // Fixed Header
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: _customBgUrl != null && _customBgUrl!.isNotEmpty
+              ? BoxDecoration(
+                  image: DecorationImage(
+                    image: NetworkImage(_customBgUrl!),
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : BoxDecoration(color: paleOrange),
+          child: Column(
+            children: [
+              SizedBox(height: 25),
+              _buildProfileHeader(), // Fixed Header
 
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _refreshData,
-                child: SingleChildScrollView(
-                  physics: AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 12),
-                      _buildNotificationBanner(),
-                      _buildMainContent(),
-                      SizedBox(height: 20),
-                    ],
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _refreshData,
+                  child: SingleChildScrollView(
+                    physics: AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      children: [
+                        SizedBox(height: 12),
+                        _buildNotificationBanner(),
+                        _buildMainContent(),
+                        SizedBox(height: 20),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         bottomNavigationBar: _buildBottomNavigationBar(),
       ),

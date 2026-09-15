@@ -51,14 +51,44 @@ class _LoginPageState extends State<LoginPage> {
   static const Color textPrimary = Color(0xFF2D3748);
   static const Color textSecondary = Color(0xFF718096);
 
+  String? _customBgUrl;
+
+  Future<void> _loadSavedBackground() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? cached = prefs.getString('bg_mobile_url');
+      if (cached != null && cached.isNotEmpty && mounted) {
+        setState(() {
+          _customBgUrl = cached;
+        });
+      }
+      final url = '${GlobalData.baseUrl}api/menu/api_bg_mobile.jsp?method=get-active-bg';
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 4));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status_code'] == '200' && data['data'] != null) {
+          String urlPic = data['data']['url_picture'] ?? '';
+          if (urlPic.isNotEmpty) {
+            String fullUrl = urlPic.startsWith('http')
+                ? urlPic
+                : '${GlobalData.baseUrlOri}$urlPic';
+            await prefs.setString('bg_mobile_url', fullUrl);
+            if (mounted && fullUrl != _customBgUrl) {
+              setState(() {
+                _customBgUrl = fullUrl;
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error load bg login: $e');
+    }
+  }
+
   Future<bool> onWillPop() {
     return Future.value(false);
   }
-
-  // Future<bool> _checkBiometrics() async {
-  //   bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
-  //   return canCheckBiometrics;
-  // }
 
   String _identifier = '';
   Future<void> initUniqueIdentifierState() async {
@@ -390,14 +420,22 @@ class _LoginPageState extends State<LoginPage> {
         child: Container(
           height: MediaQuery.of(context).size.height,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                backgroundColor,
-                veryLightOrange,
-              ],
-            ),
+            image: _customBgUrl != null && _customBgUrl!.isNotEmpty
+                ? DecorationImage(
+                    image: NetworkImage(_customBgUrl!),
+                    fit: BoxFit.cover,
+                  )
+                : null,
+            gradient: _customBgUrl == null || _customBgUrl!.isEmpty
+                ? LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      backgroundColor,
+                      veryLightOrange,
+                    ],
+                  )
+                : null,
           ),
           child: SingleChildScrollView(
             child: Padding(
@@ -698,5 +736,6 @@ class _LoginPageState extends State<LoginPage> {
       EasyLoading.dismiss();
     }
     initUniqueIdentifierState();
+    _loadSavedBackground();
   }
 }

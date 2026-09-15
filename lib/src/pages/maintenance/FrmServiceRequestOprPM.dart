@@ -7163,80 +7163,107 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     );
   }
 
-  Widget _buildDListTyreFitDetailQC(dynamic item, int index) {
-    return Card(
-      elevation: 8.0,
-      margin: new EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(globalScaffoldKey.currentContext!).size.width,
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
-              child: ListTile(
-                contentPadding:
-                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                title: Text(
-                  "VHCID : ${item['vhcid']}",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-                subtitle: Wrap(children: <Widget>[
-                  Text("ItemID : ${item['itemid']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Partname : ${item['partname']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Genuino: ${item['genuineno']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Merk: ${item['merk']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("ID Access: ${item['idaccess']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                  Text("Status Item: ${item['status_item']}",
-                      style: TextStyle(color: Colors.black)),
-                  Divider(
-                    color: Colors.transparent,
-                    height: 0,
-                  ),
-                ]),
-                // trailing: Icon(Icons.keyboard_arrow_right,
-                //     color: Colors.black, size: 30.0)
-              ),
+  Widget _kvItemDetail(String label, String val) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 3.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 85,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Colors.black54),
             ),
           ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(color: Color.fromRGBO(230, 232, 238, .9)),
-            child: Container(
+          const Text(": ", style: TextStyle(fontSize: 12, color: Colors.black54)),
+          Expanded(
+            child: Text(
+              val,
+              style: const TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDListTyreFitDetailQC(dynamic item, int index) {
+    final vhcid = (item['vhcid'] ?? '-').toString();
+    final itemid = (item['itemid'] ?? item['item_id'] ?? '-').toString();
+    final partname = (item['partname'] ?? '-').toString();
+    final genuineno = (item['genuineno'] ?? '-').toString();
+    final merk = (item['merk'] ?? '-').toString();
+    final idaccess = (item['idaccess'] ?? '-').toString();
+    final status_item = (item['status_item'] ?? 'OK').toString();
+    final qty = (item['qty'] ?? '0').toString();
+    final isOk = status_item.toUpperCase() == 'OK';
+
+    return Card(
+      elevation: 2.0,
+      margin: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 5.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: [
+                Icon(Icons.directions_car, color: primaryOrange, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "VHCID : $vhcid",
+                    style: const TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: isOk ? Colors.green.shade50 : Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isOk ? Colors.green.shade300 : Colors.orange.shade300,
+                    ),
+                  ),
+                  child: Text(
+                    status_item,
+                    style: TextStyle(
+                      color: isOk ? Colors.green.shade800 : Colors.orange.shade800,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 16),
+            _kvItemDetail("ItemID", itemid),
+            _kvItemDetail("Partname", partname),
+            _kvItemDetail("Genuino", genuineno),
+            _kvItemDetail("Merk", merk),
+            _kvItemDetail("ID Access", idaccess),
+            _kvItemDetail("Status Item", status_item),
+            _kvItemDetail("QTY", qty),
+            const SizedBox(height: 10),
+            Container(
+              width: MediaQuery.of(context).size.width,
+              padding: const EdgeInsets.all(6.0),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8.0),
+              ),
               child: Row(children: <Widget>[
                 buildDeleteQC(context, item),
-                SizedBox(
-                  width: 5,
-                ),
+                const SizedBox(width: 5),
                 Expanded(
                     child: ElevatedButton.icon(
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.close,
                         color: Colors.white,
                         size: 15.0,
@@ -7248,18 +7275,16 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       style: ElevatedButton.styleFrom(
                           elevation: 0.0,
                           backgroundColor: Colors.redAccent,
-                          padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
+                          textStyle: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold)),
                     )),
-                SizedBox(
-                  width: 5,
-                ),
+                const SizedBox(width: 5),
                 Expanded(
                     child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.close,
+                      icon: const Icon(
+                        Icons.edit,
                         color: Colors.white,
                         size: 15.0,
                       ),
@@ -7267,11 +7292,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       onPressed: () async {
                         print('Edit QC');
                         Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                        var item_id_edit = "${item['item_id']}";
-                        var id_detail = "${item['id_detail']}";
+                        var item_id_edit = "${item['itemid'] ?? item['item_id'] ?? ''}";
+                        var id_detail = "${item['id_detail'] ?? item['id'] ?? ''}";
                         setState(() {
                           selStatusItemEditProses = item['status_item'];
-                          txtOpnameQtyEditProses.text = item['qty'];
+                          txtOpnameQtyEditProses.text = (item['qty'] ?? '0').toString();
                         });
                         showDialog(
                             context: context,
@@ -7403,11 +7428,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     ))
               ]),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
-  }
+  }//
 
   Widget _buildDListDetailOpname(dynamic item, int index) {
     return _pmListCard(
@@ -8030,30 +8055,35 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   }
 
   Widget setupAlertDialoadContainerViewQC(BuildContext context) {
-    return SingleChildScrollView(
-      //shrinkWrap: true,
-      padding: EdgeInsets.all(2.0),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          Container(
-              height: MediaQuery.of(context)
-                  .size
-                  .height, // Change as per your requirement
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  physics: ScrollPhysics(),
-                  padding: const EdgeInsets.all(2.0),
-                  itemCount:
-                  dataListTyreFitQC == null ? 0 : dataListTyreFitQC.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return _buildDListTyreFitDetailQC(
-                        dataListTyreFitQC[index], index);
-                  }))
-        ],
-      ),
+    final size = MediaQuery.of(context).size;
+    return SizedBox(
+      width: size.width,
+      height: size.height * 0.75,
+      child: dataListTyreFitQC.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.inbox_outlined,
+                      size: 48, color: Colors.grey.shade400),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Tidak ada data item",
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              scrollDirection: Axis.vertical,
+              shrinkWrap: true,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 4.0),
+              itemCount: dataListTyreFitQC.length,
+              itemBuilder: (BuildContext context, int index) {
+                return _buildDListTyreFitDetailQC(
+                    dataListTyreFitQC[index], index);
+              }),
     );
   }
 
@@ -11917,15 +11947,40 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                     context: context,
                                     builder: (BuildContext context) {
                                       return AlertDialog(
+                                        insetPadding: const EdgeInsets.symmetric(
+                                            horizontal: 8.0, vertical: 18.0),
                                         shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(16)),
-                                        backgroundColor: cardColor,
-                                        title: Text(
-                                          'List Item',
-                                          style: TextStyle(
-                                              color: darkOrange,
-                                              fontWeight: FontWeight.w600),
+                                        backgroundColor: Colors.white,
+                                        titlePadding: const EdgeInsets.fromLTRB(
+                                            16, 14, 12, 10),
+                                        contentPadding:
+                                            const EdgeInsets.fromLTRB(6, 0, 6, 8),
+                                        title: Row(
+                                          children: [
+                                            Icon(
+                                                Icons.fact_check_outlined,
+                                                color: darkOrange,
+                                                size: 22),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'List Item QC: ${item['wodwonbr'] ?? ''}',
+                                                style: TextStyle(
+                                                    color: darkOrange,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 15),
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.close,
+                                                  color: Colors.black54),
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(false),
+                                            ),
+                                          ],
                                         ),
                                         content:
                                             setupAlertDialoadContainerViewQC(

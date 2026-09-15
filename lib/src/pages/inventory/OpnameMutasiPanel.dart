@@ -100,7 +100,7 @@ class _OpnameMutasiPanelState extends State<OpnameMutasiPanel> {
       }
       if (!mounted) return;
       setState(() {
-        _title = (body['title'] ?? 'DETAIL').toString();
+        _title = (body['title'] ?? 'DETAIL MUTASI').toString();
         _saldoAwal = (body['saldo_awal'] ?? '0').toString();
         _details = rows;
         _loaded = true;
@@ -161,7 +161,7 @@ class _OpnameMutasiPanelState extends State<OpnameMutasiPanel> {
           ),
           SizedBox(height: 6),
           if (_details.isEmpty)
-            Padding(
+            Padding(//
               padding: EdgeInsets.symmetric(horizontal: 6),
               child: Text('Tidak ada mutasi di bulan ini',
                   style:
