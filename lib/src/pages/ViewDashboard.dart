@@ -863,105 +863,10 @@ class _ViewDashboardState extends State<ViewDashboard>
     // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
     //   return;
     // }
-    // QR absensi MIXER sudah di-handle di dashboard sebelum navigasi;
-    // halaman attendance tidak cek QR lagi (default false).
+    // QR absensi (driver mixer & non-mixer) divalidasi langsung di FrmAttendanceDriver (menggunakan QR ANP)
     final needQr = requireAttendanceQr ?? false;
     if (!mounted) return;
     _navigateToAttendanceDriver(requireAttendanceQr: needQr);
-  }
-
-  Future<void> _openAttendanceDriverWithQrScan() async {
-    if (!mounted) return;
-
-    // Pastikan login_type dari prefs (hindari state kosong)
-    sharedPreferences ??= await SharedPreferences.getInstance();
-    login_type = sharedPreferences!.getString('login_type') ?? login_type;
-
-    // QR absensi MIXER wajib jika status unit CLOSE atau SERVICE.
-    // Jika ONGOING (cth: "B 9871 KIN/ ONGOING") → tidak perlu scan QR!
-    if (_isStatusUnitOngoing()) {
-      debugPrint('Driver status_unit ONGOING ($status_unit) -> langsung absensi tanpa Scan QR');
-      await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
-      return;
-    }
-
-    final requireQr = await _shouldRequireAttendanceQr();
-    if (!mounted) return;
-    if (!requireQr) {
-      debugPrint('skip Scan QR (ONGOING atau bukan CLOSE/SERVICE)');
-      await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
-      return;
-    }
-
-    Future<void> goAttendanceAfterDashboardQr() async {
-      await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
-    }
-
-    // Absensi: cukup 1x scan Logkar Motive TM per hari.
-    if (globals.isApiLokarRUN && await LogkarApiService.hasTmCheckinToday()) {
-      debugPrint('MIXER absensi: sudah check-in Motive TM hari ini → skip scan');
-      await goAttendanceAfterDashboardQr();
-      return;
-    }
-
-    final String drvid = sharedPreferences!.getString('drvid') ?? '';
-    if (drvid.isEmpty) {
-      final ctx = globalScaffoldKey.currentContext ?? context;
-      _showAlert(ctx, 0, 'Data driver tidak ditemukan', 'error');
-      return;
-    }
-
-    // CLOSE / SERVICE → tampilkan kamera Scan QR
-    debugPrint('MIXER unit CLOSE/SERVICE → buka Scan QR');
-    final String? qrData = await openQrScanner(context);
-    if (!mounted) return;
-    if (qrData == null || qrData.trim().isEmpty) {
-      final ctx = globalScaffoldKey.currentContext ?? context;
-      _showAlert(ctx, 0, 'Scan QR Code wajib dilakukan', 'error');
-      return;
-    }
-
-    if (!globals.isApiLokarRUN) {
-      await goAttendanceAfterDashboardQr();
-      return;
-    }
-
-    EasyLoading.show(status: 'Check-in Motive TM...');
-    try {
-      final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
-      final lat = (gpsResult['latitude'] ?? 0).toString();
-      final lon = (gpsResult['longitude'] ?? 0).toString();
-      final phone = sharedPreferences!.getString('phone') ?? '';
-      final result = await LogkarApiService.checkInMotiveTm(
-        driverPhone: phone,
-        qrData: qrData.trim(),
-        latitude: lat,
-        longitude: lon,
-      );
-      if (!mounted) return;
-      EasyLoading.dismiss();
-
-      if (result.ok) {
-        await LogkarApiService.markTmCheckinToday();
-        await goAttendanceAfterDashboardQr();
-      } else {
-        final ctx = globalScaffoldKey.currentContext ?? context;
-        _showAlert(
-          ctx,
-          0,
-          result.message.isNotEmpty
-              ? result.message
-              : 'Gagal check-in Motive TM',
-          'error',
-        );
-      }
-    } catch (e) {
-      if (EasyLoading.isShow) {
-        EasyLoading.dismiss();
-      }
-      final ctx = globalScaffoldKey.currentContext ?? context;
-      _showAlert(ctx, 0, 'Gagal memproses QR Code: $e', 'error');
-    }
   }
 
   /// Scan QR + POST Logkar /transporter/sync/tm (wajib sukses).
@@ -1089,7 +994,6 @@ class _ViewDashboardState extends State<ViewDashboard>
           cekDetailInfoMECHANIC("status_mc_out_standing");
         }
 
-        _anpServiceList.clear();
         _setupMenuItems();
         _setupBannerItems();
       }
@@ -1181,10 +1085,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       }
     }
     known.sort((a, b) => orderMap[a.idKey!]!.compareTo(orderMap[b.idKey!]!));
-    _anpServiceList
-      ..clear()
-      ..addAll(known)
-      ..addAll(unknown);
+    _anpServiceList = [...known, ...unknown];
   }
 
   Future<void> _saveMenuOrder(List<AnpService> ordered) async {
@@ -1199,9 +1100,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       return;
     }
     setState(() {
-      _anpServiceList
-        ..clear()
-        ..addAll(ordered);
+      _anpServiceList = List<AnpService>.from(ordered);
       _organizeMenus();
     });
   }
@@ -1216,7 +1115,6 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   void _setupMenuItems() {
-    _anpServiceList.clear();
     _fetchMenusFromApi();
   }
 
@@ -1313,8 +1211,16 @@ class _ViewDashboardState extends State<ViewDashboard>
   Future<void> _fetchMenusFromApi() async {
     final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
 
+    final currentUsername = username.isNotEmpty
+        ? username
+        : (prefs.getString('username') ?? '');
+    final currentLoginname = loginname.isNotEmpty
+        ? loginname
+        : (prefs.getString('loginname') ?? '');
+
     // 1. Coba baca dari cache lokal terlebih dahulu agar tampilan instan muncul
-    final cached = prefs.getString('cached_mobile_menus_${username}_$loginname');
+    final cacheKey = 'cached_mobile_menus_${currentUsername}_$currentLoginname';
+    final cached = prefs.getString(cacheKey);
     if (cached != null && cached.isNotEmpty && _anpServiceList.isEmpty) {
       try {
         final res = jsonDecode(cached);
@@ -1326,11 +1232,12 @@ class _ViewDashboardState extends State<ViewDashboard>
 
     // 2. Tarik data realtime dari database melalui API
     try {
-      final roles = globals.akses_pages?.join(',') ?? '';
+      final rolesList = globals.akses_pages ?? prefs.getStringList("akses_pages") ?? [];
+      final roles = rolesList.join(',');
       final url = Uri.parse(
         "${GlobalData.baseUrl}api/menu/api_menu_dashboard.jsp?method=list-user-menus"
-        "&username=${Uri.encodeComponent(username)}"
-        "&loginname=${Uri.encodeComponent(loginname)}"
+        "&username=${Uri.encodeComponent(currentUsername)}"
+        "&loginname=${Uri.encodeComponent(currentLoginname)}"
         "&roles=${Uri.encodeComponent(roles)}"
         "&ismixer=${ismixer == 'true' ? 'true' : 'false'}"
         "&isforeman=${isMenuForeman ? 'true' : 'false'}",
@@ -1342,7 +1249,7 @@ class _ViewDashboardState extends State<ViewDashboard>
           final List dynamicList = res['data'];
           if (dynamicList.isNotEmpty) {
             await prefs.setString(
-              'cached_mobile_menus_${username}_$loginname',
+              cacheKey,
               response.body,
             );
             _applyDynamicMenuList(dynamicList);
@@ -1362,28 +1269,33 @@ class _ViewDashboardState extends State<ViewDashboard>
       final String title = item['title']?.toString() ?? '';
       final String iconName = item['icon']?.toString() ?? '';
       final String colorHex = item['color']?.toString() ?? '#FF6600';
+      final String badgeNewStr = item['badge_new_since']?.toString() ?? '';
+      DateTime? badgeNewDate = DateTime.tryParse(badgeNewStr);
+      if (badgeNewDate == null && idKey == 40) {
+        badgeNewDate = DateTime(2026, 6, 3);
+      }
+
       if (idKey > 0 && title.isNotEmpty) {
         fetchedServices.add(AnpService(
           image: _resolveMenuIcon(iconName),
           color: _resolveMenuColor(colorHex, primaryOrange),
           idKey: idKey,
           title: title,
+          badgeNewSince: badgeNewDate,
         ));
       }
     }
     if (fetchedServices.isNotEmpty && mounted) {
       setState(() {
-        _anpServiceList.clear();
-        _anpServiceList.addAll(fetchedServices);
+        _anpServiceList = List<AnpService>.from(fetchedServices);
         _applySavedMenuOrder();
         _organizeMenus();
       });
     }
   }
 
-  // âœ… ADDED: Function untuk memisahkan menu utama dan tambahan
+  // ✅ ADDED: Function untuk memisahkan menu utama dan tambahan
   void _organizeMenus() {
-    _mainMenuList.clear();
     _additionalMenuList.clear();
 
     // Cek apakah user adalah ADMIN atau memiliki akses OP
@@ -1395,14 +1307,14 @@ class _ViewDashboardState extends State<ViewDashboard>
       _additionalMenuList = _anpServiceList.skip(MAX_MAIN_MENU).toList();
 
       // Tambahkan menu "More"
-      _mainMenuList.add(new AnpService(
+      _mainMenuList.add(const AnpService(
           image: Icons.more_horiz,
-          color: Colors.grey.shade600,
+          color: Colors.grey,
           idKey: 999, // Special ID untuk More
           title: "More"));
     } else {
-      // Jika bukan ADMIN/OP atau menu tidak lebih dari 7, tampilkan semua
-      _mainMenuList = _anpServiceList;
+      // PENTING: Gunakan List.from agar _mainMenuList BUKAN referensi yang sama dengan _anpServiceList!
+      _mainMenuList = List<AnpService>.from(_anpServiceList);
     }
   }
 
@@ -5735,8 +5647,6 @@ class _ViewDashboardState extends State<ViewDashboard>
         if (_isStatusUnitOngoing()) {
           debugPrint('DRIVER status_unit ONGOING ($status_unit) -> absensi tanpa scan QR');
           await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
-        } else if (login_type == "MIXER") {
-          await _openAttendanceDriverWithQrScan();
         } else {
           final requireQr = await _shouldRequireAttendanceQr();
           await _goToAttendanceDriverIfSimValid(requireAttendanceQr: requireQr);
