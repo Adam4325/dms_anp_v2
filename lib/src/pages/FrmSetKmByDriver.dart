@@ -324,8 +324,9 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
       prefs.setString("vhcid_last_antrian", vhcid);
       locid = prefs.getString("locid").toString() ?? "";
       String name = prefs.getString("name").toString() ??"";
+      String imeiid = (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "").trim();
       var urlData =
-          "${GlobalData.baseUrl}api/update_km_vehicle.jsp?method=update_vhc&vhcid=" +
+          "${GlobalData.baseUrl}api/update_km_vehicle_v2.jsp?method=update_vhc&vhcid=" +
               vhcid +
               "&vhckm=" +
               vhckm +
@@ -334,7 +335,9 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
               "&driverid=" +
               drvid +
               "&locid=" +
-              locid;
+              locid +
+              "&imeiid=" +
+              imeiid;
 
       var encoded = Uri.encodeFull(urlData);
       Uri myUri = Uri.parse(encoded);
@@ -429,15 +432,18 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
       prefs.setString("vhcid_last_antrian", _vhcid);
       locid = prefs.getString("locid")!;
       String name = prefs.getString("name")!;
+      String imeiid = (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "").trim();
       var urlData =
-          "${GlobalData.baseUrl}api/update_km_vehicle.jsp?method=update_vhc-standby&vhcid=" +
+          "${GlobalData.baseUrl}api/update_km_vehicle_v2.jsp?method=update_vhc-standby&vhcid=" +
               _vhcid +
               "&vhckm=" +
               vhckm +
               "&drvid=" +
               drvid +
               "&bujnumber=" +
-              bujnumber;
+              bujnumber +
+              "&imeiid=" +
+              imeiid;
 
       var encoded = Uri.encodeFull(urlData);
       Uri myUri = Uri.parse(encoded);
@@ -477,7 +483,7 @@ class _FrmSetKmByDriverState extends State<FrmSetKmByDriver> {
       }
 
       var urlData =
-          "${GlobalData.baseUrl}api/do/do_diterima.jsp?method=list-set_vehicle_diterima_apps&drvid=${drvid}";
+          "${GlobalData.baseUrl}api/do/do_diterima_v2.jsp?method=list-set_vehicle_diterima_apps&drvid=${drvid}";
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);

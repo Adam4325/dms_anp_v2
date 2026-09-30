@@ -31,21 +31,33 @@ class _BottomSheetContentVehicle extends StatefulWidget {
 
 class _BottomSheetContentVehicleState extends State<_BottomSheetContentVehicle> {
   List<Map<String, dynamic>> _filteredList = [];
+  String _selectedCategory = "ALL"; // ALL, MIXER, NON_MIXER
 
   void _filterList(String query) {
     setState(() {
-      if (query.isEmpty) {
-        _filteredList = List<Map<String, dynamic>>.from(listVehicleId);
-      } else {
-        final q = query.toLowerCase();
-        _filteredList = (listVehicleId as List<Map<String, dynamic>>)
-            .where((v) {
-          final title = (v['title'] ?? '').toString().toLowerCase();
-          final value = (v['value'] ?? '').toString().toLowerCase();
-          return title.contains(q) || value.contains(q);
-        })
-            .toList();
-      }
+      final q = query.trim().toLowerCase();
+      List<Map<String, dynamic>> baseList =
+          List<Map<String, dynamic>>.from(listVehicleId);
+
+      _filteredList = baseList.where((v) {
+        final title = (v['title'] ?? '').toString();
+        final value = (v['value'] ?? '').toString();
+        final isMixer = title.toUpperCase().contains('MIX') ||
+            value.toUpperCase().contains('MIX');
+
+        // Filter category
+        if (_selectedCategory == "MIXER" && !isMixer) return false;
+        if (_selectedCategory == "NON_MIXER" && isMixer) return false;
+
+        // Search text
+        if (q.isNotEmpty) {
+          final matchesTitle = title.toLowerCase().contains(q);
+          final matchesValue = value.toLowerCase().contains(q);
+          if (!matchesTitle && !matchesValue) return false;
+        }
+
+        return true;
+      }).toList();
     });
   }
 
@@ -66,109 +78,506 @@ class _BottomSheetContentVehicleState extends State<_BottomSheetContentVehicle> 
     super.dispose();
   }
 
+  Widget _buildCategoryChip(String label, String categoryKey) {
+    final isSelected = _selectedCategory == categoryKey;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedCategory = categoryKey;
+        });
+        _filterList(txtSearchVehicle.text);
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.orange : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.orange : Colors.grey.shade300,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.orange.withValues(alpha: 0.25),
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  )
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : ColorConstants.kTextColor,
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
+      height: MediaQuery.of(context).size.height * 0.85,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Color(0xFFF8FAFC),
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
         ),
       ),
       child: Column(
         children: [
-          // Header
-          Container(
-            height: 60,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
+          // Drag handle pill
+          Center(
+            child: Container(
+              width: 44,
+              height: 4,
+              margin: EdgeInsets.only(top: 12, bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            child: Center(
-              child: Text(
-                "List Vehicle",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+          ),
+
+          // Header Card
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFF97316), Color(0xFFEA580C)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.orange.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.directions_car_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Pilih Kendaraan",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "Total ${listVehicleId.length} armada terdaftar",
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                InkWell(
+                  onTap: () => Navigator.of(context).pop(),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
           // Search Field
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
             child: TextField(
               controller: txtSearchVehicle,
+              cursorColor: Colors.orange,
               onChanged: (_) => _filterList(txtSearchVehicle.text),
               decoration: InputDecoration(
-                fillColor: Colors.white,
+                hintText: "Cari Nopol atau cabang...",
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                prefixIcon: Icon(Icons.search, color: Colors.orange),
+                suffixIcon: txtSearchVehicle.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.cancel,
+                            color: Colors.grey.shade400, size: 18),
+                        onPressed: () {
+                          txtSearchVehicle.clear();
+                          _filterList('');
+                        },
+                      )
+                    : null,
                 filled: true,
-                isDense: true,
-                labelText: "Search Vehicle",
-                contentPadding: EdgeInsets.all(5.0),
+                fillColor: Colors.white,
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.orange, width: 2),
+                ),
               ),
             ),
           ),
 
+          // Category Chips & Count
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                _buildCategoryChip("Semua", "ALL"),
+                SizedBox(width: 8),
+                _buildCategoryChip("Mixer", "MIXER"),
+                SizedBox(width: 8),
+                _buildCategoryChip("Non-Mixer", "NON_MIXER"),
+                Spacer(),
+                Text(
+                  "${_filteredList.length} unit",
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 6),
+
           // Vehicle List
           Expanded(
-            child: ListView.builder(
-              itemCount: _filteredList.length,
-              itemBuilder: (context, index) {
-                final item = _filteredList[index];
-                return Container(
-                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      leading: Icon(
-                        Icons.directions_car,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 28,
-                      ),
-                      title: Text(
-                        "${item['title']}",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: ColorConstants.kTextColor,
+            child: listVehicleId.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(color: Colors.orange),
+                        SizedBox(height: 14),
+                        Text(
+                          "Memuat data armada...",
+                          style: TextStyle(
+                            color: ColorConstants.kTextColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
-                      subtitle: Text(
-                        "Vehicle ID: ${item['value']}",
-                        style: TextStyle(
-                          color: ColorConstants.kGreyTextColor,
-                          fontSize: 12,
-                        ),
-                      ),
-                      trailing: Icon(
-                        Icons.arrow_forward_ios,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 16,
-                      ),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        txtVehicleName.text =
-                            item['value'].toString();
-                        txtVehicleIdList.text =
-                            item['value'].toString();
-                      },
+                      ],
                     ),
-                  ),
-                );
-              },
-            ),
+                  )
+                : _filteredList.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.search_off_rounded,
+                              size: 56,
+                              color: Colors.grey.shade400,
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              "Tidak ada armada ditemukan",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: ColorConstants.kTextColor,
+                                fontSize: 15,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "Coba cari dengan kata kunci lain",
+                              style: TextStyle(
+                                color: ColorConstants.kGreyTextColor,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: EdgeInsets.only(top: 4, bottom: 24),
+                        itemCount: _filteredList.length,
+                        itemBuilder: (context, index) {
+                          final item = _filteredList[index];
+                          final title = (item['title'] ?? '').toString();
+                          final value = (item['value'] ?? '').toString();
+                          final isMixer = title.toUpperCase().contains('MIX') ||
+                              value.toUpperCase().contains('MIX');
+                          final isSelected = txtVehicleName.text
+                                  .trim()
+                                  .toUpperCase() ==
+                              value.trim().toUpperCase();
+
+                          String branch = '';
+                          if (title.contains(' - ')) {
+                            branch = title
+                                .split(' - ')
+                                .sublist(1)
+                                .join(' - ')
+                                .trim();
+                          }
+
+                          return Container(
+                            margin: EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.orange
+                                    : Colors.grey.shade200,
+                                width: isSelected ? 1.8 : 1.0,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isSelected
+                                      ? Colors.orange.withValues(alpha: 0.08)
+                                      : Colors.black.withValues(alpha: 0.02),
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                  txtVehicleName.text = value;
+                                  txtVehicleIdList.text = value;
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 12),
+                                  child: Row(
+                                    children: [
+                                      // Leading Avatar
+                                      Container(
+                                        width: 44,
+                                        height: 44,
+                                        decoration: BoxDecoration(
+                                          color: isMixer
+                                              ? Colors.orange.shade50
+                                              : Color(0xFFF1F5F9),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: isMixer
+                                                ? Colors.orange.shade200
+                                                : Colors.grey.shade300,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: Icon(
+                                            isMixer
+                                                ? Icons.local_shipping_rounded
+                                                : Icons.directions_car_rounded,
+                                            color: isMixer
+                                                ? Colors.orange.shade800
+                                                : Color(0xFF475569),
+                                            size: 24,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 12),
+
+                                      // Middle info
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  value.isNotEmpty
+                                                      ? value
+                                                      : title,
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xFF1E293B),
+                                                    letterSpacing: 0.3,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 8),
+                                                if (isMixer)
+                                                  Container(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            horizontal: 6,
+                                                            vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors
+                                                          .orange.shade100,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6),
+                                                    ),
+                                                    child: Text(
+                                                      "MIXER",
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors
+                                                            .orange.shade900,
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 4),
+                                            if (branch.isNotEmpty)
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.location_on_outlined,
+                                                    size: 13,
+                                                    color: Colors.grey.shade600,
+                                                  ),
+                                                  SizedBox(width: 3),
+                                                  Expanded(
+                                                    child: Text(
+                                                      branch,
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors
+                                                            .grey.shade600,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                            else
+                                              Text(
+                                                "Vehicle ID: $value",
+                                                style: TextStyle(
+                                                  color: ColorConstants
+                                                      .kGreyTextColor,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+
+                                      // Trailing Button
+                                      if (isSelected)
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange,
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.check,
+                                                  size: 14,
+                                                  color: Colors.white),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                "Dipilih",
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      else
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange.shade50,
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            border: Border.all(
+                                                color: Colors.orange.shade200),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                "Pilih",
+                                                style: TextStyle(
+                                                  color: Colors.orange.shade800,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              SizedBox(width: 2),
+                                              Icon(
+                                                Icons.arrow_forward_ios_rounded,
+                                                size: 10,
+                                                color: Colors.orange.shade800,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
           ),
         ],
       ),
@@ -324,7 +733,7 @@ class FrmPlayBackState extends State<FrmPlayBack> {
                 children: [
                   Icon(
                     Icons.directions_car,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Colors.orange,
                     size: 24,
                   ),
                   SizedBox(width: 12),
@@ -397,7 +806,7 @@ class FrmPlayBackState extends State<FrmPlayBack> {
             margin: EdgeInsets.only(bottom: 16),
             child: TextField(
               readOnly: true,
-              cursorColor: Theme.of(context).colorScheme.primary,
+              cursorColor: Colors.orange,
               style: TextStyle(color: ColorConstants.kTextColor),
               controller: txtVehicleName,
               onTap: () {
@@ -460,19 +869,38 @@ class FrmPlayBackState extends State<FrmPlayBack> {
                     // Header
                     Row(
                       children: [
-                        Icon(
-                          Icons.history,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 28,
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.history_rounded,
+                            color: Colors.orange.shade700,
+                            size: 26,
+                          ),
                         ),
                         SizedBox(width: 12),
-                        Text(
-                          'Search History',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: ColorConstants.kTextColor,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Search History',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: ColorConstants.kTextColor,
+                              ),
+                            ),
+                            Text(
+                              'Pilih rentang waktu & armada',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: ColorConstants.kGreyTextColor,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -489,7 +917,7 @@ class FrmPlayBackState extends State<FrmPlayBack> {
                         lastDate: DateTime(2100),
                         icon: Icon(
                           Icons.event,
-                          color: Theme.of(context).colorScheme.primary,
+                          color: Colors.orange,
                         ),
                         dateLabelText: 'Start Date',
                         timeLabelText: 'Start Time',
@@ -511,7 +939,7 @@ class FrmPlayBackState extends State<FrmPlayBack> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.primary,
+                                color: Colors.orange,
                                 width: 2),
                           ),
                           filled: true,
@@ -531,7 +959,7 @@ class FrmPlayBackState extends State<FrmPlayBack> {
                         lastDate: DateTime(2100),
                         icon: Icon(
                           Icons.event,
-                          color: Theme.of(context).colorScheme.primary,
+                          color: Colors.orange,
                         ),
                         dateLabelText: 'End Date',
                         timeLabelText: 'End Time',
@@ -553,7 +981,7 @@ class FrmPlayBackState extends State<FrmPlayBack> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.primary,
+                                color: Colors.orange,
                                 width: 2),
                           ),
                           filled: true,
@@ -567,36 +995,62 @@ class FrmPlayBackState extends State<FrmPlayBack> {
                       margin: EdgeInsets.only(bottom: 24),
                       child: TextField(
                         readOnly: true,
-                        cursorColor: Theme.of(context).colorScheme.primary,
-                        style: TextStyle(color: ColorConstants.kTextColor),
+                        cursorColor: Colors.orange,
+                        style: TextStyle(
+                          color: ColorConstants.kTextColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
                         controller: txtVehicleName,
                         onTap: () {
                           _showModalListVehicle(context);
                         },
                         decoration: InputDecoration(
                           labelText: "Pilih Kendaraan",
+                          labelStyle: TextStyle(
+                            color: Colors.orange.shade800,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          floatingLabelStyle: TextStyle(
+                            color: Colors.orange.shade800,
+                            fontWeight: FontWeight.bold,
+                          ),
                           hintText: "Tap untuk memilih kendaraan",
+                          hintStyle: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 14,
+                          ),
                           prefixIcon: Icon(
-                            Icons.directions_car,
-                            color: Theme.of(context).colorScheme.primary,
+                            Icons.directions_car_rounded,
+                            color: Colors.orange,
                           ),
                           suffixIcon: Icon(
-                            Icons.arrow_drop_down,
-                            color: Theme.of(context).colorScheme.primary,
+                            Icons.arrow_drop_down_rounded,
+                            color: Colors.orange,
+                            size: 32,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                                color: ColorConstants.ktextFieldBorderColor),
+                              color: Colors.orange.shade200,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: Colors.orange.shade300,
+                              width: 1.5,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.primary,
-                                width: 2),
+                              color: Colors.orange,
+                              width: 2,
+                            ),
                           ),
                           filled: true,
-                          fillColor: ColorConstants.kWhiteColor,
+                          fillColor: Color(0xFFFFFBF5),
                         ),
                       ),
                     ),

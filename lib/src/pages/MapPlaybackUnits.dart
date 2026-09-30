@@ -15,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:ui' as ui;
 import '../flusbar.dart';
+import 'package:share_plus/share_plus.dart';
 
 const double CAMERA_ZOOM = 16;
 const double CAMERA_TILT = 0;
@@ -76,12 +77,17 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
   var u_report_nm = "";
   var u_gps_time = "";
   var u_statusKendaraan = "";
-  var isShowUnitInfo = false;
+  var isShowUnitInfo = true;
   var isLastDataInfo = false;
   var isShowPlay = true;
   var isShowPause = false;
   var isPrevPlayBack = true;
   var index_his = 0;
+
+  bool isShowPanel = true;
+  int _activeTabIndex = 0; // 0 = Unit Info, 1 = Info DO
+  List<dynamic> data_list_do = [];
+  bool isLoadingDo = false;
   
   //PLAYBACK CONTROLS
   Set<Polyline> _polylines = {};
@@ -238,6 +244,9 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
     getShareDateSession();
     GetStartData();
     GetDataVehicle();
+    GetListDo();
+    isShowUnitInfo = true;
+    isShowPanel = true;
     if (EasyLoading.isShow) {
       EasyLoading.dismiss();
     }
@@ -249,6 +258,1086 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
     _timer?.cancel();
     controllerUI.dispose();
     super.dispose();
+  }
+
+  void GetListDo() async {
+    try {
+      setState(() {
+        isLoadingDo = true;
+      });
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String no_do = prefs.getString("do_maps") ?? prefs.getString("pb_no_do") ?? "";
+      String drvid = prefs.getString("drvid") ?? "";
+      String rawVhc = prefs.getString("pb_vhcid") ?? prefs.getString("vhcid") ?? u_nopol;
+      String vhcid = rawVhc.contains("/") ? rawVhc.split("/")[0].trim() : rawVhc.trim();
+      String nopolParam = u_nopol.isNotEmpty
+          ? u_nopol
+          : (rawVhc.contains("/") ? rawVhc.split("/")[1].trim() : rawVhc.trim());
+      var loginType = (prefs.getString("login_type") ?? "").toUpperCase();
+      bool isMixer = loginType.contains("MIXER") ||
+          rawVhc.toUpperCase().contains("TM") ||
+          u_nopol.toUpperCase().contains("TM");
+
+      List<dynamic> fetchedDo = [];
+
+      // 1. Query Utama by VHCID / Nopol + hari ini ke list_order_driver.jsp
+      String method = isMixer ? "get-do-byvhcid-v1-mixer" : "get-do-byvhcid-v1-non-mixer";
+      String primaryUrl =
+          "${GlobalData.baseUrlProd}api/do/list_order_driver.jsp?method=$method&vhcid=${Uri.encodeComponent(vhcid)}&nopol=${Uri.encodeComponent(nopolParam)}&type_driver=${Uri.encodeComponent(isMixer ? 'MIXER' : 'NON-MIXER')}";
+
+      try {
+        var response = await http
+            .get(Uri.parse(primaryUrl), headers: {"Accept": "application/json"})
+            .timeout(const Duration(seconds: 10));
+        if (response.statusCode == 200) {
+          var decoded = json.decode(response.body);
+          if (decoded is List && decoded.isNotEmpty) {
+            fetchedDo = decoded;
+          }
+        }
+      } catch (e) {
+        print("Primary list_order_driver error: $e");
+      }
+
+      // 2. Jika belum ketemu, coba alternatif mixer / non-mixer pada list_order_driver.jsp
+      if (fetchedDo.isEmpty) {
+        String altMethod = isMixer ? "get-do-byvhcid-v1-non-mixer" : "get-do-byvhcid-v1-mixer";
+        String altUrl =
+            "${GlobalData.baseUrlProd}api/do/list_order_driver.jsp?method=$altMethod&vhcid=${Uri.encodeComponent(vhcid)}&nopol=${Uri.encodeComponent(nopolParam)}&type_driver=${Uri.encodeComponent(isMixer ? 'MIXER' : 'NON-MIXER')}";
+        try {
+          var response = await http
+              .get(Uri.parse(altUrl), headers: {"Accept": "application/json"})
+              .timeout(const Duration(seconds: 8));
+          if (response.statusCode == 200) {
+            var decoded = json.decode(response.body);
+            if (decoded is List && decoded.isNotEmpty) {
+              fetchedDo = decoded;
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 3. Fallback: by DO number jika ada
+      if (fetchedDo.isEmpty && no_do.isNotEmpty) {
+        var urlData = isMixer
+            ? "${GlobalData.baseUrlProd}api/do_mixer/list_do_driver_mixer.jsp?method=get-do-bynumberdo-v1&do_number=${Uri.encodeComponent(no_do)}"
+            : "${GlobalData.baseUrlProd}api/do/list_order_driver.jsp?method=get-do-bynumberdo-v1&do_number=${Uri.encodeComponent(no_do)}";
+        try {
+          var response = await http
+              .get(Uri.parse(urlData), headers: {"Accept": "application/json"})
+              .timeout(const Duration(seconds: 8));
+          if (response.statusCode == 200) {
+            var decoded = json.decode(response.body);
+            if (decoded is List && decoded.isNotEmpty) {
+              fetchedDo = decoded;
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 4. Fallback: lookup by vehicle / driver jika masih kosong
+      if (fetchedDo.isEmpty && (vhcid.isNotEmpty || drvid.isNotEmpty)) {
+        var lookupUrl = isMixer
+            ? "${GlobalData.baseUrlProd}api/do_mixer/list_do_driver_mixer.jsp?method=lookup-list-do-driver-v1&vhcid=${Uri.encodeComponent(vhcid)}&drvid=${Uri.encodeComponent(drvid)}"
+            : "${GlobalData.baseUrlProd}api/do/list_do_driver.jsp?method=lookup-list-do-driver-v1&vhcid=${Uri.encodeComponent(vhcid)}&drvid=${Uri.encodeComponent(drvid)}";
+        try {
+          var response = await http
+              .get(Uri.parse(lookupUrl), headers: {"Accept": "application/json"})
+              .timeout(const Duration(seconds: 8));
+          if (response.statusCode == 200) {
+            var decoded = json.decode(response.body);
+            if (decoded is List && decoded.isNotEmpty) {
+              fetchedDo = decoded;
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (mounted) {
+        setState(() {
+          data_list_do = fetchedDo;
+          isLoadingDo = false;
+        });
+      }
+    } catch (e) {
+      print("GetListDo playback error: $e");
+      if (mounted) {
+        setState(() {
+          isLoadingDo = false;
+        });
+      }
+    }
+  }
+
+  String _fmtTimelineDate(String dateStr) {
+    if (dateStr.isEmpty || dateStr == 'null') {
+      return '-';
+    }
+    try {
+      DateTime dt = DateTime.parse(dateStr.replaceAll('/', '-'));
+      String day = dt.day.toString().padLeft(2, '0');
+      String month = dt.month.toString().padLeft(2, '0');
+      String year = dt.year.toString();
+      String hour = dt.hour.toString().padLeft(2, '0');
+      String min = dt.minute.toString().padLeft(2, '0');
+      return '$day/$month/$year ($hour:$min)';
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  String _calcDuration(String startStr, String endStr) {
+    if (startStr.isEmpty || startStr == 'null') {
+      if (endStr.isNotEmpty && endStr != 'null') {
+        return '0 detik';
+      }
+      return '-';
+    }
+    if (endStr.isEmpty || endStr == 'null') return '-';
+    try {
+      DateTime s = DateTime.parse(startStr.replaceAll('/', '-'));
+      DateTime e = DateTime.parse(endStr.replaceAll('/', '-'));
+      Duration d = e.difference(s);
+      if (d.inSeconds <= 0) return '0 detik';
+      if (d.inHours > 0) {
+        int mins = d.inMinutes.remainder(60);
+        return '${d.inHours} jam ${mins > 0 ? '$mins menit' : ''}';
+      }
+      if (d.inMinutes > 0) {
+        return '${d.inMinutes} menit';
+      }
+      return '${d.inSeconds} detik';
+    } catch (e) {
+      return '-';
+    }
+  }
+
+  void _shareTrackingInfo(
+    String plateNumber,
+    String vehicleType,
+    String goodsName,
+    String originName,
+    String destinationName,
+    String statusName, {
+    String? driverName,
+  }) {
+    String pos = u_address.isNotEmpty && u_address != "-" ? u_address : "";
+
+    double? currentLat;
+    double? currentLon;
+    if (data_list_history['Data'] != null &&
+        index_his < (data_list_history['Data'] as List).length &&
+        index_his >= 0) {
+      var item = (data_list_history['Data'] as List)[index_his];
+      currentLat = double.tryParse(item['lat']?.toString() ?? '');
+      currentLon = double.tryParse(item['lon']?.toString() ?? '');
+    } else if (lat != 0 && lon != 0) {
+      currentLat = lat;
+      currentLon = lon;
+    }
+
+    if (pos.isEmpty || pos == "-") {
+      String stLower = statusName.toLowerCase();
+      if (stLower.contains("bongkar") || stLower.contains("tujuan") || stLower.contains("customer")) {
+        pos = destinationName.isNotEmpty && destinationName != '-' ? destinationName : originName;
+      } else if (stLower.contains("muat") || stLower.contains("loading") || stLower.contains("pool")) {
+        pos = originName.isNotEmpty && originName != '-' ? originName : destinationName;
+      } else {
+        pos = destinationName.isNotEmpty && destinationName != '-' ? destinationName : (originName.isNotEmpty && originName != '-' ? originName : "");
+      }
+    }
+
+    if (pos.isEmpty) {
+      if (currentLat != null && currentLon != null) {
+        pos = "Koordinat ($currentLat, $currentLon)";
+      } else {
+        pos = destinationName.isNotEmpty && destinationName != '-' ? destinationName : "-";
+      }
+    }
+
+    String dName = (driverName != null && driverName.isNotEmpty && driverName != "-")
+        ? driverName
+        : (driver_nm.isNotEmpty ? driver_nm : "-");
+    String doNo = no_do.isNotEmpty ? no_do : (do_number.isNotEmpty ? do_number : "-");
+    String nopol = plateNumber.isNotEmpty ? plateNumber : (u_nopol.isNotEmpty ? u_nopol : "-");
+    String type = vehicleType.isNotEmpty ? vehicleType : "Truck";
+
+    String shareText = "Informasi Pengiriman DMS ANP:\n"
+        "No. DO: $doNo\n"
+        + (goodsName.isNotEmpty && goodsName != '-' ? "Barang: $goodsName\n" : "") +
+        "Nopol: $nopol ($type)\n"
+        "Driver: $dName\n"
+        "Muat: $originName\n"
+        "Bongkar: $destinationName\n"
+        "Status: $statusName\n"
+        "Posisi: $pos";
+
+    if (currentLat != null && currentLon != null) {
+      shareText += "\nMaps: https://maps.google.com/?q=$currentLat,$currentLon";
+    }
+
+    Share.share(shareText);
+  }
+
+  Widget _buildDottedDivider({double height = 1.0, Color color = const Color(0xFFCBD5E1)}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: SizedBox(
+        width: double.infinity,
+        height: height,
+        child: CustomPaint(
+          painter: _DashedLineHorizontalPainter(color: color),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsCard(String travelDuration, String loadingDuration, String waitingUnloadDuration) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                const Text(
+                  "Waktu\nPerjalanan",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontFamily: "Poppins Regular"),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  travelDuration,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E293B), fontFamily: "Poppins Regular"),
+                ),
+              ],
+            ),
+          ),
+          Container(height: 32, width: 1, color: const Color(0xFFE2E8F0)),
+          Expanded(
+            child: Column(
+              children: [
+                const Text(
+                  "Durasi Muat\nBarang",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontFamily: "Poppins Regular"),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  loadingDuration,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E293B), fontFamily: "Poppins Regular"),
+                ),
+              ],
+            ),
+          ),
+          Container(height: 32, width: 1, color: const Color(0xFFE2E8F0)),
+          Expanded(
+            child: Column(
+              children: [
+                const Text(
+                  "Waktu Tunggu\nBongkar",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontFamily: "Poppins Regular"),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  waitingUnloadDuration,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E293B), fontFamily: "Poppins Regular"),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineItem({
+    String title = '',
+    String timestamp = '',
+    bool isActive = false,
+    bool isDone = true,
+    bool isLast = false,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isActive)
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD1FAE5),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF6EE7B7), width: 1.5),
+                ),
+                child: Center(
+                  child: Container(
+                    width: 9,
+                    height: 9,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF059669),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              )
+            else if (isDone)
+              Container(
+                width: 18,
+                height: 18,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE0F2FE),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  size: 12,
+                  color: Color(0xFF0284C7),
+                ),
+              )
+            else
+              Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+                ),
+              ),
+            if (!isLast)
+              Container(
+                width: 2,
+                height: 24,
+                margin: const EdgeInsets.symmetric(vertical: 2),
+                child: CustomPaint(
+                  painter: _DashedLineVerticalPainter(color: const Color(0xFFCBD5E1)),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+                    color: isActive ? const Color(0xFF0F172A) : const Color(0xFF334155),
+                    fontFamily: "Poppins Regular",
+                  ),
+                ),
+                if (timestamp.isNotEmpty && timestamp != "-") ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    timestamp,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                      fontFamily: "Poppins Regular",
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUnitInfoTabContent() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        // Address chip - full width dengan copy / tap functionality
+        InkWell(
+          onTap: () {
+            if (u_address.isNotEmpty) {
+              Clipboard.setData(ClipboardData(text: u_address));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Alamat berhasil disalin'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          },
+          child: _buildInfoChip(
+            'Address',
+            u_address.isNotEmpty ? u_address : 'No Address',
+            Icons.location_on,
+            Colors.orange,
+            isFullWidth: true,
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Row untuk Nopol dan Acc
+        Row(
+          children: [
+            Expanded(
+              child: _buildInfoChip(
+                'Nopol',
+                u_nopol.isNotEmpty ? u_nopol : '-',
+                Icons.directions_car,
+                Colors.blue,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildInfoChip(
+                'ACC',
+                u_acc.isNotEmpty ? u_acc : 'OFF',
+                Icons.power,
+                u_acc == 'ON' ? Colors.green : Colors.red,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // Row untuk Speed dan Odometer
+        Row(
+          children: [
+            Expanded(
+              child: _buildInfoChip(
+                'Speed',
+                '${u_speed} km/h',
+                Icons.speed,
+                Colors.purple,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildInfoChip(
+                'Odometer',
+                '${NumberFormat('0.00').format(double.tryParse(u_odometer) ?? 0.0)} Km',
+                Icons.speed,
+                Colors.indigo,
+                isFullWidth: true,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // GPS Time chip - full width
+        _buildInfoChip(
+          'GPS Time',
+          u_gps_time.isNotEmpty ? u_gps_time : '-',
+          Icons.access_time,
+          Colors.teal,
+          isFullWidth: true,
+        ),
+
+        // Event chip - conditional
+        if (u_report_nm != null && u_report_nm.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _buildInfoChip(
+            'Event',
+            u_report_nm,
+            Icons.warning,
+            Colors.red,
+            isFullWidth: true,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDoInfoTabContent() {
+    if (isLoadingDo) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 30),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.orange),
+              ),
+              SizedBox(height: 12),
+              Text(
+                "Memuat data DO...",
+                style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontFamily: "Poppins Regular"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (data_list_do.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF1F5F9),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.inventory_2_outlined, size: 24, color: Color(0xFF94A3B8)),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "Tidak ada data DO aktif",
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF334155),
+                  fontFamily: "Poppins Regular",
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "Kendaraan: ${u_nopol.isNotEmpty ? u_nopol : '-'}",
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF64748B),
+                  fontFamily: "Poppins Regular",
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 36,
+                child: ElevatedButton.icon(
+                  onPressed: () => GetListDo(),
+                  icon: const Icon(Icons.refresh, size: 15, color: Colors.white),
+                  label: const Text("Muat Ulang", style: TextStyle(fontSize: 12, color: Colors.white, fontFamily: "Poppins Regular")),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Map<String, dynamic> firstDo = data_list_do[0];
+    String plateNumber = (firstDo['vehicled_id'] != null && firstDo['vehicled_id'].toString().isNotEmpty)
+        ? firstDo['vehicled_id'].toString()
+        : (firstDo['nopol'] != null && firstDo['nopol'].toString().isNotEmpty
+            ? firstDo['nopol'].toString()
+            : (u_nopol.isNotEmpty ? u_nopol : '-'));
+    String vehicleType = (firstDo['type'] != null && firstDo['type'].toString().isNotEmpty)
+        ? firstDo['type'].toString()
+        : (plateNumber.contains('/') ? plateNumber.split('/')[1].trim() : 'Truck');
+    String driverName = (firstDo['driver_nm'] != null && firstDo['driver_nm'].toString().isNotEmpty)
+        ? firstDo['driver_nm'].toString()
+        : (firstDo['drvname'] != null && firstDo['drvname'].toString().isNotEmpty
+            ? firstDo['drvname'].toString()
+            : (driver_nm.isNotEmpty ? driver_nm : '-'));
+
+    String doNbr = (firstDo['dlocustdonbr'] != null && firstDo['dlocustdonbr'].toString().isNotEmpty)
+        ? firstDo['dlocustdonbr'].toString()
+        : (firstDo['do_number'] != null && firstDo['do_number'].toString().isNotEmpty
+            ? firstDo['do_number'].toString()
+            : (no_do.isNotEmpty ? no_do : (do_number.isNotEmpty ? do_number : '-')));
+
+    String goodsName = (firstDo['item_nm'] != null && firstDo['item_nm'].toString().isNotEmpty)
+        ? firstDo['item_nm'].toString()
+        : (firstDo['dloitem'] != null && firstDo['dloitem'].toString().isNotEmpty
+            ? firstDo['dloitem'].toString()
+            : '-');
+    String qtyVal = (firstDo['bujitemqty'] != null && firstDo['bujitemqty'].toString().isNotEmpty)
+        ? firstDo['bujitemqty'].toString()
+        : (firstDo['dloitemqty'] != null && firstDo['dloitemqty'].toString().isNotEmpty
+            ? firstDo['dloitemqty'].toString()
+            : '');
+    String uomVal = (firstDo['dloitemuom'] != null && firstDo['dloitemuom'].toString().isNotEmpty)
+        ? firstDo['dloitemuom'].toString()
+        : (firstDo['uom'] != null && firstDo['uom'].toString().isNotEmpty
+            ? firstDo['uom'].toString()
+            : '');
+    String goodsQty = (qtyVal.isNotEmpty && uomVal.isNotEmpty)
+        ? '$qtyVal $uomVal'
+        : (qtyVal.isNotEmpty ? qtyVal : (uomVal.isNotEmpty ? uomVal : '-'));
+
+    String originName = (firstDo['origin'] != null && firstDo['origin'].toString().isNotEmpty)
+        ? firstDo['origin'].toString()
+        : '-';
+    String destinationName = (firstDo['destination'] != null && firstDo['destination'].toString().isNotEmpty)
+        ? firstDo['destination'].toString()
+        : (firstDo['dlocustomer'] != null && firstDo['dlocustomer'].toString().isNotEmpty
+            ? firstDo['dlocustomer'].toString()
+            : '-');
+
+    final timeInLoading = firstDo["INLOADING"] ?? firstDo["inloading"];
+    final timeOutLoading = firstDo["OUTLOADING"] ?? firstDo["outloading"];
+    final timeOutPool = firstDo["OUTPOOL"] ?? firstDo["outpool"];
+    final timeInCustomer = firstDo["INCUSTOMER"] ?? firstDo["incustomer"];
+    final timeInUnloading = firstDo["INUNLOADING"] ?? firstDo["inunloading"];
+    final timeOutUnloading = firstDo["OUTUNLOADING"] ?? firstDo["outunloading"];
+
+    bool _isValidTs(dynamic val) {
+      if (val == null) return false;
+      String s = val.toString().trim();
+      return s.isNotEmpty && s != "null" && s != "-";
+    }
+
+    bool isMixerData = _isValidTs(timeInLoading) || _isValidTs(timeOutLoading) || _isValidTs(timeOutPool);
+
+    String startDest = firstDo['startdestination'] != null ? firstDo['startdestination'].toString() : '';
+    String finishDest = firstDo['finishdestination'] != null ? firstDo['finishdestination'].toString() : '';
+    String startLoad = firstDo['startloading'] != null ? firstDo['startloading'].toString() : '';
+    String finishLoad = firstDo['finishloading'] != null ? firstDo['finishloading'].toString() : '';
+
+    String bujOutDate = firstDo['bujoutdate'] != null ? firstDo['bujoutdate'].toString() : '';
+    String bujOutTime = firstDo['bujouttime'] != null ? firstDo['bujouttime'].toString() : '';
+    String bujOutCombined = (bujOutDate.isNotEmpty && bujOutTime.isNotEmpty)
+        ? '$bujOutDate $bujOutTime'
+        : (bujOutDate.isNotEmpty ? bujOutDate : '');
+
+    String doDate = firstDo['dodate'] != null ? firstDo['dodate'].toString() : '';
+    String doTime = firstDo['dotime'] != null ? firstDo['dotime'].toString() : '';
+    String doCombined = (doDate.isNotEmpty && doTime.isNotEmpty)
+        ? '$doDate $doTime'
+        : (firstDo['tgl_do'] != null ? firstDo['tgl_do'].toString() : '');
+
+    String timeMenujuBongkar = _fmtTimelineDate(startDest);
+    String timeSelesaiMuat = _fmtTimelineDate(finishLoad);
+    String timeTibaDiMuat = _fmtTimelineDate(startLoad);
+    String timeMenujuMuat = _fmtTimelineDate(bujOutCombined);
+    String timeTerjadwal = _fmtTimelineDate(doCombined);
+
+    String waktuPerjalanan = _calcDuration(startDest, finishDest);
+    String durasiMuat = _calcDuration(startLoad, finishLoad);
+    String waktuTungguBongkar = '-';
+
+    String currentStatus = "Terjadwal";
+    if (isMixerData) {
+      if (_isValidTs(timeOutUnloading)) {
+        currentStatus = "Out Unloading (Selesai Bongkar)";
+      } else if (_isValidTs(timeInUnloading)) {
+        currentStatus = "In Unloading (Sedang Bongkar)";
+      } else if (_isValidTs(timeInCustomer)) {
+        currentStatus = "In Customer (Tiba di Customer)";
+      } else if (_isValidTs(timeOutPool)) {
+        currentStatus = "Out Pool (Menuju Customer)";
+      } else if (_isValidTs(timeOutLoading)) {
+        currentStatus = "Out Loading (Selesai Muat)";
+      } else if (_isValidTs(timeInLoading)) {
+        currentStatus = "In Loading (Mulai Muat)";
+      }
+    } else {
+      if (finishDest.isNotEmpty && finishDest != "-") {
+        currentStatus = "Selesai Bongkar";
+      } else if (startDest.isNotEmpty && startDest != "-") {
+        currentStatus = "Menuju Tempat Bongkar";
+      } else if (finishLoad.isNotEmpty && finishLoad != "-") {
+        currentStatus = "Selesai Muat";
+      } else if (startLoad.isNotEmpty && startLoad != "-") {
+        currentStatus = "Tiba di Muat";
+      } else if (bujOutCombined.isNotEmpty && bujOutCombined != "-") {
+        currentStatus = "Menuju Tempat Muat";
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header DO & Status
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: Text(
+                "DO: $doNbr",
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1D4ED8),
+                  fontFamily: "Poppins Regular",
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                currentStatus.length > 25 ? currentStatus.substring(0, 25) + '...' : currentStatus,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF059669),
+                  fontFamily: "Poppins Regular",
+                ),
+              ),
+            ),
+          ],
+        ),
+        _buildDottedDivider(),
+
+        // Section 1: Barang
+        if (goodsName.isNotEmpty && goodsName != '-') ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.inventory_2_outlined,
+                  color: Color(0xFF2563EB),
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Barang",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontFamily: "Poppins Regular",
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    Text(
+                      goodsName,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: "Poppins Regular",
+                        color: Color(0xFF1E293B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              if (goodsQty.isNotEmpty && goodsQty != '-')
+                Text(
+                  goodsQty,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "Poppins Regular",
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+            ],
+          ),
+          _buildDottedDivider(),
+        ],
+
+        // Section 2: Alamat
+        Row(
+          children: const [
+            Icon(Icons.location_on_outlined, size: 15, color: Color(0xFF64748B)),
+            SizedBox(width: 4),
+            Text(
+              "Alamat",
+              style: TextStyle(
+                fontSize: 11,
+                fontFamily: "Poppins Regular",
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 2, right: 10),
+              child: Column(
+                children: [
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2563EB),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.arrow_upward, size: 10, color: Colors.white),
+                  ),
+                  Container(width: 1.5, height: 10, color: const Color(0xFFCBD5E1)),
+                  const Icon(Icons.arrow_drop_down, size: 12, color: Color(0xFF94A3B8)),
+                  Container(width: 1.5, height: 10, color: const Color(0xFFCBD5E1)),
+                  Container(
+                    width: 15,
+                    height: 15,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: const Icon(Icons.arrow_downward, size: 10, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Muat", style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontFamily: "Poppins Regular")),
+                  Text(
+                    originName,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E293B), fontFamily: "Poppins Regular"),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text("Bongkar", style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontFamily: "Poppins Regular")),
+                  Text(
+                    destinationName,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E293B), fontFamily: "Poppins Regular"),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        _buildDottedDivider(),
+
+        // Section 3: Supir & Truk
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F172A),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    plateNumber.split('/')[0].trim(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  vehicleType,
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontFamily: "Poppins Regular"),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Container(
+                  width: 26,
+                  height: 26,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE2E8F0),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.person, size: 16, color: Color(0xFF64748B)),
+                ),
+                const SizedBox(width: 6),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 100),
+                  child: Text(
+                    driverName,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E293B),
+                      fontFamily: "Poppins Regular",
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        _buildDottedDivider(),
+
+        // Section 4: Progress Pengiriman
+        Row(
+          children: const [
+            Icon(Icons.speed, size: 16, color: Color(0xFF64748B)),
+            SizedBox(width: 6),
+            Text(
+              "Progress Pengiriman",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                fontFamily: "Poppins Regular",
+                color: Color(0xFF1E293B),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _buildStatsCard(waktuPerjalanan, durasiMuat, waktuTungguBongkar),
+        const SizedBox(height: 12),
+
+        if (isMixerData) ...[
+          _buildTimelineItem(
+            title: "Out Unloading (Selesai Bongkar)",
+            timestamp: _isValidTs(timeOutUnloading) ? timeOutUnloading.toString() : "-",
+            isActive: currentStatus.contains("Out Unloading"),
+            isDone: _isValidTs(timeOutUnloading),
+            isLast: false,
+          ),
+          _buildTimelineItem(
+            title: "In Unloading (Sedang Bongkar)",
+            timestamp: _isValidTs(timeInUnloading) ? timeInUnloading.toString() : "-",
+            isActive: currentStatus.contains("In Unloading"),
+            isDone: _isValidTs(timeInUnloading),
+            isLast: false,
+          ),
+          _buildTimelineItem(
+            title: "In Customer (Tiba di Customer)",
+            timestamp: _isValidTs(timeInCustomer) ? timeInCustomer.toString() : "-",
+            isActive: currentStatus.contains("In Customer"),
+            isDone: _isValidTs(timeInCustomer),
+            isLast: false,
+          ),
+          _buildTimelineItem(
+            title: "Out Pool (Menuju Customer)",
+            timestamp: _isValidTs(timeOutPool) ? timeOutPool.toString() : "-",
+            isActive: currentStatus.contains("Out Pool"),
+            isDone: _isValidTs(timeOutPool),
+            isLast: false,
+          ),
+          _buildTimelineItem(
+            title: "Out Loading (Selesai Muat)",
+            timestamp: _isValidTs(timeOutLoading) ? timeOutLoading.toString() : "-",
+            isActive: currentStatus.contains("Out Loading"),
+            isDone: _isValidTs(timeOutLoading),
+            isLast: false,
+          ),
+          _buildTimelineItem(
+            title: "In Loading (Mulai Muat)",
+            timestamp: _isValidTs(timeInLoading) ? timeInLoading.toString() : "-",
+            isActive: currentStatus.contains("In Loading"),
+            isDone: _isValidTs(timeInLoading),
+            isLast: true,
+          ),
+        ] else ...[
+          _buildTimelineItem(
+            title: "Menuju Tempat Bongkar",
+            timestamp: timeMenujuBongkar,
+            isActive: currentStatus == "Menuju Tempat Bongkar",
+            isDone: finishDest.isNotEmpty || startDest.isNotEmpty,
+            isLast: false,
+          ),
+          _buildTimelineItem(
+            title: "Selesai Muat",
+            timestamp: timeSelesaiMuat,
+            isActive: currentStatus == "Selesai Muat",
+            isDone: finishLoad.isNotEmpty,
+            isLast: false,
+          ),
+          _buildTimelineItem(
+            title: "Tiba di Muat",
+            timestamp: timeTibaDiMuat,
+            isActive: currentStatus == "Tiba di Muat",
+            isDone: startLoad.isNotEmpty,
+            isLast: false,
+          ),
+          _buildTimelineItem(
+            title: "Menuju Tempat Muat",
+            timestamp: timeMenujuMuat,
+            isActive: currentStatus == "Menuju Tempat Muat",
+            isDone: bujOutCombined.isNotEmpty,
+            isLast: false,
+          ),
+          _buildTimelineItem(
+            title: "Terjadwal",
+            timestamp: timeTerjadwal,
+            isActive: currentStatus == "Terjadwal",
+            isDone: true,
+            isLast: true,
+          ),
+        ],
+        const SizedBox(height: 14),
+
+        // Bagikan Posisi Pengiriman
+        SizedBox(
+          width: double.infinity,
+          height: 42,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              _shareTrackingInfo(
+                plateNumber,
+                vehicleType,
+                goodsName,
+                originName,
+                destinationName,
+                currentStatus,
+                driverName: driverName,
+              );
+            },
+            icon: const Icon(Icons.share, size: 15, color: Colors.white),
+            label: const Text(
+              "Bagikan Posisi Pengiriman",
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontFamily: "Poppins Regular",
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF22C55E),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   void setMapPins(
@@ -876,6 +1965,7 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
                           isShowPlay = false;
                           isShowPause = false;
                           isShowUnitInfo = true;
+                          isShowPanel = true;
                         });
                         await runPlayBack();
                         if (mounted) setState(() {});
@@ -1014,6 +2104,7 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
                           await lastPlayBack();
                           setState(() {
                             isShowUnitInfo = true;
+                            isShowPanel = true;
                             isLastDataInfo = true;
                           });
                           print('IconButton pressed! last ');
@@ -1025,113 +2116,299 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
               ),
             ),
             if (isShowUnitInfo) ...[
-              Positioned(
-                left: 20,
-                right: 20,
-                bottom: MediaQuery.of(context).padding.bottom + 20,
-                child: Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        blurRadius: 15,
-                        offset: Offset(0, 5),
-                        color: Colors.grey.withOpacity(0.3),
-                      )
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      // Address chip - full width dengan onTap functionality
-                      InkWell(
-                        onTap: () {
-                          // Share location functionality
-                        },
-                        child: _buildInfoChip(
-                            'Address',
-                            u_address,
-                            Icons.location_on,
-                            Colors.orange,
-                            isFullWidth: true
+              // Floating toggle button when collapsed
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeInOut,
+                left: 0,
+                right: 0,
+                bottom: isShowPanel ? -100 : (MediaQuery.of(context).padding.bottom + 16),
+                child: Center(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          isShowPanel = true;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.18),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _activeTabIndex == 0 ? Icons.directions_car : Icons.inventory_2_outlined,
+                              size: 18,
+                              color: Colors.orange.shade700,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _activeTabIndex == 0 ? "Unit Info" : "Info DO",
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: "Poppins Regular",
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.keyboard_arrow_up,
+                              size: 20,
+                              color: Color(0xFF64748B),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
+                  ),
+                ),
+              ),
 
-                      SizedBox(height: 12),
-
-                      // Row untuk Nopol dan Acc
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildInfoChip(
-                                'Nopol',
-                                u_nopol,
-                                Icons.directions_car,
-                                Colors.blue
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: _buildInfoChip(
-                                'ACC',
-                                u_acc,
-                                Icons.power,
-                                u_acc == 'ON' ? Colors.green : Colors.red
-                            ),
-                          ),
-                        ],
+              // Sliding draggable bottom panel
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeInOut,
+                left: 0,
+                right: 0,
+                bottom: isShowPanel ? 0 : -MediaQuery.of(context).size.height,
+                child: IgnorePointer(
+                  ignoring: !isShowPanel,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.72,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20.0),
+                        topRight: Radius.circular(20.0),
                       ),
-
-                      SizedBox(height: 8),
-
-                      // Row untuk Speed dan GPS Time
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildInfoChip(
-                                'Speed',
-                                '${u_speed} km/h',
-                                Icons.speed,
-                                Colors.purple
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: _buildInfoChip(
-                                'Odometer',
-                                '${NumberFormat('0.00').format(double.tryParse(u_odometer) ?? 0.0)} Km',
-                                Icons.speed,
-                                Colors.indigo,
-                                isFullWidth: true
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      SizedBox(height: 8),
-
-                      // Odometer chip - full width
-                      _buildInfoChip(
-                          'GPS Time',
-                          u_gps_time,
-                          Icons.access_time,
-                          Colors.teal
-                      ),
-
-                      // Event chip - conditional
-                      if (u_report_nm != null && u_report_nm != "") ...[
-                        SizedBox(height: 8),
-                        _buildInfoChip(
-                            'Event',
-                            u_report_nm,
-                            Icons.warning,
-                            Colors.red,
-                            isFullWidth: true
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.18),
+                          blurRadius: 14,
+                          offset: const Offset(0, -4),
                         ),
                       ],
-                    ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Drag handle bar
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onVerticalDragUpdate: (details) {
+                            if (details.primaryDelta != null && details.primaryDelta! > 5) {
+                              setState(() {
+                                isShowPanel = false;
+                              });
+                            }
+                          },
+                          onVerticalDragEnd: (details) {
+                            if (details.primaryVelocity != null && details.primaryVelocity! > 80) {
+                              setState(() {
+                                isShowPanel = false;
+                              });
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 12, 4),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Center(
+                                  child: Container(
+                                    width: 40,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFCBD5E1),
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                ),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        isShowPanel = false;
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(4),
+                                      child: Icon(
+                                        Icons.close,
+                                        size: 20,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // 2 Tabs Selector
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          child: Container(
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              children: [
+                                // Tab 1: Unit Info
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _activeTabIndex = 0;
+                                      });
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: _activeTabIndex == 0 ? Colors.white : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(8),
+                                        boxShadow: _activeTabIndex == 0
+                                            ? [
+                                                BoxShadow(
+                                                  color: Colors.black.withOpacity(0.08),
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 1),
+                                                )
+                                              ]
+                                            : null,
+                                      ),
+                                      margin: const EdgeInsets.all(3),
+                                      alignment: Alignment.center,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.directions_car,
+                                            size: 16,
+                                            color: _activeTabIndex == 0 ? Colors.orange.shade700 : const Color(0xFF64748B),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            "Unit Info",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: _activeTabIndex == 0 ? FontWeight.bold : FontWeight.w500,
+                                              color: _activeTabIndex == 0 ? Colors.orange.shade700 : const Color(0xFF64748B),
+                                              fontFamily: "Poppins Regular",
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                // Tab 2: Info DO
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _activeTabIndex = 1;
+                                      });
+                                      if (data_list_do.isEmpty && !isLoadingDo) {
+                                        GetListDo();
+                                      }
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: _activeTabIndex == 1 ? Colors.white : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(8),
+                                        boxShadow: _activeTabIndex == 1
+                                            ? [
+                                                BoxShadow(
+                                                  color: Colors.black.withOpacity(0.08),
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 1),
+                                                )
+                                              ]
+                                            : null,
+                                      ),
+                                      margin: const EdgeInsets.all(3),
+                                      alignment: Alignment.center,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.inventory_2_outlined,
+                                            size: 16,
+                                            color: _activeTabIndex == 1 ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            "Info DO",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: _activeTabIndex == 1 ? FontWeight.bold : FontWeight.w500,
+                                              color: _activeTabIndex == 1 ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                                              fontFamily: "Poppins Regular",
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Tab Content (Scrollable)
+                        Flexible(
+                          child: NotificationListener<ScrollNotification>(
+                            onNotification: (notification) {
+                              if (notification is OverscrollNotification && notification.overscroll < -8) {
+                                setState(() {
+                                  isShowPanel = false;
+                                });
+                                return true;
+                              }
+                              if (notification is ScrollUpdateNotification &&
+                                  notification.metrics.pixels <= 0 &&
+                                  (notification.scrollDelta ?? 0) < -12) {
+                                setState(() {
+                                  isShowPanel = false;
+                                });
+                                return true;
+                              }
+                              return false;
+                            },
+                            child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                              child: _activeTabIndex == 0
+                                  ? _buildUnitInfoTabContent()
+                                  : _buildDoInfoTabContent(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1398,4 +2675,44 @@ class MapPlayBackUnitsState extends State<MapPlayBackUnits> {
     }
   }
 
+}
+
+class _DashedLineVerticalPainter extends CustomPainter {
+  final Color color;
+  _DashedLineVerticalPainter({this.color = const Color(0xFFCBD5E1)});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    double dashHeight = 4, dashSpace = 3, startY = 0;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5;
+    while (startY < size.height) {
+      canvas.drawLine(Offset(0, startY), Offset(0, startY + dashHeight), paint);
+      startY += dashHeight + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+class _DashedLineHorizontalPainter extends CustomPainter {
+  final Color color;
+  _DashedLineHorizontalPainter({this.color = const Color(0xFFCBD5E1)});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    double dashWidth = 5, dashSpace = 4, startX = 0;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.0;
+    while (startX < size.width) {
+      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
+      startX += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

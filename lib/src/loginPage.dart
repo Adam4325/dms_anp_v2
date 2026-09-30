@@ -1,5 +1,3 @@
-
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -62,8 +60,10 @@ class _LoginPageState extends State<LoginPage> {
           _customBgUrl = cached;
         });
       }
-      final url = '${GlobalData.baseUrl}api/menu/api_bg_mobile.jsp?method=get-active-bg';
-      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 4));
+      final url =
+          '${GlobalData.baseUrl}api/menu/api_bg_mobile.jsp?method=get-active-bg';
+      final response =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['status_code'] == '200' && data['data'] != null) {
@@ -170,9 +170,14 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _updateImeiOnServer({required String imeiid, required String statusKaryawan, required String drvid, required String kryid}) async {
+  Future<void> _updateImeiOnServer(
+      {required String imeiid,
+      required String statusKaryawan,
+      required String drvid,
+      required String kryid}) async {
     try {
-      final status = statusKaryawan.toLowerCase() == 'driver' ? 'driver' : 'karyawan';
+      final status =
+          statusKaryawan.toLowerCase() == 'driver' ? 'driver' : 'karyawan';
       final id = status == 'driver' ? drvid : kryid;
       final baseUrl = GlobalData.baseUrl + "api/imeiid/update_imeiid.jsp";
       final uri = Uri.parse(baseUrl).replace(queryParameters: {
@@ -191,7 +196,7 @@ class _LoginPageState extends State<LoginPage> {
     EasyLoading.show();
     try {
       final JsonDecoder _decoder = new JsonDecoder();
-      var endpointUrl = GlobalData.baseUrl + "api/authorize_v11.jsp";
+      var endpointUrl = GlobalData.baseUrl + "api/authorize_v12.jsp";
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String username = TxtUsername.text.trim();
@@ -200,11 +205,16 @@ class _LoginPageState extends State<LoginPage> {
       if (isFinger) {
         if (username.isEmpty) username = prefs.getString('username') ?? '';
         if (password.isEmpty) password = prefs.getString('password') ?? '';
-        if (_identifier.isEmpty || _identifier == 'Failed to get Unique Identifier') {
+        if (_identifier.isEmpty ||
+            _identifier == 'Failed to get Unique Identifier') {
           EasyLoading.dismiss();
           final ctx = globalScaffoldKey.currentContext;
           if (ctx != null) {
-            alert(ctx, 0, "IMEIID/Device ID tidak tersedia. Pastikan permission telah diberikan.", "error");
+            alert(
+                ctx,
+                0,
+                "IMEIID/Device ID tidak tersedia. Pastikan permission telah diberikan.",
+                "error");
           }
           return;
         }
@@ -288,7 +298,7 @@ class _LoginPageState extends State<LoginPage> {
           var cpyid = result["data"][0]["cpyid"];
           var cpyname = result["data"][0]["cpyname"];
           var ismixer = result["data"][0]["ismixer"];
-          var phone = result["data"][0]["phone"]??"";
+          var phone = result["data"][0]["phone"] ?? "";
           // default true bila field belum ada di response lama
           final dynamic isReadSimRaw = result["data"][0]["is_read_sim"];
           final bool isReadSim = (() {
@@ -303,7 +313,9 @@ class _LoginPageState extends State<LoginPage> {
           String kryid = '';
           if (rawKry != null) {
             final s = rawKry.toString().trim();
-            if (s.isNotEmpty && s.toLowerCase() != 'null' && s.toLowerCase() != 'undefined') {
+            if (s.isNotEmpty &&
+                s.toLowerCase() != 'null' &&
+                s.toLowerCase() != 'undefined') {
               kryid = s;
             }
           }
@@ -370,8 +382,10 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('status_karyawan', status_karyawan);
           prefs.setString('kryid', kryid);
           prefs.setString('api_lokar', api_lokar ?? '');
-          prefs.setString('lokar_client_id', (lokar_client_id ?? '').toString());
-          prefs.setString('lokar_api_token', (lokar_api_token ?? '').toString());
+          prefs.setString(
+              'lokar_client_id', (lokar_client_id ?? '').toString());
+          prefs.setString(
+              'lokar_api_token', (lokar_api_token ?? '').toString());
           print('IMMEIID $_identifier');
           // Debug: dump nomor login vs nomor SIM yang terbaca di device
           unawaited(
@@ -381,7 +395,11 @@ class _LoginPageState extends State<LoginPage> {
           UserInactivityController.reloadIdleDuration();
 
           final imeiToSend = (prefs.getString('androidID') ?? _identifier);
-          await _updateImeiOnServer(imeiid: imeiToSend, statusKaryawan: status_karyawan, drvid: drvid, kryid: kryid);
+          await _updateImeiOnServer(
+              imeiid: imeiToSend,
+              statusKaryawan: status_karyawan,
+              drvid: drvid,
+              kryid: kryid);
           await FcmAduanService.instance.syncTokenIfPossible();
           unawaited(MasterDataPreloader.preloadCommon(forceRefresh: true));
 
@@ -462,12 +480,12 @@ class _LoginPageState extends State<LoginPage> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(25),
                       child: Image.network(
-                       GlobalData.baseUrlOri + 'img/dms.jpeg',
+                        GlobalData.baseUrlOri + 'img/dms.jpeg',
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
-                  //SAMPE ICON SINI 
+                  //SAMPE ICON SINI
                   SizedBox(height: 20),
                   Text(
                     "PT. Andalan Nusa Pratama",
@@ -639,7 +657,8 @@ class _LoginPageState extends State<LoginPage> {
                                       await doLogin(context, false);
                                     } catch (e) {
                                       print("ERROR ${e.toString()}");
-                                      final ctx = globalScaffoldKey.currentContext;
+                                      final ctx =
+                                          globalScaffoldKey.currentContext;
                                       if (ctx != null) {
                                         alert(ctx, 0, e.toString(), "error");
                                       }
@@ -678,7 +697,8 @@ class _LoginPageState extends State<LoginPage> {
                                       await _authenticate();
                                     } catch (e) {
                                       print("ERROR ${e.toString()}");
-                                      final ctx = globalScaffoldKey.currentContext;
+                                      final ctx =
+                                          globalScaffoldKey.currentContext;
                                       if (ctx != null) {
                                         alert(ctx, 0, e.toString(), "error");
                                       }
@@ -716,7 +736,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextStyle(
                       color: textSecondary,
                       fontSize: 14,
-                      fontWeight: FontWeight.w500,//
+                      fontWeight: FontWeight.w500, //
                     ),
                   ),
                   SizedBox(height: 20),

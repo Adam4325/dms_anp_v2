@@ -978,7 +978,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   final Color primaryOrange = Color(0xFFFF8C69);
   final Color lightOrange = Color(0xFFFFF4E6);
   final Color accentOrange = Color(0xFFFFB347);
-  final Color darkOrange = Color(0xFFE07B39);
+  final Color accentOrange2 = Color.fromARGB(255, 221, 155, 62);
+  final Color darkOrange = Color.fromARGB(255, 218, 140, 88);
   final Color backgroundColor = Color(0xFFFFFAF5);
   final Color cardColor = Color(0xFFFFF8F0);
   final Color shadowColor = Color(0x20FF8C69);
@@ -1058,7 +1059,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       title: Text(
         title,
-        style: TextStyle(color: darkOrange, fontWeight: FontWeight.w700, fontSize: 16),
+        style: TextStyle(
+            color: darkOrange, fontWeight: FontWeight.w700, fontSize: 16),
       ),
       content: content,
       actions: actions,
@@ -1111,15 +1113,13 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               alignment: Alignment.centerLeft,
               child: Text(label,
                   style: TextStyle(
-                      color: Colors.grey.shade800,
-                      fontSize: dense ? 11 : 12)),
+                      color: Colors.grey.shade800, fontSize: dense ? 11 : 12)),
             ),
             Align(
               alignment: Alignment.center,
               child: Text(":",
                   style: TextStyle(
-                      color: Colors.grey.shade800,
-                      fontSize: dense ? 11 : 12)),
+                      color: Colors.grey.shade800, fontSize: dense ? 11 : 12)),
             ),
             Align(
               alignment: Alignment.centerRight,
@@ -1170,7 +1170,10 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         borderRadius: BorderRadius.circular(r),
         border: Border.all(color: accentOrange.withOpacity(0.45)),
         boxShadow: [
-          BoxShadow(color: shadowColor, blurRadius: compact ? 4 : 8, offset: Offset(0, compact ? 1 : 3)),
+          BoxShadow(
+              color: shadowColor,
+              blurRadius: compact ? 4 : 8,
+              offset: Offset(0, compact ? 1 : 3)),
         ],
       ),
       child: Column(
@@ -1501,7 +1504,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   }
 
   String pr_number = "";
-  Future CreatePurchaseRequest(String qty_stock, String qty_op_request,
+  Future CreatePurchaseRequest(
+      String qty_stock,
+      String qty_op_request,
       String itemid,
       String partname,
       String item_size,
@@ -1510,8 +1515,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       String genuino,
       String merk,
       String notes,
-      String nomor_sr
-      ) async {
+      String nomor_sr) async {
     try {
       if (!EasyLoading.isShow) {
         EasyLoading.show();
@@ -1815,7 +1819,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         selKatalog = _resolveKatalogValue(itpid);
         _ensureKatalogChoice(selKatalog);
       }
-      nama_katalog = selKatalog.isEmpty ? '' : '(${_katalogTitleOf(selKatalog)})';
+      nama_katalog =
+          selKatalog.isEmpty ? '' : '(${_katalogTitleOf(selKatalog)})';
     });
   }
 
@@ -1903,9 +1908,10 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     );
   }
 
-  void _showModalListMechanic(BuildContext context) {
-    showModalBottomSheet<void>(
+  Future<void> _showModalListMechanic(BuildContext context) {
+    return showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       builder: (context) {
         return _BottomSheetContentMechanic();
       },
@@ -1930,9 +1936,10 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     );
   }
 
-  void _showModalListMechanic2(BuildContext context) {
-    showModalBottomSheet<void>(
+  Future<void> _showModalListMechanic2(BuildContext context) {
+    return showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       builder: (context) {
         return _BottomSheetContentMechanic2();
       },
@@ -2446,9 +2453,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -2469,7 +2476,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               alert(
@@ -2576,9 +2583,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -2599,7 +2606,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               alert(
@@ -2979,7 +2986,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         setState(() {
           if (response.statusCode == 200) {
             status_code = json.decode(response.body)["status_code"];
-            message = json.decode(response.body)["message"];//
+            message = json.decode(response.body)["message"]; //
             print("message craete");
             print(message);
             if (status_code == 200) {
@@ -2989,9 +2996,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -3004,7 +3011,17 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         if (isQtyZero && selectedItemQuantity == 0) {
                           print('Create PR');
                           CreatePurchaseRequest(
-                              selectedItemQuantity.toString(), qty_op_request,itemid,partname,item_size,idtype,idaccess,genuino,merk,notes,nomor_sr);
+                              selectedItemQuantity.toString(),
+                              qty_op_request,
+                              itemid,
+                              partname,
+                              item_size,
+                              idtype,
+                              idaccess,
+                              genuino,
+                              merk,
+                              notes,
+                              nomor_sr);
                         } else {
                           print('NOT Create PR');
                         }
@@ -3020,7 +3037,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -3114,9 +3131,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -3137,7 +3154,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -3187,7 +3204,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         EasyLoading.show();
         print('Create New OPNAME');
         var encoded = Uri.encodeFull(
-            "${BASE_URL}api/maintenance/sr/create_opname_sr_detail.jsp");
+            "${BASE_URL}api/maintenance/sr/create_opname_sr_detail_dialog.jsp");
         print(encoded);
         Uri urlEncode = Uri.parse(encoded);
         var data = {
@@ -3204,6 +3221,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           'estimasi': selEstimasi.toString() + ":00",
           'idtype': txtTypeID.text,
           'partname': txtPartName.text,
+          'item_size': txtItemSize.text,
           'idaccess': txtTypeAccess.text,
           'status_item': selStatusItem,
           'userid': userid.toUpperCase(),
@@ -3232,9 +3250,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -3255,7 +3273,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -3717,7 +3735,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     }
   }
 
-  Future DeleteOpnameDetail(bool isload, String vehicle_id, String id,String itemid) async {
+  Future DeleteOpnameDetail(
+      bool isload, String vehicle_id, String id, String itemid) async {
     try {
       EasyLoading.show();
       var nomor_sr = txtOpnameWONUMBER.text;
@@ -3946,15 +3965,15 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       //   urlBase =
       //       "${BASE_URL}api/maintenance/sr/list_opname_sr_detail.jsp?method=list-opname-sr-detail&id_header=${id_header}&vhcid=${vehicle_id}";
       // }
-      if(txtOpnameWONUMBER.text.isNotEmpty){
-        print('list detail pr');//
+      if (txtOpnameWONUMBER.text.isNotEmpty) {
+        print('list detail pr'); //
         METHOD_DETAIL = "PURCHASE-ORDER";
         urlBase =
-        "${BASE_URL}api/maintenance/sr/list_opname_sr_detail.jsp?method=list-opname-sr-detail&id_header=${id_header}&vhcid=${vehicle_id}&pbnbr=${pr_number}&method_detail=${METHOD_DETAIL}&nomor_sr=${txtOpnameWONUMBER.text}";
+            "${BASE_URL}api/maintenance/sr/list_opname_sr_detail.jsp?method=list-opname-sr-detail&id_header=${id_header}&vhcid=${vehicle_id}&pbnbr=${pr_number}&method_detail=${METHOD_DETAIL}&nomor_sr=${txtOpnameWONUMBER.text}";
         METHOD_DETAIL = "";
-      }else{
+      } else {
         urlBase =
-        "${BASE_URL}api/maintenance/sr/list_opname_sr_detail.jsp?method=list-opname-sr-detail&id_header=${id_header}&vhcid=${vehicle_id}&pbnbr=${pr_number}&method_detail=${METHOD_DETAIL}";
+            "${BASE_URL}api/maintenance/sr/list_opname_sr_detail.jsp?method=list-opname-sr-detail&id_header=${id_header}&vhcid=${vehicle_id}&pbnbr=${pr_number}&method_detail=${METHOD_DETAIL}";
       }
 
       var urlData = urlBase;
@@ -4312,9 +4331,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -4335,7 +4354,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -4432,9 +4451,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -4456,7 +4475,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -4555,9 +4574,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -4579,7 +4598,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -4604,6 +4623,411 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       alert(globalScaffoldKey.currentContext!, 0, "Client, ${e}", "error");
       print(e.toString());
     }
+  }
+
+  void _showDialogStartWo(BuildContext context, dynamic item) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final String srNumber = _s(item['srnumber']);
+            final String vhcId = _s(item['vhcid']);
+
+            return Dialog(
+              insetPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              elevation: 6,
+              backgroundColor: cardColor,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      // Header
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: lightOrange,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: accentOrange.withValues(alpha: 0.35),
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: primaryOrange, width: 1.2),
+                              ),
+                              child: Icon(Icons.handyman_rounded,
+                                  color: primaryOrange, size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Start Work Order",
+                                    style: TextStyle(
+                                      color: darkOrange,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    "SR: $srNumber${vhcId.isNotEmpty ? ' • Unit: $vhcId' : ''}",
+                                    style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.close_rounded,
+                                  color: Colors.grey.shade600),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop(false);
+                                resetTeks();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Form Body
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Mechanic 1 Dropdown
+                            InkWell(
+                              onTap: () async {
+                                await _showModalListMechanic(dialogContext);
+                                setDialogState(() {});
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  labelText: "Mechanic ID 1 *",
+                                  hintText: "Pilih Mechanic ID 1",
+                                  isDense: true,
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  labelStyle: TextStyle(
+                                    color: txtWorkedBy.text.isNotEmpty
+                                        ? primaryOrange
+                                        : Colors.grey.shade700,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  prefixIcon: Icon(Icons.person_rounded,
+                                      color: primaryOrange, size: 20),
+                                  suffixIcon: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (txtWorkedBy.text.isNotEmpty)
+                                        IconButton(
+                                          icon: Icon(Icons.close_rounded,
+                                              color: Colors.grey.shade400,
+                                              size: 18),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          onPressed: () {
+                                            setDialogState(() {
+                                              txtWorkedBy.clear();
+                                              txtWorkedById.clear();
+                                            });
+                                          },
+                                        ),
+                                      const SizedBox(width: 4),
+                                      Icon(Icons.arrow_drop_down_rounded,
+                                          color: primaryOrange, size: 28),
+                                      const SizedBox(width: 8),
+                                    ],
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide:
+                                        BorderSide(color: Colors.grey.shade300),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: txtWorkedBy.text.isNotEmpty
+                                          ? primaryOrange.withValues(alpha: 0.8)
+                                          : Colors.grey.shade300,
+                                      width:
+                                          txtWorkedBy.text.isNotEmpty ? 1.5 : 1,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  txtWorkedBy.text.isEmpty
+                                      ? "Pilih Mechanic ID 1..."
+                                      : txtWorkedBy.text,
+                                  style: TextStyle(
+                                    color: txtWorkedBy.text.isEmpty
+                                        ? Colors.grey.shade400
+                                        : Colors.grey.shade900,
+                                    fontSize: 13,
+                                    fontWeight: txtWorkedBy.text.isEmpty
+                                        ? FontWeight.normal
+                                        : FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+
+                            // Mechanic 2 Dropdown
+                            InkWell(
+                              onTap: () async {
+                                await _showModalListMechanic2(dialogContext);
+                                setDialogState(() {});
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  labelText: "Mechanic ID 2 (Opsional)",
+                                  hintText: "Pilih Mechanic ID 2",
+                                  isDense: true,
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  labelStyle: TextStyle(
+                                    color: Colors.grey.shade700,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  prefixIcon: Icon(Icons.group_rounded,
+                                      color: primaryOrange, size: 20),
+                                  suffixIcon: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (txtWorkedBy2.text.isNotEmpty)
+                                        IconButton(
+                                          icon: Icon(Icons.close_rounded,
+                                              color: Colors.grey.shade400,
+                                              size: 18),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          onPressed: () {
+                                            setDialogState(() {
+                                              txtWorkedBy2.clear();
+                                              txtWorkedById2.clear();
+                                            });
+                                          },
+                                        ),
+                                      const SizedBox(width: 4),
+                                      Icon(Icons.arrow_drop_down_rounded,
+                                          color: primaryOrange, size: 28),
+                                      const SizedBox(width: 8),
+                                    ],
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide:
+                                        BorderSide(color: Colors.grey.shade300),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: txtWorkedBy2.text.isNotEmpty
+                                          ? accentOrange.withValues(alpha: 0.8)
+                                          : Colors.grey.shade300,
+                                      width: txtWorkedBy2.text.isNotEmpty
+                                          ? 1.5
+                                          : 1,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  txtWorkedBy2.text.isEmpty
+                                      ? "Pilih Mechanic ID 2 (opsional)..."
+                                      : txtWorkedBy2.text,
+                                  style: TextStyle(
+                                    color: txtWorkedBy2.text.isEmpty
+                                        ? Colors.grey.shade400
+                                        : Colors.grey.shade900,
+                                    fontSize: 13,
+                                    fontWeight: txtWorkedBy2.text.isEmpty
+                                        ? FontWeight.normal
+                                        : FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+
+                            // Notes TextField
+                            TextField(
+                              controller: txtWodNotes,
+                              cursorColor: primaryOrange,
+                              style: TextStyle(
+                                  color: Colors.grey.shade900, fontSize: 13),
+                              keyboardType: TextInputType.multiline,
+                              maxLines: 2,
+                              decoration: InputDecoration(
+                                labelText: "Notes",
+                                hintText: "Tulis catatan pekerjaan...",
+                                isDense: true,
+                                filled: true,
+                                fillColor: Colors.white,
+                                labelStyle: TextStyle(
+                                    color: Colors.grey.shade700, fontSize: 13),
+                                hintStyle: TextStyle(
+                                    color: Colors.grey.shade400, fontSize: 13),
+                                prefixIcon: Icon(Icons.edit_note_rounded,
+                                    color: primaryOrange, size: 22),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                      color: primaryOrange, width: 2),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Action Buttons
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                icon: Icon(Icons.close_rounded,
+                                    size: 16, color: Colors.grey.shade700),
+                                label: Text(
+                                  'Batal',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade800,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.of(dialogContext).pop(false);
+                                  resetTeks();
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 11),
+                                  side: BorderSide(
+                                      color: Colors.grey.shade400, width: 1.1),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.play_arrow_rounded,
+                                    size: 18, color: Colors.white),
+                                label: const Text(
+                                  'Start WO',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  var workedby = txtWorkedById.text;
+                                  var workedby2 = txtWorkedById2.text;
+                                  if (workedby.isEmpty &&
+                                      txtWorkedBy.text.isNotEmpty) {
+                                    workedby = txtWorkedBy.text;
+                                  }
+                                  if (workedby.isEmpty) {
+                                    alert(
+                                        dialogContext,
+                                        0,
+                                        "Mechanic ID 1 wajib dipilih!",
+                                        "warning");
+                                    return;
+                                  }
+                                  Navigator.of(dialogContext).pop(true);
+                                  startRequestServiceForeman(
+                                    item['srnumber'],
+                                    item['wodwonbr'],
+                                    workedby,
+                                    workedby2,
+                                    item['vhcid'],
+                                    item['drvid'],
+                                    item['srkm'],
+                                    txtWodNotes.text,
+                                    item['srtypeid'],
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  elevation: 2,
+                                  backgroundColor: primaryOrange,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 11),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void closeWoRequestService(String stSRNumber, String stWODNbr, String stVHCID,
@@ -4661,9 +5085,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -4684,7 +5108,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -4768,9 +5192,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -4791,7 +5215,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -4873,9 +5297,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -4896,7 +5320,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -4972,9 +5396,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -4995,7 +5419,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -5070,9 +5494,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -5093,7 +5517,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -5184,9 +5608,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -5210,7 +5634,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -5301,9 +5725,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               showDialog(
                 context: globalScaffoldKey.currentContext!,
                 builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("$message"),
-                            actions: <Widget>[
+                  title: 'Information',
+                  content: Text("$message"),
+                  actions: <Widget>[
                     new ElevatedButton.icon(
                       icon: Icon(
                         Icons.info,
@@ -5327,7 +5751,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
-                          ),
+                ),
               );
             } else {
               if (EasyLoading.isShow) {
@@ -6207,311 +6631,310 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     ));
   }
 
-
   Widget buildButtonAddBanFinish(BuildContext context, dynamic item) {
     txtGenuinoFinish.text = item["original_sn"] == null ||
-        item["original_sn"] == '' ||
-        item["original_sn"] == 'null'
+            item["original_sn"] == '' ||
+            item["original_sn"] == 'null'
         ? ''
         : item["original_sn"];
     return Expanded(
         child: ElevatedButton.icon(
-          icon: Icon(
-            Icons.save,
-            color: Colors.white,
-            size: 15.0,
-          ),
-          label: pmBtnLabel("Pilih"),
-          onPressed: () async {
-            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-            fnFITTYREID = item['iditemid'];
-            fnFITSERIALNO = item['tyrenumber'];
-            fnSTARTDATE = item['curdate'];
-            //fnSTARTKM = '0';
-            fnTYREBRAND = item['merk'];
-            fnTYREPATTERN = item['itmalias'];
-            fnTYREPRICE = item['itdunitcost'];
-            //fnGENUINENO = '';
-            //fnFitPost = '';
-            //fnWONUMBER='';
-            await Future.delayed(Duration(seconds: 1));
-            //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
-            showDialog(
-              context: context,
-              builder: (context) => new AlertDialog(
-                scrollable: true,
-                title: new Text('Information'),
-                //content:
-                //new Text("Save new request service?"),
-                content: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  //position
-                  mainAxisSize: MainAxisSize.min,
-                  // wrap content in flutter
-                  children: <Widget>[
-                    Container(
-                      margin:
+      icon: Icon(
+        Icons.save,
+        color: Colors.white,
+        size: 15.0,
+      ),
+      label: pmBtnLabel("Pilih"),
+      onPressed: () async {
+        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+        fnFITTYREID = item['iditemid'];
+        fnFITSERIALNO = item['tyrenumber'];
+        fnSTARTDATE = item['curdate'];
+        //fnSTARTKM = '0';
+        fnTYREBRAND = item['merk'];
+        fnTYREPATTERN = item['itmalias'];
+        fnTYREPRICE = item['itdunitcost'];
+        //fnGENUINENO = '';
+        //fnFitPost = '';
+        //fnWONUMBER='';
+        await Future.delayed(Duration(seconds: 1));
+        //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
+        showDialog(
+          context: context,
+          builder: (context) => new AlertDialog(
+            scrollable: true,
+            title: new Text('Information'),
+            //content:
+            //new Text("Save new request service?"),
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              //position
+              mainAxisSize: MainAxisSize.min,
+              // wrap content in flutter
+              children: <Widget>[
+                Container(
+                  margin:
                       EdgeInsets.only(top: 5, bottom: 0.0, left: 10, right: 10),
-                      child: Text("Tyre Number : ${item['tyrenumber']}",
-                          style: TextStyle(color: Colors.black)),
-                    ),
-                    Container(
-                      margin:
-                      EdgeInsets.only(top: 5, bottom: 0.0, left: 10, right: 10),
-                      child: Text(
-                          "Part Name : ${item['partname']}- ${item['merk']}",
-                          style: TextStyle(color: Colors.black)),
-                    ),
-                    Container(
-                      margin: EdgeInsets.all(10.0),
-                      child: TextField(
-                        readOnly: false,
-                        cursorColor: Colors.black,
-                        style: TextStyle(color: Colors.grey.shade800),
-                        controller: txtGenuinoFinish,
-                        keyboardType: TextInputType.text,
-                        decoration: new InputDecoration(
-                          fillColor: Colors.yellow,
-                          filled: true,
-                          isDense: true,
-                          labelText: "GENUINENO/ SN BAN",
-                          contentPadding: EdgeInsets.all(5.0),
-                        ),
-                      ),
-                    ),
-                    SmartSelect<String>.single(
-                      title: 'FIT POST',
-                      selectedValue: selFitPostIdFinish,
-                      onChange: (selected) {
-                        setState(() => selFitPostIdFinish = selected.value);
-                      },
-                      choiceType: S2ChoiceType.radios,
-                      choiceItems: choices.collFitPost,
-                      modalType: S2ModalType.popupDialog,
-                      modalHeader: false,
-                      modalConfig: const S2ModalConfig(
-                        style: S2ModalStyle(
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  child: Text("Tyre Number : ${item['tyrenumber']}",
+                      style: TextStyle(color: Colors.black)),
                 ),
-                actions: <Widget>[
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 20.0,
+                Container(
+                  margin:
+                      EdgeInsets.only(top: 5, bottom: 0.0, left: 10, right: 10),
+                  child: Text(
+                      "Part Name : ${item['partname']}- ${item['merk']}",
+                      style: TextStyle(color: Colors.black)),
+                ),
+                Container(
+                  margin: EdgeInsets.all(10.0),
+                  child: TextField(
+                    readOnly: false,
+                    cursorColor: Colors.black,
+                    style: TextStyle(color: Colors.grey.shade800),
+                    controller: txtGenuinoFinish,
+                    keyboardType: TextInputType.text,
+                    decoration: new InputDecoration(
+                      fillColor: Colors.yellow,
+                      filled: true,
+                      isDense: true,
+                      labelText: "GENUINENO/ SN BAN",
+                      contentPadding: EdgeInsets.all(5.0),
                     ),
-                    label: pmBtnLabel("Close"),
-                    onPressed: () {
-                      Navigator.of(context).pop(false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.red,
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.save,
-                      color: Colors.white,
-                      size: 20.0,
+                ),
+                SmartSelect<String>.single(
+                  title: 'FIT POST',
+                  selectedValue: selFitPostIdFinish,
+                  onChange: (selected) {
+                    setState(() => selFitPostIdFinish = selected.value);
+                  },
+                  choiceType: S2ChoiceType.radios,
+                  choiceItems: choices.collFitPost,
+                  modalType: S2ModalType.popupDialog,
+                  modalHeader: false,
+                  modalConfig: const S2ModalConfig(
+                    style: S2ModalStyle(
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                      ),
                     ),
-                    label: pmBtnLabel("Save"),
-                    onPressed: () async {
-                      Navigator.of(context).pop(false);
-                      var isOK = globals.akses_pages == null
-                          ? globals.akses_pages
-                          : globals.akses_pages.where((x) => x == "OP");
-                      if (isOK != null) {
-                        if (isOK.length > 0) {
-                          fnGENUINENO = txtGenuinoFinish.text;
-                          fnFitPost = selFitPostIdFinish;
-                          //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
-                          saveFitPost();
-                        }
-                      } else {
-                        alert(globalScaffoldKey.currentContext!, 0,
-                            "Anda tidak dapat melakukan transaksi ini", "error");
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: primaryOrange,
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
-                ],
+                ),
+              ],
+            ),
+            actions: <Widget>[
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 20.0,
+                ),
+                label: pmBtnLabel("Close"),
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: Colors.red,
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                    textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-              elevation: 0.0,
-              backgroundColor: primaryOrange,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ));
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.save,
+                  color: Colors.white,
+                  size: 20.0,
+                ),
+                label: pmBtnLabel("Save"),
+                onPressed: () async {
+                  Navigator.of(context).pop(false);
+                  var isOK = globals.akses_pages == null
+                      ? globals.akses_pages
+                      : globals.akses_pages.where((x) => x == "OP");
+                  if (isOK != null) {
+                    if (isOK.length > 0) {
+                      fnGENUINENO = txtGenuinoFinish.text;
+                      fnFitPost = selFitPostIdFinish;
+                      //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
+                      saveFitPost();
+                    }
+                  } else {
+                    alert(globalScaffoldKey.currentContext!, 0,
+                        "Anda tidak dapat melakukan transaksi ini", "error");
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: primaryOrange,
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                    textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+          elevation: 0.0,
+          backgroundColor: primaryOrange,
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+    ));
   }
 
   Widget buildButtonAddBanQC(BuildContext context, dynamic item) {
     txtGenuinoQC.text = item["original_sn"] == null ||
-        item["original_sn"] == '' ||
-        item["original_sn"] == 'null'
+            item["original_sn"] == '' ||
+            item["original_sn"] == 'null'
         ? ''
         : item["original_sn"];
     return Expanded(
         child: ElevatedButton.icon(
-          icon: Icon(
-            Icons.save,
-            color: Colors.white,
-            size: 15.0,
-          ),
-          label: pmBtnLabel("Pilih"),
-          onPressed: () async {
-            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-            fnFITTYREID = item['iditemid'];
-            fnFITSERIALNO = item['tyrenumber'];
-            fnSTARTDATE = item['curdate'];
-            //fnSTARTKM = '0';
-            fnTYREBRAND = item['merk'];
-            fnTYREPATTERN = item['itmalias'];
-            fnTYREPRICE = item['itdunitcost'];
-            //fnGENUINENO = '';
-            //fnFitPost = '';
-            //fnWONUMBER='';
-            await Future.delayed(Duration(seconds: 1));
-            //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
-            showDialog(
-              context: context,
-              builder: (context) => new AlertDialog(
-                scrollable: true,
-                title: new Text('Information'),
-                //content:
-                //new Text("Save new request service?"),
-                content: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  //position
-                  mainAxisSize: MainAxisSize.min,
-                  // wrap content in flutter
-                  children: <Widget>[
-                    Container(
-                      margin:
+      icon: Icon(
+        Icons.save,
+        color: Colors.white,
+        size: 15.0,
+      ),
+      label: pmBtnLabel("Pilih"),
+      onPressed: () async {
+        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+        fnFITTYREID = item['iditemid'];
+        fnFITSERIALNO = item['tyrenumber'];
+        fnSTARTDATE = item['curdate'];
+        //fnSTARTKM = '0';
+        fnTYREBRAND = item['merk'];
+        fnTYREPATTERN = item['itmalias'];
+        fnTYREPRICE = item['itdunitcost'];
+        //fnGENUINENO = '';
+        //fnFitPost = '';
+        //fnWONUMBER='';
+        await Future.delayed(Duration(seconds: 1));
+        //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
+        showDialog(
+          context: context,
+          builder: (context) => new AlertDialog(
+            scrollable: true,
+            title: new Text('Information'),
+            //content:
+            //new Text("Save new request service?"),
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              //position
+              mainAxisSize: MainAxisSize.min,
+              // wrap content in flutter
+              children: <Widget>[
+                Container(
+                  margin:
                       EdgeInsets.only(top: 5, bottom: 0.0, left: 10, right: 10),
-                      child: Text("Tyre Number : ${item['tyrenumber']}",
-                          style: TextStyle(color: Colors.black)),
-                    ),
-                    Container(
-                      margin:
-                      EdgeInsets.only(top: 5, bottom: 0.0, left: 10, right: 10),
-                      child: Text(
-                          "Part Name : ${item['partname']}- ${item['merk']}",
-                          style: TextStyle(color: Colors.black)),
-                    ),
-                    Container(
-                      margin: EdgeInsets.all(10.0),
-                      child: TextField(
-                        readOnly: false,
-                        cursorColor: Colors.black,
-                        style: TextStyle(color: Colors.grey.shade800),
-                        controller: txtGenuinoQC,
-                        keyboardType: TextInputType.text,
-                        decoration: new InputDecoration(
-                          fillColor: Colors.yellow,
-                          filled: true,
-                          isDense: true,
-                          labelText: "GENUINENO/ SN BAN",
-                          contentPadding: EdgeInsets.all(5.0),
-                        ),
-                      ),
-                    ),
-                    SmartSelect<String>.single(
-                      title: 'FIT POST',
-                      selectedValue: selFitPostIdQC,
-                      onChange: (selected) {
-                        setState(() => selFitPostIdQC = selected.value);
-                      },
-                      choiceType: S2ChoiceType.radios,
-                      choiceItems: choices.collFitPost,
-                      modalType: S2ModalType.popupDialog,
-                      modalHeader: false,
-                      modalConfig: const S2ModalConfig(
-                        style: S2ModalStyle(
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  child: Text("Tyre Number : ${item['tyrenumber']}",
+                      style: TextStyle(color: Colors.black)),
                 ),
-                actions: <Widget>[
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 20.0,
+                Container(
+                  margin:
+                      EdgeInsets.only(top: 5, bottom: 0.0, left: 10, right: 10),
+                  child: Text(
+                      "Part Name : ${item['partname']}- ${item['merk']}",
+                      style: TextStyle(color: Colors.black)),
+                ),
+                Container(
+                  margin: EdgeInsets.all(10.0),
+                  child: TextField(
+                    readOnly: false,
+                    cursorColor: Colors.black,
+                    style: TextStyle(color: Colors.grey.shade800),
+                    controller: txtGenuinoQC,
+                    keyboardType: TextInputType.text,
+                    decoration: new InputDecoration(
+                      fillColor: Colors.yellow,
+                      filled: true,
+                      isDense: true,
+                      labelText: "GENUINENO/ SN BAN",
+                      contentPadding: EdgeInsets.all(5.0),
                     ),
-                    label: pmBtnLabel("Close"),
-                    onPressed: () {
-                      Navigator.of(context).pop(false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.red,
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.save,
-                      color: Colors.white,
-                      size: 20.0,
+                ),
+                SmartSelect<String>.single(
+                  title: 'FIT POST',
+                  selectedValue: selFitPostIdQC,
+                  onChange: (selected) {
+                    setState(() => selFitPostIdQC = selected.value);
+                  },
+                  choiceType: S2ChoiceType.radios,
+                  choiceItems: choices.collFitPost,
+                  modalType: S2ModalType.popupDialog,
+                  modalHeader: false,
+                  modalConfig: const S2ModalConfig(
+                    style: S2ModalStyle(
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                      ),
                     ),
-                    label: pmBtnLabel("Save"),
-                    onPressed: () async {
-                      Navigator.of(context).pop(false);
-                      var isOK = globals.akses_pages == null
-                          ? globals.akses_pages
-                          : globals.akses_pages.where((x) => x == "OP");
-                      if (isOK != null) {
-                        if (isOK.length > 0) {
-                          fnGENUINENO = txtGenuinoQC.text;
-                          fnFitPost = selFitPostIdQC;
-                          //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
-                          saveFitPost();
-                        }
-                      } else {
-                        alert(globalScaffoldKey.currentContext!, 0,
-                            "Anda tidak dapat melakukan transaksi ini", "error");
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: primaryOrange,
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
-                ],
+                ),
+              ],
+            ),
+            actions: <Widget>[
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 20.0,
+                ),
+                label: pmBtnLabel("Close"),
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: Colors.red,
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                    textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-              elevation: 0.0,
-              backgroundColor: primaryOrange,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ));
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.save,
+                  color: Colors.white,
+                  size: 20.0,
+                ),
+                label: pmBtnLabel("Save"),
+                onPressed: () async {
+                  Navigator.of(context).pop(false);
+                  var isOK = globals.akses_pages == null
+                      ? globals.akses_pages
+                      : globals.akses_pages.where((x) => x == "OP");
+                  if (isOK != null) {
+                    if (isOK.length > 0) {
+                      fnGENUINENO = txtGenuinoQC.text;
+                      fnFitPost = selFitPostIdQC;
+                      //print("${fnFITTYREID},${fnFITSERIALNO},${fnSTARTDATE},${fnSTARTKM},${fnTYREBRAND},${fnTYREPATTERN},${fnTYREPRICE},${fnGENUINENO},${fnFitPost},${fnWONUMBER}");
+                      saveFitPost();
+                    }
+                  } else {
+                    alert(globalScaffoldKey.currentContext!, 0,
+                        "Anda tidak dapat melakukan transaksi ini", "error");
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: primaryOrange,
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                    textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+          elevation: 0.0,
+          backgroundColor: primaryOrange,
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+    ));
   }
 
   String listSRNumberOpnameDetail = '';
@@ -6527,102 +6950,210 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   Widget buildButtonOpnameDetail(BuildContext context, dynamic item) {
     return Expanded(
         child: ElevatedButton.icon(
-          icon: Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 15.0,
-          ),
-          label: pmBtnLabel("Add"),
-          onPressed: () async {
-            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-            showDialog(
-              context: context,
-              builder: (context) => new AlertDialog(
-                title: new Text('Information'),
-                //content:
-                //new Text("Save new request service?"),
-                content: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  //position
-                  mainAxisSize: MainAxisSize.min,
-                  // wrap content in flutter
-                  children: <Widget>[
-                    Container(
-                      margin: EdgeInsets.all(10.0),
-                      child: Text("Add data?"),
-                    ),
-                  ],
+      icon: Icon(
+        Icons.add,
+        color: Colors.white,
+        size: 15.0,
+      ),
+      label: pmBtnLabel("Add"),
+      onPressed: () async {
+        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+        showDialog(
+          context: context,
+          builder: (context) => new AlertDialog(
+            title: new Text('Information'),
+            //content:
+            //new Text("Save new request service?"),
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              //position
+              mainAxisSize: MainAxisSize.min,
+              // wrap content in flutter
+              children: <Widget>[
+                Container(
+                  margin: EdgeInsets.all(10.0),
+                  child: Text("Add data?"),
                 ),
-                actions: <Widget>[
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 20.0,
-                    ),
-                    label: pmBtnLabel("Add"),
-                    onPressed: () async {
-                      Navigator.of(context).pop(false);
-                      setState(() {
-                        txtItemID.text = "";
-                        txtPartName.text = "";
-                        txtItemSize.text = "";
-                        txtTypeID.text = "";
-                        txtTypeAccess.text = "";
-                        txtGenuineNoOpname.text = "";
-                        txtOpnameMerk.text = "";
-                        txtOpnameWONUMBER.text = listSRNumberOpnameDetail;
-                        txtOpnameVHCID.text = listOpnameVHCID;
-                        print(item[0]['id_header']);
-                        id_header = int.parse(item[0]['id_header'].toString());
-                        item_id_apr = item[0]['item_id'].toString();
-                        //txtItemID.text = item_id_apr;
-                        METHOD_DETAIL = 'OPNAME';
-                        status_apr = 'APR';
-                      });
-                      _tabController.animateTo(2);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: primaryOrange,
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle:
+              ],
+            ),
+            actions: <Widget>[
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: 20.0,
+                ),
+                label: pmBtnLabel("Add"),
+                onPressed: () async {
+                  Navigator.of(context).pop(false);
+                  setState(() {
+                    txtItemID.text = "";
+                    txtPartName.text = "";
+                    txtItemSize.text = "";
+                    txtTypeID.text = "";
+                    txtTypeAccess.text = "";
+                    txtGenuineNoOpname.text = "";
+                    txtOpnameMerk.text = "";
+                    txtOpnameWONUMBER.text = listSRNumberOpnameDetail;
+                    txtOpnameVHCID.text = listOpnameVHCID;
+                    print(item[0]['id_header']);
+                    id_header = int.parse(item[0]['id_header'].toString());
+                    item_id_apr = item[0]['item_id'].toString();
+                    //txtItemID.text = item_id_apr;
+                    METHOD_DETAIL = 'OPNAME';
+                    status_apr = 'APR';
+                  });
+                  _tabController.animateTo(2);
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: primaryOrange,
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                    textStyle:
                         TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                  ),
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 20.0,
-                    ),
-                    label: pmBtnLabel("Close"),
-                    onPressed: () async {
-                      Navigator.of(context).pop(false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.orangeAccent,
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                  ),
-                ],
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-              elevation: 0.0,
-              backgroundColor: primaryOrange,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ));
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 20.0,
+                ),
+                label: pmBtnLabel("Close"),
+                onPressed: () async {
+                  Navigator.of(context).pop(false);
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: Colors.orangeAccent,
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                    textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+          elevation: 0.0,
+          backgroundColor: primaryOrange,
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+    ));
   }
 
   Widget buildButtonDeleteBan(BuildContext context, dynamic item) {
     return Expanded(
         child: ElevatedButton.icon(
+      icon: Icon(
+        Icons.delete,
+        color: Colors.white,
+        size: 15.0,
+      ),
+      label: pmBtnLabel("Delete"),
+      onPressed: () async {
+        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+        showDialog(
+          context: context,
+          builder: (context) => new AlertDialog(
+            title: new Text('Information'),
+            //content:
+            //new Text("Save new request service?"),
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              //position
+              mainAxisSize: MainAxisSize.min,
+              // wrap content in flutter
+              children: <Widget>[
+                Container(
+                  margin: EdgeInsets.all(10.0),
+                  child: Text("Delete this data?"),
+                ),
+              ],
+            ),
+            actions: <Widget>[
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.delete,
+                  color: Colors.white,
+                  size: 20.0,
+                ),
+                label: pmBtnLabel("Delete Ban"),
+                onPressed: () async {
+                  //Navigator.of(context).pop(false);
+                  var isOK = globals.akses_pages == null
+                      ? globals.akses_pages
+                      : globals.akses_pages.where((x) => x == "OP");
+                  if (isOK != null) {
+                    if (isOK.length > 0) {
+                      collTyreFit.removeWhere((x) =>
+                          x['genuino'] == item['genuino'] &&
+                          x['fitpost'] == item['fitpost']);
+                      var isExists = collTyreFit.where((x) =>
+                          x['genuino'] == item['genuino'] &&
+                          x['fitpost'] == item['fitpost']);
+                      //print(item);
+                      collTyreNumber.removeWhere(
+                          (x) => x['tyrenumber'] == item['fittyreid']);
+                      //print(collTyreNumber.length);
+                      //print(collTyreFit.length);
+                      if (isExists.length > 0) {
+                        alert(globalScaffoldKey.currentContext!, 0,
+                            "Gagal delete this row", "error");
+                      } else {
+                        Navigator.of(context).pop(false);
+                        alert(globalScaffoldKey.currentContext!, 1,
+                            "Delete this row success", "success");
+                      }
+                    }
+                  } else {
+                    alert(globalScaffoldKey.currentContext!, 0,
+                        "Anda tidak dapat melakukan transaksi ini", "error");
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: Colors.orangeAccent,
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                    textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.save,
+                  color: Colors.white,
+                  size: 20.0,
+                ),
+                label: pmBtnLabel("Close"),
+                onPressed: () async {
+                  Navigator.of(context).pop(false);
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: Colors.orangeAccent,
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                    textStyle:
+                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+          elevation: 0.0,
+          backgroundColor: primaryOrange,
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+    ));
+  }
+
+  Widget buildButtonDeleteDetailOpname(dynamic item) {
+    return Container(
+        child: Row(
+      children: <Widget>[
+        Expanded(
+            child: ElevatedButton.icon(
           icon: Icon(
-            Icons.delete,
+            Icons.remove_circle,
             color: Colors.white,
             size: 15.0,
           ),
@@ -6643,60 +7174,40 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   children: <Widget>[
                     Container(
                       margin: EdgeInsets.all(10.0),
-                      child: Text("Delete this data?"),
+                      child: Text("Delete this data ?"),
                     ),
                   ],
                 ),
                 actions: <Widget>[
                   new ElevatedButton.icon(
                     icon: Icon(
-                      Icons.delete,
+                      Icons.save,
                       color: Colors.white,
                       size: 20.0,
                     ),
-                    label: pmBtnLabel("Delete Ban"),
+                    label: pmBtnLabel("Submit"),
                     onPressed: () async {
-                      //Navigator.of(context).pop(false);
-                      var isOK = globals.akses_pages == null
-                          ? globals.akses_pages
-                          : globals.akses_pages.where((x) => x == "OP");
-                      if (isOK != null) {
-                        if (isOK.length > 0) {
-                          collTyreFit.removeWhere((x) =>
-                          x['genuino'] == item['genuino'] &&
-                              x['fitpost'] == item['fitpost']);
-                          var isExists = collTyreFit.where((x) =>
-                          x['genuino'] == item['genuino'] &&
-                              x['fitpost'] == item['fitpost']);
-                          //print(item);
-                          collTyreNumber.removeWhere(
-                                  (x) => x['tyrenumber'] == item['fittyreid']);
-                          //print(collTyreNumber.length);
-                          //print(collTyreFit.length);
-                          if (isExists.length > 0) {
-                            alert(globalScaffoldKey.currentContext!, 0,
-                                "Gagal delete this row", "error");
-                          } else {
-                            Navigator.of(context).pop(false);
-                            alert(globalScaffoldKey.currentContext!, 1,
-                                "Delete this row success", "success");
-                          }
-                        }
-                      } else {
-                        alert(globalScaffoldKey.currentContext!, 0,
-                            "Anda tidak dapat melakukan transaksi ini", "error");
-                      }
+                      Navigator.of(context).pop(false);
+                      setState(() {
+                        var idheader = int.parse(item['id_header'].toString());
+                        var iddetail = int.parse(item['id_detail'].toString());
+                        print(idheader);
+                        print(iddetail);
+                        DeleteOpnameSrDetail(idheader, iddetail,
+                            item['vhcid']?.toString() ?? '');
+                      });
                     },
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
-                        backgroundColor: Colors.orangeAccent,
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                        backgroundColor: primaryOrange,
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        textStyle: TextStyle(
+                            fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                   new ElevatedButton.icon(
                     icon: Icon(
-                      Icons.save,
+                      Icons.close,
                       color: Colors.white,
                       size: 20.0,
                     ),
@@ -6707,9 +7218,10 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     style: ElevatedButton.styleFrom(
                         elevation: 0.0,
                         backgroundColor: Colors.orangeAccent,
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle:
-                        TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        textStyle: TextStyle(
+                            fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -6717,148 +7229,60 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
           },
           style: ElevatedButton.styleFrom(
               elevation: 0.0,
-              backgroundColor: primaryOrange,
+              backgroundColor: Colors.orangeAccent,
               padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ));
-  }
-
-  Widget buildButtonDeleteDetailOpname(dynamic item) {
-    return Container(
-        child: Row(
-          children: <Widget>[
-            Expanded(
-                child: ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.remove_circle,
-                    color: Colors.white,
-                    size: 15.0,
-                  ),
-                  label: pmBtnLabel("Delete"),
-                  onPressed: () async {
-                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                    showDialog(
-                      context: context,
-                      builder: (context) => new AlertDialog(
-                        title: new Text('Information'),
-                        //content:
-                        //new Text("Save new request service?"),
-                        content: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          //position
-                          mainAxisSize: MainAxisSize.min,
-                          // wrap content in flutter
-                          children: <Widget>[
-                            Container(
-                              margin: EdgeInsets.all(10.0),
-                              child: Text("Delete this data ?"),
-                            ),
-                          ],
-                        ),
-                        actions: <Widget>[
-                          new ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.save,
-                              color: Colors.white,
-                              size: 20.0,
-                            ),
-                            label: pmBtnLabel("Submit"),
-                            onPressed: () async {
-                              Navigator.of(context).pop(false);
-                              setState(() {
-                                var idheader = int.parse(item['id_header'].toString());
-                                var iddetail = int.parse(item['id_detail'].toString());
-                                print(idheader);
-                                print(iddetail);
-                                DeleteOpnameSrDetail(idheader, iddetail, item['vhcid']?.toString() ?? '');
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0.0,
-                                backgroundColor: primaryOrange,
-                                padding:
-                                EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                                textStyle: TextStyle(
-                                    fontSize: 10, fontWeight: FontWeight.bold)),
-                          ),
-                          new ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 20.0,
-                            ),
-                            label: pmBtnLabel("Close"),
-                            onPressed: () async {
-                              Navigator.of(context).pop(false);
-                            },
-                            style: ElevatedButton.styleFrom(
-                                elevation: 0.0,
-                                backgroundColor: Colors.orangeAccent,
-                                padding:
-                                EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                                textStyle: TextStyle(
-                                    fontSize: 10, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
-                      backgroundColor: Colors.orangeAccent,
-                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                ))
-          ],
-        ));
+        ))
+      ],
+    ));
   }
 
   Widget buildButtonCancelBan(BuildContext context) {
     return Expanded(
         child: ElevatedButton.icon(
-          icon: Icon(
-            Icons.cancel,
-            color: Colors.white,
-            size: 15.0,
-          ),
-          label: pmBtnLabel("Cancel"),
-          onPressed: () async {
-            listItemApprove = [];
-            dummylistBanTms = [];
-            txtWodCloseNotes.text = "";
-            txtGenuino.text = "";
-            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-          },
-          style: ElevatedButton.styleFrom(
-              elevation: 0.0,
-              backgroundColor: Colors.orangeAccent,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ));
+      icon: Icon(
+        Icons.cancel,
+        color: Colors.white,
+        size: 15.0,
+      ),
+      label: pmBtnLabel("Cancel"),
+      onPressed: () async {
+        listItemApprove = [];
+        dummylistBanTms = [];
+        txtWodCloseNotes.text = "";
+        txtGenuino.text = "";
+        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+      },
+      style: ElevatedButton.styleFrom(
+          elevation: 0.0,
+          backgroundColor: Colors.orangeAccent,
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+    ));
   }
 
   Widget buildButtonCancelBanQC(BuildContext context) {
     return Expanded(
         child: ElevatedButton.icon(
-          icon: Icon(
-            Icons.cancel,
-            color: Colors.white,
-            size: 15.0,
-          ),
-          label: pmBtnLabel("Cancel"),
-          onPressed: () async {
-            listItemApprove = [];
-            dummylistBanTmsQC = [];
-            txtWodCloseNotesQC.text = "";
-            txtGenuino.text = "";
-            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-          },
-          style: ElevatedButton.styleFrom(
-              elevation: 0.0,
-              backgroundColor: Colors.orangeAccent,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ));
+      icon: Icon(
+        Icons.cancel,
+        color: Colors.white,
+        size: 15.0,
+      ),
+      label: pmBtnLabel("Cancel"),
+      onPressed: () async {
+        listItemApprove = [];
+        dummylistBanTmsQC = [];
+        txtWodCloseNotesQC.text = "";
+        txtGenuino.text = "";
+        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+      },
+      style: ElevatedButton.styleFrom(
+          elevation: 0.0,
+          backgroundColor: Colors.orangeAccent,
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+    ));
   }
 
   Widget _buildDListTempBan(dynamic item, int index) {
@@ -6867,7 +7291,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       rows: [
         _kv('Tyre Number', _s(item['fittyreid'])),
         _kv('Partname', _s(item['partname'])),
-        _kv('Item Alias/Merk', '${_s(item['tyrepattern'])} / ${_s(item['tyrebrand'])}'),
+        _kv('Item Alias/Merk',
+            '${_s(item['tyrepattern'])} / ${_s(item['tyrebrand'])}'),
         _kv('ID FitPOST', _s(item['fitpost'])),
         _kv('FitPOST Desc.', _s(item['fitpost_desc'])),
       ],
@@ -6923,7 +7348,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             child: Container(
               child: ListTile(
                 contentPadding:
-                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 title: Text(
                   "VHCID : ${item['vhcid']}",
                   style: TextStyle(
@@ -6990,171 +7415,171 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
                 Expanded(
                     child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 15.0,
-                      ),
-                      label: pmBtnLabel("Close"),
-                      onPressed: () async {
-                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.orangeAccent,
-                          padding:
+                  icon: Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 15.0,
+                  ),
+                  label: pmBtnLabel("Close"),
+                  onPressed: () async {
+                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 0.0,
+                      backgroundColor: Colors.orangeAccent,
+                      padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          textStyle:
+                      textStyle:
                           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    )),
+                )),
                 SizedBox(
                   width: 5,
                 ),
                 Expanded(
                     child: ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 15.0,
-                      ),
-                      label: pmBtnLabel("Edit"),
-                      onPressed: () async {
-                        print('Edit Proses');
-                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                        var item_id_edit = "${item['item_id']}";
-                        var id_detail = "${item['id_detail']}";
-                        setState(() {
-                          selStatusItemEditProses = item['status_item'];
-                          txtOpnameQtyEditProses.text = item['qty'];
-                        });
-                        showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text('Update Detail Item'),
-                                content: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  //position
-                                  mainAxisSize: MainAxisSize.min,
-                                  // wrap content in flutter
-                                  children: <Widget>[
-                                    Container(
-                                      margin: EdgeInsets.only(
-                                          left: 10, top: 10, right: 10, bottom: 10),
-                                      child: TextField(
-                                        readOnly: false,
-                                        cursorColor: Colors.black,
-                                        style:
+                  icon: Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 15.0,
+                  ),
+                  label: pmBtnLabel("Edit"),
+                  onPressed: () async {
+                    print('Edit Proses');
+                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                    var item_id_edit = "${item['item_id']}";
+                    var id_detail = "${item['id_detail']}";
+                    setState(() {
+                      selStatusItemEditProses = item['status_item'];
+                      txtOpnameQtyEditProses.text = item['qty'];
+                    });
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Update Detail Item'),
+                            content: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              //position
+                              mainAxisSize: MainAxisSize.min,
+                              // wrap content in flutter
+                              children: <Widget>[
+                                Container(
+                                  margin: EdgeInsets.only(
+                                      left: 10, top: 10, right: 10, bottom: 10),
+                                  child: TextField(
+                                    readOnly: false,
+                                    cursorColor: Colors.black,
+                                    style:
                                         TextStyle(color: Colors.grey.shade800),
-                                        controller: txtOpnameQtyEditProses,
-                                        keyboardType: TextInputType.number,
-                                        decoration: new InputDecoration(
-                                          //fillColor: Colors.black12,
-                                          filled: true,
-                                          labelText: 'QTY',
-                                          isDense: true,
-                                          contentPadding: EdgeInsets.all(2.0),
-                                        ),
-                                      ),
+                                    controller: txtOpnameQtyEditProses,
+                                    keyboardType: TextInputType.number,
+                                    decoration: new InputDecoration(
+                                      //fillColor: Colors.black12,
+                                      filled: true,
+                                      labelText: 'QTY',
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.all(2.0),
                                     ),
-                                    SmartSelect<String>.single(
-                                      title: 'Status Item',
-                                      selectedValue: selStatusItemEditProses,
-                                      onChange: (selected) {
-                                        setState(() => selStatusItemEditProses =
-                                            selected.value);
-                                      },
-                                      choiceType: S2ChoiceType.radios,
-                                      choiceItems: choices.collStatusItemOpname,
-                                      modalType: S2ModalType.popupDialog,
-                                      modalHeader: false,
-                                      modalConfig: const S2ModalConfig(
-                                        style: S2ModalStyle(
-                                          elevation: 3,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(20.0)),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Container(
-                                      width: MediaQuery.of(context).size.width,
-                                      padding: EdgeInsets.all(10.0),
-                                      decoration: BoxDecoration(
-                                          color: Color.fromRGBO(230, 232, 238, .9)),
-                                      child: Container(
-                                        child: Row(children: <Widget>[
-                                          Expanded(
-                                              child: ElevatedButton.icon(
-                                                icon: Icon(
-                                                  Icons.close,
-                                                  color: Colors.white,
-                                                  size: 15.0,
-                                                ),
-                                                label: pmBtnLabel("Close"),
-                                                onPressed: () async {
-                                                  Navigator.of(globalScaffoldKey
-                                                      .currentContext!)
-                                                      .pop(false);
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                    elevation: 0.0,
-                                                    backgroundColor:
-                                                    Colors.orangeAccent,
-                                                    padding: EdgeInsets.symmetric(
-                                                        horizontal: 10, vertical: 10),
-                                                    textStyle: TextStyle(
-                                                        fontSize: 12,
-                                                        fontWeight: FontWeight.bold)),
-                                              )),
-                                          SizedBox(
-                                            width: 5,
-                                          ),
-                                          Expanded(
-                                              child: ElevatedButton.icon(
-                                                icon: Icon(
-                                                  Icons.close,
-                                                  color: Colors.white,
-                                                  size: 15.0,
-                                                ),
-                                                label: pmBtnLabel("Update"),
-                                                onPressed: () async {
-                                                  print('Edit Proses');
-                                                  Navigator.of(globalScaffoldKey
-                                                      .currentContext!)
-                                                      .pop(false);
-                                                  //print(id_detail);
-                                                  //print(item_id_edit);
-                                                  UpdateDetailProses(
-                                                      id_detail, item_id_edit);
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                    elevation: 0.0,
-                                                    backgroundColor:
-                                                    Colors.orangeAccent,
-                                                    padding: EdgeInsets.symmetric(
-                                                        horizontal: 10, vertical: 10),
-                                                    textStyle: TextStyle(
-                                                        fontSize: 12,
-                                                        fontWeight: FontWeight.bold)),
-                                              ))
-                                        ]),
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              );
-                            });
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.orangeAccent,
-                          padding:
+                                SmartSelect<String>.single(
+                                  title: 'Status Item',
+                                  selectedValue: selStatusItemEditProses,
+                                  onChange: (selected) {
+                                    setState(() => selStatusItemEditProses =
+                                        selected.value);
+                                  },
+                                  choiceType: S2ChoiceType.radios,
+                                  choiceItems: choices.collStatusItemOpname,
+                                  modalType: S2ModalType.popupDialog,
+                                  modalHeader: false,
+                                  modalConfig: const S2ModalConfig(
+                                    style: S2ModalStyle(
+                                      elevation: 3,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(20.0)),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  padding: EdgeInsets.all(10.0),
+                                  decoration: BoxDecoration(
+                                      color: Color.fromRGBO(230, 232, 238, .9)),
+                                  child: Container(
+                                    child: Row(children: <Widget>[
+                                      Expanded(
+                                          child: ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 15.0,
+                                        ),
+                                        label: pmBtnLabel("Close"),
+                                        onPressed: () async {
+                                          Navigator.of(globalScaffoldKey
+                                                  .currentContext!)
+                                              .pop(false);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            elevation: 0.0,
+                                            backgroundColor:
+                                                Colors.orangeAccent,
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 10),
+                                            textStyle: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold)),
+                                      )),
+                                      SizedBox(
+                                        width: 5,
+                                      ),
+                                      Expanded(
+                                          child: ElevatedButton.icon(
+                                        icon: Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 15.0,
+                                        ),
+                                        label: pmBtnLabel("Update"),
+                                        onPressed: () async {
+                                          print('Edit Proses');
+                                          Navigator.of(globalScaffoldKey
+                                                  .currentContext!)
+                                              .pop(false);
+                                          //print(id_detail);
+                                          //print(item_id_edit);
+                                          UpdateDetailProses(
+                                              id_detail, item_id_edit);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                            elevation: 0.0,
+                                            backgroundColor:
+                                                Colors.orangeAccent,
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 10),
+                                            textStyle: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold)),
+                                      ))
+                                    ]),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        });
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 0.0,
+                      backgroundColor: const Color.fromARGB(255, 223, 103, 5),
+                      padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          textStyle:
+                      textStyle:
                           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    ))
+                ))
               ]),
             ),
           ),
@@ -7176,12 +7601,15 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               style: const TextStyle(fontSize: 12, color: Colors.black54),
             ),
           ),
-          const Text(": ", style: TextStyle(fontSize: 12, color: Colors.black54)),
+          const Text(": ",
+              style: TextStyle(fontSize: 12, color: Colors.black54)),
           Expanded(
             child: Text(
               val,
               style: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87),
             ),
           ),
         ],
@@ -7223,18 +7651,21 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: isOk ? Colors.green.shade50 : Colors.orange.shade50,
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
-                      color: isOk ? Colors.green.shade300 : Colors.orange.shade300,
+                      color:
+                          isOk ? Colors.green.shade300 : Colors.orange.shade300,
                     ),
                   ),
                   child: Text(
                     status_item,
                     style: TextStyle(
-                      color: isOk ? Colors.green.shade800 : Colors.orange.shade800,
+                      color:
+                          isOk ? Colors.green.shade800 : Colors.orange.shade800,
                       fontWeight: FontWeight.bold,
                       fontSize: 11,
                     ),
@@ -7259,180 +7690,182 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 borderRadius: BorderRadius.circular(8.0),
               ),
               child: Row(children: <Widget>[
-                buildDeleteQC(context, item),
+                //buildDeleteQC(context, item),
                 const SizedBox(width: 5),
                 Expanded(
                     child: ElevatedButton.icon(
-                      icon: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 15.0,
-                      ),
-                      label: pmBtnLabel("Close"),
-                      onPressed: () async {
-                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.redAccent,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
-                          textStyle: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold)),
-                    )),
+                  icon: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 15.0,
+                  ),
+                  label: pmBtnLabel("Close"),
+                  onPressed: () async {
+                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                  },
+                  style: ElevatedButton.styleFrom(
+                      elevation: 0.0,
+                      backgroundColor: Colors.redAccent,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 10),
+                      textStyle: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.bold)),
+                )),
                 const SizedBox(width: 5),
-                Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(
-                        Icons.edit,
-                        color: Colors.white,
-                        size: 15.0,
-                      ),
-                      label: pmBtnLabel("Edit"),
-                      onPressed: () async {
-                        print('Edit QC');
-                        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                        var item_id_edit = "${item['itemid'] ?? item['item_id'] ?? ''}";
-                        var id_detail = "${item['id_detail'] ?? item['id'] ?? ''}";
-                        setState(() {
-                          selStatusItemEditProses = item['status_item'];
-                          txtOpnameQtyEditProses.text = (item['qty'] ?? '0').toString();
-                        });
-                        showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text('Update Detail Item'),
-                                content: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  //position
-                                  mainAxisSize: MainAxisSize.min,
-                                  // wrap content in flutter
-                                  children: <Widget>[
-                                    Container(
-                                      margin: EdgeInsets.only(
-                                          left: 10, top: 10, right: 10, bottom: 10),
-                                      child: TextField(
-                                        readOnly: false,
-                                        cursorColor: Colors.black,
-                                        style:
-                                        TextStyle(color: Colors.grey.shade800),
-                                        controller: txtOpnameQtyEditProses,
-                                        keyboardType: TextInputType.number,
-                                        decoration: new InputDecoration(
-                                          //fillColor: Colors.black12,
-                                          filled: true,
-                                          labelText: 'QTY',
-                                          isDense: true,
-                                          contentPadding: EdgeInsets.all(2.0),
-                                        ),
-                                      ),
-                                    ),
-                                    SmartSelect<String>.single(
-                                      title: 'Status Item 2',
-                                      selectedValue: selStatusItemEditQC,
-                                      onChange: (selected) {
-                                        setState(() =>
-                                        selStatusItemEditQC = selected.value);
-                                      },
-                                      choiceType: S2ChoiceType.radios,
-                                      choiceItems: choices.collStatusItemOpname,
-                                      modalType: S2ModalType.popupDialog,
-                                      modalHeader: false,
-                                      modalConfig: const S2ModalConfig(
-                                        style: S2ModalStyle(
-                                          elevation: 3,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(20.0)),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Container(
-                                      width: MediaQuery.of(context).size.width,
-                                      padding: EdgeInsets.all(10.0),
-                                      decoration: BoxDecoration(
-                                          color: Color.fromRGBO(230, 232, 238, .9)),
-                                      child: Container(
-                                        child: Row(children: <Widget>[
-                                          Expanded(
-                                              child: ElevatedButton.icon(
-                                                icon: Icon(
-                                                  Icons.close,
-                                                  color: Colors.white,
-                                                  size: 15.0,
-                                                ),
-                                                label: pmBtnLabel("Close"),
-                                                onPressed: () async {
-                                                  Navigator.of(globalScaffoldKey
-                                                      .currentContext!)
-                                                      .pop(false);
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                    elevation: 0.0,
-                                                    backgroundColor:
-                                                    Colors.orangeAccent,
-                                                    padding: EdgeInsets.symmetric(
-                                                        horizontal: 10, vertical: 10),
-                                                    textStyle: TextStyle(
-                                                        fontSize: 12,
-                                                        fontWeight: FontWeight.bold)),
-                                              )),
-                                          SizedBox(
-                                            width: 5,
-                                          ),
-                                          Expanded(
-                                              child: ElevatedButton.icon(
-                                                icon: Icon(
-                                                  Icons.close,
-                                                  color: Colors.white,
-                                                  size: 15.0,
-                                                ),
-                                                label: pmBtnLabel("Update"),
-                                                onPressed: () async {
-                                                  print('Edit Proses');
-                                                  Navigator.of(globalScaffoldKey
-                                                      .currentContext!)
-                                                      .pop(false);
-                                                  //print(id_detail);
-                                                  //print(item_id_edit);
-                                                  UpdateDetailQC(
-                                                      id_detail, item_id_edit);
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                    elevation: 0.0,
-                                                    backgroundColor:
-                                                    Colors.orangeAccent,
-                                                    padding: EdgeInsets.symmetric(
-                                                        horizontal: 10, vertical: 10),
-                                                    textStyle: TextStyle(
-                                                        fontSize: 12,
-                                                        fontWeight: FontWeight.bold)),
-                                              ))
-                                        ]),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            });
-                      },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.orangeAccent,
-                          padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          textStyle:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    ))
+                // Expanded(
+                //     child: ElevatedButton.icon(
+                //   icon: const Icon(
+                //     Icons.edit,
+                //     color: Colors.white,
+                //     size: 15.0,
+                //   ),
+                //   label: pmBtnLabel("Edit"),
+                //   onPressed: () async {
+                //     print('Edit QC');
+                //     Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                //     var item_id_edit =
+                //         "${item['itemid'] ?? item['item_id'] ?? ''}";
+                //     var id_detail = "${item['id_detail'] ?? item['id'] ?? ''}";
+                //     setState(() {
+                //       selStatusItemEditProses = item['status_item'];
+                //       txtOpnameQtyEditProses.text =
+                //           (item['qty'] ?? '0').toString();
+                //     });
+                //     showDialog(
+                //         context: context,
+                //         builder: (BuildContext context) {
+                //           return AlertDialog(
+                //             title: Text('Update Detail Item'),
+                //             content: Column(
+                //               crossAxisAlignment: CrossAxisAlignment.stretch,
+                //               //position
+                //               mainAxisSize: MainAxisSize.min,
+                //               // wrap content in flutter
+                //               children: <Widget>[
+                //                 Container(
+                //                   margin: EdgeInsets.only(
+                //                       left: 10, top: 10, right: 10, bottom: 10),
+                //                   child: TextField(
+                //                     readOnly: false,
+                //                     cursorColor: Colors.black,
+                //                     style:
+                //                         TextStyle(color: Colors.grey.shade800),
+                //                     controller: txtOpnameQtyEditProses,
+                //                     keyboardType: TextInputType.number,
+                //                     decoration: new InputDecoration(
+                //                       //fillColor: Colors.black12,
+                //                       filled: true,
+                //                       labelText: 'QTY',
+                //                       isDense: true,
+                //                       contentPadding: EdgeInsets.all(2.0),
+                //                     ),
+                //                   ),
+                //                 ),
+                //                 SmartSelect<String>.single(
+                //                   title: 'Status Item 2',
+                //                   selectedValue: selStatusItemEditQC,
+                //                   onChange: (selected) {
+                //                     setState(() =>
+                //                         selStatusItemEditQC = selected.value);
+                //                   },
+                //                   choiceType: S2ChoiceType.radios,
+                //                   choiceItems: choices.collStatusItemOpname,
+                //                   modalType: S2ModalType.popupDialog,
+                //                   modalHeader: false,
+                //                   modalConfig: const S2ModalConfig(
+                //                     style: S2ModalStyle(
+                //                       elevation: 3,
+                //                       shape: RoundedRectangleBorder(
+                //                         borderRadius: BorderRadius.all(
+                //                             Radius.circular(20.0)),
+                //                       ),
+                //                     ),
+                //                   ),
+                //                 ),
+                //                 Container(
+                //                   width: MediaQuery.of(context).size.width,
+                //                   padding: EdgeInsets.all(10.0),
+                //                   decoration: BoxDecoration(
+                //                       color: Color.fromRGBO(230, 232, 238, .9)),
+                //                   child: Container(
+                //                     child: Row(children: <Widget>[
+                //                       Expanded(
+                //                           child: ElevatedButton.icon(
+                //                         icon: Icon(
+                //                           Icons.close,
+                //                           color: Colors.white,
+                //                           size: 15.0,
+                //                         ),
+                //                         label: pmBtnLabel("Close"),
+                //                         onPressed: () async {
+                //                           Navigator.of(globalScaffoldKey
+                //                                   .currentContext!)
+                //                               .pop(false);
+                //                         },
+                //                         style: ElevatedButton.styleFrom(
+                //                             elevation: 0.0,
+                //                             backgroundColor:
+                //                                 Colors.orangeAccent,
+                //                             padding: EdgeInsets.symmetric(
+                //                                 horizontal: 10, vertical: 10),
+                //                             textStyle: TextStyle(
+                //                                 fontSize: 12,
+                //                                 fontWeight: FontWeight.bold)),
+                //                       )),
+                //                       SizedBox(
+                //                         width: 5,
+                //                       ),
+                //                       Expanded(
+                //                           child: ElevatedButton.icon(
+                //                         icon: Icon(
+                //                           Icons.close,
+                //                           color: Colors.white,
+                //                           size: 15.0,
+                //                         ),
+                //                         label: pmBtnLabel("Update"),
+                //                         onPressed: () async {
+                //                           print('Edit Proses');
+                //                           Navigator.of(globalScaffoldKey
+                //                                   .currentContext!)
+                //                               .pop(false);
+                //                           //print(id_detail);
+                //                           //print(item_id_edit);
+                //                           UpdateDetailQC(
+                //                               id_detail, item_id_edit);
+                //                         },
+                //                         style: ElevatedButton.styleFrom(
+                //                             elevation: 0.0,
+                //                             backgroundColor:
+                //                                 Colors.orangeAccent,
+                //                             padding: EdgeInsets.symmetric(
+                //                                 horizontal: 10, vertical: 10),
+                //                             textStyle: TextStyle(
+                //                                 fontSize: 12,
+                //                                 fontWeight: FontWeight.bold)),
+                //                       ))
+                //                     ]),
+                //                   ),
+                //                 ),
+                //               ],
+                //             ),
+                //           );
+                //         });
+                //   },
+                //   style: ElevatedButton.styleFrom(
+                //       elevation: 0.0,
+                //       backgroundColor: Colors.orangeAccent,
+                //       padding:
+                //           EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                //       textStyle:
+                //           TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                // ))
               ]),
             ),
           ],
         ),
       ),
     );
-  }//
+  } //
 
   Widget _buildDListDetailOpname(dynamic item, int index) {
     return _pmListCard(
@@ -7506,7 +7939,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   content: const Text("Save Opname ?"),
                   actions: [
                     ElevatedButton.icon(
-                      icon: const Icon(Icons.save, color: Colors.white, size: 16),
+                      icon:
+                          const Icon(Icons.save, color: Colors.white, size: 16),
                       label: pmBtnLabel("Save Opname"),
                       style: pmBtnStyle(primaryOrange),
                       onPressed: () async {
@@ -7515,7 +7949,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       },
                     ),
                     ElevatedButton.icon(
-                      icon: const Icon(Icons.close, color: Colors.white, size: 16),
+                      icon: const Icon(Icons.close,
+                          color: Colors.white, size: 16),
                       label: pmBtnLabel("Close"),
                       style: pmBtnStyle(accentOrange),
                       onPressed: () async {
@@ -7591,7 +8026,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       rows: [
         _kv("WOD Number", (item['wodwonbr'] ?? '').toString(), dense: true),
         _kv("MechanicID", (item['mechanicid'] ?? '').toString(), dense: true),
-        _kv("MechanicName", (item['mechanicname'] ?? '').toString(), dense: true),
+        _kv("MechanicName", (item['mechanicname'] ?? '').toString(),
+            dense: true),
         _kv("Start Date", _fmtDt(item['startdate']), dense: true),
         _kv("Start Note", (item['start_notes'] ?? '').toString(), dense: true),
         _kv("Stop Date", _fmtDt(item['stopdate']), dense: true),
@@ -7612,7 +8048,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             child: Container(
               child: ListTile(
                 contentPadding:
-                EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                    EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
                 title: Text(
                   "Tyre Number : ${item['tyrenumber']}",
                   style: TextStyle(
@@ -7689,307 +8125,308 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
   Widget buildDeleteTyreFit(BuildContext context, dynamic item) {
     return Expanded(
         child: ElevatedButton.icon(
-          icon: Icon(
-            Icons.cancel,
-            color: Colors.white,
-            size: 15.0,
-          ),
-          label: pmBtnLabel("Delete"),
-          onPressed: () async {
-            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-            showDialog(
-              context: globalScaffoldKey.currentContext!,
-              builder: (context) => new AlertDialog(
-                title: new Text('Information'),
-                content: new Text("Delete this data?"),
-                actions: <Widget>[
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 24.0,
-                    ),
-                    label: pmBtnLabel("Close"),
-                    onPressed: () async {
-                      //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.redAccent,
-                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle:
+      icon: Icon(
+        Icons.cancel,
+        color: Colors.white,
+        size: 15.0,
+      ),
+      label: pmBtnLabel("Delete"),
+      onPressed: () async {
+        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+        showDialog(
+          context: globalScaffoldKey.currentContext!,
+          builder: (context) => new AlertDialog(
+            title: new Text('Information'),
+            content: new Text("Delete this data?"),
+            actions: <Widget>[
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 24.0,
+                ),
+                label: pmBtnLabel("Close"),
+                onPressed: () async {
+                  //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: Colors.redAccent,
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                    textStyle:
                         TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.delete,
-                      color: Colors.white,
-                      size: 24.0,
-                    ),
-                    label: pmBtnLabel("Delete"),
-                    onPressed: () async {
-                      print('show');
-                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      //await Future.delayed(Duration(milliseconds: 1));
-                      print(item['wonumber']);
-                      print(item['id']);
-                      if (item['id'] == '' || item['id'] == null) {
-                        alert(globalScaffoldKey.currentContext!, 2,
-                            "Id tidak boleh kosong", "warning");
-                      } else if (item['wonumber'] == '' ||
-                          item['wonumber'] == null) {
-                        alert(globalScaffoldKey.currentContext!, 2,
-                            "WO NUMBER tidak boleh kosong", "warning");
-                      } else {
-                        await DeleteTyreFit(true, item['wonumber'], item['id']);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: primaryOrange,
-                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                ],
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-              elevation: 0.0,
-              backgroundColor: Colors.orangeAccent,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ));
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.delete,
+                  color: Colors.white,
+                  size: 24.0,
+                ),
+                label: pmBtnLabel("Delete"),
+                onPressed: () async {
+                  print('show');
+                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                  //await Future.delayed(Duration(milliseconds: 1));
+                  print(item['wonumber']);
+                  print(item['id']);
+                  if (item['id'] == '' || item['id'] == null) {
+                    alert(globalScaffoldKey.currentContext!, 2,
+                        "Id tidak boleh kosong", "warning");
+                  } else if (item['wonumber'] == '' ||
+                      item['wonumber'] == null) {
+                    alert(globalScaffoldKey.currentContext!, 2,
+                        "WO NUMBER tidak boleh kosong", "warning");
+                  } else {
+                    await DeleteTyreFit(true, item['wonumber'], item['id']);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: primaryOrange,
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                    textStyle:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+          elevation: 0.0,
+          backgroundColor: Colors.orangeAccent,
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+    ));
   }
 
   Widget buildDeleteProses(BuildContext context, dynamic item) {
     return Expanded(
         child: ElevatedButton.icon(
-          icon: Icon(
-            Icons.cancel,
-            color: Colors.white,
-            size: 15.0,
-          ),
-          label: pmBtnLabel("Delete"),
-          onPressed: () async {
-            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-            showDialog(
-              context: globalScaffoldKey.currentContext!,
-              builder: (context) => new AlertDialog(
-                title: new Text('Information'),
-                content: new Text("Delete this data?"),
-                actions: <Widget>[
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 24.0,
-                    ),
-                    label: pmBtnLabel("Close"),
-                    onPressed: () async {
-                      //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.redAccent,
-                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle:
+      icon: Icon(
+        Icons.cancel,
+        color: Colors.white,
+        size: 15.0,
+      ),
+      label: pmBtnLabel("Delete"),
+      onPressed: () async {
+        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+        showDialog(
+          context: globalScaffoldKey.currentContext!,
+          builder: (context) => new AlertDialog(
+            title: new Text('Information'),
+            content: new Text("Delete this data?"),
+            actions: <Widget>[
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 24.0,
+                ),
+                label: pmBtnLabel("Close"),
+                onPressed: () async {
+                  //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: Colors.redAccent,
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                    textStyle:
                         TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.delete,
-                      color: Colors.white,
-                      size: 24.0,
-                    ),
-                    label: pmBtnLabel("Delete"),
-                    onPressed: () async {
-                      print('show');
-                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      //await Future.delayed(Duration(milliseconds: 1));
-                      print(item['wonumber']);
-                      print(item['id']);
-                      if (item['id'] == '' || item['id'] == null) {
-                        alert(globalScaffoldKey.currentContext!, 2,
-                            "Id tidak boleh kosong", "warning");
-                      } else if (item['wonumber'] == '' ||
-                          item['wonumber'] == null) {
-                        alert(globalScaffoldKey.currentContext!, 2,
-                            "WO NUMBER tidak boleh kosong", "warning");
-                      } else {
-                        await DeleteViewProses(true, item['wonumber'], item['id']);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: primaryOrange,
-                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                ],
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-              elevation: 0.0,
-              backgroundColor: Colors.orangeAccent,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ));
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.delete,
+                  color: Colors.white,
+                  size: 24.0,
+                ),
+                label: pmBtnLabel("Delete"),
+                onPressed: () async {
+                  print('show');
+                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                  //await Future.delayed(Duration(milliseconds: 1));
+                  print(item['wonumber']);
+                  print(item['id']);
+                  if (item['id'] == '' || item['id'] == null) {
+                    alert(globalScaffoldKey.currentContext!, 2,
+                        "Id tidak boleh kosong", "warning");
+                  } else if (item['wonumber'] == '' ||
+                      item['wonumber'] == null) {
+                    alert(globalScaffoldKey.currentContext!, 2,
+                        "WO NUMBER tidak boleh kosong", "warning");
+                  } else {
+                    await DeleteViewProses(true, item['wonumber'], item['id']);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: primaryOrange,
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                    textStyle:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+          elevation: 0.0,
+          backgroundColor: Colors.orangeAccent,
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+    ));
   }
 
   Widget buildDeleteQC(BuildContext context, dynamic item) {
     return Expanded(
         child: ElevatedButton.icon(
-          icon: Icon(
-            Icons.cancel,
-            color: Colors.white,
-            size: 15.0,
-          ),
-          label: pmBtnLabel("Delete"),
-          onPressed: () async {
-            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-            showDialog(
-              context: globalScaffoldKey.currentContext!,
-              builder: (context) => new AlertDialog(
-                title: new Text('Information'),
-                content: new Text("Delete this data?"),
-                actions: <Widget>[
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 24.0,
-                    ),
-                    label: pmBtnLabel("Close"),
-                    onPressed: () async {
-                      //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.redAccent,
-                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle:
+      icon: Icon(
+        Icons.cancel,
+        color: Colors.white,
+        size: 15.0,
+      ),
+      label: pmBtnLabel("Delete"),
+      onPressed: () async {
+        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+        showDialog(
+          context: globalScaffoldKey.currentContext!,
+          builder: (context) => new AlertDialog(
+            title: new Text('Information'),
+            content: new Text("Delete this data?"),
+            actions: <Widget>[
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 24.0,
+                ),
+                label: pmBtnLabel("Close"),
+                onPressed: () async {
+                  //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: Colors.redAccent,
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                    textStyle:
                         TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.delete,
-                      color: Colors.white,
-                      size: 24.0,
-                    ),
-                    label: pmBtnLabel("Delete"),
-                    onPressed: () async {
-                      print('show');
-                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      //await Future.delayed(Duration(milliseconds: 1));
-                      print(item['wonumber']);
-                      print(item['id']);
-                      if (item['id'] == '' || item['id'] == null) {
-                        alert(globalScaffoldKey.currentContext!, 2,
-                            "Id tidak boleh kosong", "warning");
-                      } else if (item['wonumber'] == '' ||
-                          item['wonumber'] == null) {
-                        alert(globalScaffoldKey.currentContext!, 2,
-                            "WO NUMBER tidak boleh kosong", "warning");
-                      } else {
-                        await DeleteViewQC(true, item['wonumber'], item['id']);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: primaryOrange,
-                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                ],
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-              elevation: 0.0,
-              backgroundColor: Colors.orangeAccent,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ));
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.delete,
+                  color: Colors.white,
+                  size: 24.0,
+                ),
+                label: pmBtnLabel("Delete"),
+                onPressed: () async {
+                  print('show');
+                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                  //await Future.delayed(Duration(milliseconds: 1));
+                  print(item['wonumber']);
+                  print(item['id']);
+                  if (item['id'] == '' || item['id'] == null) {
+                    alert(globalScaffoldKey.currentContext!, 2,
+                        "Id tidak boleh kosong", "warning");
+                  } else if (item['wonumber'] == '' ||
+                      item['wonumber'] == null) {
+                    alert(globalScaffoldKey.currentContext!, 2,
+                        "WO NUMBER tidak boleh kosong", "warning");
+                  } else {
+                    await DeleteViewQC(true, item['wonumber'], item['id']);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: primaryOrange,
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                    textStyle:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+          elevation: 0.0,
+          backgroundColor: Colors.orangeAccent,
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+    ));
   }
 
   Widget buildDeleteOpnameDetail(BuildContext context, dynamic item) {
     return Expanded(
         child: ElevatedButton.icon(
-          icon: Icon(
-            Icons.cancel,
-            color: Colors.white,
-            size: 15.0,
-          ),
-          label: pmBtnLabel("Delete"),
-          onPressed: () async {
-            Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-            showDialog(
-              context: globalScaffoldKey.currentContext!,
-              builder: (context) => new AlertDialog(
-                title: new Text('Information'),
-                content: new Text("Delete this data?"), //DELETE OPNAME
-                actions: <Widget>[
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 24.0,
-                    ),
-                    label: pmBtnLabel("Close"),
-                    onPressed: () async {
-                      //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.redAccent,
-                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle:
+      icon: Icon(
+        Icons.cancel,
+        color: Colors.white,
+        size: 15.0,
+      ),
+      label: pmBtnLabel("Delete"),
+      onPressed: () async {
+        Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+        showDialog(
+          context: globalScaffoldKey.currentContext!,
+          builder: (context) => new AlertDialog(
+            title: new Text('Information'),
+            content: new Text("Delete this data?"), //DELETE OPNAME
+            actions: <Widget>[
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 24.0,
+                ),
+                label: pmBtnLabel("Close"),
+                onPressed: () async {
+                  //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: Colors.redAccent,
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                    textStyle:
                         TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.delete,
-                      color: Colors.white,
-                      size: 24.0,
-                    ),
-                    label: pmBtnLabel("Delete"),
-                    onPressed: () async {
-                      print('show');
-                      Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                      print(item['id']);
-                      if (item['id'] == '' || item['id'] == null) {
-                        alert(globalScaffoldKey.currentContext!, 2,
-                            "Id tidak boleh kosong", "warning");
-                      } else {
-                        await DeleteOpnameDetail(true, item['vhcid'], item['id'], item['itemid']?.toString() ?? '');
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: primaryOrange,
-                        padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        textStyle:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                ],
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-              elevation: 0.0,
-              backgroundColor: Colors.redAccent,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        ));
+              new ElevatedButton.icon(
+                icon: Icon(
+                  Icons.delete,
+                  color: Colors.white,
+                  size: 24.0,
+                ),
+                label: pmBtnLabel("Delete"),
+                onPressed: () async {
+                  print('show');
+                  Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                  print(item['id']);
+                  if (item['id'] == '' || item['id'] == null) {
+                    alert(globalScaffoldKey.currentContext!, 2,
+                        "Id tidak boleh kosong", "warning");
+                  } else {
+                    await DeleteOpnameDetail(true, item['vhcid'], item['id'],
+                        item['itemid']?.toString() ?? '');
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: primaryOrange,
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                    textStyle:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+          elevation: 0.0,
+          backgroundColor: Colors.redAccent,
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+    ));
   }
 
   Widget _buildDListBanTmsFinish(dynamic item, int index) {
@@ -8005,7 +8442,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         _kv('Original SN', _s(item['original_sn'])),
         _kv('WH', _s(item['wh'])),
       ],
-      actions: Row(children: <Widget>[buildButtonAddBanFinish(context, item), SizedBox(width: 10), buildButtonCancelBan(context)]),
+      actions: Row(children: <Widget>[
+        buildButtonAddBanFinish(context, item),
+        SizedBox(width: 10),
+        buildButtonCancelBan(context)
+      ]),
     );
   }
 
@@ -8022,7 +8463,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         _kv('Original SN', _s(item['original_sn'])),
         _kv('WH', _s(item['wh'])),
       ],
-      actions: Row(children: <Widget>[buildButtonAddBanQC(context, item), SizedBox(width: 10), buildButtonCancelBanQC(context)]),
+      actions: Row(children: <Widget>[
+        buildButtonAddBanQC(context, item),
+        SizedBox(width: 10),
+        buildButtonCancelBanQC(context)
+      ]),
     );
   }
 
@@ -8044,7 +8489,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   physics: ScrollPhysics(),
                   padding: const EdgeInsets.all(2.0),
                   itemCount:
-                  dataListTyreFit == null ? 0 : dataListTyreFit.length,
+                      dataListTyreFit == null ? 0 : dataListTyreFit.length,
                   itemBuilder: (BuildContext context, int index) {
                     return _buildDListTyreFitDetailFinish(
                         dataListTyreFit[index], index);
@@ -8078,7 +8523,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               scrollDirection: Axis.vertical,
               shrinkWrap: true,
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 4.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 2.0, vertical: 4.0),
               itemCount: dataListTyreFitQC.length,
               itemBuilder: (BuildContext context, int index) {
                 return _buildDListTyreFitDetailQC(
@@ -8187,8 +8633,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           if (index < 0 || index >= items.length) {
                             return const SizedBox.shrink();
                           }
-                          return _buildDListDetailOpnameSr(
-                              items[index], index);
+                          return _buildDListDetailOpnameSr(items[index], index);
                         },
                       ),
               ),
@@ -8207,7 +8652,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       child: Column(
         children: [
           Container(
-            margin: EdgeInsets.all(10.0),//
+            margin: EdgeInsets.all(10.0), //
             child: TextField(
               readOnly: false,
               cursorColor: Colors.black,
@@ -8215,21 +8660,21 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               controller: txtSearchPartname,
               keyboardType: TextInputType.text,
               decoration: softDecoration(
-                  label: "Partname",
-                  prefixIcon: Icon(Icons.search, color: primaryOrange),
-                  suffixIcon: IconButton(
-                    icon: new Image.asset(
-                      "assets/img/search.png",
-                      width: 32.0,
-                      height: 32.0,
-                    ),
-                    onPressed: () async {
-                      if (txtSearchPartname.text != null &&
-                          txtSearchPartname.text != "") {
-                        await getListDataItem(true, txtSearchPartname.text, 0);
-                      }
-                    },
+                label: "Partname",
+                prefixIcon: Icon(Icons.search, color: primaryOrange),
+                suffixIcon: IconButton(
+                  icon: new Image.asset(
+                    "assets/img/search.png",
+                    width: 32.0,
+                    height: 32.0,
                   ),
+                  onPressed: () async {
+                    if (txtSearchPartname.text != null &&
+                        txtSearchPartname.text != "") {
+                      await getListDataItem(true, txtSearchPartname.text, 0);
+                    }
+                  },
+                ),
               ),
             ),
           ),
@@ -8579,8 +9024,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: lightOrange,
                   borderRadius: BorderRadius.circular(8),
@@ -8638,7 +9082,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.assignment_outlined, color: primaryOrange, size: 24),
+                    Icon(Icons.assignment_outlined,
+                        color: primaryOrange, size: 24),
                     SizedBox(width: 12),
                     Text(
                       'Data Create SR',
@@ -8764,7 +9209,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly:
-                  is_edit_req != null && is_edit_req == true ? true : false,
+                      is_edit_req != null && is_edit_req == true ? true : false,
                   cursorColor: primaryOrange,
                   style: TextStyle(color: Colors.black87, fontSize: 14),
                   controller: txtDriverName,
@@ -8837,327 +9282,327 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 child: Row(children: <Widget>[
                   Expanded(
                       child: ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.cancel,
-                          color: Colors.white,
-                          size: 15.0,
-                        ),
-                        label: pmBtnLabel("Cancel"),
-                        onPressed: () async {
-                          resetTeks();
-                          setState(() {
-                            btnSubmitText = bSave;
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0.0,
-                            backgroundColor: Colors.orangeAccent,
-                            padding:
+                    icon: Icon(
+                      Icons.cancel,
+                      color: Colors.white,
+                      size: 15.0,
+                    ),
+                    label: pmBtnLabel("Cancel"),
+                    onPressed: () async {
+                      resetTeks();
+                      setState(() {
+                        btnSubmitText = bSave;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Colors.orangeAccent,
+                        padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                            textStyle: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
-                      )),
+                        textStyle: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold)),
+                  )),
                   SizedBox(width: 5),
                   Expanded(
                       child: ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.save,
-                          color: Colors.white,
-                          size: 15.0,
-                        ),
-                        label: pmBtnLabel("${btnSubmitText}"),
-                        onPressed: () async {
-                          if (is_edit_req != null && is_edit_req == true) {
+                    icon: Icon(
+                      Icons.save,
+                      color: Colors.white,
+                      size: 15.0,
+                    ),
+                    label: pmBtnLabel("${btnSubmitText}"),
+                    onPressed: () async {
+                      if (is_edit_req != null && is_edit_req == true) {
+                        showDialog(
+                          context: context,
+                          builder: (context) => new AlertDialog(
+                            title: new Text('Information'),
+                            content: new Text("${bUpdate}?"),
+                            actions: <Widget>[
+                              new ElevatedButton.icon(
+                                icon: Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 20.0,
+                                ),
+                                label: pmBtnLabel("No"),
+                                onPressed: () {
+                                  Navigator.of(context).pop(false);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                    elevation: 0.0,
+                                    backgroundColor: Colors.red,
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 0),
+                                    textStyle: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                              new ElevatedButton.icon(
+                                icon: Icon(
+                                  Icons.save,
+                                  color: Colors.white,
+                                  size: 20.0,
+                                ),
+                                label: pmBtnLabel("Ok"),
+                                onPressed: () async {
+                                  Navigator.of(context).pop(false);
+                                  var isOK = globals.akses_pages == null
+                                      ? globals.akses_pages
+                                      : globals.akses_pages.where((x) =>
+                                          x == "OP" || username == "ADMIN");
+                                  if (isOK != null) {
+                                    if (isOK.length > 0) {
+                                      saveRequestService('update', 'no', '', '',
+                                          '', '', '', '', '', '');
+                                    }
+                                  } else {
+                                    alert(
+                                        globalScaffoldKey.currentContext!,
+                                        0,
+                                        "Anda tidak dapat melakukan transaksi ini",
+                                        "error");
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                    elevation: 0.0,
+                                    backgroundColor: primaryOrange,
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 0),
+                                    textStyle: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        );
+                        print('Update');
+                      } else {
+                        print(txtSrTypeId.text);
+                        //SHOW MODAL LIST BAN
+                        if (txtSrTypeId.text.contains("BAN LUAR") ||
+                            txtSrTypeId.text.contains("BANLUAR") ||
+                            txtSrTypeId.text.contains("BAN-LUAR")) {
+                          if (collTyreFit.length > 0) {
                             showDialog(
-                              context: context,
+                              context: globalScaffoldKey.currentContext!,
                               builder: (context) => new AlertDialog(
                                 title: new Text('Information'),
-                                content: new Text("${bUpdate}?"),
+                                content: new Text("Save/ pilih item kembali?"),
                                 actions: <Widget>[
                                   new ElevatedButton.icon(
                                     icon: Icon(
-                                      Icons.close,
+                                      Icons.check,
                                       color: Colors.white,
-                                      size: 20.0,
+                                      size: 24.0,
                                     ),
-                                    label: pmBtnLabel("No"),
-                                    onPressed: () {
-                                      Navigator.of(context).pop(false);
+                                    label: pmBtnLabel("pilih"),
+                                    onPressed: () async {
+                                      //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                                      Navigator.of(
+                                              globalScaffoldKey.currentContext!)
+                                          .pop(false);
+                                      await Future.delayed(
+                                          Duration(seconds: 1));
+                                      fnVHCID = txtVehicleId.text;
+                                      print("VEHICL ID ${fnVHCID}");
+                                      await getListBanTMS(true, '');
+                                      showDialog(
+                                          context:
+                                              globalScaffoldKey.currentContext!,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title:
+                                                  Text('List Ban Create SR '),
+                                              content:
+                                                  setupAlertDialoadContainer(
+                                                      context),
+                                            );
+                                          });
                                     },
                                     style: ElevatedButton.styleFrom(
                                         elevation: 0.0,
-                                        backgroundColor: Colors.red,
+                                        backgroundColor: Colors.green,
                                         padding: EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 0),
+                                            horizontal: 5, vertical: 0),
                                         textStyle: TextStyle(
-                                            fontSize: 10,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.bold)),
                                   ),
                                   new ElevatedButton.icon(
                                     icon: Icon(
                                       Icons.save,
                                       color: Colors.white,
-                                      size: 20.0,
+                                      size: 24.0,
                                     ),
-                                    label: pmBtnLabel("Ok"),
-                                    onPressed: () async {
-                                      Navigator.of(context).pop(false);
-                                      var isOK = globals.akses_pages == null
-                                          ? globals.akses_pages
-                                          : globals.akses_pages.where((x) =>
-                                      x == "OP" || username == "ADMIN");
-                                      if (isOK != null) {
-                                        if (isOK.length > 0) {
-                                          saveRequestService('update', 'no', '', '',
-                                              '', '', '', '', '', '');
-                                        }
-                                      } else {
-                                        alert(
-                                            globalScaffoldKey.currentContext!,
-                                            0,
-                                            "Anda tidak dapat melakukan transaksi ini",
-                                            "error");
+                                    label: pmBtnLabel("Save"),
+                                    onPressed: () {
+                                      fnVHCID = txtVehicleId.text;
+                                      print("VEHICL ID ${fnVHCID}");
+                                      Navigator.of(
+                                              globalScaffoldKey.currentContext!)
+                                          .pop(false);
+                                      selFitPostName = '';
+                                      for (var i = 0;
+                                          i < collTyreFit.length;
+                                          i++) {
+                                        var fitArr = i ==
+                                                (collTyreFit.length - 1)
+                                            ? "${collTyreFit[i]['fittyreid']};${collTyreFit[i]['fitserialno']};${collTyreFit[i]['startdate']};${collTyreFit[i]['tyrebrand']};${collTyreFit[i]['tyrepattern']};${collTyreFit[i]['tyreprice']};${collTyreFit[i]['genuino']};${collTyreFit[i]['fitpost']}"
+                                            : "${collTyreFit[i]['fittyreid']};${collTyreFit[i]['fitserialno']};${collTyreFit[i]['startdate']};${collTyreFit[i]['tyrebrand']};${collTyreFit[i]['tyrepattern']};${collTyreFit[i]['tyreprice']};${collTyreFit[i]['genuino']};${collTyreFit[i]['fitpost']}<=>";
+                                        selFitPostName += fitArr;
                                       }
+                                      //print(selFitPostName);
+                                      is_edit_req = false;
+                                      saveRequestService('save', 'yes', '', '',
+                                          '', '', '', '', '', '');
                                     },
                                     style: ElevatedButton.styleFrom(
                                         elevation: 0.0,
                                         backgroundColor: primaryOrange,
                                         padding: EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 0),
+                                            horizontal: 5, vertical: 0),
                                         textStyle: TextStyle(
-                                            fontSize: 10,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.bold)),
                                   ),
                                 ],
                               ),
                             );
-                            print('Update');
                           } else {
-                            print(txtSrTypeId.text);
-                            //SHOW MODAL LIST BAN
-                            if (txtSrTypeId.text.contains("BAN LUAR") ||
-                                txtSrTypeId.text.contains("BANLUAR") ||
-                                txtSrTypeId.text.contains("BAN-LUAR")) {
-                              if (collTyreFit.length > 0) {
-                                showDialog(
-                                  context: globalScaffoldKey.currentContext!,
-                                  builder: (context) => new AlertDialog(
-                                    title: new Text('Information'),
-                                    content: new Text("Save/ pilih item kembali?"),
-                                    actions: <Widget>[
-                                      new ElevatedButton.icon(
-                                        icon: Icon(
-                                          Icons.check,
-                                          color: Colors.white,
-                                          size: 24.0,
-                                        ),
-                                        label: pmBtnLabel("pilih"),
-                                        onPressed: () async {
-                                          //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                                          Navigator.of(
-                                              globalScaffoldKey.currentContext!)
-                                              .pop(false);
-                                          await Future.delayed(
-                                              Duration(seconds: 1));
-                                          fnVHCID = txtVehicleId.text;
-                                          print("VEHICL ID ${fnVHCID}");
-                                          await getListBanTMS(true, '');
-                                          showDialog(
-                                              context:
-                                              globalScaffoldKey.currentContext!,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  title:
-                                                  Text('List Ban Create SR '),
-                                                  content:
-                                                  setupAlertDialoadContainer(
-                                                      context),
-                                                );
-                                              });
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                            elevation: 0.0,
-                                            backgroundColor: Colors.green,
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 5, vertical: 0),
-                                            textStyle: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold)),
-                                      ),
-                                      new ElevatedButton.icon(
-                                        icon: Icon(
-                                          Icons.save,
-                                          color: Colors.white,
-                                          size: 24.0,
-                                        ),
-                                        label: pmBtnLabel("Save"),
-                                        onPressed: () {
-                                          fnVHCID = txtVehicleId.text;
-                                          print("VEHICL ID ${fnVHCID}");
-                                          Navigator.of(
-                                              globalScaffoldKey.currentContext!)
-                                              .pop(false);
-                                          selFitPostName = '';
-                                          for (var i = 0;
-                                          i < collTyreFit.length;
-                                          i++) {
-                                            var fitArr = i ==
-                                                (collTyreFit.length - 1)
-                                                ? "${collTyreFit[i]['fittyreid']};${collTyreFit[i]['fitserialno']};${collTyreFit[i]['startdate']};${collTyreFit[i]['tyrebrand']};${collTyreFit[i]['tyrepattern']};${collTyreFit[i]['tyreprice']};${collTyreFit[i]['genuino']};${collTyreFit[i]['fitpost']}"
-                                                : "${collTyreFit[i]['fittyreid']};${collTyreFit[i]['fitserialno']};${collTyreFit[i]['startdate']};${collTyreFit[i]['tyrebrand']};${collTyreFit[i]['tyrepattern']};${collTyreFit[i]['tyreprice']};${collTyreFit[i]['genuino']};${collTyreFit[i]['fitpost']}<=>";
-                                            selFitPostName += fitArr;
-                                          }
-                                          //print(selFitPostName);
-                                          is_edit_req = false;
-                                          saveRequestService('save', 'yes', '', '',
-                                              '', '', '', '', '', '');
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                            elevation: 0.0,
-                                            backgroundColor: primaryOrange,
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 5, vertical: 0),
-                                            textStyle: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold)),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              } else {
-                                await getListBanTMS(true, '');
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: Text('List Ban Create SR'),
-                                        content:
-                                        setupAlertDialoadContainer(context),
-                                      );
-                                    });
-                              }
-                            } else {
-                              showDialog(
+                            await getListBanTMS(true, '');
+                            showDialog(
                                 context: context,
-                                builder: (context) => new AlertDialog(
-                                  title: new Text('Information'),
-                                  content: new Text("Save new request service?"),
-                                  actions: <Widget>[
-                                    new ElevatedButton.icon(
-                                      icon: Icon(
-                                        Icons.close,
-                                        color: Colors.white,
-                                        size: 20.0,
-                                      ),
-                                      label: pmBtnLabel("No"),
-                                      onPressed: () {
-                                        Navigator.of(context).pop(false);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                          elevation: 0.0,
-                                          backgroundColor: Colors.red,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 0),
-                                          textStyle: TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                    new ElevatedButton.icon(
-                                      icon: Icon(
-                                        Icons.save,
-                                        color: Colors.white,
-                                        size: 20.0,
-                                      ),
-                                      label: pmBtnLabel("Ok"),
-                                      onPressed: () async {
-                                        Navigator.of(context).pop(false);
-                                        var isOK = globals.akses_pages == null
-                                            ? globals.akses_pages
-                                            : globals.akses_pages
-                                            .where((x) => x == "OP");
-                                        if (isOK != null) {
-                                          if (isOK.length > 0) {
-                                            is_edit_req = false;
-                                            saveRequestService('save', 'no', '', '',
-                                                '', '', '', '', '', '');
-                                          }
-                                        } else {
-                                          alert(
-                                              globalScaffoldKey.currentContext!,
-                                              0,
-                                              "Anda tidak dapat melakukan transaksi ini",
-                                              "error");
-                                        }
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                          elevation: 0.0,
-                                          backgroundColor: primaryOrange,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 0),
-                                          textStyle: TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              print('save');
-                            }
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('List Ban Create SR'),
+                                    content:
+                                        setupAlertDialoadContainer(context),
+                                  );
+                                });
                           }
-                        },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0.0,
-                            backgroundColor: primaryOrange,
-                            padding:
+                        } else {
+                          showDialog(
+                            context: context,
+                            builder: (context) => new AlertDialog(
+                              title: new Text('Information'),
+                              content: new Text("Save new request service?"),
+                              actions: <Widget>[
+                                new ElevatedButton.icon(
+                                  icon: Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 20.0,
+                                  ),
+                                  label: pmBtnLabel("No"),
+                                  onPressed: () {
+                                    Navigator.of(context).pop(false);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      elevation: 0.0,
+                                      backgroundColor: Colors.red,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 0),
+                                      textStyle: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                                new ElevatedButton.icon(
+                                  icon: Icon(
+                                    Icons.save,
+                                    color: Colors.white,
+                                    size: 20.0,
+                                  ),
+                                  label: pmBtnLabel("Ok"),
+                                  onPressed: () async {
+                                    Navigator.of(context).pop(false);
+                                    var isOK = globals.akses_pages == null
+                                        ? globals.akses_pages
+                                        : globals.akses_pages
+                                            .where((x) => x == "OP");
+                                    if (isOK != null) {
+                                      if (isOK.length > 0) {
+                                        is_edit_req = false;
+                                        saveRequestService('save', 'no', '', '',
+                                            '', '', '', '', '', '');
+                                      }
+                                    } else {
+                                      alert(
+                                          globalScaffoldKey.currentContext!,
+                                          0,
+                                          "Anda tidak dapat melakukan transaksi ini",
+                                          "error");
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      elevation: 0.0,
+                                      backgroundColor: primaryOrange,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 0),
+                                      textStyle: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                          );
+                          print('save');
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: primaryOrange,
+                        padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                            textStyle: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
-                      )),
+                        textStyle: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold)),
+                  )),
                   SizedBox(width: 5),
                   Expanded(
                       child: ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.details_outlined,
-                          color: Colors.white,
-                          size: 15.0,
-                        ),
-                        label: pmBtnLabel("Detail List Ban"),
-                        onPressed: () async {
-                          var value = txtSrTypeId.text;
-                          if (value != null && value != '') {
-                            if (value.toString().contains("BAN LUAR") ||
-                                value.toString().contains("BANLUAR") ||
-                                value.toString().contains("BAN-LUAR")) {
-                              if (collTyreFit.length > 0) {
-                                print('List total fit post ${collTyreFit.length}');
-                                // collTyreFit.add({"genuino": i.toString(),"fitpost": i.toString()});
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: Text('List Ban'),
-                                        content: setupAlertDialoadContainerTempBan(
-                                            context),
-                                      );
-                                    });
-                              } else {
-                                alert(
-                                    globalScaffoldKey.currentContext!,
-                                    2,
-                                    "Maaf,Tidak ada data, silahkan add terlebih dahulu",
-                                    "warning");
-                              }
-                            }
+                    icon: Icon(
+                      Icons.details_outlined,
+                      color: Colors.white,
+                      size: 15.0,
+                    ),
+                    label: pmBtnLabel("Detail List Ban"),
+                    onPressed: () async {
+                      var value = txtSrTypeId.text;
+                      if (value != null && value != '') {
+                        if (value.toString().contains("BAN LUAR") ||
+                            value.toString().contains("BANLUAR") ||
+                            value.toString().contains("BAN-LUAR")) {
+                          if (collTyreFit.length > 0) {
+                            print('List total fit post ${collTyreFit.length}');
+                            // collTyreFit.add({"genuino": i.toString(),"fitpost": i.toString()});
+                            showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('List Ban'),
+                                    content: setupAlertDialoadContainerTempBan(
+                                        context),
+                                  );
+                                });
+                          } else {
+                            alert(
+                                globalScaffoldKey.currentContext!,
+                                2,
+                                "Maaf,Tidak ada data, silahkan add terlebih dahulu",
+                                "warning");
                           }
-                        },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0.0,
-                            backgroundColor: primaryOrange,
-                            padding:
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: primaryOrange,
+                        padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                            textStyle: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
-                      )),
+                        textStyle: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold)),
+                  )),
                 ]),
               ),
               SizedBox(height: 8),
@@ -9168,11 +9613,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     } else {
       return Container(
           child: Center(
-            child: Text(
-              "Anda tidak punya akses",
-              textAlign: TextAlign.center,
-            ),
-          ));
+        child: Text(
+          "Anda tidak punya akses",
+          textAlign: TextAlign.center,
+        ),
+      ));
     }
   }
 
@@ -9348,33 +9793,44 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Note:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                    Text('Note:',
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w700)),
                     SizedBox(width: 8),
-                    Text('Baik', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text('Baik',
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600)),
                     Radio(
                       value: "0",
-                      visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                      visualDensity:
+                          VisualDensity(horizontal: -4, vertical: -4),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       fillColor: MaterialStateColor.resolveWith(
-                              (states) => Colors.green),
+                          (states) => Colors.green),
                     ),
                     SizedBox(width: 8),
-                    Text('Tidak Baik', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text('Tidak Baik',
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600)),
                     Radio(
                       value: "0",
-                      visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                      visualDensity:
+                          VisualDensity(horizontal: -4, vertical: -4),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       fillColor: MaterialStateColor.resolveWith(
-                              (states) => Colors.orange),
+                          (states) => Colors.orange),
                     ),
                     SizedBox(width: 8),
-                    Text('Tidak Ada', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text('Tidak Ada',
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600)),
                     Radio(
                       value: "0",
-                      visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                      visualDensity:
+                          VisualDensity(horizontal: -4, vertical: -4),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      fillColor:
-                      MaterialStateColor.resolveWith((states) => Colors.red),
+                      fillColor: MaterialStateColor.resolveWith(
+                          (states) => Colors.red),
                     ),
                   ],
                 ),
@@ -9408,10 +9864,10 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                     children: <Widget>[
                       ListTile(
                         visualDensity:
-                        VisualDensity(horizontal: 0, vertical: -4),
+                            VisualDensity(horizontal: 0, vertical: -4),
                         //leading: Icon(Icons.album),
                         title:
-                        Text("${element['seq']}. ${element['question']}"),
+                            Text("${element['seq']}. ${element['question']}"),
                         //subtitle: Text(element['note']!=null && element['note']!="null"?element['note']:""),
                       ),
                       Padding(
@@ -9426,9 +9882,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               Radio(
                                 value: "baik$element['index']",
                                 groupValue:
-                                listChecklistValueCHK[element['index']],
+                                    listChecklistValueCHK[element['index']],
                                 fillColor: MaterialStateColor.resolveWith(
-                                        (states) => Colors.green),
+                                    (states) => Colors.green),
                                 onChanged: (val) {
                                   setState(() {
                                     listChecklistValueCHK[element['index']] =
@@ -9450,9 +9906,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               Radio(
                                 value: "tidak_baik$element['index']",
                                 groupValue:
-                                listChecklistValueCHK[element['index']],
+                                    listChecklistValueCHK[element['index']],
                                 fillColor: MaterialStateColor.resolveWith(
-                                        (states) => Colors.orange),
+                                    (states) => Colors.orange),
                                 onChanged: (val) {
                                   setState(() {
                                     listChecklistValueCHK[element['index']] =
@@ -9474,9 +9930,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               Radio(
                                 value: "tidak_ada$element['index']",
                                 groupValue:
-                                listChecklistValueCHK[element['index']],
+                                    listChecklistValueCHK[element['index']],
                                 fillColor: MaterialStateColor.resolveWith(
-                                        (states) => Colors.red),
+                                    (states) => Colors.red),
                                 onChanged: (val) {
                                   setState(() {
                                     listChecklistValueCHK[element['index']] =
@@ -9520,7 +9976,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           element['note'] != "null") ...[
                         ListTile(
                             visualDensity:
-                            VisualDensity(horizontal: 0, vertical: -4),
+                                VisualDensity(horizontal: 0, vertical: -4),
                             title: Text("Note: ${element['note']}")),
                       ]
                     ],
@@ -9673,120 +10129,120 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             child: Row(children: <Widget>[
               Expanded(
                   child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.delete,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: pmBtnLabel("Cancel"),
-                    onPressed: () async {
-                      await DeleteDraft();
-                      print('Delete');
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.orangeAccent,
-                        padding: EdgeInsets.symmetric(horizontal: 0, vertical: 10),
-                        textStyle:
+                icon: Icon(
+                  Icons.delete,
+                  color: Colors.white,
+                  size: 15.0,
+                ),
+                label: pmBtnLabel("Cancel"),
+                onPressed: () async {
+                  await DeleteDraft();
+                  print('Delete');
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: Colors.orangeAccent,
+                    padding: EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+                    textStyle:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  )),
+              )),
               SizedBox(width: 10),
               Expanded(
                   child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.save,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label: pmBtnLabel("Submit"),
-                    onPressed: () async {
-                      if (txtCabangIdCHK.text == null ||
-                          txtCabangIdCHK.text == '') {
-                        alert(globalScaffoldKey.currentContext!, 2,
-                            "Cabang tidak boleh kosong", "warning");
-                      } else if (txtVHCIDCHK.text == null ||
-                          txtVHCIDCHK.text == '') {
-                        alert(globalScaffoldKey.currentContext!, 2,
-                            "Nopol tidak boleh kosong", "warning");
-                      } else if (txtJenisTypeCHK.text == null ||
-                          txtJenisTypeCHK.text == '') {
-                        alert(globalScaffoldKey.currentContext!, 2,
-                            "Type Kendaraan tidak boleh kosong", "warning");
-                      } else if (txtKMCHK.text == null || txtKMCHK.text == '') {
-                        alert(globalScaffoldKey.currentContext!, 2,
-                            "Milage/KM Kendaraan tidak boleh kosong", "warning");
-                      } else if (int.parse(txtKMCHK.text) <= 0) {
-                        alert(globalScaffoldKey.currentContext!, 2,
-                            "Milage/KM Kendaraan tidak boleh kosong", "warning");
-                      } else {
-                        SharedPreferences prefs =
+                icon: Icon(
+                  Icons.save,
+                  color: Colors.white,
+                  size: 15.0,
+                ),
+                label: pmBtnLabel("Submit"),
+                onPressed: () async {
+                  if (txtCabangIdCHK.text == null ||
+                      txtCabangIdCHK.text == '') {
+                    alert(globalScaffoldKey.currentContext!, 2,
+                        "Cabang tidak boleh kosong", "warning");
+                  } else if (txtVHCIDCHK.text == null ||
+                      txtVHCIDCHK.text == '') {
+                    alert(globalScaffoldKey.currentContext!, 2,
+                        "Nopol tidak boleh kosong", "warning");
+                  } else if (txtJenisTypeCHK.text == null ||
+                      txtJenisTypeCHK.text == '') {
+                    alert(globalScaffoldKey.currentContext!, 2,
+                        "Type Kendaraan tidak boleh kosong", "warning");
+                  } else if (txtKMCHK.text == null || txtKMCHK.text == '') {
+                    alert(globalScaffoldKey.currentContext!, 2,
+                        "Milage/KM Kendaraan tidak boleh kosong", "warning");
+                  } else if (int.parse(txtKMCHK.text) <= 0) {
+                    alert(globalScaffoldKey.currentContext!, 2,
+                        "Milage/KM Kendaraan tidak boleh kosong", "warning");
+                  } else {
+                    SharedPreferences prefs =
                         await SharedPreferences.getInstance();
-                        if (prefs.getString("trxnumber_form_check") == null) {
-                          alert(globalScaffoldKey.currentContext!, 2,
-                              "Anda belum memilih form checklist", "warning");
-                        } else {
-                          showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (context) => new AlertDialog(
-                              title: new Text('Information'),
-                              content: new Text("Save data form checklist?"),
-                              actions: <Widget>[
-                                new ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.info,
-                                    color: Colors.white,
-                                    size: 24.0,
-                                  ),
-                                  label: pmBtnLabel("Cancel"),
-                                  onPressed: () {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .pop();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: primaryOrange,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                                SizedBox(width: 10),
-                                new ElevatedButton.icon(
-                                  icon: Icon(
-                                    Icons.info,
-                                    color: Colors.white,
-                                    size: 24.0,
-                                  ),
-                                  label: pmBtnLabel("Ok"),
-                                  onPressed: () async {
-                                    Navigator.of(context, rootNavigator: true)
-                                        .pop();
-                                    await UpdateAll();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      backgroundColor: primaryOrange,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 0),
-                                      textStyle: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                              ],
+                    if (prefs.getString("trxnumber_form_check") == null) {
+                      alert(globalScaffoldKey.currentContext!, 2,
+                          "Anda belum memilih form checklist", "warning");
+                    } else {
+                      showDialog(
+                        context: globalScaffoldKey.currentContext!,
+                        builder: (context) => new AlertDialog(
+                          title: new Text('Information'),
+                          content: new Text("Save data form checklist?"),
+                          actions: <Widget>[
+                            new ElevatedButton.icon(
+                              icon: Icon(
+                                Icons.info,
+                                color: Colors.white,
+                                size: 24.0,
+                              ),
+                              label: pmBtnLabel("Cancel"),
+                              onPressed: () {
+                                Navigator.of(context, rootNavigator: true)
+                                    .pop();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                  elevation: 0.0,
+                                  backgroundColor: primaryOrange,
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 5, vertical: 0),
+                                  textStyle: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold)),
                             ),
-                          );
-                        }
-                        print('Save');
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: primaryOrange,
-                        padding: EdgeInsets.symmetric(horizontal: 0, vertical: 12),
-                        textStyle:
+                            SizedBox(width: 10),
+                            new ElevatedButton.icon(
+                              icon: Icon(
+                                Icons.info,
+                                color: Colors.white,
+                                size: 24.0,
+                              ),
+                              label: pmBtnLabel("Ok"),
+                              onPressed: () async {
+                                Navigator.of(context, rootNavigator: true)
+                                    .pop();
+                                await UpdateAll();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                  elevation: 0.0,
+                                  backgroundColor: primaryOrange,
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 5, vertical: 0),
+                                  textStyle: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    print('Save');
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                    elevation: 0.0,
+                    backgroundColor: primaryOrange,
+                    padding: EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+                    textStyle:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  )),
+              )),
             ]),
           )
         ],
@@ -9821,7 +10277,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.inventory_2_outlined, color: primaryOrange, size: 24),
+                    Icon(Icons.inventory_2_outlined,
+                        color: primaryOrange, size: 24),
                     SizedBox(width: 12),
                     Text(
                       'Data Opname',
@@ -9943,7 +10400,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         : '(${_katalogTitleOf(selKatalog)})';
                   });
                   if (val == null || val == '') {
-                    alert(globalScaffoldKey.currentContext!, 0, "Katalog ID Kosong", "error");
+                    alert(globalScaffoldKey.currentContext!, 0,
+                        "Katalog ID Kosong", "error");
                     return;
                   }
                   await _openItemSearchDialog(search: txtPartName.text);
@@ -9957,8 +10415,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 modalFilterAuto: true,
               ),
               Container(
-                margin:
-                EdgeInsets.all(12.0),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
                   cursorColor: primaryOrange,
@@ -9985,7 +10442,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           builder: (BuildContext context) => new AlertDialog(
                             title: new Text('Information'),
                             content:
-                            new Text("Search Partname/ Item By Scan Code"),
+                                new Text("Search Partname/ Item By Scan Code"),
                             actions: <Widget>[
                               new ElevatedButton.icon(
                                 icon: Icon(
@@ -10051,8 +10508,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               Container(
-                margin:
-                EdgeInsets.all(12.0),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
                   cursorColor: primaryOrange,
@@ -10066,8 +10522,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               Container(
-                margin:
-                EdgeInsets.all(12.0),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
                   cursorColor: primaryOrange,
@@ -10081,8 +10536,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               Container(
-                margin:
-                EdgeInsets.all(12.0),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
                   cursorColor: primaryOrange,
@@ -10096,8 +10550,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               Container(
-                margin:
-                EdgeInsets.all(12.0),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
                   cursorColor: primaryOrange,
@@ -10111,8 +10564,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               Container(
-                margin:
-                EdgeInsets.all(12.0),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
                   cursorColor: primaryOrange,
@@ -10126,8 +10578,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               Container(
-                margin:
-                EdgeInsets.all(12.0),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: true,
                   cursorColor: primaryOrange,
@@ -10141,8 +10592,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 ),
               ),
               Container(
-                margin:
-                EdgeInsets.all(12.0),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   readOnly: false,
                   cursorColor: primaryOrange,
@@ -10198,8 +10648,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               //   ),
               // ),
               Container(
-                margin:
-                EdgeInsets.all(12.0),
+                margin: EdgeInsets.all(12.0),
                 child: TextField(
                   onTap: () {
                     dateTimePickerWidget(context);
@@ -10243,455 +10692,456 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   // SizedBox(width: 10),
                   Expanded(
                       child: ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.save,
-                          color: Colors.white,
-                          size: 15.0,
-                        ),
-                        label: pmBtnLabel("Create"),
-                        onPressed: () async {
-                          print(fnWONUMBER);
-                          print("METHOD_DETAIL ${METHOD_DETAIL}");
-                          print(id_header);
-                          if (txtOpnameVHCID.text == null ||
-                              txtOpnameVHCID.text == '') {
-                            alert(globalScaffoldKey.currentContext!, 0,
-                                "Vehicle ID tidak boleh kosong", "error");
-                          } else {
-                            if (id_header > 0 && METHOD_DETAIL != '') {
-                              showDialog(
-                                context: globalScaffoldKey.currentContext!,
-                                builder: (context) => new AlertDialog(
-                                  title: new Text('Information'),
-                                  content: new Text("Create new detail opname?"),
-                                  actions: <Widget>[
-                                    new ElevatedButton.icon(
-                                      icon: Icon(
-                                        Icons.cancel,
-                                        color: Colors.white,
-                                        size: 24.0,
-                                      ),
-                                      label: pmBtnLabel("Cancel"),
-                                      onPressed: () async {
-                                        Navigator.of(context, rootNavigator: true)
-                                            .pop();
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                          elevation: 0.0,
-                                          backgroundColor: Colors.orangeAccent,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 5, vertical: 0),
-                                          textStyle: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                    new SizedBox(width: 10),
-                                    new ElevatedButton.icon(
-                                      icon: Icon(
-                                        Icons.info,
-                                        color: Colors.white,
-                                        size: 24.0,
-                                      ),
-                                      label: pmBtnLabel("Ok"),
-                                      onPressed: () async {
-                                        Navigator.of(context, rootNavigator: true)
-                                            .pop();
-                                        createOpnameDetail(); //TEST
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                          elevation: 0.0,
-                                          backgroundColor: primaryOrange,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 5, vertical: 0),
-                                          textStyle: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                  ],
+                    icon: Icon(
+                      Icons.save,
+                      color: Colors.white,
+                      size: 15.0,
+                    ),
+                    label: pmBtnLabel("Create"),
+                    onPressed: () async {
+                      print(fnWONUMBER);
+                      print("METHOD_DETAIL ${METHOD_DETAIL}");
+                      print(id_header);
+                      if (txtOpnameVHCID.text == null ||
+                          txtOpnameVHCID.text == '') {
+                        alert(globalScaffoldKey.currentContext!, 0,
+                            "Vehicle ID tidak boleh kosong", "error");
+                      } else {
+                        if (id_header > 0 && METHOD_DETAIL != '') {
+                          showDialog(
+                            context: globalScaffoldKey.currentContext!,
+                            builder: (context) => new AlertDialog(
+                              title: new Text('Information'),
+                              content: new Text("Create new detail opname?"),
+                              actions: <Widget>[
+                                new ElevatedButton.icon(
+                                  icon: Icon(
+                                    Icons.cancel,
+                                    color: Colors.white,
+                                    size: 24.0,
+                                  ),
+                                  label: pmBtnLabel("Cancel"),
+                                  onPressed: () async {
+                                    Navigator.of(context, rootNavigator: true)
+                                        .pop();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      elevation: 0.0,
+                                      backgroundColor: Colors.orangeAccent,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 0),
+                                      textStyle: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold)),
                                 ),
-                              );
-                            }
+                                new SizedBox(width: 10),
+                                new ElevatedButton.icon(
+                                  icon: Icon(
+                                    Icons.info,
+                                    color: Colors.white,
+                                    size: 24.0,
+                                  ),
+                                  label: pmBtnLabel("Ok"),
+                                  onPressed: () async {
+                                    Navigator.of(context, rootNavigator: true)
+                                        .pop();
+                                    createOpnameDetail(); //TEST
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      elevation: 0.0,
+                                      backgroundColor: primaryOrange,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 0),
+                                      textStyle: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
 
-                            if (fnWONUMBER != '' && METHOD_DETAIL == 'PROSES') {
-                              showDialog(
-                                context: globalScaffoldKey.currentContext!,
-                                builder: (context) => new AlertDialog(
-                                  title: new Text('Information'),
-                                  content: new Text("Create new detail opname?"),
-                                  actions: <Widget>[
-                                    new ElevatedButton.icon(
-                                      icon: Icon(
-                                        Icons.cancel,
-                                        color: Colors.white,
-                                        size: 24.0,
-                                      ),
-                                      label: pmBtnLabel("Cancel"),
-                                      onPressed: () async {
-                                        Navigator.of(context, rootNavigator: true)
-                                            .pop();
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                          elevation: 0.0,
-                                          backgroundColor: Colors.orangeAccent,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 5, vertical: 0),
-                                          textStyle: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                    new SizedBox(width: 10),
-                                    new ElevatedButton.icon(
-                                      icon: Icon(
-                                        Icons.info,
-                                        color: Colors.white,
-                                        size: 24.0,
-                                      ),
-                                      label: pmBtnLabel("Ok"),
-                                      onPressed: () async {
-                                        Navigator.of(context, rootNavigator: true)
-                                            .pop();
-                                        createOpnameDetailProses();
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                          elevation: 0.0,
-                                          backgroundColor: primaryOrange,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 5, vertical: 0),
-                                          textStyle: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                  ],
+                        if (fnWONUMBER != '' && METHOD_DETAIL == 'PROSES') {
+                          showDialog(
+                            context: globalScaffoldKey.currentContext!,
+                            builder: (context) => new AlertDialog(
+                              title: new Text('Information'),
+                              content: new Text("Create new detail opname?"),
+                              actions: <Widget>[
+                                new ElevatedButton.icon(
+                                  icon: Icon(
+                                    Icons.cancel,
+                                    color: Colors.white,
+                                    size: 24.0,
+                                  ),
+                                  label: pmBtnLabel("Cancel"),
+                                  onPressed: () async {
+                                    Navigator.of(context, rootNavigator: true)
+                                        .pop();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      elevation: 0.0,
+                                      backgroundColor: Colors.orangeAccent,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 0),
+                                      textStyle: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold)),
                                 ),
-                              );
-                            }
+                                new SizedBox(width: 10),
+                                new ElevatedButton.icon(
+                                  icon: Icon(
+                                    Icons.info,
+                                    color: Colors.white,
+                                    size: 24.0,
+                                  ),
+                                  label: pmBtnLabel("Ok"),
+                                  onPressed: () async {
+                                    Navigator.of(context, rootNavigator: true)
+                                        .pop();
+                                    createOpnameDetailProses();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      elevation: 0.0,
+                                      backgroundColor: primaryOrange,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 0),
+                                      textStyle: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
 
-                            if (fnWONUMBERQC != '' && METHOD_DETAIL == 'QC') {
-                              showDialog(
-                                context: globalScaffoldKey.currentContext!,
-                                builder: (context) => new AlertDialog(
-                                  title: new Text('Information'),
-                                  content: new Text("Create new detail opname?"),
-                                  actions: <Widget>[
-                                    new ElevatedButton.icon(
-                                      icon: Icon(
-                                        Icons.cancel,
-                                        color: Colors.white,
-                                        size: 24.0,
-                                      ),
-                                      label: pmBtnLabel("Cancel"),
-                                      onPressed: () async {
-                                        Navigator.of(context, rootNavigator: true)
-                                            .pop();
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                          elevation: 0.0,
-                                          backgroundColor: Colors.orangeAccent,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 5, vertical: 0),
-                                          textStyle: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                    new SizedBox(width: 10),
-                                    new ElevatedButton.icon(
-                                      icon: Icon(
-                                        Icons.info,
-                                        color: Colors.white,
-                                        size: 24.0,
-                                      ),
-                                      label: pmBtnLabel("Ok"),
-                                      onPressed: () async {
-                                        Navigator.of(context, rootNavigator: true)
-                                            .pop();
-                                        createOpnameDetailQC();
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                          elevation: 0.0,
-                                          backgroundColor: primaryOrange,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 5, vertical: 0),
-                                          textStyle: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                  ],
+                        if (fnWONUMBERQC != '' && METHOD_DETAIL == 'QC') {
+                          showDialog(
+                            context: globalScaffoldKey.currentContext!,
+                            builder: (context) => new AlertDialog(
+                              title: new Text('Information'),
+                              content: new Text("Create new detail opname?"),
+                              actions: <Widget>[
+                                new ElevatedButton.icon(
+                                  icon: Icon(
+                                    Icons.cancel,
+                                    color: Colors.white,
+                                    size: 24.0,
+                                  ),
+                                  label: pmBtnLabel("Cancel"),
+                                  onPressed: () async {
+                                    Navigator.of(context, rootNavigator: true)
+                                        .pop();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      elevation: 0.0,
+                                      backgroundColor: Colors.orangeAccent,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 0),
+                                      textStyle: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold)),
                                 ),
-                              );
-                            }
-                            print('save detail opname');
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0.0,
-                            backgroundColor: primaryOrange,
-                            padding:
+                                new SizedBox(width: 10),
+                                new ElevatedButton.icon(
+                                  icon: Icon(
+                                    Icons.info,
+                                    color: Colors.white,
+                                    size: 24.0,
+                                  ),
+                                  label: pmBtnLabel("Ok"),
+                                  onPressed: () async {
+                                    Navigator.of(context, rootNavigator: true)
+                                        .pop();
+                                    createOpnameDetailQC();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      elevation: 0.0,
+                                      backgroundColor: primaryOrange,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 0),
+                                      textStyle: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        print('save detail opname');
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: primaryOrange,
+                        padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                            textStyle: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.bold)),
-                      )),
+                        textStyle: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold)),
+                  )),
                   SizedBox(width: 5),
                   Expanded(
                       child: ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.book,
-                          color: Colors.white,
-                          size: 15.0,
-                        ),
-                        label: pmBtnLabel("List Detail"),
-                        onPressed: () async {
-                          print("Button List Detail Opname");
-                          //txtOpnameVHCID.text = 'B 9474 YU/B 9474 YU'; //DEV
-                          //id_header = 3740;
-                          if (txtOpnameVHCID.text == null ||
-                              txtOpnameVHCID.text == '') {
-                            alert(globalScaffoldKey.currentContext!, 0,
-                                "Vehicle ID tidak boleh kosong", "error");
-                          } else {
-                            dataListOpnameDetail = [];
-                            await getListDataOpnameDetail(
-                                true, id_header.toString(), txtOpnameVHCID.text);
+                    icon: Icon(
+                      Icons.book,
+                      color: Colors.white,
+                      size: 15.0,
+                    ),
+                    label: pmBtnLabel("List Detail"),
+                    onPressed: () async {
+                      print("Button List Detail Opname");
+                      //txtOpnameVHCID.text = 'B 9474 YU/B 9474 YU'; //DEV
+                      //id_header = 3740;
+                      if (txtOpnameVHCID.text == null ||
+                          txtOpnameVHCID.text == '') {
+                        alert(globalScaffoldKey.currentContext!, 0,
+                            "Vehicle ID tidak boleh kosong", "error");
+                      } else {
+                        dataListOpnameDetail = [];
+                        await getListDataOpnameDetail(
+                            true, id_header.toString(), txtOpnameVHCID.text);
 
-                            await Future.delayed(Duration(milliseconds: 1));
-                            if (dataListOpnameDetail.length > 0) {
-                              //Navigator.of(context).pop(false);
-                              await Future.delayed(Duration(milliseconds: 1));
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                        insetPadding: const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 24),
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(16)),
-                                        backgroundColor: cardColor,
-                                        titlePadding: const EdgeInsets.fromLTRB(
-                                            16, 16, 16, 0),
-                                        contentPadding: const EdgeInsets.fromLTRB(
-                                            12, 12, 12, 8),
-                                        actionsPadding: const EdgeInsets.fromLTRB(
-                                            12, 0, 12, 12),
-                                        title: Row(
-                                          children: [
-                                            Icon(Icons.inventory_2_outlined,
-                                                color: darkOrange, size: 22),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                'List Detail',
-                                                style: TextStyle(
-                                                  color: darkOrange,
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 16,
-                                                ),
-                                              ),
+                        await Future.delayed(Duration(milliseconds: 1));
+                        if (dataListOpnameDetail.length > 0) {
+                          //Navigator.of(context).pop(false);
+                          await Future.delayed(Duration(milliseconds: 1));
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                    insetPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 24),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
+                                    backgroundColor: cardColor,
+                                    titlePadding: const EdgeInsets.fromLTRB(
+                                        16, 16, 16, 0),
+                                    contentPadding: const EdgeInsets.fromLTRB(
+                                        12, 12, 12, 8),
+                                    actionsPadding: const EdgeInsets.fromLTRB(
+                                        12, 0, 12, 12),
+                                    title: Row(
+                                      children: [
+                                        Icon(Icons.inventory_2_outlined,
+                                            color: darkOrange, size: 22),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'List Detail',
+                                            style: TextStyle(
+                                              color: darkOrange,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 16,
                                             ),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 3),
-                                              decoration: BoxDecoration(
-                                                color: lightOrange,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Text(
-                                                '${dataListOpnameDetail.length}',
-                                                style: TextStyle(
-                                                  color: primaryOrange,
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        content: listDataOpnameDetail(context),
-                                        actions: <Widget>[
-                                          Flex(
-                                            direction: Axis.horizontal,
-                                            children: [
-                                              Expanded(
-                                                  child: ElevatedButton.icon(
-                                                    icon: Icon(
-                                                      Icons.book,
-                                                      color: Colors.white,
-                                                      size: 15.0,
-                                                    ),
-                                                    label: pmBtnLabel("Approve"), //Approve Opname
-                                                    onPressed: () async {
-                                                      //selEstimasi = "1";
-                                                      //id_header=88;
-                                                      //print('getAkses("FO") ${getAkses("FO")}');
-                                                      if (username == "ADMIN" ||
-                                                          getAkses("SA")) {
-                                                        if (txtOpnameVHCID.text ==
-                                                            null ||
-                                                            txtOpnameVHCID.text == '') {
-                                                          alert(
-                                                              globalScaffoldKey
-                                                                  .currentContext!,
-                                                              0,
-                                                              "Vehicle ID tidak boleh kosong",
-                                                              "error");
-                                                        } else if (id_header <= 0) {
-                                                          alert(
-                                                              globalScaffoldKey
-                                                                  .currentContext!,
-                                                              0,
-                                                              "ID Opname tidak boleh kosong",
-                                                              "error");
-                                                        } else if (selEstimasi ==
-                                                            null ||
-                                                            selEstimasi == "") {
-                                                          alert(
-                                                              globalScaffoldKey
-                                                                  .currentContext!,
-                                                              0,
-                                                              "Estimasi tidak boleh kosong 2",
-                                                              "error");
-                                                        } else {
-                                                          Navigator.of(context)
-                                                              .pop(false);
-                                                          showDialog(
-                                                            context: context,
-                                                            builder: (context) =>
-                                                            new AlertDialog(
-                                                              title: new Text(
-                                                                  'Information'),
-                                                              //content:
-                                                              //new Text("Save new request service?"),
-                                                              content: Column(
-                                                                crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .stretch,
-                                                                //position
-                                                                mainAxisSize:
-                                                                MainAxisSize.min,
-                                                                // wrap content in flutter
-                                                                children: <Widget>[
-                                                                  Container(
-                                                                    margin:
-                                                                    EdgeInsets.all(
-                                                                        10.0),
-                                                                    child: Text(
-                                                                        "Approve this data?"),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              actions: <Widget>[
-                                                                new ElevatedButton.icon(
-                                                                  icon: Icon(
-                                                                    Icons.delete,
-                                                                    color: Colors.white,
-                                                                    size: 20.0,
-                                                                  ),
-                                                                  label: pmBtnLabel("Approve"),
-                                                                  onPressed: () async {
-                                                                    Navigator.of(
-                                                                        context)
-                                                                        .pop(false);
-                                                                    await Future.delayed(
-                                                                        Duration(
-                                                                            milliseconds:
-                                                                            1));
-                                                                    await ApproveOpnameDetail(
-                                                                        true,
-                                                                        txtOpnameVHCID
-                                                                            .text,
-                                                                        id_header
-                                                                            .toString());
-                                                                  },
-                                                                  style: ElevatedButton.styleFrom(
-                                                                      elevation: 0.0,
-                                                                      backgroundColor:
-                                                                      Colors.blue,
-                                                                      padding: EdgeInsets
-                                                                          .symmetric(
-                                                                          horizontal:
-                                                                          10,
-                                                                          vertical:
-                                                                          0),
-                                                                      textStyle: TextStyle(
-                                                                          fontSize: 10,
-                                                                          fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                                ),
-                                                                new ElevatedButton.icon(
-                                                                  icon: Icon(
-                                                                    Icons.save,
-                                                                    color: Colors.white,
-                                                                    size: 20.0,
-                                                                  ),
-                                                                  label: pmBtnLabel("Close"),
-                                                                  onPressed: () async {
-                                                                    Navigator.of(
-                                                                        context)
-                                                                        .pop(false);
-                                                                  },
-                                                                  style: ElevatedButton.styleFrom(
-                                                                      elevation: 0.0,
-                                                                      backgroundColor:
-                                                                      Colors
-                                                                          .orangeAccent,
-                                                                      padding: EdgeInsets
-                                                                          .symmetric(
-                                                                          horizontal:
-                                                                          10,
-                                                                          vertical:
-                                                                          0),
-                                                                      textStyle: TextStyle(
-                                                                          fontSize: 10,
-                                                                          fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          );
-                                                        }
-                                                      } else {
-                                                        alert(
-                                                            globalScaffoldKey
-                                                                .currentContext!,
-                                                            0,
-                                                            "Anda tidak punya izin untuk melakukan approval",
-                                                            "error");
-                                                      }
-                                                    },
-                                                    style: ElevatedButton.styleFrom(
-                                                        elevation: 0.0,
-                                                        backgroundColor: primaryOrange,
-                                                        padding: EdgeInsets.symmetric(
-                                                            horizontal: 5, vertical: 0),
-                                                        textStyle: TextStyle(
-                                                            fontSize: 12,
-                                                            fontWeight:
-                                                            FontWeight.bold)),
-                                                  )),
-                                            ],
                                           ),
-                                        ]);
-                                  });
-                            } else {
-                              //Navigator.of(context).pop(false);
-                              await Future.delayed(Duration(milliseconds: 1));
-                              alert(context, 2, "tidak ada data yang di temukan",
-                                  "warning");
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0.0,
-                            backgroundColor: primaryOrange,
-                            padding:
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: lightOrange,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            '${dataListOpnameDetail.length}',
+                                            style: TextStyle(
+                                              color: primaryOrange,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    content: listDataOpnameDetail(context),
+                                    actions: <Widget>[
+                                      Flex(
+                                        direction: Axis.horizontal,
+                                        children: [
+                                          Expanded(
+                                              child: ElevatedButton.icon(
+                                            icon: Icon(
+                                              Icons.book,
+                                              color: Colors.white,
+                                              size: 15.0,
+                                            ),
+                                            label: pmBtnLabel(
+                                                "Approve"), //Approve Opname
+                                            onPressed: () async {
+                                              //selEstimasi = "1";
+                                              //id_header=88;
+                                              //print('getAkses("FO") ${getAkses("FO")}');
+                                              if (username == "ADMIN" ||
+                                                  getAkses("SA")) {
+                                                if (txtOpnameVHCID.text ==
+                                                        null ||
+                                                    txtOpnameVHCID.text == '') {
+                                                  alert(
+                                                      globalScaffoldKey
+                                                          .currentContext!,
+                                                      0,
+                                                      "Vehicle ID tidak boleh kosong",
+                                                      "error");
+                                                } else if (id_header <= 0) {
+                                                  alert(
+                                                      globalScaffoldKey
+                                                          .currentContext!,
+                                                      0,
+                                                      "ID Opname tidak boleh kosong",
+                                                      "error");
+                                                } else if (selEstimasi ==
+                                                        null ||
+                                                    selEstimasi == "") {
+                                                  alert(
+                                                      globalScaffoldKey
+                                                          .currentContext!,
+                                                      0,
+                                                      "Estimasi tidak boleh kosong 2",
+                                                      "error");
+                                                } else {
+                                                  Navigator.of(context)
+                                                      .pop(false);
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (context) =>
+                                                        new AlertDialog(
+                                                      title: new Text(
+                                                          'Information'),
+                                                      //content:
+                                                      //new Text("Save new request service?"),
+                                                      content: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .stretch,
+                                                        //position
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        // wrap content in flutter
+                                                        children: <Widget>[
+                                                          Container(
+                                                            margin:
+                                                                EdgeInsets.all(
+                                                                    10.0),
+                                                            child: Text(
+                                                                "Approve this data?"),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      actions: <Widget>[
+                                                        new ElevatedButton.icon(
+                                                          icon: Icon(
+                                                            Icons.delete,
+                                                            color: Colors.white,
+                                                            size: 20.0,
+                                                          ),
+                                                          label: pmBtnLabel(
+                                                              "Approve"),
+                                                          onPressed: () async {
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop(false);
+                                                            await Future.delayed(
+                                                                Duration(
+                                                                    milliseconds:
+                                                                        1));
+                                                            await ApproveOpnameDetail(
+                                                                true,
+                                                                txtOpnameVHCID
+                                                                    .text,
+                                                                id_header
+                                                                    .toString());
+                                                          },
+                                                          style: ElevatedButton.styleFrom(
+                                                              elevation: 0.0,
+                                                              backgroundColor:
+                                                                  Colors.blue,
+                                                              padding: EdgeInsets
+                                                                  .symmetric(
+                                                                      horizontal:
+                                                                          10,
+                                                                      vertical:
+                                                                          0),
+                                                              textStyle: TextStyle(
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold)),
+                                                        ),
+                                                        new ElevatedButton.icon(
+                                                          icon: Icon(
+                                                            Icons.save,
+                                                            color: Colors.white,
+                                                            size: 20.0,
+                                                          ),
+                                                          label: pmBtnLabel(
+                                                              "Close"),
+                                                          onPressed: () async {
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop(false);
+                                                          },
+                                                          style: ElevatedButton.styleFrom(
+                                                              elevation: 0.0,
+                                                              backgroundColor:
+                                                                  Colors
+                                                                      .orangeAccent,
+                                                              padding: EdgeInsets
+                                                                  .symmetric(
+                                                                      horizontal:
+                                                                          10,
+                                                                      vertical:
+                                                                          0),
+                                                              textStyle: TextStyle(
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold)),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }
+                                              } else {
+                                                alert(
+                                                    globalScaffoldKey
+                                                        .currentContext!,
+                                                    0,
+                                                    "Anda tidak punya izin untuk melakukan approval",
+                                                    "error");
+                                              }
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                                elevation: 0.0,
+                                                backgroundColor: primaryOrange,
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 5, vertical: 0),
+                                                textStyle: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                          )),
+                                        ],
+                                      ),
+                                    ]);
+                              });
+                        } else {
+                          //Navigator.of(context).pop(false);
+                          await Future.delayed(Duration(milliseconds: 1));
+                          alert(context, 2, "tidak ada data yang di temukan",
+                              "warning");
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: primaryOrange,
+                        padding:
                             EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                            textStyle: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.bold)),
-                      )),
+                        textStyle: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold)),
+                  )),
                   //SizedBox(width: 5),
                 ]),
               ),
@@ -10754,11 +11204,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
     } else {
       return Container(
           child: Center(
-            child: Text(
-              "Anda tidak punya akses",
-              textAlign: TextAlign.center,
-            ),
-          ));
+        child: Text(
+          "Anda tidak punya akses",
+          textAlign: TextAlign.center,
+        ),
+      ));
     }
   }
 
@@ -10839,15 +11289,15 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 cursorColor: primaryOrange,
                 style: TextStyle(color: Colors.black87, fontSize: 14),
                 decoration: softDecoration(
-                    label: "Search",
-                    hint: "Search nopol/locid",
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        getJSONData(true, txtSearchVehicleStart.text);
-                      },
-                      icon: Icon(Icons.search, color: primaryOrange),
-                    ),
-                    prefixIcon: Icon(Icons.search, color: primaryOrange),
+                  label: "Search",
+                  hint: "Search nopol/locid",
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      getJSONData(true, txtSearchVehicleStart.text);
+                    },
+                    icon: Icon(Icons.search, color: primaryOrange),
+                  ),
+                  prefixIcon: Icon(Icons.search, color: primaryOrange),
                 ),
               ),
             ),
@@ -10897,15 +11347,15 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   cursorColor: primaryOrange,
                   style: TextStyle(color: Colors.black87, fontSize: 14),
                   decoration: softDecoration(
-                      label: "Search",
-                      hint: "Search nopol/wo/sr number",
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          getJSONDataFinish(false, txtSearchVehicleFinish.text);
-                        },
-                        icon: Icon(Icons.search, color: primaryOrange),
-                      ),
-                      prefixIcon: Icon(Icons.search, color: primaryOrange),
+                    label: "Search",
+                    hint: "Search nopol/wo/sr number",
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        getJSONDataFinish(false, txtSearchVehicleFinish.text);
+                      },
+                      icon: Icon(Icons.search, color: primaryOrange),
+                    ),
+                    prefixIcon: Icon(Icons.search, color: primaryOrange),
                   ),
                 ),
               ),
@@ -10960,15 +11410,15 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   cursorColor: primaryOrange,
                   style: TextStyle(color: Colors.black87, fontSize: 14),
                   decoration: softDecoration(
-                      label: "Search",
-                      hint: "Search nopol/wo/sr number",
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          getJSONDataQC(true, txtSearchVehicleQC.text);
-                        },
-                        icon: Icon(Icons.search, color: primaryOrange),
-                      ),
-                      prefixIcon: Icon(Icons.search, color: primaryOrange),
+                    label: "Search",
+                    hint: "Search nopol/wo/sr number",
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        getJSONDataQC(true, txtSearchVehicleQC.text);
+                      },
+                      icon: Icon(Icons.search, color: primaryOrange),
+                    ),
+                    prefixIcon: Icon(Icons.search, color: primaryOrange),
                   ),
                 ),
               ),
@@ -11000,6 +11450,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
       ));
     }
   }
+
 //OK
   Widget _buildDListRequestOprsStartFOREMAN(dynamic item, int index) {
     return _pmListCard(
@@ -11031,8 +11482,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 color: Colors.white,
                 size: 15.0,
               ),
-              label:
-                  Text("Opname", style: TextStyle(color: Colors.white)),
+              label: Text("Opname", style: TextStyle(color: Colors.white)),
               onPressed: () async {
                 print('OPNAME FOREMAN LIST ${item['wodwonbr']}');
                 print('show dialog');
@@ -11068,19 +11518,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
                   builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("Cancel data ${item['srnumber']}"),
-                            actions: <Widget>[
+                    title: 'Information',
+                    content: Text("Cancel data ${item['srnumber']}"),
+                    actions: <Widget>[
                       ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(globalScaffoldKey.currentContext!)
-                                .pop(false);
-                          },
-                          child: pmBtnLabel('No'),
-                          style: pmBtnStyle(Colors.grey.shade500),
-                        ),
+                        onPressed: () {
+                          Navigator.of(globalScaffoldKey.currentContext!)
+                              .pop(false);
+                        },
+                        child: pmBtnLabel('No'),
+                        style: pmBtnStyle(Colors.grey.shade500),
+                      ),
                       ElevatedButton(
-                          onPressed: () async {
+                        onPressed: () async {
                           //_tabController.animateTo(0);
                           Navigator.of(globalScaffoldKey.currentContext!)
                               .pop(false);
@@ -11088,11 +11538,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               item['srnumber'], item['vhcid'], item['drvid']);
                           //
                         },
-                          child: pmBtnLabel('Ok'),
-                          style: pmBtnStyle(primaryOrange),
-                        ),
+                        child: pmBtnLabel('Ok'),
+                        style: pmBtnStyle(primaryOrange),
+                      ),
                     ],
-                          ),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -11110,166 +11560,10 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 color: Colors.white,
                 size: 15.0,
               ),
-              label: pmBtnLabel("WO Start"),//
+              label: pmBtnLabel("WO Start"), //
               onPressed: () async {
-                showDialog(
-                  context: globalScaffoldKey.currentContext!,
-                  builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("Start data ${item['srnumber']}"),
-                            actions: <Widget>[
-                      ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(globalScaffoldKey.currentContext!)
-                                .pop(false);
-                            resetTeks();
-                          },
-                          child: pmBtnLabel('No'),
-                          style: pmBtnStyle(Colors.grey.shade500),
-                        ),
-                      new TextButton(
-                        onPressed: () async {
-                          print("Start Foremman ${userid.toUpperCase()}");
-                          //_tabController.animateTo(0);
-                          Navigator.of(globalScaffoldKey.currentContext!)
-                              .pop(false);
-                          showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (context) => new AlertDialog(
-                              //title: new Text('Start '),
-                              //content: new Text("Cancel data ini?"),
-                              content: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                //position
-                                mainAxisSize: MainAxisSize.min,
-                                // wrap content in flutter
-                                children: <Widget>[
-                                  Container(
-                                    margin: EdgeInsets.all(12.0),
-                                    child: TextField(
-                                      cursorColor: Colors.black,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade800),
-                                      controller: txtWorkedBy,
-                                      onTap: () {
-                                        _showModalListMechanic(context);
-                                      },
-                                      keyboardType: TextInputType.text,
-                                      decoration: new InputDecoration(
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        isDense: true,
-                                        labelText: "Mechanic ID 1",
-                                        contentPadding: EdgeInsets.all(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: EdgeInsets.all(12.0),
-                                    child: TextField(
-                                      cursorColor: Colors.black,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade800),
-                                      controller: txtWorkedBy2,
-                                      onTap: () {
-                                        _showModalListMechanic2(context);
-                                      },
-                                      keyboardType: TextInputType.text,
-                                      decoration: new InputDecoration(
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        isDense: true,
-                                        labelText: "Mechanic ID 2",
-                                        contentPadding: EdgeInsets.all(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: EdgeInsets.all(12.0),
-                                    child: TextField(
-                                      cursorColor: Colors.black,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade800),
-                                      controller: txtWodNotes,
-                                      keyboardType: TextInputType.text,
-                                      decoration: new InputDecoration(
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        isDense: true,
-                                        labelText: "Notes",
-                                        contentPadding: EdgeInsets.all(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                          ),
-                              actions: <Widget>[
-                                new TextButton(
-                                    onPressed: () async {
-                                      Navigator.of(
-                                              globalScaffoldKey.currentContext!)
-                                          .pop(false);
-                                    },
-                                    child: new Text('No')),
-                                new TextButton(
-                                  onPressed: () async {
-                                    Navigator.of(
-                                            globalScaffoldKey.currentContext!)
-                                        .pop(false);
-                                    showDialog(
-                                      context:
-                                          globalScaffoldKey.currentContext!,
-                                      builder: (context) => new AlertDialog(
-                                        title: new Text(
-                                            'Information: Start this data?'),
-                                        //content: new Text("Cancel data ini?"),
-
-                                        actions: <Widget>[
-                                          new TextButton(
-                                              onPressed: () async {
-                                                Navigator.of(globalScaffoldKey
-                                                        .currentContext!)
-                                                    .pop(false);
-                                              },
-                                              child: new Text('No')),
-                                          new TextButton(
-                                            onPressed: () async {
-                                              Navigator.of(globalScaffoldKey
-                                                      .currentContext!)
-                                                  .pop(false);
-                                              var workedby = txtWorkedById.text;
-                                              var workedby2 =
-                                                  txtWorkedById2.text;
-                                              print(txtWodNotes.text);
-                                              startRequestServiceForeman(
-                                                  item['srnumber'],
-                                                  item['wodwonbr'],
-                                                  workedby,
-                                                  workedby2,
-                                                  item['vhcid'],
-                                                  item['drvid'],
-                                                  item['srkm'],
-                                                  txtWodNotes.text,
-                                                  item['srtypeid']);
-                                            },
-                                            child: new Text('Ok'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                  child: new Text('Ok'),
-                                ),
-                              ],
-                            ),
-                          );
-                          //
-                        },
-                        child: new Text('Ok'),
-                      ),
-                    ],
-                  ),
-                );
+                resetTeks();
+                _showDialogStartWo(context, item);
               },
               style: ElevatedButton.styleFrom(
                   elevation: 0.0,
@@ -11301,15 +11595,15 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   showDialog(
                     context: globalScaffoldKey.currentContext!,
                     builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("Edit data ${item['srnumber']}"),
-                            actions: <Widget>[
+                      title: 'Information',
+                      content: Text("Edit data ${item['srnumber']}"),
+                      actions: <Widget>[
                         ElevatedButton(
                           onPressed: () {
-                              Navigator.of(globalScaffoldKey.currentContext!)
-                                  .pop(false);
-                              resetTeks();
-                            },
+                            Navigator.of(globalScaffoldKey.currentContext!)
+                                .pop(false);
+                            resetTeks();
+                          },
                           child: pmBtnLabel('No'),
                           style: pmBtnStyle(Colors.grey.shade500),
                         ),
@@ -11342,7 +11636,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           style: pmBtnStyle(primaryOrange),
                         ),
                       ],
-                          ),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -11381,20 +11675,20 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
                   builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("Edit data ${item['srnumber']}"),
-                            actions: <Widget>[
+                    title: 'Information',
+                    content: Text("Edit data ${item['srnumber']}"),
+                    actions: <Widget>[
                       ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(globalScaffoldKey.currentContext!)
-                                .pop(false);
-                            resetTeks();
-                          },
-                          child: pmBtnLabel('No'),
-                          style: pmBtnStyle(Colors.grey.shade500),
-                        ),
+                        onPressed: () {
+                          Navigator.of(globalScaffoldKey.currentContext!)
+                              .pop(false);
+                          resetTeks();
+                        },
+                        child: pmBtnLabel('No'),
+                        style: pmBtnStyle(Colors.grey.shade500),
+                      ),
                       ElevatedButton(
-                          onPressed: () async {
+                        onPressed: () async {
                           //_tabController.animateTo(0);
                           setState(() {
                             is_edit_req = true;
@@ -11418,11 +11712,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           _tabController.animateTo(0);
                           //
                         },
-                          child: pmBtnLabel('Ok'),
-                          style: pmBtnStyle(primaryOrange),
-                        ),
+                        child: pmBtnLabel('Ok'),
+                        style: pmBtnStyle(primaryOrange),
+                      ),
                     ],
-                          ),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -11445,19 +11739,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                 showDialog(
                   context: globalScaffoldKey.currentContext!,
                   builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("Cancel data ${item['srnumber']}"),
-                            actions: <Widget>[
+                    title: 'Information',
+                    content: Text("Cancel data ${item['srnumber']}"),
+                    actions: <Widget>[
                       ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(globalScaffoldKey.currentContext!)
-                                .pop(false);
-                          },
-                          child: pmBtnLabel('No'),
-                          style: pmBtnStyle(Colors.grey.shade500),
-                        ),
+                        onPressed: () {
+                          Navigator.of(globalScaffoldKey.currentContext!)
+                              .pop(false);
+                        },
+                        child: pmBtnLabel('No'),
+                        style: pmBtnStyle(Colors.grey.shade500),
+                      ),
                       ElevatedButton(
-                          onPressed: () async {
+                        onPressed: () async {
                           //_tabController.animateTo(0);
                           Navigator.of(globalScaffoldKey.currentContext!)
                               .pop(false);
@@ -11465,11 +11759,11 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               item['srnumber'], item['vhcid'], item['drvid']);
                           //
                         },
-                          child: pmBtnLabel('Ok'),
-                          style: pmBtnStyle(primaryOrange),
-                        ),
+                        child: pmBtnLabel('Ok'),
+                        style: pmBtnStyle(primaryOrange),
+                      ),
                     ],
-                          ),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -11489,163 +11783,8 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               ),
               label: pmBtnLabel("Start"),
               onPressed: () async {
-                showDialog(
-                  context: globalScaffoldKey.currentContext!,
-                  builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("Start data ${item['srnumber']}"),
-                            actions: <Widget>[
-                      ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(globalScaffoldKey.currentContext!)
-                                .pop(false);
-                            resetTeks();
-                          },
-                          child: pmBtnLabel('No'),
-                          style: pmBtnStyle(Colors.grey.shade500),
-                        ),
-                      new TextButton(
-                        onPressed: () async {
-                          //_tabController.animateTo(0);
-                          Navigator.of(globalScaffoldKey.currentContext!)
-                              .pop(false);
-                          showDialog(
-                            context: globalScaffoldKey.currentContext!,
-                            builder: (context) => new AlertDialog(
-                              //title: new Text('Start '),
-                              //content: new Text("Cancel data ini?"),
-                              content: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                //position
-                                mainAxisSize: MainAxisSize.min,
-                                // wrap content in flutter
-                                children: <Widget>[
-                                  Container(
-                                    margin: EdgeInsets.all(12.0),
-                                    child: TextField(
-                                      cursorColor: Colors.black,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade800),
-                                      controller: txtWorkedBy,
-                                      onTap: () {
-                                        _showModalListMechanic(context);
-                                      },
-                                      keyboardType: TextInputType.text,
-                                      decoration: new InputDecoration(
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        isDense: true,
-                                        labelText: "Mechanic ID 1",
-                                        contentPadding: EdgeInsets.all(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: EdgeInsets.all(12.0),
-                                    child: TextField(
-                                      cursorColor: Colors.black,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade800),
-                                      controller: txtWorkedBy2,
-                                      onTap: () {
-                                        _showModalListMechanic2(context);
-                                      },
-                                      keyboardType: TextInputType.text,
-                                      decoration: new InputDecoration(
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        isDense: true,
-                                        labelText: "Mechanic ID 2",
-                                        contentPadding: EdgeInsets.all(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    margin: EdgeInsets.all(12.0),
-                                    child: TextField(
-                                      cursorColor: Colors.black,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade800),
-                                      controller: txtWodNotes,
-                                      keyboardType: TextInputType.text,
-                                      decoration: new InputDecoration(
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        isDense: true,
-                                        labelText: "Notes",
-                                        contentPadding: EdgeInsets.all(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                          ),
-                              actions: <Widget>[
-                                new TextButton(
-                                    onPressed: () async {
-                                      Navigator.of(
-                                              globalScaffoldKey.currentContext!)
-                                          .pop(false);
-                                    },
-                                    child: new Text('No')),
-                                new TextButton(
-                                  onPressed: () async {
-                                    Navigator.of(
-                                            globalScaffoldKey.currentContext!)
-                                        .pop(false);
-                                    showDialog(
-                                      context:
-                                          globalScaffoldKey.currentContext!,
-                                      builder: (context) => new AlertDialog(
-                                        title: new Text(
-                                            'Information: Start this data?'),
-                                        //content: new Text("Cancel data ini?"),
-
-                                        actions: <Widget>[
-                                          new TextButton(
-                                              onPressed: () async {
-                                                Navigator.of(globalScaffoldKey
-                                                        .currentContext!)
-                                                    .pop(false);
-                                              },
-                                              child: new Text('No')),
-                                          new TextButton(
-                                            onPressed: () async {
-                                              Navigator.of(globalScaffoldKey
-                                                      .currentContext!)
-                                                  .pop(false);
-                                              var workedby = txtWorkedById.text;
-                                              var workedby2 =
-                                                  txtWorkedById2.text;
-                                              print(txtWodNotes.text);
-                                              startRequestServiceForeman(
-                                                  item['srnumber'],
-                                                  item['wodwonbr'],
-                                                  workedby,
-                                                  workedby2,
-                                                  item['vhcid'],
-                                                  item['drvid'],
-                                                  item['srkm'],
-                                                  txtWodNotes.text,
-                                                  item['srtypeid']);
-                                            },
-                                            child: new Text('Ok'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                  child: new Text('Ok'),
-                                ),
-                              ],
-                            ),
-                          );
-                          //
-                        },
-                        child: new Text('Ok'),
-                      ),
-                    ],
-                  ),
-                );
+                resetTeks();
+                _showDialogStartWo(context, item);
               },
               style: ElevatedButton.styleFrom(
                   elevation: 0.0,
@@ -11677,15 +11816,15 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   showDialog(
                     context: globalScaffoldKey.currentContext!,
                     builder: (context) => pmAlertDialog(
-                            title: 'Information',
-                            content: Text("Edit data ${item['srnumber']}"),
-                            actions: <Widget>[
+                      title: 'Information',
+                      content: Text("Edit data ${item['srnumber']}"),
+                      actions: <Widget>[
                         ElevatedButton(
                           onPressed: () {
-                              Navigator.of(globalScaffoldKey.currentContext!)
-                                  .pop(false);
-                              resetTeks();
-                            },
+                            Navigator.of(globalScaffoldKey.currentContext!)
+                                .pop(false);
+                            resetTeks();
+                          },
                           child: pmBtnLabel('No'),
                           style: pmBtnStyle(Colors.grey.shade500),
                         ),
@@ -11718,7 +11857,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           style: pmBtnStyle(primaryOrange),
                         ),
                       ],
-                          ),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -11748,125 +11887,1371 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         _kv("Notes", (item['srnotes'] ?? '').toString()),
       ],
       actions: Column(
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(
-                          Icons.build_circle,
-                          color: Colors.white,
-                          size: 16.0,
-                        ),
-                        label: pmBtnLabel("Add/Update"),
-                        onPressed: () async {
-                          mechanicID = null;
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(
+                    Icons.build_circle,
+                    color: Colors.white,
+                    size: 16.0,
+                  ),
+                  label: pmBtnLabel("Add/Update"),
+                  onPressed: () async {
+                    mechanicID = null;
 
-                          SharedPreferences prefs =
-                              await SharedPreferences.getInstance();
+                    SharedPreferences prefs =
+                        await SharedPreferences.getInstance();
 
-                          prefs.setString("wo_mcn_detail", item['wodwonbr']);
-                          prefs.setString("srnumber_mcn_detail", item['srnumber']);
+                    prefs.setString("wo_mcn_detail", item['wodwonbr']);
+                    prefs.setString("srnumber_mcn_detail", item['srnumber']);
 
-                          EasyLoading.show();
+                    EasyLoading.show();
 
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ViewListMcnDetail(),
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ViewListMcnDetail(),
+                      ),
+                    );
+                  },
+                  style: pmBtnStyle(primaryOrange),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(
+                    Icons.list_alt,
+                    color: Colors.white,
+                    size: 16.0,
+                  ),
+                  label: pmBtnLabel("Detail List."),
+                  onPressed: () async {
+                    await getListDataListMechanic(item['wodwonbr']);
+
+                    if (dataListMechanicProses.isNotEmpty) {
+                      showDialog(
+                        context: context, //
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                            backgroundColor: cardColor,
+                            title: Text(
+                              'List Detail Mechanic',
+                              style: TextStyle(
+                                  color: darkOrange,
+                                  fontWeight: FontWeight.w600),
                             ),
+                            content: listDataMechanicProses(context),
+                            actions: <Widget>[
+                              ElevatedButton.icon(
+                                icon: Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 16.0,
+                                ),
+                                label: pmBtnLabel("Close"),
+                                onPressed: () {
+                                  Navigator.of(context).pop(false);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  elevation: 0.0,
+                                  backgroundColor: Colors.orangeAccent,
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  textStyle: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
                           );
                         },
-                        style: pmBtnStyle(primaryOrange),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(
-                          Icons.list_alt,
-                          color: Colors.white,
-                          size: 16.0,
-                        ),
-                        label: pmBtnLabel("Detail List."),
-                        onPressed: () async {
-                          await getListDataListMechanic(item['wodwonbr']);
-
-                          if (dataListMechanicProses.isNotEmpty) {
-                            showDialog(
-                              context: context,//
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16)),
-                                  backgroundColor: cardColor,
-                                  title: Text(
-                                    'List Detail Mechanic',
-                                    style: TextStyle(
-                                        color: darkOrange,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                  content: listDataMechanicProses(context),
-                                  actions: <Widget>[
-                                    ElevatedButton.icon(
-                                      icon: Icon(
-                                        Icons.close,
-                                        color: Colors.white,
-                                        size: 16.0,
-                                      ),
-                                      label: pmBtnLabel("Close"),
-                                      onPressed: () {
-                                        Navigator.of(context).pop(false);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        elevation: 0.0,
-                                        backgroundColor: Colors.orangeAccent,
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 8),
-                                        textStyle: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          }
-                        },
-                        style: pmBtnStyle(accentOrange),
-                      ),
-                    ),
-                  ],
+                      );
+                    }
+                  },
+                  style: pmBtnStyle(accentOrange2),
                 ),
-                const SizedBox(height: 6),//
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(
-                      Icons.inventory_2_rounded,
-                      color: Colors.white,
-                      size: 16.0,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: const Icon(
+                Icons.inventory_2_rounded,
+                color: Colors.white,
+                size: 16.0,
+              ),
+              label: pmBtnLabel("Opname"),
+              onPressed: () async {
+                print('OPNAME PROSES ${item['wodwonbr']}');
+                await getListDataItemForeman(item["wodwonbr"]);
+                txtOpnameWONUMBER.text = item['srnumber'];
+                wonumberopname = item['wodwonbr'];
+                if (dataListItemSearch.length > 0) {
+                  listSRNumberOpnameDetail = item['srnumber'];
+                  listOpnameVHCID = item['vhcid'];
+                }
+                await _showOpnameDetailDialog(context);
+              },
+              style: pmBtnStyle(accentOrange),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCatatanDialogQC(BuildContext context, dynamic item) {
+    final TextEditingController txtCatatan = TextEditingController();
+    showDialog(
+      context: globalScaffoldKey.currentContext!,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: cardColor,
+          titlePadding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
+          contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          title: Row(
+            children: [
+              Icon(Icons.speaker_notes_outlined, color: darkOrange, size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Catatan Work Order',
+                  style: TextStyle(
+                    color: darkOrange,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.black54, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: lightOrange,
+                    borderRadius: BorderRadius.circular(8),
+                    border:
+                        Border.all(color: accentOrange.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    children: [
+                      _kv("SR Number", (item['srnumber'] ?? '-').toString(),
+                          dense: true),
+                      _kv("WO Number", (item['wodwonbr'] ?? '-').toString(),
+                          dense: true),
+                      _kv("Unit / VHCID", (item['vhcid'] ?? '-').toString(),
+                          dense: true),
+                      _kv("Driver", (item['drvname'] ?? '-').toString(),
+                          dense: true),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  //
+                  "Isi Catatan:",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: darkOrange,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: txtCatatan,
+                  maxLines: 4,
+                  cursorColor: primaryOrange,
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  decoration: InputDecoration(
+                    fillColor: Colors.white,
+                    filled: true,
+                    hintText: "Masukkan catatan untuk WO ini...",
+                    hintStyle:
+                        TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                    contentPadding: const EdgeInsets.all(12),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
                     ),
-                    label: pmBtnLabel("Opname"),
-                    onPressed: () async {
-                      print('OPNAME PROSES ${item['wodwonbr']}');
-                      await getListDataItemForeman(item["wodwonbr"]);
-                      txtOpnameWONUMBER.text = item['srnumber'];
-                      wonumberopname = item['wodwonbr'];
-                      if (dataListItemSearch.length > 0) {
-                        listSRNumberOpnameDetail = item['srnumber'];
-                        listOpnameVHCID = item['vhcid'];
-                      }
-                      await _showOpnameDetailDialog(context);
-                    },
-                    style: pmBtnStyle(accentOrange),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: primaryOrange, width: 1.5),
+                    ),
                   ),
                 ),
               ],
             ),
+          ),
+          actions: <Widget>[
+            ElevatedButton.icon(
+              icon: const Icon(Icons.close, color: Colors.white, size: 16.0),
+              label: pmBtnLabel("Batal"),
+              style: pmBtnStyle(Colors.grey.shade500),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.send_rounded,
+                  color: Colors.white, size: 16.0),
+              label: pmBtnLabel("Kirim Catatan"),
+              style: pmBtnStyle(primaryOrange),
+              onPressed: () {
+                // Confirm Dialog Yes or No sebelum hit to server
+                showDialog(
+                  context: globalScaffoldKey.currentContext!,
+                  builder: (BuildContext confirmContext) {
+                    return pmAlertDialog(
+                      title: 'Konfirmasi',
+                      content: Text(
+                          "Apakah Anda yakin ingin mengirim catatan untuk WO ${item['wodwonbr']}?"),
+                      actions: [
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.close,
+                              color: Colors.white, size: 16.0),
+                          label: pmBtnLabel("Tidak"),
+                          style: pmBtnStyle(Colors.grey.shade500),
+                          onPressed: () => Navigator.of(confirmContext).pop(),
+                        ),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.check,
+                              color: Colors.white, size: 16.0),
+                          label: pmBtnLabel("Ya, Kirim"),
+                          style: pmBtnStyle(primaryOrange),
+                          onPressed: () async {
+                            Navigator.of(confirmContext).pop();
+                            Navigator.of(dialogContext).pop();
+                            await _hitUpdateCatatanServer(
+                                (item['wodwonbr'] ?? '').toString(),
+                                txtCatatan.text.trim(),
+                                item);
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
+
+  Future<void> _hitUpdateCatatanServer(
+      String wodwonbr, String catatan, dynamic item) async {
+    try {
+      EasyLoading.show(status: "Menyimpan catatan...");
+      final url =
+          Uri.parse("${BASE_URL}api/maintenance/sr/update_catatan_wo.jsp")
+              .replace(queryParameters: {
+        'wodwonbr': wodwonbr,
+        'wh': catatan,
+      });
+      final res = await http.get(url, headers: {"Accept": "application/json"});
+      EasyLoading.dismiss();
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body);
+        if (data['status_code'] == 200) {
+          setState(() {
+            item['srnotes'] = catatan;
+          });
+          alert(
+              globalScaffoldKey.currentContext!,
+              1,
+              data['message'] ?? "Catatan berhasil disimpan ke server",
+              "success");
+        } else {
+          alert(globalScaffoldKey.currentContext!, 3,
+              data['message'] ?? "Gagal update catatan", "error");
+        }
+      } else {
+        alert(globalScaffoldKey.currentContext!, 3,
+            "Server error: ${res.statusCode}", "error");
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      alert(globalScaffoldKey.currentContext!, 3, "Error: $e", "error");
+    }
+  }
+
+  void _showCreatePrPbDialogQC(BuildContext context, dynamic item) async {
+    final String currentWoNumber = (item['wodwonbr'] ?? '').toString();
+    final String currentSrNumber = (item['srnumber'] ?? '').toString();
+    final String currentVhcId = (item['vhcid'] ?? '').toString();
+    final String currentDrvName = (item['drvname'] ?? '-').toString();
+
+    wonumberopname = currentWoNumber;
+    srnumberopname = currentSrNumber;
+    txtOpnameWONUMBER.text = currentSrNumber;
+    txtOpnameVHCID.text = currentVhcId;
+    fnVHCID = currentVhcId;
+    fnWONUMBER = currentWoNumber;
+    fnSRNUMBER = currentSrNumber;
+    fnWONUMBERQC = currentWoNumber;
+    service_typeid = (item['srtypeid'] ?? '').toString();
+    pm_locid = (item['srlocid'] ?? '').toString();
+    METHOD_DETAIL = 'PURCHASE-ORDER';
+    btnNameCreatePR = 'Create PR';
+
+    // Bersihkan form input saat dialog dibuka
+    txtItemID.text = "";
+    txtPartName.text = "";
+    txtItemSize.text = "";
+    txtTypeID.text = "";
+    txtTypeAccess.text = "";
+    txtGenuineNoOpname.text = "";
+    txtOpnameMerk.text = "";
+    txtOpnameQty.text = "";
+    selKatalog = "";
+    selStatusItem = "";
+    txtEstimasi.text = "";
+
+    if (lstVKatalog.isEmpty) {
+      await getMenuKatalog();
+    }
+
+    String? editingDetailId;
+    List<Map<String, dynamic>> dialogDetails = [];
+    bool isLoadingDetails = false;
+    bool hasInitialized = false;
+
+    showDialog(
+      context: globalScaffoldKey.currentContext!,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            // 1. SELECT API: list_opname_sr_detail_dialog.jsp
+            Future<void> fetchDetails() async {
+              setDialogState(() => isLoadingDetails = true);
+              try {
+                final url = Uri.parse(
+                        "${BASE_URL}api/maintenance/sr/list_opname_sr_detail_dialog.jsp")
+                    .replace(
+                  queryParameters: {
+                    'wonumber': currentWoNumber,
+                    'srnumber': currentSrNumber,
+                    'vhcid': currentVhcId,
+                  },
+                );
+                final res = await http
+                    .get(url, headers: {"Accept": "application/json"});
+                if (res.statusCode == 200) {
+                  final decoded = json.decode(res.body);
+                  if (decoded is List) {
+                    dialogDetails = decoded
+                        .map((e) => Map<String, dynamic>.from(e))
+                        .toList();
+                  }
+                }
+              } catch (e) {
+                print("Error fetchDetails dialog: $e");
+              } finally {
+                setDialogState(() => isLoadingDetails = false);
+              }
+            }
+
+            if (!hasInitialized) {
+              hasInitialized = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                fetchDetails();
+              });
+            }
+
+            // 2. DELETE API: delete_opname_sr_detail_dialog.jsp
+            Future<void> deleteDetail(dynamic detailItem) async {
+              final String detailId = (detailItem['id'] ?? '').toString();
+              if (detailId.isEmpty) return;
+
+              showDialog(
+                context: context,
+                builder: (ctx) => pmAlertDialog(
+                  title: 'Konfirmasi Hapus',
+                  content: Text(
+                      "Hapus ${detailItem['partname'] ?? 'item ini'} dari detail opname?"),
+                  actions: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.close,
+                          color: Colors.white, size: 16.0),
+                      label: pmBtnLabel("Batal"),
+                      style: pmBtnStyle(Colors.grey.shade500),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.delete,
+                          color: Colors.white, size: 16.0),
+                      label: pmBtnLabel("Ya, Hapus"),
+                      style: pmBtnStyle(Colors.redAccent),
+                      onPressed: () async {
+                        Navigator.of(ctx).pop();
+                        EasyLoading.show(status: "Menghapus item...");
+                        try {
+                          final url = Uri.parse(
+                                  "${BASE_URL}api/maintenance/sr/delete_opname_sr_detail_dialog.jsp")
+                              .replace(
+                            queryParameters: {
+                              'id': detailId,
+                              'itemid': (detailItem['itemid'] ?? '').toString(),
+                              'nomor_sr': currentWoNumber,
+                              'userid': userid.toUpperCase(),
+                            },
+                          );
+                          final res = await http.get(url,
+                              headers: {"Accept": "application/json"});
+                          EasyLoading.dismiss();
+                          if (res.statusCode == 200) {
+                            final data = json.decode(res.body);
+                            if (data['status_code'] == 200) {
+                              alert(globalScaffoldKey.currentContext!, 1,
+                                  "Item berhasil dihapus", "success");
+                              await fetchDetails();
+                            } else {
+                              alert(
+                                  globalScaffoldKey.currentContext!,
+                                  0,
+                                  data['message'] ?? "Gagal menghapus",
+                                  "error");
+                            }
+                          } else {
+                            alert(globalScaffoldKey.currentContext!, 0,
+                                "Gagal menghapus item", "error");
+                          }
+                        } catch (e) {
+                          EasyLoading.dismiss();
+                          alert(globalScaffoldKey.currentContext!, 0,
+                              "Error: $e", "error");
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // 3. CLOSE APPROVAL API: approve_opname_sr_detail_dialog.jsp
+            Future<void> approveOpname() async {
+              showDialog(
+                context: context,
+                builder: (ctx) => pmAlertDialog(
+                  title: 'Konfirmasi Approval',
+                  content: Text(
+                      "Approve / Close Approval Opname untuk WO $currentWoNumber?"),
+                  actions: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.close,
+                          color: Colors.white, size: 16.0),
+                      label: pmBtnLabel("Batal"),
+                      style: pmBtnStyle(Colors.grey.shade500),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.check_circle,
+                          color: Colors.white, size: 16.0),
+                      label: pmBtnLabel("Ya, Approve"),
+                      style: pmBtnStyle(primaryOrange),
+                      onPressed: () async {
+                        Navigator.of(ctx).pop();
+                        EasyLoading.show(status: "Memproses approval...");
+                        try {
+                          final url = Uri.parse(
+                                  "${BASE_URL}api/maintenance/sr/approve_opname_sr_detail_dialog.jsp")
+                              .replace(
+                            queryParameters: {
+                              'wonumber': currentWoNumber,
+                              'vhcid': currentVhcId,
+                              'estimasi': txtEstimasi.text.trim(),
+                              'userid': userid.toUpperCase(),
+                            },
+                          );
+                          final res = await http.get(url,
+                              headers: {"Accept": "application/json"});
+                          EasyLoading.dismiss();
+                          if (res.statusCode == 200) {
+                            final data = json.decode(res.body);
+                            if (data['status_code'] == 200) {
+                              alert(
+                                  globalScaffoldKey.currentContext!,
+                                  1,
+                                  data['message'] ??
+                                      "Berhasil approve opname",
+                                  "success");
+                              await fetchDetails();
+                            } else {
+                              alert(
+                                  globalScaffoldKey.currentContext!,
+                                  0,
+                                  data['message'] ?? "Gagal approve opname",
+                                  "error");
+                            }
+                          } else {
+                            alert(globalScaffoldKey.currentContext!, 0,
+                                "Gagal approve opname", "error");
+                          }
+                        } catch (e) {
+                          EasyLoading.dismiss();
+                          alert(globalScaffoldKey.currentContext!, 0,
+                              "Error: $e", "error");
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // 4. SAVE (create_opname_sr_detail_dialog.jsp) & EDIT (edit_opname_sr_detail_dialog.jsp)
+            Future<void> saveOrUpdateItem() async {
+              if (txtItemID.text.isEmpty) {
+                alert(globalScaffoldKey.currentContext!, 0,
+                    "Item belum dipilih", "error");
+                return;
+              }
+              if (txtOpnameQty.text.isEmpty ||
+                  (double.tryParse(txtOpnameQty.text) ?? 0) <= 0) {
+                alert(globalScaffoldKey.currentContext!, 0,
+                    "QTY tidak boleh 0 / kosong", "error");
+                return;
+              }
+
+              final isEditing = editingDetailId != null;
+              final confirmTitle =
+                  isEditing ? "Konfirmasi Edit" : "Konfirmasi Simpan";
+              final confirmContent = isEditing
+                  ? "Update data ${txtPartName.text} (QTY: ${txtOpnameQty.text})?"
+                  : "Simpan PR/PB untuk ${txtPartName.text} (QTY: ${txtOpnameQty.text})?";
+
+              showDialog(
+                context: globalScaffoldKey.currentContext!,
+                builder: (ctx) => pmAlertDialog(
+                  title: confirmTitle,
+                  content: Text(confirmContent),
+                  actions: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.close,
+                          color: Colors.white, size: 16.0),
+                      label: pmBtnLabel("Tidak"),
+                      style: pmBtnStyle(Colors.grey.shade500),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.check,
+                          color: Colors.white, size: 16.0),
+                      label:
+                          pmBtnLabel(isEditing ? "Ya, Update" : "Ya, Simpan"),
+                      style: pmBtnStyle(primaryOrange),
+                      onPressed: () async {
+                        Navigator.of(ctx).pop();
+                        EasyLoading.show(
+                            status: isEditing
+                                ? "Mengupdate item..."
+                                : "Menyimpan item...");
+                        try {
+                          final String endpoint = isEditing
+                              ? "${BASE_URL}api/maintenance/sr/edit_opname_sr_detail_dialog.jsp"
+                              : "${BASE_URL}api/maintenance/sr/create_opname_sr_detail_dialog.jsp";
+
+                          final Map<String, String> data = isEditing
+                              ? {
+                                  'id': editingDetailId!,
+                                  'kode_katalog': selKatalog,
+                                  'itemid': txtItemID.text.trim(),
+                                  'genuineno': txtGenuineNoOpname.text.trim(),
+                                  'idtype': txtTypeID.text.trim(),
+                                  'partname': txtPartName.text.trim(),
+                                  'item_size': txtItemSize.text.trim(),
+                                  'idaccess': txtTypeAccess.text.trim(),
+                                  'status_item': selStatusItem ?? '',
+                                  'merk': txtOpnameMerk.text.trim(),
+                                  'qty': txtOpnameQty.text.trim(),
+                                  'estimasi': txtEstimasi.text.trim(),
+                                  'userid': userid.toUpperCase(),
+                                }
+                              : {
+                                  'method': "create-detail-proses_qc",
+                                  'wonumber_detail': currentWoNumber,
+                                  'vhcid': currentVhcId,
+                                  'kode_katalog': selKatalog,
+                                  'itemid': txtItemID.text.trim(),
+                                  'genuineno': txtGenuineNoOpname.text.trim(),
+                                  'merk': txtOpnameMerk.text.trim(),
+                                  'qty': txtOpnameQty.text.trim(),
+                                  'estimasi': txtEstimasi.text.trim(),
+                                  'idtype': txtTypeID.text.trim(),
+                                  'partname': txtPartName.text.trim(),
+                                  'item_size': txtItemSize.text.trim(),
+                                  'idaccess': txtTypeAccess.text.trim(),
+                                  'status_item': selStatusItem ?? '',
+                                  'userid': userid.toUpperCase(),
+                                  'company': 'AN',
+                                };
+
+                          final res = await http.post(
+                            Uri.parse(endpoint),
+                            body: data,
+                            headers: {
+                              "Content-Type":
+                                  "application/x-www-form-urlencoded"
+                            },
+                            encoding: Encoding.getByName('utf-8'),
+                          );
+                          EasyLoading.dismiss();
+                          if (res.statusCode == 200) {
+                            final resData = json.decode(res.body);
+                            if (resData['status_code'] == 200) {
+                              alert(
+                                  globalScaffoldKey.currentContext!,
+                                  1,
+                                  resData['message'] ??
+                                      (isEditing
+                                          ? "Berhasil update"
+                                          : "Berhasil disimpan"),
+                                  "success");
+                              setDialogState(() {
+                                editingDetailId = null;
+                                txtItemID.text = "";
+                                txtPartName.text = "";
+                                txtItemSize.text = "";
+                                txtTypeID.text = "";
+                                txtTypeAccess.text = "";
+                                txtGenuineNoOpname.text = "";
+                                txtOpnameMerk.text = "";
+                                txtOpnameQty.text = "";
+                                selKatalog = "";
+                                selStatusItem = "";
+                                txtEstimasi.text = "";
+                              });
+                              await fetchDetails();
+                            } else {
+                              alert(
+                                  globalScaffoldKey.currentContext!,
+                                  0,
+                                  resData['message'] ?? "Gagal menyimpan",
+                                  "error");
+                            }
+                          } else {
+                            alert(globalScaffoldKey.currentContext!, 0,
+                                "Gagal menghubungi server", "error");
+                          }
+                        } catch (e) {
+                          EasyLoading.dismiss();
+                          alert(globalScaffoldKey.currentContext!, 0,
+                              "Error: $e", "error");
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return AlertDialog(
+              insetPadding:
+                  const EdgeInsets.symmetric(horizontal: 10.0, vertical: 14.0),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              backgroundColor: cardColor,
+              titlePadding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
+              contentPadding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              actionsPadding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+              title: Row(
+                children: [
+                  Icon(Icons.inventory_2_outlined,
+                      color: primaryOrange, size: 24),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Form PR/PB - Data Opname',
+                      style: TextStyle(
+                        color: darkOrange,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close,
+                        color: Colors.black54, size: 20),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height * 0.82,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Info Card
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(top: 6, bottom: 8),
+                        decoration: BoxDecoration(
+                          color: lightOrange,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: accentOrange.withValues(alpha: 0.3)),
+                        ),
+                        child: Column(
+                          children: [
+                            _kv("SR Number", currentSrNumber, dense: true),
+                            _kv("WO Number", currentWoNumber, dense: true),
+                            _kv("VHCID", currentVhcId, dense: true),
+                            _kv("Driver", currentDrvName, dense: true),
+                          ],
+                        ),
+                      ),
+                      // Edit Banner if in edit mode
+                      if (editingDetailId != null)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.blue.shade300),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit_note,
+                                  color: Colors.blue.shade700, size: 20),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  "Mode Edit Detail (ID: $editingDetailId)",
+                                  style: TextStyle(
+                                    color: Colors.blue.shade900,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  setDialogState(() {
+                                    editingDetailId = null;
+                                    txtItemID.text = "";
+                                    txtPartName.text = "";
+                                    txtItemSize.text = "";
+                                    txtTypeID.text = "";
+                                    txtTypeAccess.text = "";
+                                    txtGenuineNoOpname.text = "";
+                                    txtOpnameMerk.text = "";
+                                    txtOpnameQty.text = "";
+                                    selKatalog = "";
+                                    selStatusItem = "";
+                                    txtEstimasi.text = "";
+                                  });
+                                },
+                                child: Icon(Icons.cancel,
+                                    color: Colors.blue.shade700, size: 18),
+                              ),
+                            ],
+                          ),
+                        ),
+                      // Katalog dropdown
+                      Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            hint: Text(
+                              selKatalog.isEmpty
+                                  ? 'Pilih Katalog'
+                                  : 'Katalog: ${_katalogTitleOf(selKatalog)}',
+                              style: TextStyle(
+                                  color: selKatalog.isEmpty
+                                      ? Colors.grey.shade600
+                                      : darkOrange,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            items: lstVKatalog.map((k) {
+                              final val = k['value']?.toString() ?? '';
+                              final tit = _katalogChoiceTitle(k);
+                              return DropdownMenuItem<String>(
+                                value: val,
+                                child: Text(tit,
+                                    style: const TextStyle(fontSize: 13)),
+                              );
+                            }).toList(),
+                            onChanged: (val) async {
+                              if (val != null && val.isNotEmpty) {
+                                setDialogState(() {
+                                  selKatalog = val;
+                                  nama_katalog =
+                                      '(${_katalogTitleOf(selKatalog)})';
+                                });
+                                await _openItemSearchDialog(
+                                    search: txtPartName.text);
+                                setDialogState(() {});
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      // Item ID with Search & Scan
+                      Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 4),
+                        child: TextField(
+                          readOnly: true,
+                          cursorColor: primaryOrange,
+                          style: const TextStyle(
+                              color: Colors.black87, fontSize: 13),
+                          controller: txtItemID,
+                          decoration: InputDecoration(
+                            fillColor: Colors.black12,
+                            filled: true,
+                            labelText: 'Item ID',
+                            isDense: true,
+                            contentPadding: const EdgeInsets.all(8.0),
+                            suffixIcon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.search,
+                                      color: primaryOrange, size: 22),
+                                  onPressed: () async {
+                                    txtPartName.text = "";
+                                    await _openItemSearchDialog(
+                                        search: txtPartName.text);
+                                    setDialogState(() {});
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.qr_code_scanner,
+                                      color: primaryOrange, size: 22),
+                                  onPressed: () {
+                                    if (selKatalog.isEmpty) {
+                                      alert(
+                                          globalScaffoldKey.currentContext!,
+                                          0,
+                                          "Katalog tidak boleh kosong",
+                                          "error");
+                                    } else {
+                                      scanQRCode();
+                                      setDialogState(() {});
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Part Name
+                      Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 4),
+                        child: TextField(
+                          readOnly: true,
+                          cursorColor: primaryOrange,
+                          style: const TextStyle(
+                              color: Colors.black87, fontSize: 13),
+                          controller: txtPartName,
+                          decoration: softDecoration(
+                              label: "Part Name", readOnly: true),
+                        ),
+                      ),
+                      // Item Size & Type ID
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 4),
+                              child: TextField(
+                                readOnly: true,
+                                style: const TextStyle(
+                                    color: Colors.black87, fontSize: 13),
+                                controller: txtItemSize,
+                                decoration: softDecoration(
+                                    label: "Item Size", readOnly: true),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 4),
+                              child: TextField(
+                                readOnly: true,
+                                style: const TextStyle(
+                                    color: Colors.black87, fontSize: 13),
+                                controller: txtTypeID,
+                                decoration: softDecoration(
+                                    label: "Type ID", readOnly: true),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // ID Access & Genuine No
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 4),
+                              child: TextField(
+                                readOnly: true,
+                                style: const TextStyle(
+                                    color: Colors.black87, fontSize: 13),
+                                controller: txtTypeAccess,
+                                decoration: softDecoration(
+                                    label: "ID Access", readOnly: true),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 4),
+                              child: TextField(
+                                readOnly: true,
+                                style: const TextStyle(
+                                    color: Colors.black87, fontSize: 13),
+                                controller: txtGenuineNoOpname,
+                                decoration: softDecoration(
+                                    label: "Genuine No", readOnly: true),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Merk & QTY
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 4),
+                              child: TextField(
+                                readOnly: true,
+                                style: const TextStyle(
+                                    color: Colors.black87, fontSize: 13),
+                                controller: txtOpnameMerk,
+                                decoration: softDecoration(
+                                    label: "Merk", readOnly: true),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 4),
+                              child: TextField(
+                                cursorColor: primaryOrange,
+                                style: const TextStyle(
+                                    color: Colors.black87, fontSize: 13),
+                                controller: txtOpnameQty,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                decoration: const InputDecoration(
+                                  filled: true,
+                                  labelText: 'QTY',
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.all(8.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Status Item dropdown
+                      Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            hint: Text(
+                              (selStatusItem == null || selStatusItem.isEmpty)
+                                  ? 'Status Item'
+                                  : 'Status: $selStatusItem',
+                              style: TextStyle(
+                                  color: (selStatusItem == null ||
+                                          selStatusItem.isEmpty)
+                                      ? Colors.grey.shade600
+                                      : darkOrange,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            items: choices.collStatusItemOpname.map((c) {
+                              return DropdownMenuItem<String>(
+                                value: c.value,
+                                child: Text(c.title ?? '',
+                                    style: const TextStyle(fontSize: 13)),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              setDialogState(() {
+                                selStatusItem = val ?? '';
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      // Estimasi Date Picker
+                      Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 4),
+                        child: TextField(
+                          onTap: () async {
+                            await dateTimePickerWidget(context);
+                            setDialogState(() {});
+                          },
+                          readOnly: true,
+                          cursorColor: primaryOrange,
+                          style: const TextStyle(
+                              color: Colors.black87, fontSize: 13),
+                          controller: txtEstimasi,
+                          keyboardType: TextInputType.datetime,
+                          decoration: InputDecoration(
+                            filled: true,
+                            labelText: 'Estimasi',
+                            isDense: true,
+                            contentPadding: const EdgeInsets.all(8.0),
+                            suffixIcon: Icon(Icons.calendar_today,
+                                color: primaryOrange, size: 18),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      // Tombol Form (Create/Update, Clear)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: Icon(
+                                  editingDetailId != null
+                                      ? Icons.edit
+                                      : Icons.save,
+                                  color: Colors.white,
+                                  size: 16.0),
+                              label: pmBtnLabel(editingDetailId != null
+                                  ? "Update PR/PB"
+                                  : "Create PR/PB"),
+                              style: pmBtnStyle(primaryOrange),
+                              onPressed: saveOrUpdateItem,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.cancel,
+                                color: Colors.white, size: 16.0),
+                            label: pmBtnLabel(editingDetailId != null
+                                ? "Batal Edit"
+                                : "Clear"),
+                            style: pmBtnStyle(Colors.orangeAccent),
+                            onPressed: () {
+                              setDialogState(() {
+                                editingDetailId = null;
+                                txtItemID.text = "";
+                                txtPartName.text = "";
+                                txtItemSize.text = "";
+                                txtTypeID.text = "";
+                                txtTypeAccess.text = "";
+                                txtGenuineNoOpname.text = "";
+                                txtOpnameMerk.text = "";
+                                txtOpnameQty.text = "";
+                                selKatalog = "";
+                                selStatusItem = "";
+                                txtEstimasi.text = "";
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Divider(thickness: 1.2),
+                      const SizedBox(height: 6),
+
+                      // SECTION: LIST DETAIL YANG SUDAH DI-INPUT
+                      Row(
+                        children: [
+                          Icon(Icons.format_list_bulleted_rounded,
+                              color: darkOrange, size: 20),
+                          const SizedBox(width: 6),
+                          Text(
+                            "List Detail Opname",
+                            style: TextStyle(
+                              color: darkOrange,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: lightOrange,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              "${dialogDetails.length}",
+                              style: TextStyle(
+                                color: primaryOrange,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: Icon(Icons.refresh,
+                                color: primaryOrange, size: 20),
+                            tooltip: "Refresh List",
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: fetchDetails,
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.check_circle_outline,
+                                color: Colors.white, size: 14),
+                            label: pmBtnLabel("Approval"),
+                            style: pmBtnStyle(Colors.green.shade700),
+                            onPressed: approveOpname,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      if (isLoadingDetails)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: CircularProgressIndicator(
+                                color: primaryOrange, strokeWidth: 2.5),
+                          ),
+                        )
+                      else if (dialogDetails.isEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          alignment: Alignment.center,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.inbox_outlined,
+                                  size: 36, color: Colors.grey.shade400),
+                              const SizedBox(height: 6),
+                              Text(
+                                "Belum ada item detail yang di-input",
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: dialogDetails.length,
+                          itemBuilder: (ctx, idx) {
+                            final d = dialogDetails[idx];
+                            final isCurEdit =
+                                editingDetailId == d['id']?.toString();
+                            return Container(
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: isCurEdit
+                                    ? Colors.blue.shade50
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isCurEdit
+                                      ? Colors.blue.shade400
+                                      : Colors.grey.shade300,
+                                  width: isCurEdit ? 1.5 : 1.0,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          (d['partname'] ?? '-').toString(),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                            color: darkOrange,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 7, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: lightOrange,
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                          border: Border.all(
+                                              color: accentOrange
+                                                  .withValues(alpha: 0.4)),
+                                        ),
+                                        child: Text(
+                                          "QTY: ${d['qty'] ?? '0'}",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11,
+                                            color: primaryOrange,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Item: ${d['itemid'] ?? '-'} | Merk: ${d['merk'] ?? '-'} | Status: ${d['status_item'] ?? '-'}",
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade700),
+                                  ),
+                                  if ((d['item_size'] ?? '')
+                                          .toString()
+                                          .isNotEmpty ||
+                                      (d['estimasi'] ?? '')
+                                          .toString()
+                                          .isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      "Size: ${d['item_size'] ?? '-'} | Est: ${d['estimasi'] ?? '-'}",
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey.shade600),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.edit,
+                                            size: 13, color: Colors.white),
+                                        label: pmBtnLabel("Edit"),
+                                        style: pmBtnStyle(Colors.blue.shade600),
+                                        onPressed: () {
+                                          setDialogState(() {
+                                            editingDetailId =
+                                                d['id']?.toString();
+                                            txtItemID.text =
+                                                (d['itemid'] ?? '').toString();
+                                            txtPartName.text =
+                                                (d['partname'] ?? '')
+                                                    .toString();
+                                            txtItemSize.text =
+                                                (d['item_size'] ?? '')
+                                                    .toString();
+                                            txtTypeID.text =
+                                                (d['idtype'] ?? '').toString();
+                                            txtTypeAccess.text =
+                                                (d['idaccess'] ?? '')
+                                                    .toString();
+                                            txtGenuineNoOpname.text =
+                                                (d['genuineno'] ?? '')
+                                                    .toString();
+                                            txtOpnameMerk.text =
+                                                (d['merk'] ?? '').toString();
+                                            txtOpnameQty.text =
+                                                (d['qty'] ?? '').toString();
+                                            selKatalog =
+                                                (d['katalog'] ?? '').toString();
+                                            selStatusItem =
+                                                (d['status_item'] ?? '')
+                                                    .toString();
+                                            txtEstimasi.text =
+                                                (d['estimasi'] ?? '')
+                                                    .toString();
+                                          });
+                                        },
+                                      ),
+                                      const SizedBox(width: 6),
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.delete_outline,
+                                            size: 13, color: Colors.white),
+                                        label: pmBtnLabel("Hapus"),
+                                        style: pmBtnStyle(Colors.redAccent),
+                                        onPressed: () => deleteDetail(d),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                ElevatedButton.icon(
+                  icon:
+                      const Icon(Icons.close, color: Colors.white, size: 16.0),
+                  label: pmBtnLabel("Tutup"),
+                  style: pmBtnStyle(Colors.grey.shade500),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+
 //QC
   Widget _buildDListRequestOprQC(dynamic item, int index) {
     return _pmListCard(
@@ -11877,20 +13262,19 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         _kv("DRV. NAME", (item['drvname'] ?? '').toString()),
         _kv("Notes", (item['srnotes'] ?? '').toString()),
       ],
-      actions: Row(children: <Widget>[
-                buildButtonApproveQC(
-                    context,
-                    item['srnumber'],
-                    item['wodwonbr'],
-                    item['vhcid'],
-                    item['drvid'],
-                    item['woprint']),
-                SizedBox(width: 5),
-                ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.details_outlined,
+      actions: Column(
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              buildButtonApproveQC(context, item['srnumber'], item['wodwonbr'],
+                  item['vhcid'], item['drvid'], item['woprint']),
+              if (getAkses("FO")) const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(
+                    Icons.list_alt,
                     color: Colors.white,
-                    size: 20.0,
+                    size: 16.0,
                   ),
                   label: pmBtnLabel("Detail List"), //AS LIST DETAIL QC
                   onPressed: () async {
@@ -11898,7 +13282,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       context: globalScaffoldKey.currentContext!,
                       builder: (context) => pmAlertDialog(
                         title: 'Information',
-                        content: Text("Add/ view detail?"),
+                        content: Text("Serah Terima/ view detail?"),
                         actions: <Widget>[
                           ElevatedButton.icon(
                             icon: Icon(
@@ -11906,7 +13290,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                               color: Colors.white,
                               size: 24.0,
                             ),
-                            label: pmBtnLabel("Add Detail QC"),
+                            label: pmBtnLabel("Serah Terima"),
                             onPressed: () async {
                               //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
                               Navigator.of(globalScaffoldKey.currentContext!)
@@ -11928,7 +13312,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                           ),
                           ElevatedButton.icon(
                             icon: Icon(
-                              Icons.save,
+                              Icons.list,
                               color: Colors.white,
                               size: 24.0,
                             ),
@@ -11947,8 +13331,10 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                     context: context,
                                     builder: (BuildContext context) {
                                       return AlertDialog(
-                                        insetPadding: const EdgeInsets.symmetric(
-                                            horizontal: 8.0, vertical: 18.0),
+                                        insetPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 8.0,
+                                                vertical: 18.0),
                                         shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(16)),
@@ -11956,13 +13342,12 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                         titlePadding: const EdgeInsets.fromLTRB(
                                             16, 14, 12, 10),
                                         contentPadding:
-                                            const EdgeInsets.fromLTRB(6, 0, 6, 8),
+                                            const EdgeInsets.fromLTRB(
+                                                6, 0, 6, 8),
                                         title: Row(
                                           children: [
-                                            Icon(
-                                                Icons.fact_check_outlined,
-                                                color: darkOrange,
-                                                size: 22),
+                                            Icon(Icons.fact_check_outlined,
+                                                color: darkOrange, size: 22),
                                             const SizedBox(width: 8),
                                             Expanded(
                                               child: Text(
@@ -12003,9 +13388,43 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                       ),
                     );
                   },
+                  style: pmBtnStyle(accentOrange2),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(
+                    Icons.post_add_rounded,
+                    color: Colors.white,
+                    size: 16.0,
+                  ),
+                  label: pmBtnLabel("Create PR/PB"),
+                  onPressed: () => _showCreatePrPbDialogQC(context, item),
+                  style: pmBtnStyle(primaryOrange),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(
+                    Icons.speaker_notes_outlined,
+                    color: Colors.white,
+                    size: 16.0,
+                  ),
+                  label: pmBtnLabel("Catatan"),
+                  onPressed: () => _showCatatanDialogQC(context, item),
                   style: pmBtnStyle(accentOrange),
                 ),
-              ]),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -12342,7 +13761,9 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
               shadowColor: Colors.transparent,
               side: BorderSide.none,
               textStyle: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -12405,7 +13826,7 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         child: Text('QC')),
                   ],
                 ),
-                title: Text('Service Request 2',
+                title: Text('Service Request', // MENU SR
                     style: TextStyle(
                         color: Colors.white, fontWeight: FontWeight.w600)),
               ),
@@ -12596,8 +14017,7 @@ class _ItemSearchDialogState extends State<_ItemSearchDialog> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            const BorderSide(color: _primary, width: 2),
+                        borderSide: const BorderSide(color: _primary, width: 2),
                       ),
                     ),
                   ),
@@ -12655,8 +14075,8 @@ class _ItemSearchDialogState extends State<_ItemSearchDialog> {
             backgroundColor: _accent,
             foregroundColor: Colors.white,
             disabledForegroundColor: Colors.white70,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
           onPressed: () => Navigator.of(context).pop(),

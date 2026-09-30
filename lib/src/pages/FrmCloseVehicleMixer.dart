@@ -443,7 +443,7 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
       }
 
       var urlData =
-          "${GlobalData.baseUrl}api/do/do_diterima.jsp?method=set_vehicle-do_diterima&vhcid=${vhcid}&bujnumber=${bujnumber}&drvid=${drvid}";
+          "${GlobalData.baseUrl}api/do/do_diterima_v2.jsp?method=set_vehicle-do_diterima&vhcid=${vhcid}&bujnumber=${bujnumber}&drvid=${drvid}";
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);
@@ -492,6 +492,8 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
         alert(globalScaffoldKey.currentContext!, 0, "Photo tidak boleh kosong",
             "error");
       } else {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        String imeiid = (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "").trim();
         var dataParam = {
           "method": "close_do-v1",
           "bujnumber": bujnumber,
@@ -504,10 +506,11 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
           "lat": lat,
           "lon": lon,
           "photo": photo,
+          "imeiid": imeiid,
         };
         print("close DO ${dataParam}");
         //var urlData = "${GlobalData.baseUrl}api/close_do_v3.jsp";//
-        var urlData = "${GlobalData.baseUrl}api/do_mixer/close_do_mixer.jsp";
+        var urlData = "${GlobalData.baseUrl}api/do_mixer/close_do_mixer_v2.jsp";
         print(urlData);
         print(dataParam);
 
@@ -595,7 +598,7 @@ class _FrmCloseVehicleMixerState extends State<FrmCloseVehicleMixer> {
       }
 
       var urlData =
-          "${GlobalData.baseUrl}api/do/do_diterima.jsp?method=list-do_diterima&drvid=${drvid}";
+          "${GlobalData.baseUrl}api/do/do_diterima_v2.jsp?method=list-do_diterima&drvid=${drvid}";
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);

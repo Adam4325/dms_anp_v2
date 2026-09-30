@@ -310,6 +310,133 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
     );
   }
 
+  num _toNum(dynamic v) {
+    if (v == null) return 0;
+    if (v is num) return v;
+    final s = v.toString().trim().replaceAll(',', '.');
+    return num.tryParse(s) ?? 0;
+  }
+
+  String _formatNum(num n) {
+    if (n == n.roundToDouble()) {
+      return n.toInt().toString();
+    }
+    return n.toString();
+  }
+
+  bool _hasSelisih(Map value) {
+    final String rawHands = _s(value['wh_on_hands']);
+    final String rawActual = _s(value['wh_on_actual']);
+    if (rawHands.isEmpty && rawActual.isEmpty) return false;
+    final num onHands = _toNum(rawHands);
+    final num onActual = _toNum(rawActual);
+    return (onActual - onHands).abs() > 0;
+  }
+
+  num _calcDiff(Map value) {
+    final num onHands = _toNum(value['wh_on_hands']);
+    final num onActual = _toNum(value['wh_on_actual']);
+    return onActual - onHands;
+  }
+
+  Widget _buildSelisihRow(Map value) {
+    final String rawHands = _s(value['wh_on_hands']);
+    final String rawActual = _s(value['wh_on_actual']);
+    if (rawHands.isEmpty && rawActual.isEmpty) {
+      return _kv('Selisih', '-');
+    }
+
+    final num onHands = _toNum(rawHands);
+    final num onActual = _toNum(rawActual);
+    final num diff = onActual - onHands;
+    final num selisihAbs = diff.abs();
+
+    if (selisihAbs == 0) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Table(
+          columnWidths: const {
+            0: IntrinsicColumnWidth(),
+            1: FixedColumnWidth(14),
+            2: FlexColumnWidth(),
+          },
+          children: [
+            TableRow(children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Selisih',
+                  style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
+                ),
+              ),
+              Align(
+                alignment: Alignment.center,
+                child: Text(
+                  ":",
+                  style: TextStyle(color: Colors.grey.shade800, fontSize: 12),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '0',
+                  style: TextStyle(
+                    color: Colors.green.shade700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ])
+          ],
+        ),
+      );
+    }
+
+    final String diffStr = "${diff > 0 ? '+' : ''}${_formatNum(diff)}";
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Table(
+        columnWidths: const {
+          0: IntrinsicColumnWidth(),
+          1: FixedColumnWidth(14),
+          2: FlexColumnWidth(),
+        },
+        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+        children: [
+          TableRow(children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Selisih',
+                style: TextStyle(
+                  color: Colors.red.shade800,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: Text(
+                ":",
+                style: TextStyle(
+                  color: Colors.red.shade800,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: _BlinkingAlertBadge(text: diffStr),
+            ),
+          ])
+        ],
+      ),
+    );
+  }
+
   Widget listItemBuilder(value, int index) {
     print("LIST STOK ${value}");
     return Container(
@@ -418,11 +545,20 @@ class _ListWareHouseOpNameState extends State<ListWareHouseOpName> {
                 _kv('Type', _s(value['wh_type'])),
                 _kv('Merk', _s(value['wh_merk'])),
                 _kv('Accessories', _s(value['wh_access'])),
-                _kv('Type PO', _s(value['wh_typepo'])),
-                _kv('Currency', _s(value['wh_curyid'])),
+                // Type PO dan Currency di-hidden sesuai permintaan
                 _kv('Qty On Books', _s(value['wh_on_hands'])),
                 _kv('Qty On Actual', _s(value['wh_on_actual'])),
-                _kv('With Month', _s(value['wh_withmonth'])),
+                _buildSelisihRow(value is Map ? value : {}),
+                _kv('Tgl Opname', _s(value['wh_withmonth'])),
+                if (_hasSelisih(value is Map ? value : {}))
+                  _BlinkingAlertBanner(
+                    message: () {
+                      final num d = _calcDiff(value is Map ? value : {});
+                      final String signStr = d > 0 ? "+${_formatNum(d)}" : _formatNum(d);
+                      final String desc = d > 0 ? "Fisik Lebih" : "Fisik Kurang";
+                      return "ALERT: Terdapat selisih stok $signStr ($desc)!";
+                    }(),
+                  ),
                 OpnameMutasiPanel(
                   warehouseId: _s(value['whswarehpuseid']),
                   itemId: _s(value['wh_item_id']),
@@ -591,3 +727,172 @@ class InventoryTransDataModel {
         nItems = 0,
         errorMessage = msg;
 }
+
+class _BlinkingAlertBadge extends StatefulWidget {
+  final String text;
+
+  const _BlinkingAlertBadge({Key? key, required this.text}) : super(key: key);
+
+  @override
+  __BlinkingAlertBadgeState createState() => __BlinkingAlertBadgeState();
+}
+
+class __BlinkingAlertBadgeState extends State<_BlinkingAlertBadge>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _glow;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..repeat(reverse: true);
+    _glow = Tween<double>(begin: 0.35, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final g = _glow.value;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: Color.lerp(
+              const Color(0xFFD32F2F),
+              const Color(0xFFFF5722),
+              _controller.value,
+            )!.withValues(alpha: (0.85 + 0.15 * g).clamp(0.0, 1.0)),
+            borderRadius: BorderRadius.circular(6),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.red.withValues(alpha: (0.45 * g + 0.25).clamp(0.0, 1.0)),
+                blurRadius: 4 + 6 * g,
+                spreadRadius: 1 + g,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                size: 13,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                widget.text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BlinkingAlertBanner extends StatefulWidget {
+  final String message;
+
+  const _BlinkingAlertBanner({Key? key, required this.message})
+      : super(key: key);
+
+  @override
+  __BlinkingAlertBannerState createState() => __BlinkingAlertBannerState();
+}
+
+class __BlinkingAlertBannerState extends State<_BlinkingAlertBanner>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 0.25, end: 0.9).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final p = _pulse.value;
+        return Container(
+          margin: const EdgeInsets.only(top: 8, bottom: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: Color.lerp(
+              const Color(0xFFFFEBEE),
+              const Color(0xFFFFCDD2),
+              _controller.value,
+            ),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Colors.red.shade700.withValues(alpha: (0.5 + 0.5 * p).clamp(0.0, 1.0)),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.red.withValues(alpha: (p * 0.35).clamp(0.0, 1.0)),
+                blurRadius: 6 + 6 * p,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.red.shade700,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  widget.message,
+                  style: TextStyle(
+                    color: Colors.red.shade900,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+

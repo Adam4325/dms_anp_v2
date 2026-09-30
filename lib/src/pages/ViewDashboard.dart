@@ -3262,8 +3262,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                     item['incustomer'].toString() == "1"
                         ? "Terima DO"
                         : "Close DO",
-                    style: TextStyle(fontSize: 11),
-                  ),
+                    style: TextStyle(fontSize: 11,color: Colors.white),
+                  ),//
                 ),
               ),
               SizedBox(width: 8),
@@ -3279,7 +3279,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                   ),
                   child: Text(
                     'History',
-                    style: TextStyle(fontSize: 11),
+                    style: TextStyle(fontSize: 11,color: Colors.white),
                   ),
                 ),
               ),
@@ -4296,9 +4296,72 @@ class _ViewDashboardState extends State<ViewDashboard>
     );
   }
 
+  Future<bool> _checkImeiDriver(String drvid) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final imeiidPref = (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "").trim();
+      final cleanDrvid = drvid.trim();
+      if (cleanDrvid.isEmpty) {
+        if (EasyLoading.isShow) EasyLoading.dismiss();
+        alert(globalScaffoldKey.currentContext ?? context, 0,
+            "Data driver (DRVID) tidak ditemukan.", "error");
+        return false;
+      }
+      if (imeiidPref.isEmpty) {
+        if (EasyLoading.isShow) EasyLoading.dismiss();
+        alert(globalScaffoldKey.currentContext ?? context, 0,
+            "IMEI / Device ID tidak ditemukan di perangkat.", "error");
+        return false;
+      }
+
+      final uri = Uri.parse('${GlobalData.baseUrlProd}api/do/do_diterima_v2.jsp').replace(queryParameters: {
+        'method': 'check-imei-driver',
+        'drvid': cleanDrvid,
+        'imeiid': imeiidPref,
+      });
+
+      final response = await http.get(uri, headers: {"Accept": "application/json"});
+      if (response.statusCode == 200) {
+        final result = json.decode(response.body);
+        final bool isAllowed = result['allowed'] == true ||
+            (result['status'] != null && result['status'].toString().toLowerCase() == 'success');
+        if (isAllowed) {
+          return true;
+        } else {
+          if (EasyLoading.isShow) EasyLoading.dismiss();
+          final message = result['message']?.toString() ??
+              'IMEIID Handphone tidak sesuai dengan data driver. Transaksi ditolak.';
+          alert(globalScaffoldKey.currentContext ?? context, 0, message, "error");
+          return false;
+        }
+      } else {
+        if (EasyLoading.isShow) EasyLoading.dismiss();
+        alert(globalScaffoldKey.currentContext ?? context, 0,
+            "Gagal validasi IMEI driver (${response.statusCode})", "error");
+        return false;
+      }
+    } catch (e) {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      alert(globalScaffoldKey.currentContext ?? context, 0,
+          "Terjadi kesalahan saat validasi IMEI: $e", "error");
+      return false;
+    }
+  }
+
   void _handleScheduleAction(dynamic item) async {
     print("nameButton ${item['incustomer'].toString()}");
-    EasyLoading.show();
+    EasyLoading.show(status: 'Memvalidasi perangkat...');
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String drvid = (item['driver_id'] ?? item['drvid'] ?? prefs.getString('drvid') ?? '').toString().trim();
+
+    bool isImeiValid = await _checkImeiDriver(drvid);
+    if (!isImeiValid) {
+      return;
+    }
+    if (EasyLoading.isShow) {
+      EasyLoading.dismiss();
+    }
+
     if (item['incustomer'].toString() == "2") {
       GetVhcidDo();
       Timer(Duration(seconds: 1), () {
@@ -4610,6 +4673,24 @@ class _ViewDashboardState extends State<ViewDashboard>
                             ? "OUTUNLOADING"
                             : "Close DO";
     try {
+      sharedPreferences ??= await SharedPreferences.getInstance();
+      final String drvid = (item['driver_id'] ?? item['drvid'] ?? sharedPreferences!.getString("drvid") ?? '').toString().trim();
+      if (drvid.isEmpty) {
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Data driver tidak ditemukan", "error");
+        return;
+      }
+
+      // Validasi IMEI driver berdasarkan DRVID
+      EasyLoading.show(status: 'Memvalidasi perangkat...');
+      bool isImeiValid = await _checkImeiDriver(drvid);
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
+      if (!isImeiValid) {
+        return;
+      }
+
       if (items.toString() == "OUTUNLOADING") {
         final logkarNoDo = item['do_number']?.toString() ?? '';
         if (logkarNoDo.isNotEmpty) {
@@ -4644,7 +4725,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                 vhckm: item['vhckm'],
                 bujnbr: item['bujnbr'],
                 do_number: item['do_number'],
-                driver_id: item['driver_id'],
+                driver_id: item['driver_id'] ?? drvid,
               ),
             ),
           );
@@ -4652,14 +4733,6 @@ class _ViewDashboardState extends State<ViewDashboard>
         return;
       }
       print(item['status_do_mixer']);
-
-      sharedPreferences ??= await SharedPreferences.getInstance();
-      final String drvid = sharedPreferences!.getString("drvid") ?? '';
-      if (drvid.isEmpty) {
-        alert(globalScaffoldKey.currentContext!, 0,
-            "Data driver tidak ditemukan", "error");
-        return;
-      }
 
       // no_do Logkar = item['do_number'] (sama yang dikirim ke update_status_do_mixerv2.jsp)
       final String androidDoNumber = item['do_number']?.toString().trim() ?? '';
@@ -4773,9 +4846,10 @@ class _ViewDashboardState extends State<ViewDashboard>
         await prefs.setString('logkar_mixer_no_do', doNumberAndroid);
         await prefs.setString('do_maps', doNumberAndroid);
       }
+      final String imeiidPref = (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "").trim();
       // Pakai queryParameters agar do_number tidak rusak karena encode api_lokar
       final Uri myUri = Uri.parse(
-              '${GlobalData.baseUrl}api/do_mixer/update_status_do_mixerv2.jsp')
+              '${GlobalData.baseUrl}api/do_mixer/update_status_do_mixerv2_v2.jsp')
           .replace(queryParameters: {
         'method': 'update-status-do-mixer',
         'api_lokar': api_lokar,
@@ -4786,6 +4860,8 @@ class _ViewDashboardState extends State<ViewDashboard>
         'longitude': longitude.toString(),
         'bujdestination': bujDest,
         'userid': loginname?.toString() ?? '',
+        'drvid': drvid,
+        'imeiid': imeiidPref,
       });
       print('LOGKAR JSP url: $myUri');
       print('LOGKAR JSP do_number(android)=$doNumberAndroid bujnbr=$bujnbrAndroid');
@@ -4844,13 +4920,15 @@ class _ViewDashboardState extends State<ViewDashboard>
     print(item['vehicle_id']);
     var tgl_do = item['tgl_do'] + " " + item['time_do'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString("do_maps", item['do_number']);
+    prefs.setString("do_maps", item['do_number'] != null ? item['do_number'].toString() : "");
     prefs.setString("do_tgl_do", tgl_do);
-    prefs.setString("do_nopol", item['vehicle_id']);
-    prefs.setString("do_origin", item['origin']);
-    prefs.setString("do_destination", item['destination']);
-    prefs.setString("do_vehicle_id", item['vehicle_id']);
-    prefs.setString("do_driver_nm", item['driver_nm']);
+    prefs.setString("do_nopol", item['vehicle_id'] != null ? item['vehicle_id'].toString() : "");
+    prefs.setString("do_origin", item['origin'] != null ? item['origin'].toString() : "");
+    prefs.setString("do_destination", item['destination'] != null ? item['destination'].toString() : "");
+    prefs.setString("do_vehicle_id", item['vehicle_id'] != null ? item['vehicle_id'].toString() : "");
+    prefs.setString("do_driver_nm", item['driver_nm'] != null ? item['driver_nm'].toString() : "");
+    prefs.setString("do_nopol_plate", item['nopol'] != null ? item['nopol'].toString() : "");
+    prefs.setString("do_cpy_name", item['cpy_name'] != null ? item['cpy_name'].toString() : "");
 
     Navigator.pushReplacement(
       context,

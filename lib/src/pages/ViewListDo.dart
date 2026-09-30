@@ -259,36 +259,46 @@ class _ViewListDoState extends State<ViewListDo> {
       if (!EasyLoading.isShow) {
         EasyLoading.show();
       }
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String imeiid = (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "").trim();
 
       var urlData =
-          "${GlobalData.baseUrl}api/do/do_diterima.jsp?method=create-do_diterima&drvid=${drvid}&no_do=${no_do}";
+          "${GlobalData.baseUrl}api/do/do_diterima_v2.jsp?method=create-do_diterima&drvid=${drvid}&no_do=${no_do}&imeiid=${imeiid}";
       var encoded = Uri.encodeFull(urlData);
       print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
           await http.get(myUri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
-        setState(() {
-          int status_code = jsonDecode(response.body)["status_code"];
-          if (status_code == 200) {
-            noDo_Diterima = jsonDecode(response.body)["no_do"];
-          }
-        });
+        var resBody = jsonDecode(response.body);
+        int statusCode = resBody["status_code"] is int
+            ? resBody["status_code"]
+            : int.tryParse(resBody["status_code"]?.toString() ?? "0") ?? 0;
+        String message = resBody["message"]?.toString() ?? "";
+        if (statusCode == 200) {
+          setState(() {
+            noDo_Diterima = resBody["no_do"]?.toString() ?? "";
+          });
+        } else {
+          alert(globalScaffoldKey.currentContext!, 0,
+              message.isNotEmpty ? message : "Gagal terima DO ($statusCode)", "error");
+        }
       } else {
         alert(globalScaffoldKey.currentContext!, 0,
-            "Gagal load data do diterima", "error");
+            "Gagal load data do diterima (${response.statusCode})", "error");
       }
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
       return noDo_Diterima;
     } catch (e) {
-      alert(globalScaffoldKey.currentContext!, 0, "Client, Load do diterima",
+      alert(globalScaffoldKey.currentContext!, 0, "Client, Load do diterima: $e",
           "error");
       print(e.toString());
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
+      return null;
     }
   }
 

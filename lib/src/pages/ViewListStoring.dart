@@ -98,7 +98,7 @@ class _ViewListStoringState extends State<ViewListStoring> {
         setState(() => _isLoading = false);
         alert(globalScaffoldKey.currentContext ?? context, 0,
             "Gagal memuat data (${response.statusCode})", "error");
-      }
+      }//
     } catch (e) {
       print("Error getJSONData: $e");
       if (mounted) {

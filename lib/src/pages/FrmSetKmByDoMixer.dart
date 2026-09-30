@@ -350,8 +350,9 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
       prefs.setString("vhcid_last_antrian", vhcid);
       locid = prefs.getString("locid")!;
       String name = prefs.getString("name")!;
+      String imeiid = (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "").trim();
       var urlData =
-          "${GlobalData.baseUrl}api/do_mixer/update_km_vehicle_mixer.jsp?method=update_vhc&vhcid=" +
+          "${GlobalData.baseUrl}api/do_mixer/update_km_vehicle_mixer_v2.jsp?method=update_vhc&vhcid=" +
               vhcid +
               "&vhckm=" +
               vhckm +
@@ -360,7 +361,9 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
               "&driverid=" +
               drvid +
               "&locid=" +
-              locid;
+              locid +
+              "&imeiid=" +
+              imeiid;
 
       var encoded = Uri.encodeFull(urlData);
       Uri myUri = Uri.parse(encoded);
@@ -472,15 +475,18 @@ class _FrmSetKmByDoMixerState extends State<FrmSetKmByDoMixer> {
       prefs.setString("vhcid_last_antrian", _vhcid);
       locid = prefs.getString("locid")!;
       String name = prefs.getString("name")!;
+      String imeiid = (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "").trim();
       var urlData =
-          "${GlobalData.baseUrl}api/update_km_vehicle_mixer.jsp?method=update_vhc-standby&vhcid=" +
+          "${GlobalData.baseUrl}api/update_km_vehicle_mixer_v2.jsp?method=update_vhc-standby&vhcid=" +
               _vhcid +
               "&vhckm=" +
               vhckm +
               "&drvid=" +
               drvid +
               "&bujnumber=" +
-              bujnumber;
+              bujnumber +
+              "&imeiid=" +
+              imeiid;
 
       var encoded = Uri.encodeFull(urlData);
       Uri myUri = Uri.parse(encoded);
