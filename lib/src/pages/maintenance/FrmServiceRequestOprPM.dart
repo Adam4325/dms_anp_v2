@@ -12580,13 +12580,44 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
             }
 
             // 3. CLOSE APPROVAL API: approve_opname_sr_detail_dialog.jsp
-            Future<void> approveOpname() async {
+            Future<void> approveOpname({String? specificItemId}) async {
+              if (dialogDetails.isEmpty) {
+                alert(globalScaffoldKey.currentContext!, 0,
+                    "Belum ada item detail untuk di-approve", "error");
+                return;
+              }
+              final String headerIdParam =
+                  (dialogDetails[0]['id_header'] ?? '').toString().trim();
+              if (headerIdParam.isEmpty || headerIdParam == '0') {
+                alert(globalScaffoldKey.currentContext!, 0,
+                    "ID Header opname tidak ditemukan", "error");
+                return;
+              }
+
+              String itemidParam = (specificItemId ?? '').trim();
+              if (itemidParam.isEmpty) {
+                final List<String> listItems = dialogDetails
+                    .map((d) => (d['itemid'] ?? '').toString().trim())
+                    .where((id) => id.isNotEmpty)
+                    .toSet()
+                    .toList();
+                if (listItems.isEmpty) {
+                  alert(globalScaffoldKey.currentContext!, 0,
+                      "Item ID tidak ditemukan pada detail", "error");
+                  return;
+                }
+                itemidParam = listItems.join(',');
+              }
+
+              final String confirmText = specificItemId != null
+                  ? "Approve item $specificItemId untuk WO $currentWoNumber?"
+                  : "Approve seluruh detail opname (${itemidParam.split(',').length} item) untuk WO $currentWoNumber?";
+
               showDialog(
                 context: context,
                 builder: (ctx) => pmAlertDialog(
                   title: 'Konfirmasi Approval',
-                  content: Text(
-                      "Approve / Close Approval Opname untuk WO $currentWoNumber?"),
+                  content: Text(confirmText),
                   actions: [
                     ElevatedButton.icon(
                       icon: const Icon(Icons.close,
@@ -12604,14 +12635,13 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         Navigator.of(ctx).pop();
                         EasyLoading.show(status: "Memproses approval...");
                         try {
-                          final String headerIdParam = dialogDetails.isNotEmpty
-                              ? (dialogDetails[0]['id_header'] ?? '').toString()
-                              : '';
                           final url = Uri.parse(
                                   "${BASE_URL}api/maintenance/sr/approve_opname_sr_detail_dialog.jsp")
                               .replace(
                             queryParameters: {
                               'id_header': headerIdParam,
+                              'itemid': itemidParam,
+                              'filterItem': itemidParam,
                               'wonumber': currentWoNumber,
                               'vhcid': currentVhcId,
                               'estimasi': txtEstimasi.text.trim(),
@@ -13408,6 +13438,15 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.check_circle_outline,
+                                            size: 13, color: Colors.white),
+                                        label: pmBtnLabel("Approve"),
+                                        style: pmBtnStyle(Colors.green.shade700),
+                                        onPressed: () => approveOpname(
+                                            specificItemId: (d['itemid'] ?? '').toString()),
+                                      ),
+                                      const SizedBox(width: 6),
                                       ElevatedButton.icon(
                                         icon: const Icon(Icons.edit,
                                             size: 13, color: Colors.white),
