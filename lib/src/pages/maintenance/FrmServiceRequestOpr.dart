@@ -12115,65 +12115,102 @@ class _FrmServiceRequestOprState extends State<FrmServiceRequestOpr>
             onPressed: () async {
               showDialog(
                 context: globalScaffoldKey.currentContext!,
-                builder: (context) => new AlertDialog(
-                  title: new Text('Information'),
-                  //content: new Text("Close WO data ${appSrnumber}"),
+                builder: (context) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  title: Row(
+                    children: [
+                      Icon(Icons.check_circle_outline,
+                          color: Color(0xFFE67E22), size: 22),
+                      const SizedBox(width: 8),
+                      Text('Konfirmasi Approve QC',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFE67E22))),
+                    ],
+                  ),
                   content: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    //position
                     mainAxisSize: MainAxisSize.min,
-                    // wrap content in flutter
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
+                      Text("Apakah Anda yakin ingin Approve / Close WO:",
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey.shade700)),
+                      const SizedBox(height: 8),
                       Container(
-                        margin: EdgeInsets.all(10.0),
-                        child: Text("Close WO data ${appSrnumber}"),
-                      ),
-                      Container(
-                        margin: EdgeInsets.all(10.0),
-                        child: TextField(
-                          cursorColor: Colors.black,
-                          style: TextStyle(color: Colors.grey.shade800),
-                          controller: txtWodCloseNotesQC,
-                          keyboardType: TextInputType.text,
-                          decoration: new InputDecoration(
-                            fillColor: Colors.white,
-                            filled: true,
-                            isDense: true,
-                            labelText: "Notes...",
-                            contentPadding: EdgeInsets.all(5.0),
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.shade200),
+                        ),
+                        child: Text(
+                          appSrnumber,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFE67E22),
                           ),
                         ),
                       ),
+                      if (wodNumber.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          "No. WO: $wodNumber",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   actions: <Widget>[
-                    new TextButton(
-                        onPressed: () {
-                          Navigator.of(globalScaffoldKey.currentContext!)
-                              .pop(false);
-                          resetTeks();
-                        },
-                        child: new Text('No')),
-                    new ElevatedButton.icon(
-                        icon: Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 15.0,
-                        ),
-                        label: Text("Finish"),
-                        onPressed: () async {
-                          Navigator.of(globalScaffoldKey.currentContext!)
-                              .pop(false);
-                          closeWoRequestServiceQC(appSrnumber, wodNumber, appVhcid,
-                              appDrvid, woPrint, txtWodCloseNotesQC.text);
-                        },
-                        style: ElevatedButton.styleFrom(
-                            elevation: 0.0,
-                            backgroundColor: Colors.redAccent,
-                            padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                            textStyle: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold))),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(globalScaffoldKey.currentContext!)
+                            .pop(false);
+                        resetTeks();
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.grey.shade700,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                      ),
+                      child: const Text('No',
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                    ElevatedButton.icon(
+                      icon: const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 16.0,
+                      ),
+                      label: const Text("Yes",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold)),
+                      onPressed: () async {
+                        Navigator.of(globalScaffoldKey.currentContext!)
+                            .pop(false);
+                        closeWoRequestServiceQC(appSrnumber, wodNumber,
+                            appVhcid, appDrvid, woPrint, "");
+                      },
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0.0,
+                        backgroundColor: Color(0xFFE67E22),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
                   ],
                 ),
               );

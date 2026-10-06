@@ -33,11 +33,17 @@
             tools:targetApi="s" />
 
 
+        <!-- Speech to text -->
+        <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <queries>
         <!-- If your app opens https URLs -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
         </intent>
     </queries>
    <application

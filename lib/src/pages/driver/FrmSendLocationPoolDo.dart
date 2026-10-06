@@ -54,7 +54,7 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
   List<Map<String, dynamic>> _listRequests = [];
   bool _isLoadingList = false;
   String _searchKeyword = "";
-  String _statusFilter = "approved"; // CS & ADMIN default approved
+  String _statusFilter = "pending"; // Default Menunggu Approval
   final TextEditingController _searchController = TextEditingController();
 
   // Non-Tera Soft Pastel Theme
@@ -102,7 +102,7 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
             accessList.contains("OP");
       }
       if (_isCsAdminUser) {
-        _statusFilter = "approved";
+        _statusFilter = "pending";
       }
     });
 
@@ -330,7 +330,18 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
         final List<Map<String, dynamic>> items = [];
         for (var item in rawList) {
           if (item is Map) {
-            items.add(Map<String, dynamic>.from(item));
+            final m = Map<String, dynamic>.from(item);
+            final statusStr = (m['status'] ?? '').toString().toUpperCase();
+            final isAppr = (m['is_approved'] ?? '').toString();
+            if (_statusFilter != 'cancel') {
+              if (statusStr == 'CANCEL' ||
+                  statusStr == 'CANCELLED' ||
+                  isAppr == '2' ||
+                  isAppr == '-1') {
+                continue;
+              }
+            }
+            items.add(m);
           }
         }
 
@@ -505,6 +516,91 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
       } else {
         alert(context, 0, "Gagal menyetujui data (${response.statusCode})",
             "error");
+      }
+    } catch (e) {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      alert(context, 0, "Terjadi kesalahan: $e", "error");
+    }
+  }
+
+  Future<void> _cancelLocation(int id, String wonumber) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: cardColor,
+        title: Row(
+          children: [
+            Icon(Icons.cancel_outlined, color: Colors.red.shade600, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              "Konfirmasi Cancel",
+              style: TextStyle(
+                color: Colors.red.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          "Apakah Anda yakin membatalkan lokasi transit untuk DO $wonumber?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text("Batal", style: TextStyle(color: Colors.grey.shade600)),
+          ),
+          ElevatedButton(
+            style: ntBtnStyle(Colors.red.shade600),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Ya, Batalkan"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    EasyLoading.show(status: "Memproses Cancel...");
+    try {
+      final String baseUrl =
+          "${GlobalData.baseUrlOri}mobile/api/driver/send_location_pool_do.jsp";
+      final params = <String, String>{
+        "method": "cancel_location",
+        "id": id.toString(),
+        "updated_user": _username.isNotEmpty ? _username : "ADMIN",
+      };
+
+      final uri = Uri.parse(baseUrl).replace(queryParameters: params);
+      final response = await http
+          .get(uri, headers: {"Accept": "application/json"}).timeout(
+              const Duration(seconds: 15));
+
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+
+      dynamic decoded;
+      try {
+        decoded = json.decode(response.body);
+      } catch (_) {}
+
+      final String message = decoded is Map && decoded['message'] != null
+          ? decoded['message'].toString()
+          : (response.statusCode == 200
+              ? "Lokasi transit DO berhasil di-cancel"
+              : "Gagal membatalkan data (${response.statusCode})");
+
+      if (response.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _listRequests.removeWhere((item) =>
+                item['id']?.toString() == id.toString() ||
+                (wonumber.isNotEmpty && item['wonumber']?.toString() == wonumber));
+          });
+          alert(context, 1, message, "success");
+          _fetchListRequests();
+        }
+      } else {
+        alert(context, 0, message, "error");
       }
     } catch (e) {
       if (EasyLoading.isShow) EasyLoading.dismiss();
@@ -1062,13 +1158,33 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
   }
 
   Widget _buildListRequestsTab() {
-    // Filter by search keyword
+    // Filter by search keyword & status
     final filtered = _listRequests.where((item) {
       final wonbr = (item['wonumber'] ?? '').toString().toLowerCase();
       final pool = (item['nama_pool'] ?? '').toString().toLowerCase();
       final drv = (item['drvid'] ?? '').toString().toLowerCase();
       final kw = _searchKeyword.toLowerCase();
-      return wonbr.contains(kw) || pool.contains(kw) || drv.contains(kw);
+      final matchKw = wonbr.contains(kw) || pool.contains(kw) || drv.contains(kw);
+      if (!matchKw) return false;
+
+      final int isApproved =
+          int.tryParse(item['is_approved']?.toString() ?? '0') ?? 0;
+      final String statusStr = item['status']?.toString().toUpperCase() ?? '';
+      final bool approved = isApproved == 1 || statusStr == 'APPROVED';
+      final bool isCancelled = isApproved == 2 ||
+          isApproved == -1 ||
+          statusStr == 'CANCEL' ||
+          statusStr == 'CANCELLED';
+      final bool isPending = !approved && !isCancelled;
+
+      if (_statusFilter == "pending") {
+        return isPending;
+      } else if (_statusFilter == "approved") {
+        return approved;
+      } else if (_statusFilter == "cancel") {
+        return isCancelled;
+      }
+      return !isCancelled;
     }).toList();
 
     return Column(
@@ -1112,6 +1228,8 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
                     _buildFilterChip("Menunggu Approval", "pending"),
                     const SizedBox(width: 8),
                     _buildFilterChip("Disetujui", "approved"),
+                    const SizedBox(width: 8),
+                    _buildFilterChip("Dibatalkan", "cancel"),
                   ],
                 ),
               ),
@@ -1196,11 +1314,17 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
     final String lon = item['lon']?.toString() ?? '';
     final int isApproved =
         int.tryParse(item['is_approved']?.toString() ?? '0') ?? 0;
+    final String statusStr = item['status']?.toString().toUpperCase() ?? '';
     final String createdDt = item['created_datetime']?.toString() ?? '';
     final String updatedUser = item['updated_user']?.toString() ?? '';
     final String address = item['address']?.toString() ?? '';
 
-    final bool approved = isApproved == 1;
+    final bool approved = isApproved == 1 || statusStr == 'APPROVED';
+    final bool isCancelled = isApproved == 2 ||
+        isApproved == -1 ||
+        statusStr == 'CANCEL' ||
+        statusStr == 'CANCELLED';
+    final bool isPending = !approved && !isCancelled;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1210,8 +1334,10 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: approved
-              ? Colors.green.shade200
-              : accentOrange.withOpacity(0.3),
+              ? Colors.green.shade300
+              : isCancelled
+                  ? Colors.red.shade300
+                  : accentOrange.withOpacity(0.4),
         ),
         boxShadow: [
           BoxShadow(
@@ -1242,32 +1368,51 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: approved ? Colors.green.shade50 : Colors.orange.shade50,
+                  color: approved
+                      ? Colors.green.shade50
+                      : isCancelled
+                          ? Colors.red.shade50
+                          : Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color:
-                        approved ? Colors.green.shade300 : Colors.orange.shade300,
+                    color: approved
+                        ? Colors.green.shade300
+                        : isCancelled
+                            ? Colors.red.shade300
+                            : Colors.orange.shade300,
                   ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      approved ? Icons.check_circle : Icons.hourglass_top,
+                      approved
+                          ? Icons.check_circle
+                          : isCancelled
+                              ? Icons.cancel_outlined
+                              : Icons.hourglass_top,
                       size: 13,
                       color: approved
                           ? Colors.green.shade700
-                          : Colors.orange.shade700,
+                          : isCancelled
+                              ? Colors.red.shade700
+                              : Colors.orange.shade700,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      approved ? "Disetujui" : "Menunggu Approval",
+                      approved
+                          ? "Disetujui"
+                          : isCancelled
+                              ? "Dibatalkan"
+                              : "Menunggu Approval",
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: approved
                             ? Colors.green.shade700
-                            : Colors.orange.shade700,
+                            : isCancelled
+                                ? Colors.red.shade700
+                                : Colors.orange.shade700,
                       ),
                     ),
                   ],
@@ -1349,62 +1494,100 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
             ),
           ],
 
-          // Footer info / Action Button
-          // Action Buttons: View Lokasi di Maps & Approve
+          // Action Buttons: View Lokasi di Maps & Action Decision (Approve / Cancel)
           const Divider(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryOrange,
-                    foregroundColor: Colors.white,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryOrange,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ViewMapTransitDo(
+                      itemTransit: item,
+                      isCsAdmin: _isCsAdminUser,
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ViewMapTransitDo(
-                          itemTransit: item,
-                          isCsAdmin: _isCsAdminUser,
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.map_rounded, size: 16),
-                  label: const Text(
-                    "View Lokasi di Maps",
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                );
+              },
+              icon: const Icon(Icons.map_rounded, size: 16),
+              label: const Text(
+                "View Lokasi di Maps",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          if (isPending && _isCsAdminUser) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ntBtnStyle(Colors.red.shade600),
+                    onPressed: () => _cancelLocation(id, wonumber),
+                    icon: const Icon(Icons.close, size: 16),
+                    label: const Text(
+                      "Cancel",
+                      style:
+                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-              ),
-              if (!approved && _isCsAdminUser) ...[
                 const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  style: ntBtnStyle(Colors.green.shade600),
-                  onPressed: () => _approveLocation(id, wonumber),
-                  icon: const Icon(Icons.check, size: 16),
-                  label: const Text(
-                    "Approve",
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ntBtnStyle(Colors.green.shade600),
+                    onPressed: () => _approveLocation(id, wonumber),
+                    icon: const Icon(Icons.check, size: 16),
+                    label: const Text(
+                      "Approve",
+                      style:
+                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
-            ],
-          ),
+            ),
+          ] else if (approved && _isCsAdminUser) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red.shade600,
+                  side: BorderSide(color: Colors.red.shade300),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: () => _cancelLocation(id, wonumber),
+                icon: const Icon(Icons.close, size: 15),
+                label: const Text(
+                  "Batalkan Approval (Cancel)",
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
           if (approved && updatedUser.isNotEmpty) ...[
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.verified_user, size: 13, color: Colors.green.shade600),
+                Icon(Icons.verified_user,
+                    size: 13, color: Colors.green.shade600),
                 const SizedBox(width: 4),
                 Text(
                   "Disetujui oleh: $updatedUser",
@@ -1412,6 +1595,24 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
                     color: Colors.green.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (isCancelled && updatedUser.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(Icons.cancel_outlined,
+                    size: 13, color: Colors.red.shade600),
+                const SizedBox(width: 4),
+                Text(
+                  "Dibatalkan oleh: $updatedUser",
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.red.shade700,
                   ),
                 ),
               ],

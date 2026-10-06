@@ -537,6 +537,7 @@ class _FrmInventoryState extends State<FrmInventory> {
           'sntyre': _bodyStr(sntyre),
           'genuine_no': _bodyStr(genuine_no),
           'vhtid': _bodyStr(vhtid),
+          'itdunitcost': _bodyStr(txtUnitCost.text),
           'real_qty_bekas': _bodyStr(txtRealQtyBekas.text),
           'kondisi_barang_bekas': _bodyStr(txtKondisiBarangBekas),
         };

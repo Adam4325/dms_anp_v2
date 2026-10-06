@@ -732,7 +732,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 30),
                   Text(
-                    "Version 3.11",
+                    "Version 3.12",
                     style: TextStyle(
                       color: textSecondary,
                       fontSize: 14,

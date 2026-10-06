@@ -23,6 +23,7 @@ if (flutterVersionName == null) {
 }
 
 android {
+    ndkVersion = "28.2.13676358"
     namespace "com.anp.dms_anp"
     compileSdk = flutter.compileSdkVersion
     useLibrary 'org.apache.http.legacy'

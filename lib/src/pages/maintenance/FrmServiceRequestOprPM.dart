@@ -21,6 +21,8 @@ import '../../Helper/scanner_helper.dart';
 import '../../flusbar.dart';
 // import 'package:qrscan/qrscan.dart' as scanner; // removed - migrate to mobile_scanner
 import '../../../choices.dart' as choices;
+import 'package:permission_handler/permission_handler.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 
 String scanResult = '';
@@ -12009,153 +12011,379 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
 
   void _showCatatanDialogQC(BuildContext context, dynamic item) {
     final TextEditingController txtCatatan = TextEditingController();
+    final String existingNote = (item['srnotes'] ?? '').toString();
+    // if (existingNote.isNotEmpty && existingNote != '-') {
+    //   txtCatatan.text = existingNote;
+    // }
+
+    final stt.SpeechToText speech = stt.SpeechToText();
+    bool isListening = false;
+    bool isSpeechInit = false;
+
     showDialog(
       context: globalScaffoldKey.currentContext!,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          backgroundColor: cardColor,
-          titlePadding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
-          contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          title: Row(
-            children: [
-              Icon(Icons.speaker_notes_outlined, color: darkOrange, size: 22),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Catatan Work Order',
-                  style: TextStyle(
-                    color: darkOrange,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close, color: Colors.black54, size: 20),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: lightOrange,
-                    borderRadius: BorderRadius.circular(8),
-                    border:
-                        Border.all(color: accentOrange.withValues(alpha: 0.3)),
-                  ),
-                  child: Column(
-                    children: [
-                      _kv("SR Number", (item['srnumber'] ?? '-').toString(),
-                          dense: true),
-                      _kv("WO Number", (item['wodwonbr'] ?? '-').toString(),
-                          dense: true),
-                      _kv("Unit / VHCID", (item['vhcid'] ?? '-').toString(),
-                          dense: true),
-                      _kv("Driver", (item['drvname'] ?? '-').toString(),
-                          dense: true),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  //
-                  "Isi Catatan:",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: darkOrange,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: txtCatatan,
-                  maxLines: 4,
-                  cursorColor: primaryOrange,
-                  style: const TextStyle(fontSize: 13, color: Colors.black87),
-                  decoration: InputDecoration(
-                    fillColor: Colors.white,
-                    filled: true,
-                    hintText: "Masukkan catatan untuk WO ini...",
-                    hintStyle:
-                        TextStyle(fontSize: 12, color: Colors.grey.shade400),
-                    contentPadding: const EdgeInsets.all(12),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            Future<void> toggleListening() async {
+              try {
+                if (isListening) {
+                  await speech.stop();
+                  if (dialogContext.mounted) {
+                    setDialogState(() => isListening = false);
+                  }
+                  return;
+                }
+
+                var status = await Permission.microphone.request();
+                if (!status.isGranted) {
+                  alert(dialogContext, 0,
+                      "Izin mikrofon diperlukan untuk Voice Text", "warning");
+                  return;
+                }
+
+                if (!isSpeechInit) {
+                  isSpeechInit = await speech.initialize(
+                    onStatus: (st) {
+                      if (st == 'done' || st == 'notListening') {
+                        if (dialogContext.mounted) {
+                          setDialogState(() => isListening = false);
+                        }
+                      }
+                    },
+                    onError: (err) {
+                      print("Speech Error: ${err.errorMsg}");
+                      if (dialogContext.mounted) {
+                        setDialogState(() => isListening = false);
+                      }
+                    },
+                  );
+                }
+
+                if (isSpeechInit) {
+                  if (dialogContext.mounted) {
+                    setDialogState(() => isListening = true);
+                  }
+                  final String baseText = txtCatatan.text.trim();
+
+                  var locales = await speech.locales();
+                  String? idLocale;
+                  for (var loc in locales) {
+                    if (loc.localeId.toLowerCase().startsWith('id')) {
+                      idLocale = loc.localeId;
+                      break;
+                    }
+                  }
+
+                  await speech.listen(
+                    localeId: idLocale ?? 'id_ID',
+                    onResult: (result) {
+                      if (dialogContext.mounted) {
+                        setDialogState(() {
+                          final recognized = result.recognizedWords;
+                          if (baseText.isNotEmpty) {
+                            txtCatatan.text = "$baseText $recognized".trim();
+                          } else {
+                            txtCatatan.text = recognized;
+                          }
+                          txtCatatan.selection = TextSelection.fromPosition(
+                            TextPosition(offset: txtCatatan.text.length),
+                          );
+                          if (result.finalResult) {
+                            isListening = false;
+                          }
+                        });
+                      }
+                    },
+                  );
+                } else {
+                  alert(dialogContext, 0,
+                      "Fitur Voice Text tidak tersedia di perangkat ini",
+                      "warning");
+                }
+              } catch (e) {
+                print("Voice error: $e");
+                if (dialogContext.mounted) {
+                  setDialogState(() => isListening = false);
+                }
+              }
+            }
+
+            return AlertDialog(
+              insetPadding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              backgroundColor: cardColor,
+              titlePadding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
+              contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              title: Row(
+                children: [
+                  Icon(Icons.speaker_notes_outlined,
+                      color: darkOrange, size: 22),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Catatan Work Order',
+                      style: TextStyle(
+                        color: darkOrange,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: primaryOrange, width: 1.5),
-                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            ElevatedButton.icon(
-              icon: const Icon(Icons.close, color: Colors.white, size: 16.0),
-              label: pmBtnLabel("Batal"),
-              style: pmBtnStyle(Colors.grey.shade500),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.send_rounded,
-                  color: Colors.white, size: 16.0),
-              label: pmBtnLabel("Kirim Catatan"),
-              style: pmBtnStyle(primaryOrange),
-              onPressed: () {
-                // Confirm Dialog Yes or No sebelum hit to server
-                showDialog(
-                  context: globalScaffoldKey.currentContext!,
-                  builder: (BuildContext confirmContext) {
-                    return pmAlertDialog(
-                      title: 'Konfirmasi',
-                      content: Text(
-                          "Apakah Anda yakin ingin mengirim catatan untuk WO ${item['wodwonbr']}?"),
-                      actions: [
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.close,
-                              color: Colors.white, size: 16.0),
-                          label: pmBtnLabel("Tidak"),
-                          style: pmBtnStyle(Colors.grey.shade500),
-                          onPressed: () => Navigator.of(confirmContext).pop(),
+                  IconButton(
+                    icon: const Icon(Icons.close,
+                        color: Colors.black54, size: 20),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                      if (isListening) {
+                        speech.stop();
+                      }
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: lightOrange,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: accentOrange.withValues(alpha: 0.3)),
+                      ),
+                      child: Column(
+                        children: [
+                          _kv("SR Number",
+                              (item['srnumber'] ?? '-').toString(),
+                              dense: true),
+                          _kv("WO Number",
+                              (item['wodwonbr'] ?? '-').toString(),
+                              dense: true),
+                          _kv("Unit / VHCID",
+                              (item['vhcid'] ?? '-').toString(),
+                              dense: true),
+                          _kv("Driver", (item['drvname'] ?? '-').toString(),
+                              dense: true),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Isi Catatan:",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: darkOrange,
+                          ),
                         ),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.check,
-                              color: Colors.white, size: 16.0),
-                          label: pmBtnLabel("Ya, Kirim"),
-                          style: pmBtnStyle(primaryOrange),
-                          onPressed: () async {
-                            Navigator.of(confirmContext).pop();
-                            Navigator.of(dialogContext).pop();
-                            await _hitUpdateCatatanServer(
-                                (item['wodwonbr'] ?? '').toString(),
-                                txtCatatan.text.trim(),
-                                item);
-                          },
+                        // Voice Button badge
+                        InkWell(
+                          onTap: toggleListening,
+                          borderRadius: BorderRadius.circular(20),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: isListening
+                                  ? Colors.red.shade50
+                                  : lightOrange,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isListening
+                                    ? Colors.redAccent
+                                    : primaryOrange,
+                                width: isListening ? 1.5 : 1.0,
+                              ),
+                              boxShadow: isListening
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.redAccent
+                                            .withValues(alpha: 0.3),
+                                        blurRadius: 6,
+                                        spreadRadius: 1,
+                                      )
+                                    ]
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isListening ? Icons.mic : Icons.mic_none,
+                                  color: isListening
+                                      ? Colors.redAccent
+                                      : primaryOrange,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  isListening
+                                      ? "Mendengarkan..."
+                                      : "Voice Text",
+                                  style: TextStyle(
+                                    color: isListening
+                                        ? Colors.redAccent
+                                        : primaryOrange,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: txtCatatan,
+                      maxLines: 4,
+                      cursorColor: primaryOrange,
+                      style:
+                          const TextStyle(fontSize: 13, color: Colors.black87),
+                      decoration: InputDecoration(
+                        fillColor: Colors.white,
+                        filled: true,
+                        hintText: isListening
+                            ? "Sedang mendengarkan ucapan Anda..."
+                            : "Ketik manual atau gunakan tombol Voice Text...",
+                        hintStyle: TextStyle(
+                          fontSize: 12,
+                          color: isListening
+                              ? Colors.redAccent.withValues(alpha: 0.7)
+                              : Colors.grey.shade400,
+                          fontStyle: isListening
+                              ? FontStyle.italic
+                              : FontStyle.normal,
+                        ),
+                        contentPadding: const EdgeInsets.all(12),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: isListening
+                                ? Colors.redAccent
+                                : Colors.grey.shade300,
+                            width: isListening ? 1.5 : 1.0,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: isListening
+                                ? Colors.redAccent
+                                : primaryOrange,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (isListening)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Row(
+                          children: [
+                            const SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.redAccent),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Silakan bicara sekarang. Tap 'Mendengarkan...' untuk berhenti.",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.redAccent,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.close,
+                      color: Colors.white, size: 16.0),
+                  label: pmBtnLabel("Batal"),
+                  style: pmBtnStyle(Colors.grey.shade500),
+                  onPressed: () {
+                    if (isListening) {
+                      speech.stop();
+                    }
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.send_rounded,
+                      color: Colors.white, size: 16.0),
+                  label: pmBtnLabel("Kirim Catatan"),
+                  style: pmBtnStyle(primaryOrange),
+                  onPressed: () {
+                    if (isListening) {
+                      speech.stop();
+                    }
+                    // Confirm Dialog Yes or No sebelum hit to server
+                    showDialog(
+                      context: globalScaffoldKey.currentContext!,
+                      builder: (BuildContext confirmContext) {
+                        return pmAlertDialog(
+                          title: 'Konfirmasi',
+                          content: Text(
+                              "Apakah Anda yakin ingin mengirim catatan untuk WO ${item['wodwonbr']}?"),
+                          actions: [
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.close,
+                                  color: Colors.white, size: 16.0),
+                              label: pmBtnLabel("Tidak"),
+                              style: pmBtnStyle(Colors.grey.shade500),
+                              onPressed: () =>
+                                  Navigator.of(confirmContext).pop(),
+                            ),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.check,
+                                  color: Colors.white, size: 16.0),
+                              label: pmBtnLabel("Ya, Kirim"),
+                              style: pmBtnStyle(primaryOrange),
+                              onPressed: () async {
+                                Navigator.of(confirmContext).pop();
+                                Navigator.of(dialogContext).pop();
+                                await _hitUpdateCatatanServer(
+                                    (item['wodwonbr'] ?? '').toString(),
+                                    txtCatatan.text.trim(),
+                                    item);
+                              },
+                            ),
+                          ],
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
-          ],
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -12376,10 +12604,14 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                         Navigator.of(ctx).pop();
                         EasyLoading.show(status: "Memproses approval...");
                         try {
+                          final String headerIdParam = dialogDetails.isNotEmpty
+                              ? (dialogDetails[0]['id_header'] ?? '').toString()
+                              : '';
                           final url = Uri.parse(
                                   "${BASE_URL}api/maintenance/sr/approve_opname_sr_detail_dialog.jsp")
                               .replace(
                             queryParameters: {
+                              'id_header': headerIdParam,
                               'wonumber': currentWoNumber,
                               'vhcid': currentVhcId,
                               'estimasi': txtEstimasi.text.trim(),
@@ -13278,115 +13510,55 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   ),
                   label: pmBtnLabel("Detail List"), //AS LIST DETAIL QC
                   onPressed: () async {
-                    showDialog(
-                      context: globalScaffoldKey.currentContext!,
-                      builder: (context) => pmAlertDialog(
-                        title: 'Information',
-                        content: Text("Serah Terima/ view detail?"),
-                        actions: <Widget>[
-                          ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 24.0,
-                            ),
-                            label: pmBtnLabel("Serah Terima"),
-                            onPressed: () async {
-                              //Navigator.of(globalScaffoldKey.currentContext!).pop(false);
-                              Navigator.of(globalScaffoldKey.currentContext!)
-                                  .pop(false);
-                              await Future.delayed(Duration(seconds: 1));
-                              METHOD_DETAIL = 'QC';
-                              fnVHCIDQC = item['vhcid'];
-                              fnSTARTKMQC = item['vhckm'];
-                              fnWONUMBERQC = item['wodwonbr'];
-                              fnSRNUMBER = item['srnumber'];
-                              setState(() {
-                                txtOpnameWONUMBER.text = item['srnumber'];
-                                txtOpnameVHCID.text = fnVHCIDQC;
-                              });
-                              _tabController.animateTo(1);
-                              // await getListBanTMSQC(true, '
-                            },
-                            style: pmBtnStyle(primaryOrange),
-                          ),
-                          ElevatedButton.icon(
-                            icon: Icon(
-                              Icons.list,
-                              color: Colors.white,
-                              size: 24.0,
-                            ),
-                            label: pmBtnLabel("View"),
-                            onPressed: () async {
-                              print('show');
-                              //print("${dataListTyreFitQC}");
-                              METHOD_DETAIL = '';
-                              await getListViewQC(true, item['wodwonbr']);
-                              if (dataListTyreFitQC.length > 0) {
-                                Navigator.of(context).pop(false);
-                                await Future.delayed(Duration(milliseconds: 1));
-                                print("dataListTyreFit QC");
-                                //(dataListTyreFitQC);
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        insetPadding:
-                                            const EdgeInsets.symmetric(
-                                                horizontal: 8.0,
-                                                vertical: 18.0),
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(16)),
-                                        backgroundColor: Colors.white,
-                                        titlePadding: const EdgeInsets.fromLTRB(
-                                            16, 14, 12, 10),
-                                        contentPadding:
-                                            const EdgeInsets.fromLTRB(
-                                                6, 0, 6, 8),
-                                        title: Row(
-                                          children: [
-                                            Icon(Icons.fact_check_outlined,
-                                                color: darkOrange, size: 22),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                'List Item QC: ${item['wodwonbr'] ?? ''}',
-                                                style: TextStyle(
-                                                    color: darkOrange,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15),
-                                              ),
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.close,
-                                                  color: Colors.black54),
-                                              onPressed: () =>
-                                                  Navigator.of(context)
-                                                      .pop(false),
-                                            ),
-                                          ],
-                                        ),
-                                        content:
-                                            setupAlertDialoadContainerViewQC(
-                                                context),
-                                      );
-                                    });
-                              } else {
-                                Navigator.of(context).pop(false);
-                                await Future.delayed(Duration(milliseconds: 1));
-                                alert(
-                                    context,
-                                    2,
-                                    "tidak ada data yang di temukan",
-                                    "warning");
-                              }
-                            },
-                            style: pmBtnStyle(accentOrange),
-                          ),
-                        ],
-                      ),
-                    );
+                    METHOD_DETAIL = '';
+                    await getListViewQC(true, item['wodwonbr']);
+                    if (dataListTyreFitQC.isNotEmpty) {
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              insetPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0, vertical: 18.0),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16)),
+                              backgroundColor: Colors.white,
+                              titlePadding: const EdgeInsets.fromLTRB(
+                                  16, 14, 12, 10),
+                              contentPadding:
+                                  const EdgeInsets.fromLTRB(6, 0, 6, 8),
+                              title: Row(
+                                children: [
+                                  Icon(Icons.fact_check_outlined,
+                                      color: darkOrange, size: 22),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'List Item QC: ${item['wodwonbr'] ?? ''}',
+                                      style: TextStyle(
+                                          color: darkOrange,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close,
+                                        color: Colors.black54),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(false),
+                                  ),
+                                ],
+                              ),
+                              content:
+                                  setupAlertDialoadContainerViewQC(context),
+                            );
+                          });
+                    } else {
+                      alert(
+                          context,
+                          2,
+                          "tidak ada data yang di temukan",
+                          "warning");
+                    }
                   },
                   style: pmBtnStyle(accentOrange2),
                 ),
@@ -13419,6 +13591,34 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
                   label: pmBtnLabel("Catatan"),
                   onPressed: () => _showCatatanDialogQC(context, item),
                   style: pmBtnStyle(accentOrange),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(
+                    Icons.assignment_turned_in_outlined,
+                    color: Colors.white,
+                    size: 16.0,
+                  ),
+                  label: pmBtnLabel("Serah Terima"),
+                  onPressed: () async {
+                    METHOD_DETAIL = 'QC';
+                    fnVHCIDQC = item['vhcid'];
+                    fnSTARTKMQC = item['vhckm'];
+                    fnWONUMBERQC = item['wodwonbr'];
+                    fnSRNUMBER = item['srnumber'];
+                    setState(() {
+                      txtOpnameWONUMBER.text = item['srnumber'] ?? '';
+                      txtOpnameVHCID.text = fnVHCIDQC ?? '';
+                    });
+                    _tabController.animateTo(1);
+                  },
+                  style: pmBtnStyle(darkOrange),
                 ),
               ),
             ],
@@ -13633,68 +13833,78 @@ class _FrmServiceRequestOprPMState extends State<FrmServiceRequestOprPM>
         onPressed: () async {
           showDialog(
             context: globalScaffoldKey.currentContext!,
-            builder: (context) => new AlertDialog(
-              title: new Text('Information'),
-              //content: new Text("Close WO data ${appSrnumber}"),
+            builder: (context) => pmAlertDialog(
+              title: 'Konfirmasi Approve QC',
               content: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                //position
                 mainAxisSize: MainAxisSize.min,
-                // wrap content in flutter
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: Text("Close WO data ${appSrnumber}",
-                        style: TextStyle(color: Colors.white)),
+                  Text(
+                    "Apakah Anda yakin ingin Approve / Close WO:",
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                   ),
+                  const SizedBox(height: 8),
                   Container(
-                    margin: EdgeInsets.all(12.0),
-                    child: TextField(
-                      cursorColor: primaryOrange,
-                      style: TextStyle(color: Colors.black87, fontSize: 14),
-                      controller: txtWodCloseNotesQC,
-                      keyboardType: TextInputType.text,
-                      decoration: new InputDecoration(
-                        fillColor: Colors.white,
-                        filled: true,
-                        isDense: true,
-                        labelText: "Notes...",
-                        contentPadding: EdgeInsets.all(5.0),
+                    width: double.infinity,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: lightOrange,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: accentOrange.withOpacity(0.4)),
+                    ),
+                    child: Text(
+                      appSrnumber,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: darkOrange,
                       ),
                     ),
                   ),
+                  if (wodNumber.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      "No. WO: $wodNumber",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ],
               ),
               actions: <Widget>[
-                new TextButton(
-                    onPressed: () {
-                      Navigator.of(globalScaffoldKey.currentContext!)
-                          .pop(false);
-                      resetTeks();
-                    },
-                    child:
-                        new Text('No', style: TextStyle(color: Colors.white))),
-                new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 15.0,
-                    ),
-                    label:
-                        Text("Finish", style: TextStyle(color: Colors.white)),
-                    onPressed: () async {
-                      Navigator.of(globalScaffoldKey.currentContext!)
-                          .pop(false);
-                      closeWoRequestServiceQC(appSrnumber, wodNumber, appVhcid,
-                          appDrvid, woPrint, txtWodCloseNotesQC.text);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.redAccent,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        textStyle: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold))),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                    resetTeks();
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey.shade700,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                  ),
+                  child: const Text(
+                    'No',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(
+                    Icons.check,
+                    color: Colors.white,
+                    size: 16.0,
+                  ),
+                  label: pmBtnLabel("Yes"),
+                  onPressed: () async {
+                    Navigator.of(globalScaffoldKey.currentContext!).pop(false);
+                    closeWoRequestServiceQC(
+                        appSrnumber, wodNumber, appVhcid, appDrvid, woPrint, "");
+                  },
+                  style: pmBtnStyle(primaryOrange),
+                ),
               ],
             ),
           );
