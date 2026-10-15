@@ -22,9 +22,11 @@ import 'package:trust_location/trust_location.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:camera/camera.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../helpers/DeveloperModeGuard.dart';
 import '../../helpers/GpsSecurityChecker.dart';
+import '../services/DeliveryRateService.dart';
 import 'PageMessageResponse.dart';
 
 class FrmCloseVehicle extends StatefulWidget {
@@ -40,6 +42,7 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
   GlobalKey globalScaffoldKey2 = GlobalKey<ScaffoldState>();
   SharedPreferences? prefs;
   String imageDo = "";
+  bool _isRateShared = false;
   String noImageImageBase64 =
       'iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAANlBMVEXu7u64uLjx8fHt7e21tbXQ0NC9vb3ExMTm5ubj4+O5ubnIyMjq6urf39/MzMzBwcHU1NTZ2dmQfkM8AAAE2klEQVR4nO2Y2bLrKAxFwxCPePr/n21JYBvnJLeruq5zHnqtl3gAzEZCEnk8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgK3jv62t/eXN98KbZtfOncd8O6C/8dwH/yjOO4RH26zh05XnaxiiMa/fao5fHzzLLGKfyNCxxrZfnubfZSf28SM/hOYXSvmIJf1PTlWcc1vPaNVmQn9oY3TC4GBt5ffl+H90++yRasyzfNxdJaYlLqu79ZgM656Ib9RuhdRX3KnTD5I/rrND3w/n1V2NUCifp7ENW4Nx4SvKbDDBVnVZXDyh9wlI/WdSPblIpqlxMLwpN4LC07WKrvl56nArFFV3MRk+j2+2vhFGGbQ+vDfoVsVQrI9rnRIwqbHfme23oYln9XaHNb5mS90m89TL1WmHw8rLsvq6RYfqzja3MYdNJb5ute/hHty6z9lAbxi9FmtMRd4W9zqe3r/pOZ1LHkMqGyexgzaZYN/Orjbrfe5W/9OUumfCs8EZhB9l/8mSKQi8e57Z9drr+w3uFfWNLoa3U6m7OzcTj9Lm4QTai38wPyhjFH0+FNzpopdA5XeFd4T5vIy21v10UbtbTdqldNftCiEWjxJohxxo/a48Xe9Veep86RVWpsy3doTBplDhWVs0T67B4Klyj2DdqlJiyJ+S5iySN/21+lcNmCUhn1g9npBl/pNy/rtD2Wpt2hTrd8VhYC5hvFQbx5sHikLYZzlAj3hs3v+6b2aJQHq8bLMGPdbaIp7/cpjBNOofZnwrj/Krw3C2HQvXfeZGXXq6iNiubV7Ul02nbW7erpM1QxOqGveTD5gs21Hwt81s/K/RvFHYakKTSm72s0KCTz72S+qf8yk9zKrSQ0jUWZHeFuWQb7rdhdjNJ8e5QaF6aq5X5k5dKu2bq5E6SQxwf41582XPZbFPp2JWwGbQwaNvhUPi9SKNespweo5GmKirbM05cFJpT95Lr4jTGYdMcWDKHDPNc1/VZfEGK7GOLShHRVArv1XZV2DeHQh9zjAjFsfYgeVUYVMmSVOfYaHsznbwPsfjfMd4lW3S/o1AivEaboWT8I1pqA1fvykdlwxxyOyvQ5nyxmmm1RnCldtdYo8G5yY4efkuhYpWWXecZ5apt1ZnW2/BQmHJRqjW37TcNqDJ1+RlKCNEBteTVqk3q3Dzgr3mpcBTZSc9uwyaVdzfr9Md350MLJJoe7GD0yMeLNpkvtF1v6Dh9Kdtkb/YSVfTZa6S5vfJWVaoh5VhaPNbtVojLNV/tCjWQaDzSvGe77Kndw3zmRU1CFpXD0x254We2uP2Mf2ZcEVaut3ieTpv+usK7QjWQvRmzG5ueSQPTMaCGr2iL9zwH1HPU43oCvvmMH8+aYj2upyaWkDh3Ly5UFKZFlt6bsvKHxaRFzJqLMiMfIM2gYWuyRhnWTqOaQr5zxl+l8j1yn38eVbDvVz17b+HHFunkqC5G6CR5r1bqhGXLL/TJLL2mo8+kYzxsE+QB223Kmy7MbcWdZ/z6b78Qfvyb+KGHPzrq1H78QfjaNtSv86e+92/in/i0sKF+9SfvCrnp3WdcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+B/xD/alJ5yRngQVAAAAAElFTkSuQmCC';
   String noImage =
@@ -523,6 +526,8 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
           "lon": lon,
           "photo": photo,
           "imeiid": imeiid,
+          "rate": _isRateShared ? "" : "0",
+          "is_rate_shared": _isRateShared ? "1" : "0",
         };
         print("close DO ${dataParam}");
         //var urlData = "${GlobalData.baseUrl}api/close_do_v3.jsp";
@@ -1228,9 +1233,69 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
               ],
             ),
           ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(14, 0, 14, 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _onShareRatePressed(),
+                icon: Icon(Icons.share, color: Colors.white, size: 18),
+                label: Text(
+                  'Bagikan Rate',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  elevation: 2,
+                  backgroundColor: Color(0xFFF57C00),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  void _onShareRatePressed() {
+    setState(() {
+      _isRateShared = true;
+    });
+    String currentDrvId = drvid.trim().isNotEmpty
+        ? drvid.trim()
+        : GlobalData.frmDrvId.trim();
+    if (currentDrvId.isEmpty && prefs != null) {
+      currentDrvId = (prefs!.getString("drvid") ?? "").trim();
+    }
+
+    String currentNoDo = GlobalData.frmDloDoNumber.trim().isNotEmpty
+        ? GlobalData.frmDloDoNumber.trim()
+        : GlobalData.frmBujDoNumber.trim();
+
+    if (currentDrvId.isEmpty || currentNoDo.isEmpty) {
+      final ctx = globalScaffoldKey.currentContext ?? context;
+      alert(ctx, 0, "Nomor DO atau Driver ID tidak ditemukan.", "warning");
+      return;
+    }
+
+    final int expiryMs = DateTime.now().millisecondsSinceEpoch + (60 * 1000);
+    final String raw = '$currentDrvId:::$currentNoDo:::$expiryMs';
+    final String token = base64Url.encode(utf8.encode(raw)).replaceAll('=', '');
+    final String shareUrl =
+        'https://apps.tuluatas.com/trucking/given_rate.jsp?q=$token';
+
+    final String shareText =
+        'Halo Customer, mohon kesediaan Anda memberikan rating penilaian pelayanan pengiriman kami untuk No DO: $currentNoDo melalui tautan berikut (berlaku 1 menit):\n$shareUrl';
+
+    Share.share(shareText, subject: 'Penilaian Layanan DO $currentNoDo');
   }
 
   Future<void> _onSubmitPressed() async {
@@ -1398,6 +1463,28 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                             } else {
                               Navigator.of(confirmCtx).pop(false);
                               print('Close Do test');
+                              if (!_isRateShared) {
+                                try {
+                                  String rateDrvId = drvid.trim().isNotEmpty
+                                      ? drvid.trim()
+                                      : GlobalData.frmDrvId.trim();
+                                  if (rateDrvId.isEmpty && prefs != null) {
+                                    rateDrvId = (prefs!.getString("drvid") ?? "").trim();
+                                  }
+                                  String rateNoDo = GlobalData.frmDloDoNumber.trim().isNotEmpty
+                                      ? GlobalData.frmDloDoNumber.trim()
+                                      : GlobalData.frmBujDoNumber.trim();
+                                  if (rateNoDo.isNotEmpty) {
+                                    DeliveryRateService.submitDeliveryRate(
+                                      doNumber: rateNoDo,
+                                      rate: 0,
+                                      drvid: rateDrvId,
+                                    );
+                                  }
+                                } catch (eRate) {
+                                  print('Error submitting rate 0: $eRate');
+                                }
+                              }
                               EasyLoading.show(
                                   status: 'Menyimpan Close DO...');
                               var scode = await closeDo(

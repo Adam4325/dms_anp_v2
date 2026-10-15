@@ -142,11 +142,20 @@ Future<void> onStart(ServiceInstance service) async {
           timeLimit: Duration(seconds: 20),
         ),
       );
-      await LogkarApiService.sendPositionFromPrefs(
+      final res = await LogkarApiService.sendPositionFromPrefs(
         noDo: noDo,
         latitude: position.latitude.toString(),
         longitude: position.longitude.toString(),
       );
+      if (res.message.contains('99') ||
+          res.message.contains('Selesai') ||
+          res.message.contains('dihentikan') ||
+          res.message.contains('not exists') ||
+          res.message.contains('4002') ||
+          res.message.contains('40072')) {
+        timer?.cancel();
+        service.stopSelf();
+      }
     } catch (e) {
       debugPrint('Logkar background position error: $e');
     }

@@ -85,6 +85,23 @@ class LogkarApiService {
     return null;
   }
 
+  static int? parseOrderStatusFromJson(dynamic body) {
+    if (body == null) return null;
+    if (body is Map) {
+      final data = body['data'];
+      if (data is List && data.isNotEmpty) {
+        final first = data.first;
+        if (first is Map && first['status'] != null) {
+          return int.tryParse(first['status'].toString());
+        }
+      } else if (data is Map && data['status'] != null) {
+        return int.tryParse(data['status'].toString());
+      }
+      if (body['status'] is int) return body['status'] as int;
+    }
+    return null;
+  }
+
   static String parseResponseMessage(String body) {
     if (body.trim().isEmpty) {
       return '';
@@ -355,12 +372,33 @@ class LogkarApiService {
     if (doNo.trim().isEmpty) {
       return (ok: false, message: 'Nomor DO kosong.');
     }
-    final doId = await getLogkarDoId(
+    final detailed = await getLogkarDoIdDetailed(
       apiLokar: apiLokar,
       clientId: clientId,
       apiToken: apiToken,
       doNo: doNo,
     );
+    final doId = detailed.doId;
+
+    // Cek status order Logkar saat ini
+    int? orderStatus;
+    try {
+      final dynamic decoded = json.decode(detailed.rawBody);
+      orderStatus = parseOrderStatusFromJson(decoded);
+    } catch (_) {}
+
+    // Jika order sudah berstatus 99 (Pesanan Selesai), JANGAN kirim posisi lagi!
+    if (orderStatus == 99) {
+      print('LOGKAR sendOrderPosition: Order $doNo sudah berstatus 99 (Selesai). Pengiriman posisi dihentikan.');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('logkar_mixer_no_do');
+      await prefs.setBool('logkar_bg_running', false);
+      return (
+        ok: true,
+        message: 'Order $doNo sudah berstatus 99 (Selesai). Pengiriman posisi ke Logkar dihentikan.',
+      );
+    }
+
     if (doId == null || doId <= 0) {
       return (
         ok: false,
@@ -387,6 +425,15 @@ class LogkarApiService {
         body: body,
       );
       final detail = parseResponseMessage(response.body);
+
+      // Jika response Logkar menandakan order sudah ditutup / tidak ditemukan (4002 / 40072)
+      if (response.body.contains('4002') || response.body.contains('40072') || response.body.contains('not exists')) {
+        print('LOGKAR sendOrderPosition: Order $doNo sudah tidak aktif / selesai di Logkar. Hentikan tracking.');
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('logkar_mixer_no_do');
+        await prefs.setBool('logkar_bg_running', false);
+      }
+
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return (
           ok: true,

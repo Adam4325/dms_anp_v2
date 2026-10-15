@@ -89,6 +89,7 @@ import 'marketing/ListOpenDoNC.dart';
 import 'mekanik/ListMekanikInspeksiV2.dart';
 import 'aduan/AduanMainPage.dart';
 import 'package:dms_anp/src/services/AduanService.dart';
+import 'driver/ViewListDriverRate.dart';
 
 class ViewDashboard extends StatefulWidget {
   @override
@@ -159,6 +160,9 @@ class _ViewDashboardState extends State<ViewDashboard>
   List<dynamic> data_list_do = [];
   var status_unit = '';
   int points = 0;
+  double _driverAvgRate = 0.0;
+  int _driverStarCount = 0;
+  int _driverTotalRate = 0;
   int _aduanNotifCount = 0;
   Timer? _aduanNotifTimer;
 
@@ -988,6 +992,7 @@ class _ViewDashboardState extends State<ViewDashboard>
           cekDetailInfo("stnk");
           cekDetailInfo("kir");
           fetchPoints();
+          _fetchDriverRating();
         }
         if (loginname == "MECHANIC") {
           print('status_mc_out_standing ${loginname}');
@@ -1300,6 +1305,15 @@ class _ViewDashboardState extends State<ViewDashboard>
 
     // Cek apakah user adalah ADMIN atau memiliki akses OP
     bool isAdminOrOp = (username == "ADMIN" || getAkses("OP"));
+
+    if (isAdminOrOp && !_anpServiceList.any((m) => m.idKey == 42)) {
+      _anpServiceList.add(const AnpService(
+        image: Icons.person_outline,
+        color: Color(0xFFFF8A50),
+        idKey: 42,
+        title: "List Driver",
+      ));
+    }
 
     if (isAdminOrOp && _anpServiceList.length > MAX_MAIN_MENU) {
       // Jika ADMIN/OP dan menu lebih dari 7, pisahkan
@@ -2125,6 +2139,43 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
   }
 
+  Future<void> _fetchDriverRating() async {
+    try {
+      final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
+      final drvid = (prefs.getString('drvid') ?? '').trim();
+      if (drvid.isEmpty) {
+        return;
+      }
+      final url = Uri.parse(
+          '${GlobalData.baseUrl}api/driver/get_driver_rate.jsp?drvid=${Uri.encodeComponent(drvid)}');
+      debugPrint('Fetching driver rating: $url');
+      final response = await http
+          .get(url, headers: {'Accept': 'application/json'})
+          .timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final dynamic data = json.decode(response.body);
+        if (data is Map &&
+            (data['status_code'] == 200 || data['status_code'] == '200')) {
+          if (mounted) {
+            setState(() {
+              _driverAvgRate = (data['avg_rate'] is num)
+                  ? (data['avg_rate'] as num).toDouble()
+                  : double.tryParse(data['avg_rate']?.toString() ?? '0') ?? 0.0;
+              _driverStarCount = (data['star_count'] is num)
+                  ? (data['star_count'] as num).toInt()
+                  : int.tryParse(data['star_count']?.toString() ?? '0') ?? 0;
+              _driverTotalRate = (data['total_rate'] is num)
+                  ? (data['total_rate'] as num).toInt()
+                  : int.tryParse(data['total_rate']?.toString() ?? '0') ?? 0;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error _fetchDriverRating: $e');
+    }
+  }
+
   Future<void> fetchPointsList() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var driverId = prefs.getString('drvid') ?? '';
@@ -2475,6 +2526,37 @@ class _ViewDashboardState extends State<ViewDashboard>
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                if (loginname == 'DRIVER') ...[
+                  SizedBox(height: 3),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (int i = 1; i <= 5; i++)
+                        Icon(
+                          (_driverTotalRate > 0 && i <= _driverStarCount)
+                              ? Icons.star
+                              : Icons.star_border,
+                          size: 15,
+                          color: (_driverTotalRate > 0 && i <= _driverStarCount)
+                              ? Colors.yellow.shade400
+                              : Colors.white.withOpacity(0.4),
+                        ),
+                      SizedBox(width: 5),
+                      Text(
+                        _driverTotalRate > 0
+                            ? '${_driverAvgRate.toStringAsFixed(1)} (${_driverTotalRate})'
+                            : 'Belum ada rating',
+                        style: TextStyle(
+                          color: _driverTotalRate > 0
+                              ? Colors.yellow.shade300
+                              : Colors.white.withOpacity(0.85),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 SizedBox(height: 2),
                 Row(
                   children: [
@@ -3846,7 +3928,10 @@ class _ViewDashboardState extends State<ViewDashboard>
       GetAbsensiSummary();
       GetCountStoring();
       GetListDo();
-      fetchPoints();
+      if (loginname == "DRIVER") {
+        fetchPoints();
+        _fetchDriverRating();
+      }
     });
     _fetchMenusFromApi();
     _loadSavedBackground();
@@ -5915,6 +6000,16 @@ class _ViewDashboardState extends State<ViewDashboard>
           ),
         ),
       );
+    } else if (anpService.idKey == 42) {
+      if (username == "ADMIN" || getAkses("OP")) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ViewListDriverRate()),
+        );
+      } else {
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Hanya Admin yang bisa membuka menu ini", "error");
+      }
     } else {
       final ctx = globalScaffoldKey.currentContext!;
       if (ctx != null) {
@@ -6119,12 +6214,22 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
     await sharedPreferences!.setBool('is_api_lokar_run', globals.isApiLokarRUN);
     if (data_list_do.isNotEmpty) {
-      final noDo = data_list_do.first['do_number']?.toString() ?? '';
+      final firstDo = data_list_do.first;
+      final noDo = firstDo['do_number']?.toString() ?? '';
+      final doStatus = (firstDo['status'] ?? firstDo['dostatus'] ?? '').toString().toUpperCase();
+      // Jika status DO sudah selesai / 99 / OUTUNLOADING, jangan kirim posisi lagi
+      if (doStatus == '99' || doStatus == 'OUTUNLOADING' || doStatus == 'SELESAI' || doStatus == 'CLOSED') {
+        await sharedPreferences!.remove('logkar_mixer_no_do');
+        await LogkarPositionBackgroundService.stop();
+        return;
+      }
       if (noDo.isNotEmpty) {
         await sharedPreferences!.setString('logkar_mixer_no_do', noDo);
       }
     } else {
       await sharedPreferences!.remove('logkar_mixer_no_do');
+      await LogkarPositionBackgroundService.stop();
+      return;
     }
     await LogkarPositionBackgroundService.syncTrackingState();
   }

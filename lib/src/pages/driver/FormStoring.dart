@@ -288,14 +288,24 @@ class _FormStoringState extends State<FormStoring> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String imeiid = prefs.getString("androidID")!;
       var notes = txtNOTES.text;
-      var lon = txtLon.text;
-      var lat = txtLat.text;
-      var address =
-          await getAddressFromLatLon(double.parse(lat), double.parse(lon));
+      var lon = txtLon.text.trim();
+      var lat = txtLat.text.trim();
+      if ((lat.isEmpty || lon.isEmpty || lat == "0.0" || lon == "0.0") && userLocation != null) {
+        lat = userLocation!.latitude.toString();
+        lon = userLocation!.longitude.toString();
+        txtLat.text = lat;
+        txtLon.text = lon;
+      }
+      var address = "";
+      if (lat.isNotEmpty && lon.isNotEmpty && lat != "0.0" && lon != "0.0") {
+        try {
+          address = await getAddressFromLatLon(double.parse(lat), double.parse(lon));
+        } catch (_) {}
+      }
       var urlData =
           "${GlobalData.baseUrl}api/maintenance/req_service_driver_new.jsp?method=set-service-v2" +
-              "&vhcid=${vhcid}&locid=${locid}&drvid=${drvid}&vhckm=${vhckm}&vhckm=${vhckm}"
-                  "&typereq=STORING&userid=${userid}&dlodate=&notes=${notes}&notelpon=${notelpon}&lat=${lat}&lon=${lon}&address=${address}&imeiid=${imeiid}";
+              "&vhcid=${vhcid}&locid=${locid}&drvid=${drvid}&vhckm=${vhckm}" +
+              "&typereq=STORING&userid=${userid}&dlodate=&notes=${notes}&notelpon=${notelpon}&lat=${lat}&lon=${lon}&address=${address}&imeiid=${imeiid}";
       print(urlData);
       var encoded = Uri.encodeFull(urlData);
       Uri myUri = Uri.parse(encoded);
@@ -399,55 +409,52 @@ class _FormStoringState extends State<FormStoring> {
 
 
   Future<bool> updatePosition(String inorout) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var locid = prefs.get("locid")!;
-    print("locid");
-    print(locid);
     var isOutGeo = true; // default dianggap di luar
-    print("userLocation: $userLocation");
+
+    if (userLocation == null) {
+      userLocation = await _getLocation();
+    }
 
     if (userLocation != null && listGeofence.isNotEmpty) {
       txtAddr = "";
-      print("Masuk: $userLocation");
       double latUser = userLocation!.latitude;
       double lonUser = userLocation!.longitude;
+
+      // Ambil lat lon murni dari GPS HP
       txtLat.text = latUser.toString();
       txtLon.text = lonUser.toString();
+
       for (var a in listGeofence) {
-        double latGeo = double.parse(a['lat']);
-        double lonGeo = double.parse(a['lon']);
-        double radius = double.parse(a['radius']);
+        double latGeo = double.parse(a['lat'].toString());
+        double lonGeo = double.parse(a['lon'].toString());
+        double radius = double.parse(a['radius'].toString());
 
         num distance = SphericalUtil.computeDistanceBetween(
           LatLng(latGeo, lonGeo),
           LatLng(latUser, lonUser),
         );
-        txtLat.text = a['lat'].toString();
-        txtLon.text = a['lon'].toString();
+
         print(
             "🔹 Cek geofence ${a['name']}: distance = $distance m, radius = $radius m");
-        if (radius > 0) {
-          if (distance <= radius) {
-            print("✅ Dalam geofence ${a['name']} (${a['geo_id']})");
-            if(locid.toString()=="BYH-ANP" || locid.toString()=="BYH-ANP MIX"){
-              isOutGeo = true; // masih di dalam salah satu geofence
-
-              print("isOutGeo ${txtLat.text .toString()} ${txtLon.text}");
-              print(isOutGeo);
-              break; // langsung keluar loop
-            }else{
-              isOutGeo = false;
-              break;
-            }
-          }
+        if (radius > 0 && distance <= radius) {
+          print("❌ Dalam geofence ${a['name']} (${a['geo_id']}): distance = $distance m <= radius = $radius m");
+          isOutGeo = false; // GPS HP BERADA DI DALAM GEOFENCE -> DITOLAK
+          txtAddr = (a['name'] ?? "").toString();
+          break; // langsung keluar loop
         }
       }
 
       print(
-          "🚧 Hasil akhir: ${isOutGeo ? 'Di luar area geofence' : 'Di dalam area geofence'}");
+          "🚧 Hasil akhir: ${isOutGeo ? 'Di luar area geofence (Boleh Storing)' : 'Di dalam area geofence (Ditolak: $txtAddr)'}");
     } else {
       print('⚠️ Tidak ada lokasi atau data geofence kosong');
-      _getLocation();
+      if (userLocation == null) {
+        await _getLocation();
+        if (userLocation != null) {
+          txtLat.text = userLocation!.latitude.toString();
+          txtLon.text = userLocation!.longitude.toString();
+        }
+      }
     }
 
     return isOutGeo;
@@ -778,14 +785,29 @@ class _FormStoringState extends State<FormStoring> {
                       icon: Icon(Icons.save, color: Colors.white, size: 18),
                       label: Text("Submit", style: btnTextWhite),
                       onPressed: () async {
-                            _future = _getLocation();
+                            EasyLoading.show(status: 'Memeriksa lokasi GPS...');
+                            Position? pos = await _getLocation();
+                            if (pos != null) {
+                              userLocation = pos;
+                            }
+                            EasyLoading.dismiss();
+
+                            if (userLocation == null) {
+                              alert(
+                                  globalScaffoldKey.currentContext!,
+                                  0,
+                                  "Lokasi GPS tidak ditemukan. Pastikan GPS aktif dan izin diberikan.",
+                                  "error");
+                              return;
+                            }
+
                             var isOutGeo = await updatePosition("IN");
                             if (isOutGeo) {
                               showDialog(
                                 context: context,
                                 builder: (context) => new AlertDialog(
                                   title: new Text('Information'),
-                                  content: new Text("Storing kendaraan anda ?"),//
+                                  content: new Text("Storing kendaraan anda ?"),
                                   actions: <Widget>[
                                     ElevatedButton.icon(
                                       icon: Icon(Icons.close, color: Colors.white, size: 18),
@@ -804,7 +826,16 @@ class _FormStoringState extends State<FormStoring> {
                                       icon: Icon(Icons.save, color: Colors.white, size: 18),
                                       label: Text("Submit", style: btnTextWhite),
                                       onPressed: () async {
-                                        await updatePosition("IN");
+                                        var isOut = await updatePosition("IN");
+                                        if (!isOut) {
+                                          Navigator.of(context).pop(false);
+                                          alert(
+                                              globalScaffoldKey.currentContext!,
+                                              0,
+                                              "Anda berada dalam area geofence ${txtAddr.isNotEmpty ? txtAddr : ''}. Pengajuan storing hanya diizinkan di luar area geofence.",
+                                              "error");
+                                          return;
+                                        }
 
                                         print("GlobalData.servicetype");
                                         print(GlobalData.servicetype);
@@ -812,7 +843,6 @@ class _FormStoringState extends State<FormStoring> {
                                         print(txtKM.value.text);
                                         print(vhcid);
                                         print("GlobalData.servicetype 2");
-                                        //return;
                                         if (vhcid == "" || vhcid == null) {
                                           alert(
                                               globalScaffoldKey.currentContext!,
@@ -848,21 +878,22 @@ class _FormStoringState extends State<FormStoring> {
                                               "error");
                                         }
                                         else if (txtLat.text == "0.0" ||
-                                            txtLon.text == "0.0") {
+                                            txtLon.text == "0.0" ||
+                                            txtLat.text == "" ||
+                                            txtLon.text == "") {
                                           alert(
                                               globalScaffoldKey.currentContext!,
                                               0,
                                               "Longitude latitude tidak boleh 0.0",
                                               "error");
                                         }
-                                        else if (txtNoTelp.text == "" ||
-                                            txtNoTelp.text == "") {
+                                        else if (txtNoTelp.text.trim() == "") {
                                           alert(
                                               globalScaffoldKey.currentContext!,
                                               0,
-                                              "No Telpon tidak bolrh kosong",
+                                              "No Telpon tidak boleh kosong",
                                               "error");
-                                        } else if (isMock == false) {
+                                        } else if (isMock == true) {
                                           alert(
                                               globalScaffoldKey.currentContext!,
                                               0,
@@ -897,7 +928,7 @@ class _FormStoringState extends State<FormStoring> {
                               alert(
                                   globalScaffoldKey.currentContext!,
                                   0,
-                                  "Anda berada dalam geofence ${txtAddr}",
+                                  "Anda berada dalam area geofence ${txtAddr.isNotEmpty ? txtAddr : ''}. Pengajuan storing hanya diizinkan di luar area geofence.",
                                   "error");
                             }
                           },

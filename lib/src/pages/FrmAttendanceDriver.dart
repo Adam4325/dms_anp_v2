@@ -66,6 +66,7 @@ class GeofenceArea {
   double longitude;
   double radius;
   String address;
+  bool isTransitApproved;
 
   GeofenceArea({
     this.geoId = 0,
@@ -74,6 +75,7 @@ class GeofenceArea {
     this.longitude = 0.0,
     this.radius = 0.0,
     this.address = "",
+    this.isTransitApproved = false,
   });
 
   factory GeofenceArea.fromJson(Map<String, dynamic> json) {
@@ -84,6 +86,7 @@ class GeofenceArea {
       longitude: double.tryParse(json['lon'].toString()) ?? 0.0,
       radius: double.tryParse(json['radius'].toString()) ?? 0.0,
       address: json['address']?.toString() ?? "",
+      isTransitApproved: false,
     );
   }
 }
@@ -279,13 +282,17 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
                       int.tryParse(item['id']?.toString() ?? '0') ?? 99999;
                   final String transitAddr =
                       item['address']?.toString() ?? '';
+                  // Ambil radius transit dari API (default 1000.0)
+                  final double transitRadius =
+                      double.tryParse(item['radius']?.toString() ?? '1000') ?? 1000.0;
                   loadedGeofences.add(GeofenceArea(
                     geoId: transitId,
                     name: "$poolName (DO: $wonbr)",
                     latitude: lat,
                     longitude: lon,
-                    radius: 1000.0,
+                    radius: transitRadius,
                     address: transitAddr,
+                    isTransitApproved: true,
                   ));
                 }
               }
@@ -495,11 +502,6 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
     //   return;
     // }
 
-    if (_needsAttendanceQr &&
-        await _scanAttendanceQrForAction(type) == null) {
-      return;
-    }
-
     try {
       if (userLocation == null) {
         EasyLoading.show(status: 'Getting location...');
@@ -534,6 +536,17 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
             ? selectedGeofence.address
             : selectedGeofence.name;
         addressController.text = address;
+      }
+
+      // Validasi Scan QR:
+      // JIKA DRIVER BERADA DI AREA TRANSIT APPROVED (isTransitApproved == true),
+      // MAKA SCAN QR DITIADAKAN / DI-BYPASS!
+      final bool isBypassQr = selectedGeofence.isTransitApproved || _isOngoingUnit;
+      if (!isBypassQr && widget.requireAttendanceQr) {
+        final scannedQr = await _scanAttendanceQrForAction(type);
+        if (scannedQr == null) {
+          return;
+        }
       }
 
       if (EasyLoading.isShow) {
@@ -584,8 +597,9 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
     return result.payload;
   }
 
-  bool _hasValidQrForSubmit(String type) {
-    if (!_needsAttendanceQr) {
+  bool _hasValidQrForSubmit(String type, [GeofenceArea? geofence]) {
+    // Jika berada di lokasi transit approved atau unit ongoing, QR tidak wajib
+    if ((geofence?.isTransitApproved ?? false) || !_needsAttendanceQr) {
       return true;
     }
 
@@ -610,8 +624,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         LatLng(userLocation!.latitude, userLocation!.longitude),
       );
 
-      // Special handling for default geofence
-      if (geo.geoId == AttendanceConstants.defaultGeoId) {
+      // Special handling for default geofence (hanya jika bukan transit)
+      if (geo.geoId == AttendanceConstants.defaultGeoId && !geo.isTransitApproved) {
         return geo;
       }
 
@@ -626,11 +640,46 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
 
   void _showAttendanceConfirmation(
       String type, GeofenceArea geofence, String address) {
+    final bool isTransit = geofence.isTransitApproved;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Confirmation'),
-        content: Text("Proceed with ${type.toUpperCase()} attendance?"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Proceed with ${type.toUpperCase()} attendance?"),
+            const SizedBox(height: 10),
+            Text("Lokasi: ${geofence.name}",
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            if (isTransit) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.green.shade300),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle, size: 14, color: Colors.green.shade700),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Transit DO Approved (Bebas Scan QR)",
+                      style: TextStyle(
+                          color: Colors.green.shade900,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
         actions: [
           ElevatedButton.icon(
             icon: Icon(Icons.close, color: Colors.white),
@@ -679,7 +728,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         return;
       }
 
-      if (!_hasValidQrForSubmit(type)) {
+      if (!_hasValidQrForSubmit(type, geofence)) {
         _showError("QR Code expired atau belum discan, silakan scan ulang");
         return;
       }
@@ -706,7 +755,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       };
 
       final qrPayload = _attendanceQrPayload;
-      if (_needsAttendanceQr && qrPayload != null) {
+      if (!geofence.isTransitApproved && _needsAttendanceQr && qrPayload != null) {
         data.addAll({
           'qr_data': _attendanceQrRawData,
           'qr_issuer': qrPayload.issuer,
@@ -1060,6 +1109,39 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
               "Accuracy: ${userLocation?.accuracy.toStringAsFixed(1)}m",
               style: TextStyle(color: Colors.green.shade600, fontSize: 11),
             ),
+          Builder(
+            builder: (context) {
+              final nearest = _findNearestGeofence();
+              if (nearest.geoId != 0 && nearest.isTransitApproved) {
+                return Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade100,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.green.shade400),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.verified, size: 16, color: Colors.green.shade800),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          "Geofence: ${nearest.name} (Bebas QR)",
+                          style: TextStyle(
+                            color: Colors.green.shade900,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
           // Tidak menampilkan mock banner (banyak false positive dari TrustLocation)
           // if (isMockLocation)
           //   Container(... "Mock Location Detected" ...),
@@ -1130,14 +1212,53 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
             ),
             SizedBox(height: 8),
             _buildAttendanceStatus(canCheckIn, canCheckOut),
-            if (_needsAttendanceQr) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Wajib scan QR ADMIN/OP yang masih aktif. QR expired ditolak.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-              ),
-            ],
+            Builder(
+              builder: (context) {
+                final nearest = _findNearestGeofence();
+                final bool isApprovedTransitNow =
+                    nearest.geoId != 0 && nearest.isTransitApproved;
+                if (isApprovedTransitNow) {
+                  return Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green.shade300),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check_circle, size: 16, color: Colors.green.shade700),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Area Transit Approved: Bebas Scan QR',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green.shade800,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                if (_needsAttendanceQr) {
+                  return Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Wajib scan QR ADMIN/OP yang masih aktif (Otomatis bebas QR jika berada di radius transit DO yang diapprove)',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
           ],
         ),
       ),
