@@ -1,11 +1,7 @@
-import 'package:dms_anp/src/Helper/Provider.dart';
-import 'package:dms_anp/src/pages/ViewDashboard.dart';
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
-import 'HistoryPage.dart';
+import 'package:dms_anp/src/Helper/Provider.dart';
 
 class RewardExchangePage extends StatefulWidget {
   final int pts;
@@ -14,25 +10,41 @@ class RewardExchangePage extends StatefulWidget {
   final String loc;
 
   const RewardExchangePage({
+    Key? key,
     this.pts = 0,
     this.drvId = '',
     this.usr = '',
     this.loc = '',
-  });
+  }) : super(key: key);
 
   @override
   State<RewardExchangePage> createState() => _RewardExchangePageState();
 }
 
 class _RewardExchangePageState extends State<RewardExchangePage> {
+  // Warna tema sesuai design_tab.md & design_list.md
+  final Color primaryOrange = const Color(0xFFFF8C69);
+  final Color lightOrange = const Color(0xFFFFF4E6);
+  final Color accentOrange = const Color(0xFFFFB347);
+  final Color darkOrange = const Color(0xFFE07B39);
+  final Color backgroundColor = const Color(0xFFFFFAF5);
+  final Color cardColor = const Color(0xFFFFF8F0);
+  final Color shadowColor = const Color(0x20FF8C69);
+
   List<Map<String, dynamic>> rewards = [];
   bool loading = false;
-  TextEditingController quantityController = new TextEditingController();
+  final TextEditingController quantityController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     load();
+  }
+
+  @override
+  void dispose() {
+    quantityController.dispose();
+    super.dispose();
   }
 
   Future<void> load() async {
@@ -53,87 +65,198 @@ class _RewardExchangePageState extends State<RewardExchangePage> {
                   "enabled": item['isenabled'] == 1 && item['qty'] > 0,
                 })
             .toList();
-        print('Rewards \n${rewards}');
       }
     } catch (e) {
-      print("Error loading rewards: \n$e");
+      debugPrint("Error loading rewards: $e");
     }
 
-    setState(() => loading = false);
+    if (mounted) {
+      setState(() => loading = false);
+    }
   }
 
-  Future<void> redeemOld(Map<String, dynamic> r) async {
-    int p = r['pts'];
-
-    if (widget.pts < p) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Poin tidak cukup untuk menukar hadiah ini')),
-      );
-      return;
-    }
-
-    String nbr = "RWD${DateTime.now().millisecondsSinceEpoch}";
-    Map<String, dynamic> trx = {
-      "RWDNBR": nbr,
-      "RWDDATE": DateTime.now().toIso8601String(),
-      "RWDTYPEID": "DRIVER",
-      "RWDPOINTS": p,
-      "RWDQTY": r['qty'],
-      "RWDSTATUS": "OPEN",
-      "DRVID": widget.drvId,
-      "RWDPRINT": "N",
-      "RWDTO": r['type'],
-      "LOCID": widget.loc,
-      "RWDVNOTE": "",
-      "CREATED_DATETIME": DateTime.now().toIso8601String(),
-      "CREATED_USER": widget.usr,
-      "APV_USER": "",
-      "APV_DATETIME": null,
-    };
-
-    print("Transaksi disimpan: \n$trx");
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Penukaran berhasil diajukan')),
+  ButtonStyle pmBtnStyle(Color bg) {
+    return ElevatedButton.styleFrom(
+      elevation: 0,
+      backgroundColor: bg,
+      foregroundColor: Colors.white,
+      disabledForegroundColor: Colors.white70,
+      disabledBackgroundColor: Colors.grey.shade400,
+      shadowColor: Colors.transparent,
+      side: BorderSide.none,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
     );
   }
 
-  // Panggil dialog konfirmasi dulu sebelum redeem
+  Widget pmBtnLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        fontSize: 13,
+      ),
+    );
+  }
+
+  InputDecoration softDecoration({
+    String? label,
+    String? hint,
+    Widget? prefixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      isDense: true,
+      filled: true,
+      fillColor: Colors.white,
+      labelStyle: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      prefixIcon: prefixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: primaryOrange, width: 2),
+      ),
+    );
+  }
+
+  Widget _kv(String label, String value, {bool isHighlight = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 75,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Text(
+            ' : ',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 12,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value.isEmpty ? '-' : value,
+              style: TextStyle(
+                color: isHighlight ? darkOrange : Colors.grey.shade900,
+                fontSize: 12,
+                fontWeight: isHighlight ? FontWeight.w700 : FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void confirmRedeem(Map<String, dynamic> reward) {
     quantityController.text = "1";
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Konfirmasi Penukaran'),
+      builder: (ctx) => AlertDialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: cardColor,
+        titlePadding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        title: Row(
+          children: [
+            Icon(Icons.card_giftcard, color: primaryOrange, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              'Konfirmasi Penukaran',
+              style: TextStyle(
+                color: darkOrange,
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Apakah Anda yakin ingin menukar reward "${reward['type']}" dengan ${reward['pts']} poin per item?',
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: lightOrange,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: accentOrange.withValues(alpha: 0.4)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    reward['type'] ?? '-',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: darkOrange,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Biaya: ${reward['pts']} Poin / item',
+                    style: TextStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 14),
             TextField(
               controller: quantityController,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Jumlah Quantity',
-                border: OutlineInputBorder(),
+              cursorColor: primaryOrange,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              decoration: softDecoration(
+                label: 'Jumlah Quantity',
+                hint: 'Masukkan jumlah (misal: 1)',
+                prefixIcon:
+                    Icon(Icons.shopping_bag_outlined, color: primaryOrange, size: 20),
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(
-            child: Text('Batal'),
-            onPressed: () => Navigator.pop(context),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.close, color: Colors.white, size: 16),
+            label: pmBtnLabel('Batal'),
+            style: pmBtnStyle(Colors.grey.shade500),
+            onPressed: () => Navigator.pop(ctx),
           ),
-          ElevatedButton(
-            child: Text('Ya, Tukar'),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.check_circle_outline,
+                color: Colors.white, size: 16),
+            label: pmBtnLabel('Ya, Tukar'),
+            style: pmBtnStyle(primaryOrange),
             onPressed: () {
-              Navigator.pop(context);
-              final qty = int.tryParse(quantityController.text) ?? 1;
-              print(reward);
-              redeem(reward); // panggil fungsi dengan qty
+              Navigator.pop(ctx);
+              redeem(reward);
             },
           ),
         ],
@@ -141,37 +264,38 @@ class _RewardExchangePageState extends State<RewardExchangePage> {
     );
   }
 
-  // Fungsi redeem update untuk kirim ke API, cek poin dll
   Future<void> redeem(Map<String, dynamic> r) async {
-    int p = r['pts'];
-    int qty = int.parse(quantityController.text);
-    print("widget.drvId \n${widget.drvId} {${r['type']}}");
-    if (quantityController.text == null || quantityController.text == "") {
+    final qtyText = quantityController.text.trim();
+    if (qtyText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Quantity tidak boleh kosong')),
+        const SnackBar(content: Text('Quantity tidak boleh kosong')),
       );
       return;
     }
 
-    if (int.parse(quantityController.text) <= 0) {
+    final qty = int.tryParse(qtyText) ?? 0;
+    if (qty <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Quantity harus >=1')),
+        const SnackBar(content: Text('Quantity harus >= 1')),
       );
       return;
     }
 
-    int totalPointsBeli = p * qty;
-    if (widget.pts < p) {
+    final int p = r['pts'] ?? 0;
+    final int totalPointsNeeded = p * qty;
+    if (widget.pts < totalPointsNeeded) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Poin tidak cukup untuk menukar hadiah ini')),
+        SnackBar(
+          content: Text(
+              'Poin tidak cukup! Butuh $totalPointsNeeded poin, poin Anda saat ini ${widget.pts}.'),
+        ),
       );
       return;
     }
 
-    // Contoh kirim ke API pakai POST dengan id, points, qty
     try {
-      String baseUrl = '${GlobalData.baseUrl}api/points/redeem_reward.jsp';
-      String fullUrl = "$baseUrl?"
+      final String baseUrl = '${GlobalData.baseUrl}api/points/redeem_reward.jsp';
+      final String fullUrl = "$baseUrl?"
           "method=create-point"
           "&id=${r['id']}"
           "&points=${r['pts']}"
@@ -180,40 +304,45 @@ class _RewardExchangePageState extends State<RewardExchangePage> {
           "&createdBy=${widget.usr}"
           "&locId=${widget.loc}"
           "&type=${r['type']}"
-          "&quantity_beli=${quantityController.text}";
-
-      print("Calling URL: $fullUrl");
+          "&quantity_beli=$qtyText";
 
       final response = await http.get(Uri.parse(fullUrl));
       if (response.statusCode == 200) {
-        var result = jsonDecode(response.body);
-        print(result);
-        print(result['status_code'] == 200);
-        if (result['status_code'] == 200) {
+        final result = jsonDecode(response.body);
+        if (result['status_code'] == 200 || result['status_code'] == '200') {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(result['message'] ?? 'Penukaran berhasil')),
+            SnackBar(
+              backgroundColor: Colors.green.shade700,
+              content: Text(result['message'] ?? 'Penukaran berhasil diajukan'),
+            ),
           );
-          await Future.delayed(Duration(seconds: 2));
-          Navigator.pop(context);
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(builder: (_) => ViewDashboard()),
-          // );
+          await Future.delayed(const Duration(milliseconds: 1500));
+          if (mounted) {
+            load();
+          }
           return;
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(result['message'] ?? 'Penukaran gagal')),
+            SnackBar(
+              backgroundColor: Colors.red.shade700,
+              content: Text(result['message'] ?? 'Penukaran gagal'),
+            ),
           );
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Gagal menukar reward: ${response.reasonPhrase}')),
+            backgroundColor: Colors.red.shade700,
+            content: Text('Gagal menukar reward: ${response.reasonPhrase}'),
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saat menukar reward: $e')),
+        SnackBar(
+          backgroundColor: Colors.red.shade700,
+          content: Text('Error saat menukar reward: $e'),
+        ),
       );
     }
   }
@@ -221,66 +350,232 @@ class _RewardExchangePageState extends State<RewardExchangePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: loading
-          ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: rewards.length,
-              itemBuilder: (context, index) {
-                final r = rewards[index];
-                return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  elevation: 6,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  color: Colors.white,
-                  shadowColor: Colors.blueAccent.withOpacity(0.3),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 16),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        r['type'],
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueAccent,
-                        ),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          'Point: ${r['pts']}\nQTY: ${r['qty']}\nUOM: ${r['uom']}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            height: 1.4,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ),
-                      trailing: ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlueAccent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 18),
-                          elevation: 4,
-                        ),
-                        onPressed: r['enabled'] ? () => confirmRedeem(r) : null,
-                        //onPressed: r['enabled'] ? () => redeem(r) : null,
-                        child: Text(
-                          'Tukar',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
+      backgroundColor: backgroundColor,
+      body: Column(
+        children: [
+          // Banner Poin Driver Saat Ini
+          Container(
+            margin: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [lightOrange, cardColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: accentOrange.withValues(alpha: 0.5)),
+              boxShadow: [
+                BoxShadow(
+                  color: shadowColor,
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: primaryOrange,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.stars, color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Total Poin Anda',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${widget.pts} Poin',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: darkOrange,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.refresh, color: darkOrange, size: 20),
+                  tooltip: 'Muat Ulang',
+                  onPressed: load,
+                ),
+              ],
+            ),
+          ),
+
+          // List Rewards
+          Expanded(
+            child: loading
+                ? Center(
+                    child: CircularProgressIndicator(color: primaryOrange),
+                  )
+                : rewards.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.card_giftcard_outlined,
+                                size: 48, color: Colors.grey.shade400),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Belum ada reward yang tersedia',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : RefreshIndicator(
+                        color: primaryOrange,
+                        onRefresh: load,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 24, top: 4),
+                          itemCount: rewards.length,
+                          itemBuilder: (context, index) {
+                            final r = rewards[index];
+                            final bool isAvailable = r['enabled'] == true;
+
+                            return Container(
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: cardColor,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                    color: accentOrange.withValues(alpha: 0.45)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: shadowColor,
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Header Card
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: lightOrange,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(14),
+                                        topRight: Radius.circular(14),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.card_giftcard,
+                                          color: isAvailable
+                                              ? primaryOrange
+                                              : Colors.grey,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            r['type'] ?? '-',
+                                            style: TextStyle(
+                                              color: isAvailable
+                                                  ? darkOrange
+                                                  : Colors.grey.shade700,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: isAvailable
+                                                ? primaryOrange.withValues(alpha: 0.15)
+                                                : Colors.grey.shade200,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            '${r['pts']} Pts',
+                                            style: TextStyle(
+                                              color: isAvailable
+                                                  ? darkOrange
+                                                  : Colors.grey.shade600,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  // Body Card
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              _kv('Biaya Poin',
+                                                  '${r['pts']} Point',
+                                                  isHighlight: true),
+                                              _kv('Stok',
+                                                  '${r['qty']} ${r['uom']}'),
+                                              _kv('Status',
+                                                  isAvailable
+                                                      ? 'Tersedia'
+                                                      : 'Stok Habis / Nonaktif'),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        ElevatedButton.icon(
+                                          icon: const Icon(Icons.swap_horiz,
+                                              size: 16, color: Colors.white),
+                                          label: pmBtnLabel('Tukar'),
+                                          style: pmBtnStyle(isAvailable
+                                              ? primaryOrange
+                                              : Colors.grey.shade400),
+                                          onPressed: isAvailable
+                                              ? () => confirmRedeem(r)
+                                              : null,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+          ),
+        ],
+      ),
     );
   }
 }

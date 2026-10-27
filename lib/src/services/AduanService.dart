@@ -6,10 +6,19 @@ import 'package:http/http.dart' as http;
 
 /// API: [server_api/aduan/aduan_api.jsp](server_api/aduan/aduan_api.jsp)
 class AduanService {
-  static String get _base =>
-      '${GlobalData.baseUrl}api/aduan/aduan_api.jsp';
-  static String get _roleAksesNotifBase =>
-      '${GlobalData.baseUrl}api/firebase/role_akses_notif.jsp';
+  static String get _base {
+    final b = GlobalData.baseUrl.endsWith('/')
+        ? GlobalData.baseUrl
+        : '${GlobalData.baseUrl}/';
+    return '${b}api/aduan/aduan_api.jsp';
+  }
+
+  static String get _roleAksesNotifBase {
+    final b = GlobalData.baseUrl.endsWith('/')
+        ? GlobalData.baseUrl
+        : '${GlobalData.baseUrl}/';
+    return '${b}api/firebase/role_akses_notif.jsp';
+  }
 
   static int _statusCode(dynamic v) {
     if (v == null) {
@@ -30,7 +39,7 @@ class AduanService {
         'method': 'aduan-notif-count',
         'username': username,
       });
-      final res = await http.get(uri, headers: {'Accept': 'application/json'});
+      final res = await http.get(uri, headers: {'Accept': 'application/json'}).timeout(const Duration(seconds: 10));
       if (res.statusCode != 200) {
         return 0;
       }
@@ -56,12 +65,16 @@ class AduanService {
   }
 
   static Future<List<AduanItem>> listOpen(String username) async {
-    final uri = Uri.parse(_base).replace(queryParameters: {
-      'method': 'aduan-list-open',
-      'username': username,
-    });
-    final res = await http.get(uri, headers: {'Accept': 'application/json'});
-    return _parseList(res.body);
+    try {
+      final uri = Uri.parse(_base).replace(queryParameters: {
+        'method': 'aduan-list-open',
+        'username': username,
+      });
+      final res = await http.get(uri, headers: {'Accept': 'application/json'}).timeout(const Duration(seconds: 15));
+      return _parseList(res.body);
+    } catch (_) {
+      return [];
+    }
   }
 
   static Future<Set<String>> fetchRoleAksesNotifUsers() async {
@@ -69,7 +82,7 @@ class AduanService {
       final uri = Uri.parse(_roleAksesNotifBase).replace(queryParameters: {
         'method': 'getUserNotif',
       });
-      final res = await http.get(uri, headers: {'Accept': 'application/json'});
+      final res = await http.get(uri, headers: {'Accept': 'application/json'}).timeout(const Duration(seconds: 10));
       if (res.statusCode != 200) {
         return <String>{};
       }
@@ -101,30 +114,41 @@ class AduanService {
     required String drvid,
     required String kryid,
   }) async {
-    final uri = Uri.parse(_base).replace(queryParameters: {
-      'method': 'aduan-list-mine',
-      'username': username,
-      'status_karyawan': statusKaryawan,
-      'drvid': drvid,
-      'kryid': kryid,
-    });
-    final res = await http.get(uri, headers: {'Accept': 'application/json'});
-    return _parseList(res.body);
+    try {
+      final uri = Uri.parse(_base).replace(queryParameters: {
+        'method': 'aduan-list-mine',
+        'username': username,
+        'status_karyawan': statusKaryawan,
+        'drvid': drvid,
+        'kryid': kryid,
+      });
+      final res = await http.get(uri, headers: {'Accept': 'application/json'}).timeout(const Duration(seconds: 15));
+      return _parseList(res.body);
+    } catch (_) {
+      return [];
+    }
   }
 
   static List<AduanItem> _parseList(String body) {
-    final j = json.decode(body) as Map<String, dynamic>;
-    if (_statusCode(j['status_code']) != 200) {
+    try {
+      final j = json.decode(body);
+      if (j is! Map<String, dynamic>) {
+        return [];
+      }
+      if (_statusCode(j['status_code']) != 200) {
+        return [];
+      }
+      final data = j['data'];
+      if (data is! List) {
+        return [];
+      }
+      return data
+          .whereType<Map>()
+          .map((e) => AduanItem.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } catch (_) {
       return [];
     }
-    final data = j['data'];
-    if (data is! List) {
-      return [];
-    }
-    return data
-        .whereType<Map>()
-        .map((e) => AduanItem.fromJson(Map<String, dynamic>.from(e)))
-        .toList();
   }
 
   static Future<String?> create({
@@ -134,42 +158,64 @@ class AduanService {
     required String kryid,
     required String loginname,
     required String pesan,
+    String? fotoBase64,
   }) async {
-    var body = {
-      'method': 'aduan-create',
-      'username': username,
-      'status_karyawan': statusKaryawan,
-      'drvid': drvid,
-      'kryid': kryid,
-      'loginname': loginname,
-      'pesan': pesan,
-    };
-    print(body);
-    final uri = Uri.parse(_base).replace(queryParameters: body);
-    final res = await http.get(uri, headers: {'Accept': 'application/json'});
-    final j = json.decode(res.body) as Map<String, dynamic>;
-    final code = _statusCode(j['status_code']);
-    if (code == 200) {
-      return null;
+    try {
+      var body = {
+        'method': 'aduan-create',
+        'username': username,
+        'status_karyawan': statusKaryawan,
+        'drvid': drvid,
+        'kryid': kryid,
+        'loginname': loginname,
+        'pesan': pesan,
+      };
+      if (fotoBase64 != null && fotoBase64.isNotEmpty) {
+        body['foto'] = fotoBase64;
+      }
+      final uri = Uri.parse(_base);
+      final res = await http.post(
+        uri,
+        headers: {'Accept': 'application/json'},
+        body: body,
+      ).timeout(const Duration(seconds: 25));
+
+      final j = json.decode(res.body);
+      if (j is! Map<String, dynamic>) {
+        return 'Format respon server tidak valid (${res.statusCode})';
+      }
+      final code = _statusCode(j['status_code']);
+      if (code == 200) {
+        return null;
+      }
+      return j['message']?.toString() ?? 'Gagal mengirim aduan';
+    } catch (e) {
+      return 'Koneksi bermasalah: $e';
     }
-    return j['message']?.toString() ?? 'Gagal mengirim aduan';
   }
 
   static Future<String?> close({
     required String username,
     required int id,
   }) async {
-    final uri = Uri.parse(_base).replace(queryParameters: {
-      'method': 'aduan-close',
-      'username': username,
-      'id': id.toString(),
-    });
-    final res = await http.get(uri, headers: {'Accept': 'application/json'});
-    final j = json.decode(res.body) as Map<String, dynamic>;
-    final code = _statusCode(j['status_code']);
-    if (code == 200) {
-      return null;
+    try {
+      final uri = Uri.parse(_base).replace(queryParameters: {
+        'method': 'aduan-close',
+        'username': username,
+        'id': id.toString(),
+      });
+      final res = await http.get(uri, headers: {'Accept': 'application/json'}).timeout(const Duration(seconds: 15));
+      final j = json.decode(res.body);
+      if (j is! Map<String, dynamic>) {
+        return 'Format respon server tidak valid';
+      }
+      final code = _statusCode(j['status_code']);
+      if (code == 200) {
+        return null;
+      }
+      return j['message']?.toString() ?? 'Gagal menutup aduan';
+    } catch (e) {
+      return 'Koneksi bermasalah: $e';
     }
-    return j['message']?.toString() ?? 'Gagal menutup aduan';
   }
 }

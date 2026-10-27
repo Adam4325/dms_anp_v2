@@ -609,17 +609,6 @@ class _FrmCloseDoByOprState extends State<FrmCloseDoByOpr> {
                                               Navigator.of(ctx).pop(false);
                                             }
 
-                                            // Cek keamanan GPS sebelum submit close DO
-                                            var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
-                                            if (gpsResult["isFake"] == true) {
-                                              final fakeReason = gpsResult["reason"] ?? "";
-                                              final fakeCtx = globalScaffoldKey.currentContext;
-                                              if (fakeCtx != null) {
-                                                alert(fakeCtx, 0, "FAKE GPS terdeteksi: $fakeReason", "error");
-                                              }
-                                              return;
-                                            }
-
                                             var scode = await closeDo(
                                                 _dlocustdonbr,
                                                 _bujnbr,

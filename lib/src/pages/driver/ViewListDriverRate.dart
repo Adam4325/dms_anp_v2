@@ -130,19 +130,21 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
     });
 
     try {
-      final String sortParam = (_selectedSort == 'rated') ? 'highest' : _selectedSort;
+      final String sortParam =
+          (_selectedSort == 'rated') ? 'highest' : _selectedSort;
       final String url =
           '${GlobalData.baseUrl}api/driver/list_driver_rate.jsp?search=${Uri.encodeComponent(_searchQuery)}&sort=$sortParam';
 
       debugPrint('Fetching List Driver Rate: $url');
-      final response = await http
-          .get(Uri.parse(url), headers: {'Accept': 'application/json'})
-          .timeout(const Duration(seconds: 15));
+      final response = await http.get(Uri.parse(url), headers: {
+        'Accept': 'application/json'
+      }).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final dynamic decoded = json.decode(response.body);
         if (decoded is Map &&
-            (decoded['status_code'] == 200 || decoded['status_code'] == '200')) {
+            (decoded['status_code'] == 200 ||
+                decoded['status_code'] == '200')) {
           final List<dynamic> data = decoded['data'] ?? [];
 
           int ratedCount = 0;
@@ -157,7 +159,8 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
             }
           }
 
-          final double globalAvg = ratedCount > 0 ? (totalRateSum / ratedCount) : 0.0;
+          final double globalAvg =
+              ratedCount > 0 ? (totalRateSum / ratedCount) : 0.0;
 
           if (mounted) {
             setState(() {
@@ -199,6 +202,52 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
       }).toList();
     }
 
+    list.sort((a, b) {
+      final double rateA = (a['avg_rate'] is num)
+          ? (a['avg_rate'] as num).toDouble()
+          : double.tryParse(a['avg_rate']?.toString() ?? '0') ?? 0.0;
+      final double rateB = (b['avg_rate'] is num)
+          ? (b['avg_rate'] as num).toDouble()
+          : double.tryParse(b['avg_rate']?.toString() ?? '0') ?? 0.0;
+
+      final int totalA = (a['total_rate'] is num)
+          ? (a['total_rate'] as num).toInt()
+          : int.tryParse(a['total_rate']?.toString() ?? '0') ?? 0;
+      final int totalB = (b['total_rate'] is num)
+          ? (b['total_rate'] as num).toInt()
+          : int.tryParse(b['total_rate']?.toString() ?? '0') ?? 0;
+
+      final String nameA = (a['drvname'] ?? '').toString();
+      final String nameB = (b['drvname'] ?? '').toString();
+
+      final bool hasA = totalA > 0;
+      final bool hasB = totalB > 0;
+
+      if (_selectedSort == 'highest' || _selectedSort == 'rated') {
+        if (hasA && !hasB) return -1;
+        if (!hasA && hasB) return 1;
+        if (hasA && hasB) {
+          final cmpRate = rateB.compareTo(rateA); // rating tertinggi duluan
+          if (cmpRate != 0) return cmpRate;
+          final cmpTotal = totalB.compareTo(totalA);
+          if (cmpTotal != 0) return cmpTotal;
+        }
+        return nameA.toLowerCase().compareTo(nameB.toLowerCase());
+      } else if (_selectedSort == 'lowest') {
+        if (hasA && !hasB) return -1; // bernilai rating duluan
+        if (!hasA && hasB) return 1;
+        if (hasA && hasB) {
+          final cmpRate = rateA.compareTo(rateB); // rating terkecil duluan
+          if (cmpRate != 0) return cmpRate;
+          final cmpTotal = totalB.compareTo(totalA);
+          if (cmpTotal != 0) return cmpTotal;
+        }
+        return nameA.toLowerCase().compareTo(nameB.toLowerCase());
+      } else {
+        return nameA.toLowerCase().compareTo(nameB.toLowerCase());
+      }
+    });
+
     _filteredDrivers = list;
   }
 
@@ -220,7 +269,8 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
     alert(context, 0, msg, "error");
   }
 
-  Widget _buildStarRow(int starCount, double avgRate, {int totalRate = 0, double size = 16}) {
+  Widget _buildStarRow(int starCount, double avgRate,
+      {int totalRate = 0, double size = 16}) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -228,7 +278,9 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
           Icon(
             (totalRate > 0 && i <= starCount) ? Icons.star : Icons.star_border,
             size: size,
-            color: (totalRate > 0 && i <= starCount) ? Colors.amber : Colors.grey.shade400,
+            color: (totalRate > 0 && i <= starCount)
+                ? Colors.amber
+                : Colors.grey.shade400,
           ),
         const SizedBox(width: 6),
         Text(
@@ -272,7 +324,8 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.people_alt, color: Colors.white, size: 24),
+                child:
+                    const Icon(Icons.people_alt, color: Colors.white, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -300,7 +353,8 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(20),
@@ -385,12 +439,8 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
                 if (selected) {
                   setState(() {
                     _selectedSort = f['key']!;
-                  });
-                  if (_selectedSort == 'rated') {
                     _applyLocalFilter();
-                  } else {
-                    _fetchDriverList();
-                  }
+                  });
                 }
               },
             ),
@@ -450,12 +500,12 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: totalRate > 0
-                        ? Colors.amber.shade50
-                        : lightOrange,
+                    backgroundColor:
+                        totalRate > 0 ? Colors.amber.shade50 : lightOrange,
                     child: Icon(
                       Icons.person,
-                      color: totalRate > 0 ? Colors.amber.shade800 : primaryOrange,
+                      color:
+                          totalRate > 0 ? Colors.amber.shade800 : primaryOrange,
                       size: 22,
                     ),
                   ),
@@ -493,7 +543,7 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
                       ],
                     ),
                   ),
-                  if (totalRate > 0)
+                  if (totalRate > 0) //
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
@@ -522,7 +572,6 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
               const SizedBox(height: 12),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
               const SizedBox(height: 10),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -539,7 +588,8 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      _buildStarRow(starCount, avgRate, totalRate: totalRate, size: 17),
+                      _buildStarRow(starCount, avgRate,
+                          totalRate: totalRate, size: 17),
                     ],
                   ),
                   Column(
@@ -569,7 +619,6 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
                   ),
                 ],
               ),
-
               if (phone.isNotEmpty || city.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Row(
@@ -708,7 +757,8 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    _buildStarRow(starCount, avgRate, totalRate: totalRate, size: 24),
+                    _buildStarRow(starCount, avgRate,
+                        totalRate: totalRate, size: 24),
                     const SizedBox(height: 8),
                     Text(
                       totalRate > 0
@@ -723,9 +773,12 @@ class _ViewListDriverRateState extends State<ViewListDriverRate> {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildDetailItem(Icons.phone, 'Nomor HP', phone.isNotEmpty ? phone : '-'),
-              _buildDetailItem(Icons.location_city, 'Kota / Wilayah', city.isNotEmpty ? city : '-'),
-              _buildDetailItem(Icons.verified, 'Status', 'Active (Driver Aktif)'),
+              _buildDetailItem(
+                  Icons.phone, 'Nomor HP', phone.isNotEmpty ? phone : '-'),
+              _buildDetailItem(Icons.location_city, 'Kota / Wilayah',
+                  city.isNotEmpty ? city : '-'),
+              _buildDetailItem(
+                  Icons.verified, 'Status', 'Active (Driver Aktif)'),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,

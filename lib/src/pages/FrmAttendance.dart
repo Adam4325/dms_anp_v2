@@ -21,6 +21,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helpers/sim_phone_guard.dart';
+import '../../helpers/DeveloperModeGuard.dart';
 class FrmAttendance extends StatefulWidget {
   @override
   FrmAttendanceState createState() => FrmAttendanceState();
@@ -30,7 +31,6 @@ final globalScaffoldKey = GlobalKey<ScaffoldState>();
 
 class FrmAttendanceState extends State<FrmAttendance> {
   final String BASE_URL = GlobalData.baseUrlOri;
-  bool isMock = false;
   String androidID = "";
   List listGeofence = [];
   List<Map<String, dynamic>> listInfoAbsensi = [];
@@ -75,6 +75,11 @@ class FrmAttendanceState extends State<FrmAttendance> {
       EasyLoading.dismiss();
     }
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+        return;
+      }
+    });
   }
 
   _goBack(BuildContext context) {
@@ -139,14 +144,6 @@ class FrmAttendanceState extends State<FrmAttendance> {
   }
 
   Future<Position?> _getLocation() async {
-    // try {
-    //   bool isMockLocation = await TrustLocation.isMockLocation;
-    //   // Banyak device false positive; tidak pakai hasil untuk tampilan agar tidak salah deteksi
-    //   if (mounted) setState(() => isMock = false);
-    // } catch (e) {
-    //   print('TrustLocation isMockLocation check error: $e');
-    //   if (mounted) setState(() => isMock = false);
-    // }
 
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -165,17 +162,6 @@ class FrmAttendanceState extends State<FrmAttendance> {
       return Future.error('Location permissions are permanently denied, we cannot request permissions.');
     }
 
-    // try {
-    //   TrustLocation.start(5);
-    //   TrustLocation.onChange.listen((values) => {
-    //     print('TrustLocation ${values.latitude} ${values.longitude} ${values.isMockLocation}'),
-    //     truslat = values.longitude as double,
-    //     trusLon = values.longitude as double
-    //   });
-    //   TrustLocation.stop();
-    // } catch (e) {
-    //   print('TrustLocation error: $e');
-    // }
 
     final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     setState(() {
@@ -283,9 +269,12 @@ class FrmAttendanceState extends State<FrmAttendance> {
   Future<String> saveAttendance(String inorout, int geo_id, String geo_nm,
       String employeeid, String lat, String lon, String address) async {
     try {
+      if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+        return "";
+      }
+
       SharedPreferences prefs = await SharedPreferences.getInstance();
       var user_id = prefs.getString("name");
-      //var result = await GpsSecurityChecker.checkGpsSecurity();
       if (androidID.isEmpty) {
         alert(globalScaffoldKey.currentContext!, 0, "IMEI ID kosong, silahkan kontak Administrator", "error");
         return "";
@@ -293,8 +282,6 @@ class FrmAttendanceState extends State<FrmAttendance> {
         alert(globalScaffoldKey.currentContext!, 0, "USER ID tidak boleh kosong", "error");
         return "";
       } else {
-        // Jangan blokir di client karena fake GPS (banyak false positive).
-        // Jika ingin, bisa kirim info tambahan ke server dari result (belum dipakai di sini).
         if (EasyLoading.isShow) {
           EasyLoading.dismiss();
         }
@@ -304,12 +291,9 @@ class FrmAttendanceState extends State<FrmAttendance> {
         var encoded = Uri.encodeFull("${BASE_URL}api/check_in_out_geofence_new4.jsp");
         print(encoded);
         Uri urlEncode = Uri.parse(encoded);
-        print(isMock);
-        var fake = isMock == true ? '1' : '0';
 
         var data = {
           'method': inorout == "IN" ? "checkin-attendance-v3" : "checkout-attendance-v3",
-          //'imeiid': "3d011a9d72e23c29",
           'imeiid': androidID.toString(),
           'userid': user_id,
           'address': address,
@@ -318,7 +302,7 @@ class FrmAttendanceState extends State<FrmAttendance> {
           'geo_id': geo_id.toString(),
           'geo_nm': geo_nm,
           'shift': dropdownvalue,
-          'is_mock': fake,
+          'is_mock': '0',
         };
         print('data param ${data}');
         final response = await http.post(urlEncode, body: data);
@@ -942,19 +926,6 @@ class FrmAttendanceState extends State<FrmAttendance> {
             Text(
               "Accuracy: ${userLocation!.accuracy.toStringAsFixed(1)}m",
               style: TextStyle(color: Colors.green.shade600, fontSize: 11),
-            ),
-          if (isMock)
-            Container(
-              margin: EdgeInsets.only(top: 4),
-              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.orange,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                "Mock Location Detected",
-                style: TextStyle(color: Colors.white, fontSize: 10),
-              ),
             ),
         ],
       ),

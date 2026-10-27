@@ -37,6 +37,7 @@
         <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <queries>
+        <package android:name="com.google.android.verifier" />
         <!-- If your app opens https URLs -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
@@ -54,6 +55,9 @@
        <uses-library android:name="org.apache.http.legacy" android:required="false" />
        <meta-data android:name="com.google.android.geo.API_KEY"
            android:value="AIzaSyD2TFCSTdbRTmvblF1WYhGxfNMZtbseMQo"/>
+       <meta-data
+           android:name="io.flutter.embedding.android.EnableImpeller"
+           android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

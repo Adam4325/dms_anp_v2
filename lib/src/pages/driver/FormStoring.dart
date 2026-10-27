@@ -16,7 +16,7 @@ import 'package:maps_toolkit/maps_toolkit.dart';
 import 'package:progress_dialog_null_safe/progress_dialog_null_safe.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:trust_location/trust_location.dart';
+import 'package:dms_anp/helpers/DeveloperModeGuard.dart';
 import '../../flusbar.dart';
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 
@@ -114,7 +114,6 @@ class _FormStoringState extends State<FormStoring> {
   TextEditingController txtKM = new TextEditingController();
   TextEditingController txtLon = new TextEditingController();
   TextEditingController txtLat = new TextEditingController();
-  bool isMock = false;
   var isShowLonLat = false;
   Position? userLocation;
   String status_code = "";
@@ -376,8 +375,6 @@ class _FormStoringState extends State<FormStoring> {
     txtDRIVER.text = userid;
   }
 
-  var truslat = "0.0";
-  var trusLon = "0.0";
   var error = "";
   late Future<Position?> _future;
   String txtAddr = "";
@@ -460,42 +457,19 @@ class _FormStoringState extends State<FormStoring> {
     return isOutGeo;
   }
 
-  /// Mendapatkan posisi GPS: Geolocator.getCurrentPosition + TrustLocation (mock check).
+  /// Mendapatkan posisi GPS murni: Geolocator.getCurrentPosition.
   /// Mengisi txtLat, txtLon dan userLocation agar Submit bisa pakai koordinat yang valid (bukan 0.0).
   Future<Position?> _getLocation() async {
     Position? currentLocation;
     try {
       currentLocation = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.best);
-      try {
-        isMock = await TrustLocation.isMockLocation;
-      } catch (e) {
-        print('TrustLocation isMockLocation check error: $e');
-        isMock = false;
+      if (currentLocation != null) {
+        userLocation = currentLocation;
+        txtLat.text = currentLocation.latitude.toString();
+        txtLon.text = currentLocation.longitude.toString();
+        if (mounted) setState(() {});
       }
-      TrustLocation.start(5);
-      TrustLocation.onChange.listen((values) {
-        print(
-            'TrustLocation ${values.latitude} ${values.longitude} ${values.isMockLocation}');
-        truslat = values.latitude!;
-        trusLon = values.longitude!;
-      });
-
-      if (isMock == true) {
-        // Mock: pakai nilai dari stream (bisa masih 0.0 sampai stream emit); Submit tetap diblok validasi Fake GPS
-        txtLat.text = truslat;
-        txtLon.text = trusLon;
-      } else {
-        // Bukan mock: isi langsung dari currentLocation agar lat/lon tidak tetap 0.0
-        if (currentLocation != null) {
-          userLocation = currentLocation;
-          txtLat.text = currentLocation.latitude.toString();
-          txtLon.text = currentLocation.longitude.toString();
-          if (mounted) setState(() {});
-        }
-      }
-
-      TrustLocation.stop();
     } on PlatformException catch (e) {
       if (e.code == 'PERMISSION_DENIED' || e.code == 'PERMISSION_DENIED_NEVER_ASK') {
         error = 'Permission denied';
@@ -513,10 +487,6 @@ class _FormStoringState extends State<FormStoring> {
     super.initState();
     getListGeofenceArea(true);
     _future = _getLocation();
-    _getLocation().then((position) {
-      if (position != null) userLocation = position;
-      if (mounted) setState(() {});
-    });
     setState(() {
       txtSR.text = "STORING";
       getSession();
@@ -893,13 +863,10 @@ class _FormStoringState extends State<FormStoring> {
                                               0,
                                               "No Telpon tidak boleh kosong",
                                               "error");
-                                        } else if (isMock == true) {
-                                          alert(
-                                              globalScaffoldKey.currentContext!,
-                                              0,
-                                              "Aplikasi tidak mengijinkan Fake GPS",
-                                              "error");
                                         } else {
+                                          if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+                                            return;
+                                          }
                                           print('submit ok');
                                           await saveService(
                                               vhcid,

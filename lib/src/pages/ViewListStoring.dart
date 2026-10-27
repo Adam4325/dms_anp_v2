@@ -195,14 +195,29 @@ class _ViewListStoringState extends State<ViewListStoring> {
 
     String lat = '';
     String lon = '';
-    if (parts.length >= 2) {
+
+    // Format latlon di database bisa berupa:
+    // 1) "STORING,lat,lon" (3 bagian: [0]=STORING, [1]=latitude, [2]=longitude)
+    // 2) "lat,lon" (2 bagian numerik langsung)
+    final numericParts =
+        parts.where((s) => double.tryParse(s.trim()) != null).toList();
+    if (numericParts.length >= 2) {
+      lat = numericParts[0].trim();
+      lon = numericParts[1].trim();
+    } else if (parts.length >= 3 && double.tryParse(parts[1]) != null) {
+      lat = parts[1].trim();
+      lon = parts[2].trim();
+    } else if (parts.length >= 2) {
       lat = parts[0].trim();
       lon = parts[1].trim();
     }
 
-    if (lat.isEmpty || lon.isEmpty) {
+    if (lat.isEmpty ||
+        lon.isEmpty ||
+        double.tryParse(lat) == null ||
+        double.tryParse(lon) == null) {
       alert(globalScaffoldKey.currentContext ?? context, 0,
-          "Data koordinat (Latitude / Longitude) tidak ditemukan", "error");
+          "Data koordinat (Latitude / Longitude) tidak valid atau tidak ditemukan ($rawLatLon)", "error");
       return;
     }
 

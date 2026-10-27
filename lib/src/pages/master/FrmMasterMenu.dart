@@ -36,7 +36,7 @@ class FrmMasterMenu extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: accentOrange.withOpacity(0.5)),
+          border: Border.all(color: const Color(0x73FFB347)),
           boxShadow: [
             BoxShadow(
               color: Color(0x20FF8C69),

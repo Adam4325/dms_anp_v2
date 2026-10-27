@@ -7,6 +7,7 @@ import 'package:dms_anp/src/services/face_enroll_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../helpers/DeveloperModeGuard.dart';
 
 class FrmFaceEnroll extends StatefulWidget {
   const FrmFaceEnroll({Key? key}) : super(key: key);
@@ -25,6 +26,11 @@ class _FrmFaceEnrollState extends State<FrmFaceEnroll> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+        return;
+      }
+    });
     _load();
     _checkLocalDraft();
   }

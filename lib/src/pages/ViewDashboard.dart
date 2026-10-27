@@ -21,6 +21,7 @@ import 'package:dms_anp/src/pages/FrmSetKmByDriver.dart';
 import 'package:dms_anp/src/pages/MapAddress.dart';
 import 'package:dms_anp/src/pages/MapHistory.dart';
 import 'package:dms_anp/src/pages/driver/FrmStoring.dart';
+import 'package:dms_anp/src/pages/driver/FrmAttendanceAdvanceDriver.dart';
 import 'package:dms_anp/src/pages/driver/FrmSendLocationPoolDo.dart';
 import 'package:dms_anp/src/pages/driver/ListDriverInspeksi.dart';
 import 'package:dms_anp/src/pages/driver/RegistrasiNewDriver.dart';
@@ -65,6 +66,7 @@ import 'package:http/http.dart' as http;
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:unique_identifier/unique_identifier.dart';
 import '../../helpers/GpsSecurityChecker.dart';
+import '../../helpers/DeveloperModeGuard.dart';
 import '../../helpers/sim_phone_guard.dart';
 import 'package:dms_anp/src/Helper/scanner_helper.dart';
 import 'package:dms_anp/src/Helper/logkar_api_service.dart';
@@ -269,8 +271,8 @@ class _ViewDashboardState extends State<ViewDashboard>
       final url =
           '${GlobalData.baseUrlProd}api/detail_info.jsp?method=status_unit_new&vhcid=$vhcid&drvid=$drvid';
       debugPrint('MIXER status_unit_new: $url');
-      final response =
-          await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
+      final response = await http
+          .get(Uri.parse(url), headers: {'Accept': 'application/json'});
       if (response.statusCode != 200) {
         return '';
       }
@@ -286,8 +288,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       final nopol = (result['nopol'] ?? '').toString();
       if (mounted) {
         setState(() {
-          data.removeWhere(
-              (e) => e is Map && e['name'] == 'status_unit');
+          data.removeWhere((e) => e is Map && e['name'] == 'status_unit');
           data.add({
             'name': 'status_unit',
             'from': '',
@@ -310,16 +311,19 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   Future<bool> _shouldRequireAttendanceQr() async {
     if (_isStatusUnitOngoing()) {
-      debugPrint('Driver status_unit ONGOING ($status_unit) -> scan QR TIDAK diperlukan');
+      debugPrint(
+          'Driver status_unit ONGOING ($status_unit) -> scan QR TIDAK diperlukan');
       return false;
     }
     final status = await _fetchStatusUnitRaw();
     if (_isStatusUnitOngoing(status)) {
-      debugPrint('Driver status API ONGOING ($status) -> scan QR TIDAK diperlukan');
+      debugPrint(
+          'Driver status API ONGOING ($status) -> scan QR TIDAK diperlukan');
       return false;
     }
     final needQr = _isDriverStatusUnitRequireQr(status);
-    debugPrint('requireAttendanceQr=$needQr (status="$status", status_unit="$status_unit")');
+    debugPrint(
+        'requireAttendanceQr=$needQr (status="$status", status_unit="$status_unit")');
     return needQr;
   }
 
@@ -337,6 +341,10 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   Future<void> _showAttendanceQrSheet() async {
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
+        redirectToDashboard: false)) {
+      return;
+    }
     if (!_canManageAttendanceQr()) {
       _showAlert(globalScaffoldKey.currentContext ?? context, 0,
           "Anda tidak punya akses", "error");
@@ -781,7 +789,12 @@ class _ViewDashboardState extends State<ViewDashboard>
     return false;
   }
 
-  void _navigateToAttendanceDriver({bool requireAttendanceQr = true}) {
+  Future<void> _navigateToAttendanceDriver(
+      {bool requireAttendanceQr = true}) async {
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
+        redirectToDashboard: false)) {
+      return;
+    }
     final bool isOngoing = _isStatusUnitOngoing();
     Navigator.pushReplacement(
       context,
@@ -796,6 +809,10 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   Future<void> _openKaryawanAttendance() async {
     if (!mounted) return;
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
+        redirectToDashboard: false)) {
+      return;
+    }
     EasyLoading.show(status: 'Cek enroll wajah...');
     try {
       final status = await FaceEnrollService.getStatus();
@@ -862,20 +879,21 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
   }
 
-  Future<void> _goToAttendanceDriverIfSimValid({bool? requireAttendanceQr}) async {
+  Future<void> _goToAttendanceDriverIfSimValid(
+      {bool? requireAttendanceQr}) async {
     if (!mounted) return;
     // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
     //   return;
     // }
     // QR absensi (driver mixer & non-mixer) divalidasi langsung di FrmAttendanceDriver (menggunakan QR ANP)
     final needQr = requireAttendanceQr ?? false;
-    if (!mounted) return;
-    _navigateToAttendanceDriver(requireAttendanceQr: needQr);
+    await _navigateToAttendanceDriver(requireAttendanceQr: needQr);
   }
 
   /// Scan QR + POST Logkar /transporter/sync/tm (wajib sukses).
   /// Dipakai setiap submit INLOADING.
-  Future<bool> _scanAndCheckInMotiveTm({String loadingStatus = 'Scan QR Motive TM...'}) async {
+  Future<bool> _scanAndCheckInMotiveTm(
+      {String loadingStatus = 'Scan QR Motive TM...'}) async {
     sharedPreferences ??= await SharedPreferences.getInstance();
     final String? qrData = await openQrScanner(context);
     if (!mounted) return false;
@@ -1211,17 +1229,15 @@ class _ViewDashboardState extends State<ViewDashboard>
     } catch (_) {
       return fallback;
     }
-  }//
+  } //
 
   Future<void> _fetchMenusFromApi() async {
     final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
 
-    final currentUsername = username.isNotEmpty
-        ? username
-        : (prefs.getString('username') ?? '');
-    final currentLoginname = loginname.isNotEmpty
-        ? loginname
-        : (prefs.getString('loginname') ?? '');
+    final currentUsername =
+        username.isNotEmpty ? username : (prefs.getString('username') ?? '');
+    final currentLoginname =
+        loginname.isNotEmpty ? loginname : (prefs.getString('loginname') ?? '');
 
     // 1. Coba baca dari cache lokal terlebih dahulu agar tampilan instan muncul
     final cacheKey = 'cached_mobile_menus_${currentUsername}_$currentLoginname';
@@ -1237,7 +1253,8 @@ class _ViewDashboardState extends State<ViewDashboard>
 
     // 2. Tarik data realtime dari database melalui API
     try {
-      final rolesList = globals.akses_pages ?? prefs.getStringList("akses_pages") ?? [];
+      final rolesList =
+          globals.akses_pages ?? prefs.getStringList("akses_pages") ?? [];
       final roles = rolesList.join(',');
       final url = Uri.parse(
         "${GlobalData.baseUrl}api/menu/api_menu_dashboard.jsp?method=list-user-menus"
@@ -1269,8 +1286,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   void _applyDynamicMenuList(List dynamicList) {
     final List<AnpService> fetchedServices = [];
     for (var item in dynamicList) {
-      final int idKey =
-          int.tryParse(item['id_key']?.toString() ?? '0') ?? 0;
+      final int idKey = int.tryParse(item['id_key']?.toString() ?? '0') ?? 0;
       final String title = item['title']?.toString() ?? '';
       final String iconName = item['icon']?.toString() ?? '';
       final String colorHex = item['color']?.toString() ?? '#FF6600';
@@ -2009,6 +2025,10 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   void _handleNotificationTap(NotificationData notification) async {
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
+        redirectToDashboard: false)) {
+      return;
+    }
     print('ðŸ” DEBUG: Handling notification tap for: ${notification.id}');
     try {
       await _notificationService.sendNotificationResponse(notification);
@@ -2039,8 +2059,10 @@ class _ViewDashboardState extends State<ViewDashboard>
           _customBgUrl = cached;
         });
       }
-      final url = '${GlobalData.baseUrl}api/menu/api_bg_mobile.jsp?method=get-active-bg';
-      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 4));
+      final url =
+          '${GlobalData.baseUrl}api/menu/api_bg_mobile.jsp?method=get-active-bg';
+      final response =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['status_code'] == '200' && data['data'] != null) {
@@ -2149,9 +2171,9 @@ class _ViewDashboardState extends State<ViewDashboard>
       final url = Uri.parse(
           '${GlobalData.baseUrl}api/driver/get_driver_rate.jsp?drvid=${Uri.encodeComponent(drvid)}');
       debugPrint('Fetching driver rating: $url');
-      final response = await http
-          .get(url, headers: {'Accept': 'application/json'})
-          .timeout(const Duration(seconds: 8));
+      final response = await http.get(url, headers: {
+        'Accept': 'application/json'
+      }).timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
         final dynamic data = json.decode(response.body);
         if (data is Map &&
@@ -3344,8 +3366,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                     item['incustomer'].toString() == "1"
                         ? "Terima DO"
                         : "Close DO",
-                    style: TextStyle(fontSize: 11,color: Colors.white),
-                  ),//
+                    style: TextStyle(fontSize: 11, color: Colors.white),
+                  ), //
                 ),
               ),
               SizedBox(width: 8),
@@ -3361,7 +3383,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                   ),
                   child: Text(
                     'History',
-                    style: TextStyle(fontSize: 11,color: Colors.white),
+                    style: TextStyle(fontSize: 11, color: Colors.white),
                   ),
                 ),
               ),
@@ -4200,6 +4222,11 @@ class _ViewDashboardState extends State<ViewDashboard>
                     borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () async {
+                if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(
+                    context,
+                    redirectToDashboard: false)) {
+                  return;
+                }
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 Navigator.of(context).pop();
                 var drvid = prefs.getString('drvid') ?? '';
@@ -4338,6 +4365,10 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   // Navigation methods
   void _navigateToPhoto(String viewName) async {
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
+        redirectToDashboard: false)) {
+      return;
+    }
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString("view_name", viewName);
     EasyLoading.show();
@@ -4348,6 +4379,10 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   void _navigateToPhotoUnits(String viewName, String vehicle_id) async {
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
+        redirectToDashboard: false)) {
+      return;
+    }
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString("view_name", viewName);
     prefs.setString("vehicle_id", vehicle_id);
@@ -4363,7 +4398,11 @@ class _ViewDashboardState extends State<ViewDashboard>
     if (ctx != null) alert(ctx, type, message, colorInfo); //
   }
 
-  void _navigateToWoMCN() {
+  void _navigateToWoMCN() async {
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
+        redirectToDashboard: false)) {
+      return;
+    }
     EasyLoading.show();
     Navigator.pushReplacement(
       context,
@@ -4371,7 +4410,11 @@ class _ViewDashboardState extends State<ViewDashboard>
     );
   }
 
-  void _navigateToListAbsensi(String method) {
+  void _navigateToListAbsensi(String method) async {
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
+        redirectToDashboard: false)) {
+      return;
+    }
     print(method);
     Navigator.push(
       context,
@@ -4384,7 +4427,9 @@ class _ViewDashboardState extends State<ViewDashboard>
   Future<bool> _checkImeiDriver(String drvid) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      final imeiidPref = (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "").trim();
+      final imeiidPref =
+          (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "")
+              .trim();
       final cleanDrvid = drvid.trim();
       if (cleanDrvid.isEmpty) {
         if (EasyLoading.isShow) EasyLoading.dismiss();
@@ -4399,24 +4444,29 @@ class _ViewDashboardState extends State<ViewDashboard>
         return false;
       }
 
-      final uri = Uri.parse('${GlobalData.baseUrlProd}api/do/do_diterima_v2.jsp').replace(queryParameters: {
+      final uri =
+          Uri.parse('${GlobalData.baseUrlProd}api/do/do_diterima_v2.jsp')
+              .replace(queryParameters: {
         'method': 'check-imei-driver',
         'drvid': cleanDrvid,
         'imeiid': imeiidPref,
       });
 
-      final response = await http.get(uri, headers: {"Accept": "application/json"});
+      final response =
+          await http.get(uri, headers: {"Accept": "application/json"});
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
         final bool isAllowed = result['allowed'] == true ||
-            (result['status'] != null && result['status'].toString().toLowerCase() == 'success');
+            (result['status'] != null &&
+                result['status'].toString().toLowerCase() == 'success');
         if (isAllowed) {
           return true;
         } else {
           if (EasyLoading.isShow) EasyLoading.dismiss();
           final message = result['message']?.toString() ??
               'IMEIID Handphone tidak sesuai dengan data driver. Transaksi ditolak.';
-          alert(globalScaffoldKey.currentContext ?? context, 0, message, "error");
+          alert(
+              globalScaffoldKey.currentContext ?? context, 0, message, "error");
           return false;
         }
       } else {
@@ -4437,7 +4487,10 @@ class _ViewDashboardState extends State<ViewDashboard>
     print("nameButton ${item['incustomer'].toString()}");
     EasyLoading.show(status: 'Memvalidasi perangkat...');
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String drvid = (item['driver_id'] ?? item['drvid'] ?? prefs.getString('drvid') ?? '').toString().trim();
+    String drvid =
+        (item['driver_id'] ?? item['drvid'] ?? prefs.getString('drvid') ?? '')
+            .toString()
+            .trim();
 
     bool isImeiValid = await _checkImeiDriver(drvid);
     if (!isImeiValid) {
@@ -4580,7 +4633,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     final body = json.encode({
       'do_no': doNo,
       'request_code': requestCode,
-    });//
+    }); //
     print('logkar get do_id url: $uri');
     print('logkar get do_id body: $body');
     final response = await http.post(
@@ -4759,7 +4812,12 @@ class _ViewDashboardState extends State<ViewDashboard>
                             : "Close DO";
     try {
       sharedPreferences ??= await SharedPreferences.getInstance();
-      final String drvid = (item['driver_id'] ?? item['drvid'] ?? sharedPreferences!.getString("drvid") ?? '').toString().trim();
+      final String drvid = (item['driver_id'] ??
+              item['drvid'] ??
+              sharedPreferences!.getString("drvid") ??
+              '')
+          .toString()
+          .trim();
       if (drvid.isEmpty) {
         alert(globalScaffoldKey.currentContext!, 0,
             "Data driver tidak ditemukan", "error");
@@ -4822,7 +4880,8 @@ class _ViewDashboardState extends State<ViewDashboard>
       // no_do Logkar = item['do_number'] (sama yang dikirim ke update_status_do_mixerv2.jsp)
       final String androidDoNumber = item['do_number']?.toString().trim() ?? '';
       if (androidDoNumber.isNotEmpty) {
-        await sharedPreferences!.setString('logkar_mixer_no_do', androidDoNumber);
+        await sharedPreferences!
+            .setString('logkar_mixer_no_do', androidDoNumber);
         await sharedPreferences!.setString('do_maps', androidDoNumber);
         print('LOGKAR save android do_number=$androidDoNumber');
       }
@@ -4931,7 +4990,9 @@ class _ViewDashboardState extends State<ViewDashboard>
         await prefs.setString('logkar_mixer_no_do', doNumberAndroid);
         await prefs.setString('do_maps', doNumberAndroid);
       }
-      final String imeiidPref = (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "").trim();
+      final String imeiidPref =
+          (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "")
+              .trim();
       // Pakai queryParameters agar do_number tidak rusak karena encode api_lokar
       final Uri myUri = Uri.parse(
               '${GlobalData.baseUrl}api/do_mixer/update_status_do_mixerv2_v2.jsp')
@@ -4949,7 +5010,8 @@ class _ViewDashboardState extends State<ViewDashboard>
         'imeiid': imeiidPref,
       });
       print('LOGKAR JSP url: $myUri');
-      print('LOGKAR JSP do_number(android)=$doNumberAndroid bujnbr=$bujnbrAndroid');
+      print(
+          'LOGKAR JSP do_number(android)=$doNumberAndroid bujnbr=$bujnbrAndroid');
       var response =
           await http.get(myUri, headers: {"Accept": "application/json"});
       if (!mounted) {
@@ -5005,15 +5067,23 @@ class _ViewDashboardState extends State<ViewDashboard>
     print(item['vehicle_id']);
     var tgl_do = item['tgl_do'] + " " + item['time_do'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString("do_maps", item['do_number'] != null ? item['do_number'].toString() : "");
+    prefs.setString("do_maps",
+        item['do_number'] != null ? item['do_number'].toString() : "");
     prefs.setString("do_tgl_do", tgl_do);
-    prefs.setString("do_nopol", item['vehicle_id'] != null ? item['vehicle_id'].toString() : "");
-    prefs.setString("do_origin", item['origin'] != null ? item['origin'].toString() : "");
-    prefs.setString("do_destination", item['destination'] != null ? item['destination'].toString() : "");
-    prefs.setString("do_vehicle_id", item['vehicle_id'] != null ? item['vehicle_id'].toString() : "");
-    prefs.setString("do_driver_nm", item['driver_nm'] != null ? item['driver_nm'].toString() : "");
-    prefs.setString("do_nopol_plate", item['nopol'] != null ? item['nopol'].toString() : "");
-    prefs.setString("do_cpy_name", item['cpy_name'] != null ? item['cpy_name'].toString() : "");
+    prefs.setString("do_nopol",
+        item['vehicle_id'] != null ? item['vehicle_id'].toString() : "");
+    prefs.setString(
+        "do_origin", item['origin'] != null ? item['origin'].toString() : "");
+    prefs.setString("do_destination",
+        item['destination'] != null ? item['destination'].toString() : "");
+    prefs.setString("do_vehicle_id",
+        item['vehicle_id'] != null ? item['vehicle_id'].toString() : "");
+    prefs.setString("do_driver_nm",
+        item['driver_nm'] != null ? item['driver_nm'].toString() : "");
+    prefs.setString("do_nopol_plate",
+        item['nopol'] != null ? item['nopol'].toString() : "");
+    prefs.setString("do_cpy_name",
+        item['cpy_name'] != null ? item['cpy_name'].toString() : "");
 
     Navigator.pushReplacement(
       context,
@@ -5045,7 +5115,13 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   void _handleMenuTap(AnpService anpService) async {
-    // âœ… ADDED: Handle menu "More"
+    // Validasi mode developer Android sebelum akses menu
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
+        redirectToDashboard: false)) {
+      return;
+    }
+
+    // ✅ ADDED: Handle menu "More"
     if (anpService.idKey == 999) {
       _showMoreMenuModal();
       return;
@@ -5755,10 +5831,11 @@ class _ViewDashboardState extends State<ViewDashboard>
             sharedPreferences!.setString("tire_drvid", "");
             sharedPreferences!.setString("tire_vhcid", "");
             await DatabaseHelper.instance.deleteItemLogsAll();
-            Timer(Duration(seconds: 1), () {//
+            Timer(Duration(seconds: 1), () {
+              //
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => FrmServiceTire()),//
+                MaterialPageRoute(builder: (context) => FrmServiceTire()), //
               );
             });
           } else {
@@ -5805,10 +5882,10 @@ class _ViewDashboardState extends State<ViewDashboard>
       // status_karyawan KARYAWAN (selain itu) → FrmAttendance
       sharedPreferences ??= await SharedPreferences.getInstance();
       login_type = sharedPreferences!.getString('login_type') ?? login_type;
-      if (loginname == "DRIVER" &&
-          _normalizedStatusKaryawan() == "DRIVER") {
+      if (loginname == "DRIVER" && _normalizedStatusKaryawan() == "DRIVER") {
         if (_isStatusUnitOngoing()) {
-          debugPrint('DRIVER status_unit ONGOING ($status_unit) -> absensi tanpa scan QR');
+          debugPrint(
+              'DRIVER status_unit ONGOING ($status_unit) -> absensi tanpa scan QR');
           await _goToAttendanceDriverIfSimValid(requireAttendanceQr: false);
         } else {
           final requireQr = await _shouldRequireAttendanceQr();
@@ -5902,7 +5979,7 @@ class _ViewDashboardState extends State<ViewDashboard>
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => FrmStoring()),//
+            MaterialPageRoute(builder: (context) => FrmStoring()), //
           );
         });
       } else {
@@ -5910,18 +5987,38 @@ class _ViewDashboardState extends State<ViewDashboard>
             "error");
       }
     } else if (anpService.idKey == 20) {
-      if (loginname == "DRIVER") {
-        alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
-            "error");
-      } else {
-        EasyLoading.show();
-        Timer(Duration(seconds: 1), () {
+      // Absen ADV: Conditional Routing berdasarkan role / login_type
+      sharedPreferences ??= await SharedPreferences.getInstance();
+      final currentLoginType =
+          (sharedPreferences!.getString('login_type') ?? login_type)
+              .toLowerCase()
+              .trim();
+      final isDriver =
+          currentLoginType == 'driver' || loginname.toUpperCase() == 'DRIVER';
+
+      EasyLoading.show();
+      Timer(Duration(seconds: 1), () {
+        if (EasyLoading.isShow) {
+          EasyLoading.dismiss();
+        }
+        if (isDriver) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => FrmAttendanceAdvance()),
+            MaterialPageRoute(
+              builder: (context) => const FrmAttendanceAdvanceDriver(),
+              settings: const RouteSettings(name: '/attendance/advance-driver'),
+            ),
           );
-        });
-      }
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FrmAttendanceAdvance(),
+              settings: const RouteSettings(name: '/attendance/advance'),
+            ),
+          );
+        }
+      });
     } else if (anpService.idKey == 21) {
       if (loginname == "DRIVER") {
         alert(globalScaffoldKey.currentContext!, 0, "Access Not Allowed",
@@ -6036,6 +6133,12 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   void UpdateMenuBottom() async {
+    // Validasi mode developer Android sebelum akses menu bottom
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
+        redirectToDashboard: false)) {
+      return;
+    }
+
     if (selectedIndexBottom == 0) {
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
@@ -6216,9 +6319,14 @@ class _ViewDashboardState extends State<ViewDashboard>
     if (data_list_do.isNotEmpty) {
       final firstDo = data_list_do.first;
       final noDo = firstDo['do_number']?.toString() ?? '';
-      final doStatus = (firstDo['status'] ?? firstDo['dostatus'] ?? '').toString().toUpperCase();
+      final doStatus = (firstDo['status'] ?? firstDo['dostatus'] ?? '')
+          .toString()
+          .toUpperCase();
       // Jika status DO sudah selesai / 99 / OUTUNLOADING, jangan kirim posisi lagi
-      if (doStatus == '99' || doStatus == 'OUTUNLOADING' || doStatus == 'SELESAI' || doStatus == 'CLOSED') {
+      if (doStatus == '99' ||
+          doStatus == 'OUTUNLOADING' ||
+          doStatus == 'SELESAI' ||
+          doStatus == 'CLOSED') {
         await sharedPreferences!.remove('logkar_mixer_no_do');
         await LogkarPositionBackgroundService.stop();
         return;

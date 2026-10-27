@@ -2,6 +2,7 @@ package com.anp.dms_anp;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
@@ -35,12 +36,41 @@ public class MainActivity extends FlutterFragmentActivity {
                 DEVELOPER_MODE_CHANNEL
         ).setMethodCallHandler((call, result) -> {
             if ("isDeveloperModeEnabled".equals(call.method)) {
-                int enabled = Settings.Global.getInt(
-                        getContentResolver(),
-                        Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
-                        0
-                );
-                result.success(enabled == 1);
+                try {
+                    int enabled = Settings.Global.getInt(
+                            getContentResolver(),
+                            Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
+                            0
+                    );
+                    result.success(enabled == 1);
+                } catch (Exception e) {
+                    try {
+                        int enabled = Settings.Secure.getInt(
+                                getContentResolver(),
+                                Settings.Secure.DEVELOPMENT_SETTINGS_ENABLED,
+                                0
+                        );
+                        result.success(enabled == 1);
+                    } catch (Exception ex) {
+                        result.success(false);
+                    }
+                }
+            } else if ("openDeveloperSettings".equals(call.method)) {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    result.success(true);
+                } catch (Exception e) {
+                    try {
+                        Intent intent = new Intent(Settings.ACTION_SETTINGS);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        result.success(true);
+                    } catch (Exception ex) {
+                        result.success(false);
+                    }
+                }
             } else {
                 result.notImplemented();
             }

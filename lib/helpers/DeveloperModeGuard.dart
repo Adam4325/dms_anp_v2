@@ -21,7 +21,19 @@ class DeveloperModeGuard {
     }
   }
 
-  static Future<bool> blockIfDeveloperModeEnabled(BuildContext context) async {
+  static Future<void> openDeveloperSettings() async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _channel.invokeMethod('openDeveloperSettings');
+    } catch (e) {
+      debugPrint('DeveloperModeGuard openDeveloperSettings failed: $e');
+    }
+  }
+
+  static Future<bool> blockIfDeveloperModeEnabled(
+    BuildContext context, {
+    bool redirectToDashboard = true,
+  }) async {
     final enabled = await isDeveloperModeEnabled();
     if (!enabled) return false;
     if (!context.mounted) return true;
@@ -34,12 +46,19 @@ class DeveloperModeGuard {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Disable Developer Mode'),
+        title: const Text('Mode Pengembang Terdeteksi'),
         content: const Text(
-          'Developer Mode aktif. Silahkan matikan Developer Mode terlebih dahulu.',
+          'Developer Mode (Mode Pengembang) aktif pada perangkat Android Anda.\n\nSilakan nonaktifkan Developer Options / Mode Pengembang di pengaturan perangkat terlebih dahulu untuk mengakses menu ini.',
         ),
         actions: [
           TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await openDeveloperSettings();
+            },
+            child: const Text('Buka Pengaturan'),
+          ),
+          ElevatedButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('OK'),
           ),
@@ -48,10 +67,12 @@ class DeveloperModeGuard {
     );
 
     if (!context.mounted) return true;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => ViewDashboard()),
-      (_) => false,
-    );
+    if (redirectToDashboard) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => ViewDashboard()),
+        (_) => false,
+      );
+    }
     return true;
   }
 }

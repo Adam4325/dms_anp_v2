@@ -22,7 +22,7 @@ class LogkarPositionBackgroundService {
       androidConfiguration: AndroidConfiguration(
         onStart: onStart,
         autoStart: false,
-        isForegroundMode: true,
+        isForegroundMode: false,
         foregroundServiceNotificationId: 888,
         initialNotificationTitle: 'DMS ANP Logkar',
         initialNotificationContent: 'Pelacakan posisi mixer aktif',
@@ -104,6 +104,28 @@ class LogkarPositionBackgroundService {
 @pragma('vm:entry-point')
 Future<void> onStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
+
+  if (service is AndroidServiceInstance) {
+    service.on('setAsForeground').listen((event) async {
+      try {
+        await service.setAsForegroundService();
+        await service.setForegroundNotificationInfo(
+          title: 'DMS ANP Logkar',
+          content: 'Pelacakan posisi mixer aktif',
+        );
+      } catch (e) {
+        debugPrint('Error setAsForeground: $e');
+      }
+    });
+
+    service.on('setAsBackground').listen((event) async {
+      try {
+        await service.setAsBackgroundService();
+      } catch (e) {
+        debugPrint('Error setAsBackground: $e');
+      }
+    });
+  }
 
   Timer? timer;
   service.on('stopService').listen((_) {

@@ -145,7 +145,7 @@ class _DeliveryRateDialogState extends State<DeliveryRateDialog> {
 
   /// Membagikan rating langsung ke WhatsApp customer
   void _shareToWhatsApp() async {
-    final int expiryMs = DateTime.now().millisecondsSinceEpoch + (60 * 1000);
+    final int expiryMs = DateTime.now().millisecondsSinceEpoch + (3 * 24 * 60 * 60 * 1000); // Masa berlaku 3 hari
     final String raw = '${widget.driverId}:::${widget.doNumber}:::$expiryMs';
     final String token = base64Url.encode(utf8.encode(raw)).replaceAll('=', '');
     final String shareUrl = 'https://apps.tuluatas.com/trucking/given_rate.jsp?q=$token';

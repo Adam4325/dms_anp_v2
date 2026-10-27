@@ -9,6 +9,8 @@ class AduanItem {
   final String? createdAt;
   final String? closedAt;
   final String? closedByUsername;
+  final String? foto;
+  final String? drvname;
 
   AduanItem({
     required this.id,
@@ -21,9 +23,20 @@ class AduanItem {
     this.createdAt,
     this.closedAt,
     this.closedByUsername,
+    this.foto,
+    this.drvname,
   });
 
   bool get isOpen => status.toUpperCase() == 'OPEN';
+  bool get hasFoto => foto != null && foto!.trim().isNotEmpty;
+
+  /// Nama pengirim yang ditampilkan: khusus driver jika ada nama di TBLDRIVER gunakan DRVNAME
+  String get displayPengirim {
+    if (drvname != null && drvname!.trim().isNotEmpty) {
+      return drvname!.trim();
+    }
+    return submitterUsername.isNotEmpty ? submitterUsername : '-';
+  }
 
   factory AduanItem.fromJson(Map<String, dynamic> j) {
     int id = 0;
@@ -44,6 +57,8 @@ class AduanItem {
       createdAt: j['created_at']?.toString(),
       closedAt: j['closed_at']?.toString(),
       closedByUsername: j['closed_by_username']?.toString(),
+      foto: j['foto']?.toString(),
+      drvname: j['drvname']?.toString(),
     );
   }
 }

@@ -15,12 +15,13 @@ class ListUjBaru extends StatefulWidget {
 }
 
 class _ListUjBaruState extends State<ListUjBaru> {
-  final Color primaryOrange = Color(0xFFFF8C69);
-  final Color lightOrange = Color(0xFFFFF4E6);
-  final Color accentOrange = Color(0xFFFFB347);
-  final Color darkOrange = Color(0xFFE07B39);
-  final Color backgroundColor = Color(0xFFFFFAF5);
-  final Color cardColor = Color(0xFFFFF8F0);
+  final Color primaryOrange = const Color(0xFFFF8C69);
+  final Color lightOrange = const Color(0xFFFFF4E6);
+  final Color accentOrange = const Color(0xFFFFB347);
+  final Color darkOrange = const Color(0xFFE07B39);
+  final Color backgroundColor = const Color(0xFFFFFAF5);
+  final Color cardColor = const Color(0xFFFFF8F0);
+  final Color shadowColor = const Color(0x20FF8C69);
 
   final TextEditingController _txtSearch = TextEditingController();
   List<Map<String, dynamic>> _list = [];
@@ -102,19 +103,35 @@ class _ListUjBaruState extends State<ListUjBaru> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Close UJ'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: cardColor,
+        title: Text(
+          'Close UJ',
+          style: TextStyle(
+            color: darkOrange,
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
+        ),
         content: Text(
           'Close UJ ${_s(item['cusnbr'])}? Status akan menjadi ADVANCE.',
+          style: TextStyle(color: Colors.grey.shade800, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal'),
+            child: Text(
+              'Batal',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: darkOrange),
+            style: ntBtnStyle(darkOrange),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Close', style: TextStyle(color: Colors.white)),
+            child: ntBtnLabel('Close UJ'),
           ),
         ],
       ),
@@ -124,7 +141,8 @@ class _ListUjBaruState extends State<ListUjBaru> {
     try {
       EasyLoading.show(status: 'Closing...');
       final prefs = await SharedPreferences.getInstance();
-      final userid = prefs.getString('name') ?? prefs.getString('username') ?? '';
+      final userid =
+          prefs.getString('name') ?? prefs.getString('username') ?? '';
       final url = Uri.parse(
         '${GlobalData.baseUrl}api/master/close_uj_baru.jsp',
       );
@@ -154,9 +172,71 @@ class _ListUjBaruState extends State<ListUjBaru> {
     }
   }
 
+  ButtonStyle ntBtnStyle(Color bg) {
+    return ElevatedButton.styleFrom(
+      elevation: 0,
+      backgroundColor: bg,
+      foregroundColor: Colors.white,
+      disabledForegroundColor: Colors.white70,
+      shadowColor: Colors.transparent,
+      side: BorderSide.none,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    );
+  }
+
+  Widget ntBtnLabel(String text, {double size = 13}) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        fontSize: size,
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color statusBg = lightOrange;
+    Color statusText = darkOrange;
+    Color statusBorder = accentOrange;
+
+    final s = status.toUpperCase().trim();
+    if (s == 'ADVANCE' || s == 'SELESAI' || s == 'AKTIF' || s == 'ACTIVE') {
+      statusBg = Colors.green.shade50;
+      statusText = Colors.green.shade800;
+      statusBorder = Colors.green.shade200;
+    } else if (s == '0' || s == 'DRAFT') {
+      statusBg = lightOrange;
+      statusText = darkOrange;
+      statusBorder = accentOrange;
+    } else if (s == 'CANCEL' || s == 'REJECTED' || s == 'BATAL') {
+      statusBg = Colors.red.shade50;
+      statusText = Colors.red.shade800;
+      statusBorder = Colors.red.shade200;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: statusBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: statusBorder),
+      ),
+      child: Text(
+        s == '0' ? 'DRAFT' : s,
+        style: TextStyle(
+          color: statusText,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
   Widget _kv(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
       child: Table(
         columnWidths: const {
           0: IntrinsicColumnWidth(),
@@ -165,18 +245,36 @@ class _ListUjBaruState extends State<ListUjBaru> {
         },
         children: [
           TableRow(children: [
-            Text(label,
-                style: TextStyle(color: Colors.grey.shade800, fontSize: 12)),
-            Text(':',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade800, fontSize: 12)),
-            Text(
-              value.isEmpty ? '-' : value,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                color: Colors.grey.shade900,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: Text(
+                ":",
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 12.5,
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                value.isEmpty ? '-' : value,
+                style: TextStyle(
+                  color: Colors.grey.shade900,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ]),
@@ -195,18 +293,19 @@ class _ListUjBaruState extends State<ListUjBaru> {
     final custLabel = _s(item['cpyname']).isEmpty
         ? _s(item['cpyid'])
         : '${_s(item['cpyname'])} (${_s(item['cpyid'])})';
+    final status = _s(item['status']);
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accentOrange.withOpacity(0.45)),
+        border: Border.all(color: const Color(0x73FFB347)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x20FF8C69),
+            color: shadowColor,
             blurRadius: 8,
-            offset: Offset(0, 3),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -215,25 +314,33 @@ class _ListUjBaruState extends State<ListUjBaru> {
         children: [
           Container(
             width: double.infinity,
-            padding: EdgeInsets.fromLTRB(14, 12, 14, 10),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
             decoration: BoxDecoration(
               color: lightOrange,
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(14),
                 topRight: Radius.circular(14),
               ),
             ),
-            child: Text(
-              'UJ : ${_s(item['cusnbr'])}',
-              style: TextStyle(
-                color: darkOrange,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    'UJ : ${_s(item['cusnbr'])}',
+                    style: TextStyle(
+                      color: darkOrange,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                _buildStatusBadge(status),
+              ],
             ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(14, 8, 14, 6),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
             child: Column(
               children: [
                 _kv('Customer', custLabel),
@@ -248,19 +355,14 @@ class _ListUjBaruState extends State<ListUjBaru> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(12, 0, 12, 12),
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
             child: Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    icon: Icon(Icons.edit, color: Colors.white, size: 16),
-                    label: Text('Edit',
-                        style: TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryOrange,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
+                    icon: const Icon(Icons.edit, color: Colors.white, size: 16),
+                    label: ntBtnLabel('Edit'),
+                    style: ntBtnStyle(primaryOrange),
                     onPressed: () async {
                       await Navigator.push(
                         context,
@@ -272,18 +374,13 @@ class _ListUjBaruState extends State<ListUjBaru> {
                     },
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
-                    icon: Icon(Icons.lock_outline,
+                    icon: const Icon(Icons.lock_outline,
                         color: Colors.white, size: 16),
-                    label: Text('Close',
-                        style: TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade600,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
+                    label: ntBtnLabel('Close'),
+                    style: ntBtnStyle(Colors.grey.shade600),
                     onPressed: () => _closeItem(item),
                   ),
                 ),
@@ -307,16 +404,24 @@ class _ListUjBaruState extends State<ListUjBaru> {
         backgroundColor: backgroundColor,
         appBar: AppBar(
           backgroundColor: primaryOrange,
-          title: Text('Master UJ Baru',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-          iconTheme: IconThemeData(color: Colors.white),
+          foregroundColor: Colors.white,
+          elevation: 2,
+          centerTitle: true,
+          title: const Text(
+            'Master UJ Baru',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 17,
+            ),
+          ),
           leading: IconButton(
-            icon: Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: _goMasterMenu,
           ),
           actions: [
             IconButton(
-              icon: Icon(Icons.refresh, color: Colors.white),
+              icon: const Icon(Icons.refresh, color: Colors.white),
               onPressed: () => _fetchList(page: _page),
             ),
           ],
@@ -324,23 +429,39 @@ class _ListUjBaruState extends State<ListUjBaru> {
         body: Column(
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(12, 12, 12, 4),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
               child: TextField(
                 controller: _txtSearch,
                 decoration: InputDecoration(
                   hintText: 'Cari nomor / customer / origin...',
+                  hintStyle:
+                      TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                  isDense: true,
                   filled: true,
                   fillColor: Colors.white,
-                  prefixIcon: Icon(Icons.search, color: primaryOrange),
-                  suffixIcon: IconButton(
-                    icon: Icon(Icons.clear, color: Colors.grey),
-                    onPressed: () {
-                      _txtSearch.clear();
-                      _fetchList(page: 1);
-                    },
-                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  prefixIcon:
+                      Icon(Icons.search, color: primaryOrange, size: 20),
+                  suffixIcon: _txtSearch.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear,
+                              color: Colors.grey, size: 18),
+                          onPressed: () {
+                            _txtSearch.clear();
+                            _fetchList(page: 1);
+                          },
+                        )
+                      : null,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        BorderSide(color: Colors.grey.shade300, width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        BorderSide(color: Colors.grey.shade300, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -356,13 +477,29 @@ class _ListUjBaruState extends State<ListUjBaru> {
                       child: CircularProgressIndicator(color: primaryOrange))
                   : _list.isEmpty
                       ? Center(
-                          child: Text('Tidak ada data UJ Baru',
-                              style: TextStyle(color: Colors.grey.shade700)))
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.inbox_outlined,
+                                    size: 48, color: accentOrange),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Tidak ada data UJ Baru',
+                                  style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 13.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
                       : RefreshIndicator(
                           color: primaryOrange,
                           onRefresh: () => _fetchList(page: _page),
                           child: ListView.builder(
-                            padding: EdgeInsets.only(bottom: 90, top: 4),
+                            padding: const EdgeInsets.only(bottom: 90, top: 4),
                             itemCount: _list.length,
                             itemBuilder: (_, i) => _card(_list[i]),
                           ),
@@ -370,25 +507,29 @@ class _ListUjBaruState extends State<ListUjBaru> {
             ),
             if (_pages > 1)
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Hal $_page / $_pages (total $_total)',
-                        style: TextStyle(fontSize: 12)),
+                    Text(
+                      'Hal $_page / $_pages (total $_total)',
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                    ),
                     Row(
                       children: [
                         IconButton(
                           onPressed: _page > 1
                               ? () => _fetchList(page: _page - 1)
                               : null,
-                          icon: Icon(Icons.chevron_left),
+                          icon: const Icon(Icons.chevron_left),
                         ),
                         IconButton(
                           onPressed: _page < _pages
                               ? () => _fetchList(page: _page + 1)
                               : null,
-                          icon: Icon(Icons.chevron_right),
+                          icon: const Icon(Icons.chevron_right),
                         ),
                       ],
                     ),
@@ -399,24 +540,17 @@ class _ListUjBaruState extends State<ListUjBaru> {
         ),
         bottomNavigationBar: SafeArea(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: SizedBox(
               height: 48,
               width: double.infinity,
               child: ElevatedButton.icon(
-                icon: Icon(Icons.add, color: Colors.white),
-                label: Text(
-                  'Add UJ Baru',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: darkOrange,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: ntBtnLabel('+ Add UJ Baru', size: 15),
+                style: ntBtnStyle(primaryOrange).copyWith(
+                  shape: WidgetStateProperty.all(
+                    RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
                 onPressed: () async {

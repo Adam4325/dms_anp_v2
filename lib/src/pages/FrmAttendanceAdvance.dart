@@ -1,38 +1,47 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:date_time_picker/date_time_picker.dart';
-import 'package:dms_anp/src/Helper/Provider.dart';
-import 'package:dms_anp/src/flusbar.dart';
-import 'package:dms_anp/src/pages/ViewDashboard.dart';
-import 'package:dms_anp/src/pages/ViewDetailCuti.dart';
 import 'package:flutter/material.dart';
-import 'package:dms_anp/src/Color/hex_color.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:maps_toolkit/maps_toolkit.dart';
 import 'package:progress_dialog_null_safe/progress_dialog_null_safe.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:trust_location/trust_location.dart';
-import 'package:dms_anp/src/Helper/globals.dart' as globals;
 
-import '../../helpers/GpsSecurityChecker.dart';
+import 'package:dms_anp/src/Helper/Provider.dart';
+import 'package:dms_anp/src/Helper/globals.dart' as globals;
+import 'package:dms_anp/src/flusbar.dart';
+import 'package:dms_anp/src/pages/ViewDashboard.dart';
+import 'package:dms_anp/src/pages/ViewDetailCuti.dart';
+import 'package:dms_anp/src/pages/driver/FrmAttendanceAdvanceDriver.dart';
+import 'package:dms_anp/src/pages/driver/ViewApprovalAttendanceDriver.dart';
+import '../../helpers/DeveloperModeGuard.dart';
+
+final globalScaffoldKey = GlobalKey<ScaffoldState>();
 
 class FrmAttendanceAdvance extends StatefulWidget {
+  const FrmAttendanceAdvance({Key? key}) : super(key: key);
+
   @override
   FrmAttendanceAdvanceState createState() => FrmAttendanceAdvanceState();
 }
 
-final globalScaffoldKey = GlobalKey<ScaffoldState>();
-
 class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
-  //
+  // Design Tokens (Soft Orange Pastel)
+  static const Color primaryOrange = Color(0xFFFF8C69);
+  static const Color lightOrange = Color(0xFFFFF4E6);
+  static const Color accentOrange = Color(0xFFFFB347);
+  static const Color darkOrange = Color(0xFFE07B39);
+  static const Color backgroundColor = Color(0xFFFFFAF5);
+  static const Color cardColor = Color(0xFFFFF8F0);
+  static const Color shadowColor = Color(0x20FF8C69);
+
   final String BASE_URL = GlobalData.baseUrlOri;
-  bool isMock = false;
   String androidID = "";
   List listGeofence = [];
   String address = "";
@@ -46,32 +55,35 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
   String timeOUT = "";
   String duration_check_out = "";
   String dropdownvalue = 'Pilih Absensi';
-  var itemsShift = ['Pilih Absensi', 'storing', 'izin', 'sakit', 'cuti'];
-  //sample final dt = '2022-02-07 05:00:11';DateFormat('yyyy-MM-dd HH:mm:ss').parse(dt);
-  TextEditingController txtAddr = new TextEditingController();
-  TextEditingController txtLonLat = new TextEditingController();
-  TextEditingController txtNote = new TextEditingController();
-  TextEditingController txtStartDate = new TextEditingController();
-  TextEditingController txtEndDate = new TextEditingController();
+  final itemsShift = ['Pilih Absensi', 'storing', 'izin', 'sakit', 'cuti'];
+
+  final TextEditingController txtAddr = TextEditingController();
+  final TextEditingController txtLonLat = TextEditingController();
+  final TextEditingController txtNote = TextEditingController();
+  final TextEditingController txtStartDate = TextEditingController();
+  final TextEditingController txtEndDate = TextEditingController();
+
   String start_date = '';
   String end_date = '';
   File? _imageProfile;
+  Uint8List? _bytesImageProfile;
   var isShowAddress = false;
   String filePathImageProfile = "";
-  String noImage =
-      'iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAANlBMVEXu7u64uLjx8fHt7e21tbXQ0NC9vb3ExMTm5ubj4+O5ubnIyMjq6urf39/MzMzBwcHU1NTZ2dmQfkM8AAAE2klEQVR4nO2Y2bLrKAxFwxCPePr/n21JYBvnJLeruq5zHnqtl3gAzEZCEnk8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgK3jv62t/eXN98KbZtfOncd8O6C/8dwH/yjOO4RH26zh05XnaxiiMa/fao5fHzzLLGKfyNCxxrZfnubfZSf28SM/hOYXSvmIJf1PTlWcc1vPaNVmQn9oY3TC4GBt5ffl+H90++yRasyzfNxdJaYlLqu79ZgM656Ib9RuhdRX3KnTD5I/rrND3w/n1V2NUCifp7ENW4Nx4SvKbDDBVnVZXDyh9wlI/WdSPblIpqlxMLwpN4LC07WKrvl56nArFFV3MRk+j2+2vhFGGbQ+vDfoVsVQrI9rnRIwqbHfme23oYln9XaHNb5mS90m89TL1WmHw8rLsvq6RYfqzja3MYdNJb5ute/hHty6z9lAbxi9FmtMRd4W9zqe3r/pOZ1LHkMqGyexgzaZYN/Orjbrfe5W/9OUumfCs8EZhB9l/8mSKQi8e57Z9drr+w3uFfWNLoa3U6m7OzcTj9Lm4QTai38wPyhjFH0+FNzpopdA5XeFd4T5vIy21v10UbtbTdqldNftCiEWjxJohxxo/a48Xe9Veep86RVWpsy3doTBplDhWVs0T67B4Klyj2DdqlJiyJ+S5iySN/21+lcNmCUhn1g9npBl/pNy/rtD2Wpt2hTrd8VhYC5hvFQbx5sHikLYZzlAj3hs3v+6b2aJQHq8bLMGPdbaIp7/cpjBNOofZnwrj/Krw3C2HQvXfeZGXXq6iNiubV7Ul02nbW7erpM1QxOqGveTD5gs21Hwt81s/K/RvFHYakKTSm72s0KCTz72S+qf8yk9zKrSQ0jUWZHeFuWQb7rdhdjNJ8e5QaF6aq5X5k5dKu2bq5E6SQxwf41582XPZbFPp2JWwGbQwaNvhUPi9SKNespweo5GmKirbM05cFJpT95Lr4jTGYdMcWDKHDPNc1/VZfEGK7GOLShHRVArv1XZV2DeHQh9zjAjFsfYgeVUYVMmSVOfYaHsznbwPsfjfMd4lW3S/o1AivEaboWT8I1pqA1fvykdlwxxyOyvQ5nyxmmm1RnCldtdYo8G5yY4efkuhYpWWXecZ5apt1ZnW2/BQmHJRqjW37TcNqDJ1+RlKCNEBteTVqk3q3Dzgr3mpcBTZSc9uwyaVdzfr9Md350MLJJoe7GD0yMeLNpkvtF1v6Dh9Kdtkb/YSVfTZa6S5vfJWVaoh5VhaPNbtVojLNV/tCjWQaDzSvGe77Kndw3zmRU1CFpXD0x254We2uP2Mf2ZcEVaut3ieTpv+usK7QjWQvRmzG5ueSQPTMaCGr2iL9zwH1HPU43oCvvmMH8+aYj2upyaWkDh3Ly5UFKZFlt6bsvKHxaRFzJqLMiMfIM2gYWuyRhnWTqOaQr5zxl+l8j1yn38eVbDvVz17b+HHFunkqC5G6CR5r1bqhGXLL/TJLL2mo8+kYzxsE+QB223Kmy7MbcWdZ/z6b78Qfvyb+KGHPzrq1H78QfjaNtSv86e+92/in/i0sKF+9SfvCrnp3WdcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+B/xD/alJ5yRngQVAAAAAElFTkSuQmCC';
   final picker = ImagePicker();
   var status_absensi = "";
   ProgressDialog? pr;
   bool _isUpdatingPosition = false;
-  _goBack(BuildContext context) {
+  var address_osm = "";
+  var akses_detail = false;
+
+  void _goBack(BuildContext context) {
     Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => ViewDashboard()));
+      context,
+      MaterialPageRoute(builder: (context) => ViewDashboard()),
+    );
   }
 
-  void getPicture(opsi) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    //prefs.setString("photoProfile", "");
+  void getPicture(String opsi) async {
     if (opsi == 'GALLERY') {
       final pickedFile =
           await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
@@ -80,7 +92,6 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
           _imageProfile = File(pickedFile.path);
           List<int> imageBytes = _imageProfile!.readAsBytesSync();
           filePathImageProfile = base64Encode(imageBytes);
-          //prefs.setString("photoProfile", filePathImageProfile);
         });
       }
     } else {
@@ -91,74 +102,56 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
           _imageProfile = File(pickedFile.path);
           List<int> imageBytes = _imageProfile!.readAsBytesSync();
           filePathImageProfile = base64Encode(imageBytes);
-          //prefs.setString("photoProfile", filePathImageProfile);
         });
       }
     }
   }
 
-  Uint8List? _bytesImageProfile;
   void getProfileImage() async {
-    // SharedPreferences prefs = await SharedPreferences.getInstance();
-    // if (prefs.getString("photoProfile") != null &&
-    //     prefs.getString("photoProfile") != "") {
-    //   _bytesImageProfile =
-    //       Base64Decoder().convert(prefs.getString("photoProfile"));
-    //   filePathImageProfile = prefs.getString("photoProfile");
-    // }
     filePathImageProfile = '';
   }
 
   Future getImageFromCamera(BuildContext contexs, String namaPhoto) async {
     showDialog(
       context: contexs,
-      builder: (contexs) => new AlertDialog(
-        title: new Text('Information'),
-        content: new Text("Get Picture"),
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.photo_camera, color: primaryOrange),
+            SizedBox(width: 8),
+            Text('Ambil Foto', style: TextStyle(fontSize: 16)),
+          ],
+        ),
+        content: const Text("Pilih sumber pengambilan foto:"),
         actions: <Widget>[
-          new ElevatedButton.icon(
-            icon: Icon(
-              Icons.camera_alt_outlined,
-              color: Colors.white,
-              size: 20.0,
-            ),
-            label: const Text(
-              "Camera",
-              style: TextStyle(color: Colors.white),
-            ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.camera_alt_outlined, color: Colors.white, size: 18.0),
+            label: const Text("Kamera", style: TextStyle(color: Colors.white)),
             onPressed: () async {
-              Navigator.of(contexs).pop(false);
+              Navigator.of(ctx).pop(false);
               getPicture('CAMERA');
             },
             style: ElevatedButton.styleFrom(
-                elevation: 0.0,
-                backgroundColor: const Color(0xFFFF8C69),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                textStyle:
-                    const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+              elevation: 0.0,
+              backgroundColor: primaryOrange,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            ),
           ),
-          new ElevatedButton.icon(
-            icon: Icon(
-              Icons.camera_alt_outlined,
-              color: Colors.white,
-              size: 20.0,
-            ),
-            label: const Text(
-              "Gallery",
-              style: TextStyle(color: Colors.white),
-            ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.photo_library_outlined, color: Colors.white, size: 18.0),
+            label: const Text("Galeri", style: TextStyle(color: Colors.white)),
             onPressed: () async {
-              Navigator.of(contexs).pop(false);
+              Navigator.of(ctx).pop(false);
               getPicture('GALLERY');
             },
             style: ElevatedButton.styleFrom(
-                elevation: 0.0,
-                backgroundColor: const Color(0xFFFF8C69),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                textStyle:
-                    const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+              elevation: 0.0,
+              backgroundColor: accentOrange,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            ),
           ),
         ],
       ),
@@ -174,7 +167,6 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
       var urlData =
           "${BASE_URL}api/create_geofence_area.jsp?method=list-geofence-area-v1";
       var encoded = Uri.encodeFull(urlData);
-      print(urlData);
       Uri myUri = Uri.parse(encoded);
       var response =
           await http.get(myUri, headers: {"Accept": "application/json"});
@@ -199,7 +191,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
     } catch (e) {
       alert(globalScaffoldKey.currentContext!, 0, "Client, Load data geofence",
           "error");
-      print(e.toString());
+      debugPrint(e.toString());
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
@@ -207,27 +199,22 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
   }
 
   double distance_in_meter(lat1, lon1, lat2, lon2) {
-    var R = 6371000; // Radius of the earth in m
+    var R = 6371000;
     var p = 0.017453292519943295;
     var dLat = (lat1 - lat2) * pi / p;
     var dLon = (lon1 - lon2) * pi / p;
     var a = sin(dLat / 2) * sin(dLat / 2) +
         cos(lat1 * pi / p) * cos(lat2 * pi / p) * sin(dLon / 2) * sin(dLon / 2);
     var c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    var d = R * c;
-    return d;
+    return R * c;
   }
 
   bool arePointsNear(
       checkPoint_lat, checkPoint_lon, centerPoint_lat, centerPoint_lon, meter) {
     var ky = 40000 / 360;
-    print(ky);
     var kx = cos(pi * centerPoint_lat / 180.0) * ky;
     var dx = (centerPoint_lon - checkPoint_lon).abs() * kx;
     var dy = (centerPoint_lat - checkPoint_lat).abs() * ky;
-    //return sqrt(dx * dx + dy * dy) <= km;
-    var ret = (sqrt(dx * dx + dy * dy));
-    print('(sqrt(dx * dx + dy * dy))) ${ret}');
     return (1000 * (sqrt(dx * dx + dy * dy))) <= meter;
   }
 
@@ -237,7 +224,6 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
     var a = 0.5 -
         c((lat2 - lat1) * p) / 2 +
         c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
-    //return 12742 * asin(sqrt(a)); for KM
     return 1000 * (12742 * asin(sqrt(a)));
   }
 
@@ -248,38 +234,15 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
     try {
       currentLocation = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.best);
-      // try {
-      //   isMock = await TrustLocation.isMockLocation;
-      // } catch (e) {
-      //   print('TrustLocation isMockLocation check error: $e');
-      //   isMock = false;
-      // }
-      // TrustLocation.start(5);
-      //
-      // /// the stream getter where others can listen to.
-      // TrustLocation.onChange.listen((values) {
-      //   print(
-      //       'TrustLocation ${values.latitude} ${values.longitude} ${values.isMockLocation}');
-      //   truslat = values.latitude!;
-      //   trusLon = values.longitude!;
-      // });
-      //
-      // /// stop repeating by timer
-      // TrustLocation.stop();
-      //pos.
     } catch (e) {
       currentLocation = null;
     }
-    //print(currentLocation);
     return currentLocation;
   }
 
   Future<String> getAddress(String? lat, String? lon) async {
     String address = "";
-
-    // Validasi kosong
     if (lat == null || lon == null || lat.isEmpty || lon.isEmpty) {
-      print("LAT LON kosong!");
       return "";
     }
 
@@ -296,8 +259,6 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
         },
       );
 
-      print("URL OSM: $uri");
-
       final response = await http.get(
         uri,
         headers: {
@@ -306,85 +267,54 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
         },
       );
 
-      print("Status: ${response.statusCode}");
-      print("Body: ${response.body}");
-
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
-
         if (decoded != null && decoded["display_name"] != null) {
           address = decoded["display_name"];
         }
       }
     } catch (e) {
-      print("ERROR Reverse OSM: $e");
-    }
-
-    return address;
-  }
-
-  Future<String> getAddressOLD(String lat, String lon) async {
-    var address = "";
-    try {
-      var urlOSM =
-          "https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=18&addressdetails=1";
-      print("URL OSM ${urlOSM}");
-      var encoded = Uri.encodeFull(urlOSM);
-      print(encoded);
-      Uri urlEncode = Uri.parse(encoded);
-      final response = await http.get(urlEncode, headers: {
-        'User-Agent': 'DMS_ANP/1.0 (ANP Driver Management System)',
-      });
-      print(response.body);
-      if (response.statusCode == 200) {
-        address = json.decode(response.body)["display_name"];
-        print('JOSN address ${address}');
-      } else {
-        address = "";
-      }
-    } catch ($e) {
-      address = "";
+      debugPrint("ERROR Reverse OSM: $e");
     }
     return address;
   }
 
   Future<String> saveAttendance(String inorout, int geo_id, String geo_nm,
       String employeeid, String lat, String lon, String addr) async {
-    print('ADDRESS ${addr}');
     try {
+      if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+        return "";
+      }
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      var result = await GpsSecurityChecker.checkGpsSecurity();
-      var user_id = prefs.getString("name"); //Pilih Absensi
+      var user_id = prefs.getString("name");
       if (androidID.isEmpty) {
         alert(globalScaffoldKey.currentContext!, 0,
             "IMEI ID kosong, silahkan kontak Administrator", "error");
       } else if (dropdownvalue.toString() == 'Pilih Absensi') {
         alert(globalScaffoldKey.currentContext!, 0,
-            "Type Absensi belum di pilih", "error");
+            "Tipe Absensi belum dipilih", "error");
       } else if (user_id == null || user_id == "") {
         alert(globalScaffoldKey.currentContext!, 0,
             "USER ID tidak boleh kosong", "error");
       } else if ((dropdownvalue.toString() == 'cuti' ||
               dropdownvalue.toString() == 'sakit' ||
               dropdownvalue.toString() == 'izin') &&
-          (txtNote.text == null || txtNote.text == '')) {
-        alert(globalScaffoldKey.currentContext!, 0, "Note tidak boleh kosong",
+          (txtNote.text.isEmpty)) {
+        alert(globalScaffoldKey.currentContext!, 0, "Catatan tidak boleh kosong",
             "error");
       } else if ((dropdownvalue.toString() == 'cuti') &&
-          (start_date == null || start_date == '')) {
+          (start_date.isEmpty)) {
         alert(globalScaffoldKey.currentContext!, 0,
             "Start Date tidak boleh kosong", "error");
       } else if ((dropdownvalue.toString() == 'cuti') &&
-          (end_date == null || end_date == '')) {
+          (end_date.isEmpty)) {
         alert(globalScaffoldKey.currentContext!, 0,
             "End Date tidak boleh kosong", "error");
       } else {
-        // Jangan blokir di client karena fake GPS (banyak false positive).
-        // Jika ingin, bisa kirim info tambahan ke server dari result (belum dipakai di sini).
         if (EasyLoading.isShow) {
           EasyLoading.dismiss();
         }
-        print('SAVE ATTENDANCE');
+
         var url_base = "";
         if (inorout == "IN" || inorout == "OUT") {
           url_base = "checkin-attendance-storing";
@@ -395,24 +325,20 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
         } else if (inorout.toUpperCase() == "CUTI") {
           url_base = "checkin-attendance-cuti";
         }
-        //lat ="-6.4538741";
-        //lon ="106.8018423";
+
         address_osm = await getAddress(lat.toString(), lon.toString());
         if (address_osm.isEmpty && txtAddr.text.trim().isNotEmpty) {
           address_osm = txtAddr.text.trim();
         }
-        print('cetak address ${address_osm}');
 
-        var fake = isMock == true ? '1' : '0';
-        EasyLoading.show();
+        EasyLoading.show(status: 'Menyimpan absensi...');
         var data = {
           'method': inorout,
-          //'imeiid':"956ad8eab460883e",//androidID.toString(),
           'imeiid': androidID.toString(),
           'status_absensi': dropdownvalue.toString(),
           'geo_id': geo_id.toString(),
           'geo_nm': geo_nm,
-          'is_mock': fake,
+          'is_mock': '0',
           'employeeid': "",
           'lat': lat,
           'lon': lon,
@@ -424,13 +350,11 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
           'end_date': end_date,
           'company': 'AN',
           'note': txtNote.text,
+          'photo': filePathImageProfile,
         };
-        print("Data param ${data}"); //DEMO
-        print("SAVE " + "${BASE_URL}api/${url_base}.jsp");
+
         var encoded = Uri.encodeFull("${BASE_URL}api/${url_base}.jsp");
-        print(encoded);
         Uri urlEncode = Uri.parse(encoded);
-        print(isMock);
         final response = await http.post(
           urlEncode,
           body: data,
@@ -439,10 +363,11 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
           },
           encoding: Encoding.getByName('utf-8'),
         );
-        print(response.body);
+
         if (EasyLoading.isShow) {
           EasyLoading.dismiss();
         }
+
         setState(() {
           String? message = "";
           var status_code = 100;
@@ -451,12 +376,13 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
           var _timeIN = "";
           var _timeOUT = "";
           if (response.statusCode == 200) {
-            message = json.decode(response.body)["message"];
-            status_code = json.decode(response.body)["status_code"];
-            _tgl_absen = json.decode(response.body)["tgl_absen"];
-            _duration = json.decode(response.body)["duration"];
-            _timeIN = json.decode(response.body)["timein"];
-            _timeOUT = json.decode(response.body)["timeout"];
+            final dec = json.decode(response.body);
+            message = dec["message"];
+            status_code = dec["status_code"] ?? 100;
+            _tgl_absen = dec["tgl_absen"] ?? "";
+            _duration = dec["duration"] ?? "";
+            _timeIN = dec["timein"] ?? "";
+            _timeOUT = dec["timeout"] ?? "";
 
             if (status_code == 200) {
               tglAbsen = _tgl_absen;
@@ -474,8 +400,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
                   globalScaffoldKey.currentContext!, 0, "${message}", "error");
             }
           } else {
-            message = response
-                .reasonPhrase; //json.decode(response.reasonPhrase)["message"];
+            message = response.reasonPhrase;
             alert(globalScaffoldKey.currentContext!, 0, "${message}", "error");
           }
         });
@@ -485,18 +410,9 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
         EasyLoading.dismiss();
       }
       alert(globalScaffoldKey.currentContext!, 0, "Client, ${e}", "error");
-      print(e.toString());
+      debugPrint(e.toString());
     }
     return "";
-  }
-
-  var address_osm = "";
-  Future updatePositionTest(String inorout, String lat, String lon) async {
-    print(androidID.toString());
-    var address = await getAddress(
-        userLocation!.latitude.toString(), userLocation!.longitude.toString());
-    print(address);
-    //await saveAttendance(inorout, 24, 'CIOMAS -HOME', "", lat, lon,addressss);
   }
 
   Future updatePosition(String inorout) async {
@@ -505,7 +421,6 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
     if (!EasyLoading.isShow) EasyLoading.show(status: 'Mengambil lokasi & alamat...');
     try {
       if (userLocation == null) {
-        print('No location');
         _getLocation();
         return;
       }
@@ -524,16 +439,14 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
       String geo_nmOld = "";
       bool insideAny = false;
 
-      // SphericalUtil.computeDistanceBetween returns distance in METERS
       for (var i = 0; i < listGeofence.length; i++) {
         var a = listGeofence[i];
         var radiusRaw = double.tryParse(a['radius']?.toString() ?? '') ?? 0.0;
-        // API bisa kirim radius dalam meter (e.g. 500) atau km (e.g. 0.5) → normalisasi ke meter
         var radiusMeters = radiusRaw > 0 && radiusRaw < 100 ? radiusRaw * 1000 : radiusRaw;
         var distanceBetweenPoints = SphericalUtil.computeDistanceBetween(
             LatLng(double.parse(a['lat'].toString()), double.parse(a['lon'].toString())),
             LatLng(userLocation!.latitude, userLocation!.longitude));
-        print('geofence ${a['name']} distance=${distanceBetweenPoints}m radius=${radiusMeters}m inside=${distanceBetweenPoints <= radiusMeters}');
+
         if (distanceBetweenPoints <= radiusMeters) {
           insideAny = true;
           if (i == 0 || radiusMeters < radiusOld) {
@@ -547,12 +460,6 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
       final isStoring = dropdownvalue.toString().toLowerCase() == 'storing';
 
       if (isStoring) {
-        // Storing: harus di LUAR geofence (distance > radius untuk semua). Ambil alamat OSM sekali.
-        // if (insideAny) {
-        //   if (mounted) alert(globalScaffoldKey.currentContext!, 0,
-        //       "Absensi storing hanya boleh dilakukan di luar area geofence", "error");
-        //   return;
-        // }
         address = await getAddress(userLocation!.latitude.toString(),
             userLocation!.longitude.toString());
         if (address.isEmpty) address = "Alamat tidak ditemukan";
@@ -561,7 +468,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
         return;
       }
 
-      // Bukan storing (izin/sakit/cuti): harus di DALAM geofence.
+      // Bukan storing (izin/sakit/cuti): harus di dalam geofence
       if (!insideAny) {
         if (mounted) alert(globalScaffoldKey.currentContext!, 0,
             "Anda di luar geofence. Silakan masuk area yang ditentukan.", "error");
@@ -580,23 +487,24 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Information'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.help_outline, color: primaryOrange),
+            SizedBox(width: 8),
+            Text('Konfirmasi Absen', style: TextStyle(fontSize: 16)),
+          ],
+        ),
         content: Text(
-            "checked ${inorout.toUpperCase()} absensi ${dropdownvalue.toString()}?"),
+            "Lakukan ${inorout.toUpperCase()} absensi ${dropdownvalue.toString().toUpperCase()}?"),
         actions: <Widget>[
-          ElevatedButton.icon(
-            icon: Icon(Icons.close, color: Colors.white, size: 20.0),
-            label: Text("No", style: TextStyle(color: Colors.white)),
+          TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            style: ElevatedButton.styleFrom(
-                elevation: 0.0,
-                backgroundColor: Colors.red,
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+            child: Text("Batal", style: TextStyle(color: Colors.grey.shade700)),
           ),
           ElevatedButton.icon(
-            icon: Icon(Icons.save, color: Colors.white, size: 20.0),
-            label: Text("checked ${inorout.toUpperCase()}", style: TextStyle(color: Colors.white)),
+            icon: const Icon(Icons.check_circle_outline, color: Colors.white, size: 18.0),
+            label: Text("${inorout.toUpperCase()}", style: const TextStyle(color: Colors.white)),
             onPressed: () async {
               Navigator.of(context).pop(false);
               await saveAttendance(
@@ -609,479 +517,693 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
                   address.isEmpty ? txtAddr.text : address);
             },
             style: ElevatedButton.styleFrom(
-                elevation: 0.0,
-                backgroundColor: const Color(0xFFFF8C69),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+              elevation: 0.0,
+              backgroundColor: primaryOrange,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Timer timer = new Timer(new Duration(seconds: 5), () async {
-    var currentLocation = null;
-    try {
-      currentLocation = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-    } catch (e) {
-      currentLocation = null;
-    }
-    //print(currentLocation);
-    return currentLocation;
-  });
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (bool didPop, dynamic result) {
-          if (didPop) return;
-          Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (context) => ViewDashboard()));
-        },
-        child: Scaffold(
-          key: globalScaffoldKey,
-          backgroundColor: const Color(0xFFFFF4E6), // soft orange background
-          appBar: AppBar(
-              backgroundColor: const Color(0xFFFF8C69), // soft orange appBar
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back),
-                iconSize: 20.0,
-                onPressed: () {
-                  _goBack(context);
-                },
-              ),
-              //backgroundColor: Colors.transparent,
-              //elevation: 0.0,
-              centerTitle: true,
-              title: Text('Attendance Advance')),
-          body: Container(
-            constraints: BoxConstraints.expand(),
-            color: HexColor("#f0eff4"),
-            child: Stack(
-              children: <Widget>[
-                FrmAttendance(context),
-              ],
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => ViewDashboard()));
+      },
+      child: Scaffold(
+        key: globalScaffoldKey,
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          backgroundColor: primaryOrange,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            iconSize: 20.0,
+            onPressed: () => _goBack(context),
+          ),
+          centerTitle: true,
+          title: const Text(
+            'Attendance Advance',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 17,
             ),
           ),
-        ));
+        ),
+        body: FrmAttendance(context),
+      ),
+    );
   }
 
   Widget FrmAttendance(BuildContext context) {
-    return Container(
-        padding: EdgeInsets.fromLTRB(1.0, 1.0, 1.0, 1.0),
-        child: ListView(children: <Widget>[
-          // Photo section – disamakan desainnya dengan FrmAttendance.dart
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Text(
-                    "Photo Profile",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: () async {
-                      await getImageFromCamera(context, "PROFILE");
-                    },
-                    child: Container(
-                      width: 180,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.grey.shade200,
-                      ),
-                      child: _imageProfile != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.file(
-                                _imageProfile!,
-                                width: 180,
-                                height: 200,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : filePathImageProfile != ""
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.memory(
-                                    _bytesImageProfile ??
-                                        Uint8List.fromList(const []),
-                                    width: 180,
-                                    height: 200,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.camera_alt,
-                                          size: 50,
-                                          color: Colors.grey.shade600),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        "Tap to add photo",
-                                        style: TextStyle(
-                                            color: Colors.grey.shade600),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // 1. Employee Info & Profile Card
           Container(
-            margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
-            child: Text("Nama Karyawan : ${namaKaryawan}",
-                textAlign: TextAlign.left, style: TextStyle(fontSize: 15)),
-          ),
-          // Container(
-          //   margin: EdgeInsets.only(
-          //       left: 20, top: 50, right: 20, bottom: 0),
-          //   child: InkWell(
-          //     onTap: () {
-          //       Share.share(
-          //           'http://apps.tuluatas.com:8080/trucking/master/update_imei.jsp?imeiid=${androidID}');
-          //     },
-          //     child: Text("IMEI ID : ${androidID}",
-          //         textAlign: TextAlign.center,
-          //         style: TextStyle(
-          //             fontSize: 18,
-          //             color: Colors.blueAccent,
-          //             decoration: TextDecoration.underline)),
-          //   ),
-          // ),
-          Container(
-            margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0x40FFB347)),
+              boxShadow: const [
+                BoxShadow(
+                  color: shadowColor,
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
               children: [
-                DropdownButtonHideUnderline(
-                    child: ButtonTheme(
-                  alignedDropdown: true,
-                  child: DropdownButton(
-                    isExpanded: true,
-                    value: dropdownvalue,
-                    icon: const Icon(Icons.keyboard_arrow_down),
-                    items: itemsShift.map((String items) {
-                      return DropdownMenuItem(
-                        value: items,
-                        child: Text(items),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        dropdownvalue = newValue!;
-                        status_absensi = dropdownvalue;
-                      });
-                      if (dropdownvalue != null &&
-                          dropdownvalue.toUpperCase() == 'CUTI') {
-                        setState(() {
-                          akses_detail = true;
-                        });
-                      } else {
-                        setState(() {
-                          akses_detail = false;
-                        });
-                      }
-                    },
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: lightOrange,
+                  child: const Icon(Icons.badge_outlined, color: darkOrange, size: 28),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        namaKaryawan.isNotEmpty ? namaKaryawan : 'Karyawan',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: lightOrange,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'KARYAWAN / ADMIN',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: darkOrange,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              androidID.isNotEmpty ? 'IMEI: $androidID' : '',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                )),
+                ),
               ],
             ),
           ),
-          if (status_absensi == "storing") ...[
-            Container(
-              margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
-              child: Text("Location : ${txtAddr.text}",
-                  textAlign: TextAlign.left, style: TextStyle(fontSize: 15)),
+
+          const SizedBox(height: 14),
+
+          // 2. Photo Profile Card
+          Container(
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0x59FFB347)),
+              boxShadow: const [
+                BoxShadow(
+                  color: shadowColor,
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
-            if (isShowAddress == true) ...[
-              Container(
-                margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
-                child: Text("Address : ${address_osm}",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 15)),
-              )
-            ],
-            Container(
-              margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
-              child: Text("Date Absen : ${tglAbsen}",
-                  textAlign: TextAlign.left, style: TextStyle(fontSize: 14)),
-            ),
-            Container(
-              margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
-              child: Text("Time IN : ${timeIN}",
-                  textAlign: TextAlign.left, style: TextStyle(fontSize: 14)),
-            ),
-            Container(
-              margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
-              child: Text("Time OUT : ${timeOUT}",
-                  textAlign: TextAlign.left, style: TextStyle(fontSize: 14)),
-            ),
-            Container(
-              margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
-              child: Text("Duration : ${duration_check_out}",
-                  textAlign: TextAlign.left, style: TextStyle(fontSize: 15)),
-            ),
-            Container(
-                margin: EdgeInsets.only(left: 20, top: 5, right: 20, bottom: 0),
-                child: Row(children: <Widget>[
-                  Expanded(
-                      child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.login,
-                      color: Colors.white,
-                      size: 24.0,
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: const BoxDecoration(
+                    color: lightOrange,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
                     ),
-                    label: Text(
-                      "Check IN",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    onPressed: () async {
-                      await updatePosition("IN");
-                      //await updatePositionTest("IN","-122.083922","37.4220936");
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: const Color(0xFF4CAF50),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 0),
-                        textStyle: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold)),
-                  )),
-                  SizedBox(
-                    width: 10,
                   ),
-                  Expanded(
-                      child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.logout,
-                      color: Colors.white,
-                      size: 24.0,
-                    ),
-                    label: Text(
-                      "Check OUT",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    onPressed: () async {
-                      print('CHECK OUT');
-                      await updatePosition("OUT");
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: const Color(0xFFFF8C69),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 0),
-                        textStyle: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold)),
-                  )),
-                ]))
-          ],
-          if (status_absensi == "cuti") ...[
-            Container(
-              margin: EdgeInsets.all(10.0),
-              child: DateTimePicker(
-                //type: DateTimePickerType.dateTimeSeparate,
-                dateMask: 'yyyy-MM-dd',
-                controller: txtStartDate,
-                //initialValue: _initialValue,
-                firstDate: DateTime(1950),
-                lastDate: DateTime(2100),
-                icon: Icon(Icons.event),
-                dateLabelText: 'Start Date',
-                selectableDayPredicate: (date) {
-                  return true;
-                },
-                onChanged: (val) => setState(() => start_date = val),
-                validator: (val) {
-                  setState(() => start_date = val ?? '');
-                  return null;
-                },
-                onSaved: (val) => setState(() => start_date = val ?? ''),
-              ),
-            ),
-            Container(
-              margin: EdgeInsets.all(10.0),
-              child: DateTimePicker(
-                //type: DateTimePickerType.dateTimeSeparate,
-                dateMask: 'yyyy-MM-dd',
-                controller: txtEndDate,
-                //initialValue: _initialValue,
-                firstDate: DateTime(1950),
-                lastDate: DateTime(2100),
-                icon: Icon(Icons.event),
-                dateLabelText: 'End Date',
-                selectableDayPredicate: (date) {
-                  return true;
-                },
-                onChanged: (val) => setState(() => end_date = val),
-                validator: (val) {
-                  setState(() => end_date = val ?? '');
-                  return null;
-                },
-                onSaved: (val) => setState(() => end_date = val ?? ''),
-              ),
-            )
-          ],
-          if (status_absensi == "izin" ||
-              status_absensi == "sakit" ||
-              status_absensi == "cuti") ...[
-            Container(
-              margin: EdgeInsets.only(left: 20, top: 2, right: 20, bottom: 0),
-              child: TextField(
-                controller: txtNote,
-                decoration: new InputDecoration(
-                    border: new OutlineInputBorder(
-                        borderSide: new BorderSide(color: Colors.teal)),
-                    hintText: 'Note',
-                    helperText: 'Cuti,sakit dan izin wajib ada catatan',
-                    labelText: 'Note',
-                    prefixIcon: const Icon(
-                      Icons.book,
-                      color: Colors.green,
-                    ),
-                    prefixText: ' ',
-                    //suffixText: 'USD',
-                    suffixStyle: const TextStyle(color: Colors.green)),
-              ),
-            ),
-            Container(
-                margin: EdgeInsets.only(left: 20, top: 5, right: 20, bottom: 0),
-                child: Row(children: <Widget>[
-                  Expanded(
-                      child: ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.fingerprint_rounded,
-                      color: Colors.white,
-                      size: 24.0,
-                    ),
-                    label: Text(
-                      "Submit ${dropdownvalue.toString()}",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    onPressed: () async {
-                      print('Submit ${dropdownvalue.toString()}');
-                      address = await getAddress(
-                          userLocation!.latitude.toString(),
-                          userLocation!.longitude.toString());
-                      var status = dropdownvalue.toString().toUpperCase();
-                      //IJIN,CUTI,SAKIT
-                      await saveAttendance(
-                          status,
-                          0,
-                          "",
-                          "",
-                          userLocation!.latitude.toString(),
-                          userLocation!.longitude.toString(),
-                          address);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: const Color(0xFFFF8C69),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 0),
-                        textStyle: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold)),
-                  ))
-                ]))
-          ],
-          if (akses_detail == true)
-            Container(
-              margin:
-                  const EdgeInsets.only(left: 20, top: 5, right: 20, bottom: 0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(
-                        Icons.arrow_right_outlined,
-                        color: Colors.white,
-                        size: 24.0,
-                      ),
-                      label: const Text(
-                        "View Detail Cuti",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      onPressed: () async {
-                        print('Cuti detail');
-                        EasyLoading.show();
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ViewDetailCuti(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: const Color(0xFFFF8C69),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 0),
-                        textStyle: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                  child: Row(
+                    children: const [
+                      Icon(Icons.camera_alt_outlined, color: primaryOrange, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        "Foto Bukti / Kehadiran",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: darkOrange,
                         ),
                       ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () async {
+                        await getImageFromCamera(context, "PROFILE");
+                      },
+                      child: Container(
+                        width: 170,
+                        height: 190,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          color: Colors.white,
+                          border: Border.all(color: const Color(0x73FFB347)),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: shadowColor,
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: _imageProfile != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: Image.file(
+                                  _imageProfile!,
+                                  width: 170,
+                                  height: 190,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : filePathImageProfile.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: Image.memory(
+                                      _bytesImageProfile ?? Uint8List.fromList(const []),
+                                      width: 170,
+                                      height: 190,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: lightOrange,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.add_a_photo_outlined,
+                                          size: 32,
+                                          color: primaryOrange,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        "Ketuk untuk foto",
+                                        style: TextStyle(
+                                          color: Colors.grey.shade700,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                      ),
                     ),
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // 3. Form Input Container
+          Container(
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0x59FFB347)),
+              boxShadow: const [
+                BoxShadow(
+                  color: shadowColor,
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Bar
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: const BoxDecoration(
+                    color: lightOrange,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.assignment_outlined, color: primaryOrange, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        "Pilihan Tipe & Formulir",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: darkOrange,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Dropdown Tipe Absensi
+                      _label('Tipe Absensi'),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: dropdownvalue,
+                            icon: const Icon(Icons.keyboard_arrow_down, color: primaryOrange),
+                            items: itemsShift.map((String item) {
+                              return DropdownMenuItem<String>(
+                                value: item,
+                                child: Text(
+                                  item.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: item == 'Pilih Absensi'
+                                        ? FontWeight.normal
+                                        : FontWeight.w600,
+                                    color: item == 'Pilih Absensi'
+                                        ? Colors.grey.shade500
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                dropdownvalue = newValue!;
+                                status_absensi = dropdownvalue;
+                                akses_detail = dropdownvalue.toUpperCase() == 'CUTI';
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+
+                      // Section Storing
+                      if (status_absensi == "storing") ...[
+                        const SizedBox(height: 16),
+                        _label('Informasi Storing'),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _infoRow('Lokasi Geofence', txtAddr.text.isNotEmpty ? txtAddr.text : '-'),
+                              if (isShowAddress && address_osm.isNotEmpty)
+                                _infoRow('Alamat OSM', address_osm),
+                              _infoRow('Tgl Absen', tglAbsen.isNotEmpty ? tglAbsen : '-'),
+                              _infoRow('Time IN', timeIN.isNotEmpty ? timeIN : '-'),
+                              _infoRow('Time OUT', timeOUT.isNotEmpty ? timeOUT : '-'),
+                              _infoRow('Durasi', duration_check_out.isNotEmpty ? duration_check_out : '-'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.login, color: Colors.white, size: 20),
+                                label: const Text("Check IN", style: TextStyle(fontWeight: FontWeight.bold)),
+                                onPressed: () async {
+                                  await updatePosition("IN");
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  elevation: 0,
+                                  backgroundColor: const Color(0xFF43A047),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.logout, color: Colors.white, size: 20),
+                                label: const Text("Check OUT", style: TextStyle(fontWeight: FontWeight.bold)),
+                                onPressed: () async {
+                                  await updatePosition("OUT");
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  elevation: 0,
+                                  backgroundColor: primaryOrange,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+
+                      // Section Cuti (Date Pickers)
+                      if (status_absensi == "cuti") ...[
+                        const SizedBox(height: 16),
+                        _label('Rentang Tanggal Cuti'),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: DateTimePicker(
+                            dateMask: 'yyyy-MM-dd',
+                            controller: txtStartDate,
+                            firstDate: DateTime(1950),
+                            lastDate: DateTime(2100),
+                            icon: const Icon(Icons.calendar_today, color: primaryOrange, size: 20),
+                            dateLabelText: 'Start Date',
+                            onChanged: (val) => setState(() => start_date = val),
+                            validator: (val) {
+                              setState(() => start_date = val ?? '');
+                              return null;
+                            },
+                            onSaved: (val) => setState(() => start_date = val ?? ''),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: DateTimePicker(
+                            dateMask: 'yyyy-MM-dd',
+                            controller: txtEndDate,
+                            firstDate: DateTime(1950),
+                            lastDate: DateTime(2100),
+                            icon: const Icon(Icons.event, color: primaryOrange, size: 20),
+                            dateLabelText: 'End Date',
+                            onChanged: (val) => setState(() => end_date = val),
+                            validator: (val) {
+                              setState(() => end_date = val ?? '');
+                              return null;
+                            },
+                            onSaved: (val) => setState(() => end_date = val ?? ''),
+                          ),
+                        ),
+                      ],
+
+                      // Section Note & Submit (Izin, Sakit, Cuti)
+                      if (status_absensi == "izin" ||
+                          status_absensi == "sakit" ||
+                          status_absensi == "cuti") ...[
+                        const SizedBox(height: 16),
+                        _label('Catatan / Keterangan (Wajib)'),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: txtNote,
+                          maxLines: 2,
+                          cursorColor: primaryOrange,
+                          decoration: InputDecoration(
+                            hintText: 'Tuliskan catatan absensi...',
+                            isDense: true,
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            prefixIcon: const Icon(Icons.edit_note, color: primaryOrange),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: const OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                              borderSide: BorderSide(color: primaryOrange, width: 2),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.fingerprint_rounded, color: Colors.white, size: 20.0),
+                            label: Text(
+                              "SUBMIT ${dropdownvalue.toUpperCase()}",
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                            onPressed: () async {
+                              address = await getAddress(
+                                  userLocation?.latitude.toString(),
+                                  userLocation?.longitude.toString());
+                              var status = dropdownvalue.toUpperCase();
+                              await saveAttendance(
+                                  status,
+                                  0,
+                                  "",
+                                  "",
+                                  userLocation?.latitude.toString() ?? "0",
+                                  userLocation?.longitude.toString() ?? "0",
+                                  address);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              backgroundColor: primaryOrange,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      // Button View Detail Cuti
+                      if (akses_detail) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.list_alt, color: Colors.white, size: 20),
+                            label: const Text(
+                              "Lihat Detail & Persetujuan Cuti",
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                            onPressed: () {
+                              if (EasyLoading.isShow) {
+                                EasyLoading.dismiss();
+                              }
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ViewDetailCuti(),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              backgroundColor: accentOrange,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.assignment_ind, color: Colors.white, size: 20),
+                            label: const Text(
+                              "Persetujuan Sakit & Izin Driver",
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ViewApprovalAttendanceDriver(),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              backgroundColor: darkOrange,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+
+  Widget _label(String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontWeight: FontWeight.w700,
+        fontSize: 13,
+        color: Colors.grey.shade800,
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
               ),
             ),
-        ]));
+          ),
+        ],
+      ),
+    );
   }
 
   void getSession() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    namaKaryawan = prefs.getString("name")!;
-    androidID = prefs.getString("androidID")!; //a114b4179bc8fd9f
+    setState(() {
+      namaKaryawan = prefs.getString("name") ?? "";
+      androidID = prefs.getString("androidID") ?? "";
+    });
+
+    // Guard: Driver dialihkan ke FrmAttendanceAdvanceDriver
+    final loginType = (prefs.getString("login_type") ?? "").toLowerCase().trim();
+    final loginname = (prefs.getString("loginname") ?? "").toUpperCase().trim();
+    if (loginType == 'driver' || loginname == 'DRIVER') {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const FrmAttendanceAdvanceDriver()),
+        );
+      }
+    }
   }
 
-  var akses_detail = false;
   void GetAksesViewDetail() async {
     var isAkses = false;
     SharedPreferences sf = await SharedPreferences.getInstance();
-    var username = sf.getString("username");
-    var isOK = globals.akses_pages == null
-        ? globals.akses_pages
-        : globals.akses_pages.where((x) => x == "HR");
-    if (isOK != null) {
-      if (isOK.length > 0) {
-        isAkses = true;
-      }
-    }
-    if (username == "ADMIN") {
+    final username = (sf.getString("username") ?? "").toUpperCase().trim();
+    final loginname = (sf.getString("loginname") ?? "").toUpperCase().trim();
+    final isHR = globals.akses_pages.where((x) => x == "HR").isNotEmpty;
+    final isOP = globals.akses_pages.where((x) => x == "OP").isNotEmpty;
+    if (isHR || isOP || username == "ADMIN" || loginname == "ADMIN") {
       isAkses = true;
     }
 
-    akses_detail = isAkses;
-    print('akses_detail ${akses_detail}');
+    if (mounted) {
+      setState(() {
+        akses_detail = isAkses;
+      });
+    }
   }
 
   @override
   void initState() {
-    //GetAksesViewDetail();
-    _getLocation().then((position) {
-      userLocation = position;
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+        return;
+      }
     });
-    //_getLocation();
+    _getLocation().then((position) {
+      if (mounted) {
+        setState(() {
+          userLocation = position;
+        });
+      }
+    });
     getSession();
     getProfileImage();
+    GetAksesViewDetail();
     getListGeofenceArea(false);
     if (EasyLoading.isShow) {
       EasyLoading.dismiss();
     }
-    super.initState();
   }
 }

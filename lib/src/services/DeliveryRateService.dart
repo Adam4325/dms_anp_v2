@@ -106,7 +106,7 @@ class DeliveryRateService {
     final formattedPhone = formatInternationalPhone(phoneWa);
     final String message =
         "Halo Customer, terima kasih telah menggunakan layanan PT Andalan Nusa Pratama.\n"
-        "Mohon kesediaan Anda memberikan nilai rating pelayanan pengiriman untuk No DO: $doNumber melalui link berikut:\n"
+        "Mohon kesediaan Anda memberikan nilai rating pelayanan pengiriman untuk No DO: $doNumber melalui link berikut (berlaku 3 hari):\n"
         "$ratingUrl\n\n"
         "Terima kasih atas kerja samanya.";
 

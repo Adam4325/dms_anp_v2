@@ -50,6 +50,12 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
   bool _isLocating = false;
   bool _isFetchingAddress = false;
 
+  // Approved Transit Pools for reuse across drivers
+  List<Map<String, dynamic>> _approvedPools = [];
+  Map<String, dynamic>? _nearbyApprovedPool;
+  Map<String, dynamic>? _selectedApprovedPool;
+  bool _isLoadingApprovedPools = false;
+
   // List data
   List<Map<String, dynamic>> _listRequests = [];
   bool _isLoadingList = false;
@@ -202,6 +208,7 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
           _isLocating = false;
         });
         _fetchAddressFromOsm(position.latitude, position.longitude);
+        _fetchApprovedTransitPools(position.latitude, position.longitude);
       }
     } catch (e) {
       if (mounted) {
@@ -210,6 +217,392 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
         });
       }
     }
+  }
+
+  Future<void> _fetchApprovedTransitPools(double lat, double lon) async {
+    setState(() => _isLoadingApprovedPools = true);
+    try {
+      final String baseUrl =
+          "${GlobalData.baseUrlOri}mobile/api/driver/send_location_pool_do.jsp";
+      final params = <String, String>{
+        "method": "list_approved_transit",
+        "drvid": _drvid,
+        "lat": lat.toString(),
+        "lon": lon.toString(),
+      };
+
+      final uri = Uri.parse(baseUrl).replace(queryParameters: params);
+      final response = await http
+          .get(uri, headers: {"Accept": "application/json"}).timeout(
+              const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final dynamic decoded = json.decode(response.body);
+        List<dynamic> raw = [];
+        if (decoded is Map && decoded['data'] is List) {
+          raw = decoded['data'];
+        } else if (decoded is List) {
+          raw = decoded;
+        }
+
+        final List<Map<String, dynamic>> items = [];
+        Map<String, dynamic>? nearest;
+        double minDistance = double.infinity;
+
+        for (var it in raw) {
+          if (it is Map) {
+            final m = Map<String, dynamic>.from(it);
+            items.add(m);
+
+            final dist =
+                double.tryParse(m['distance_meters']?.toString() ?? '-1') ?? -1;
+            if (dist >= 0 && dist <= 500 && dist < minDistance) {
+              minDistance = dist;
+              nearest = m;
+            }
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _approvedPools = items;
+            _nearbyApprovedPool = nearest;
+            _isLoadingApprovedPools = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching approved pools: $e");
+    } finally {
+      if (mounted) setState(() => _isLoadingApprovedPools = false);
+    }
+  }
+
+  void _applyApprovedPool(Map<String, dynamic> pool) {
+    setState(() {
+      _selectedApprovedPool = pool;
+      _namaPoolController.text = (pool['nama_pool'] ?? '').toString();
+      _addressController.text = (pool['address'] ?? '').toString();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "Titik resmi '${pool['nama_pool']}' dipilih! No DO akan langsung aktif.",
+        ),
+        backgroundColor: Colors.green.shade700,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showApprovedPoolsPicker() {
+    String search = "";
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final filtered = _approvedPools.where((p) {
+              final name = (p['nama_pool'] ?? '').toString().toLowerCase();
+              final addr = (p['address'] ?? '').toString().toLowerCase();
+              final q = search.toLowerCase();
+              return name.contains(q) || addr.contains(q);
+            }).toList();
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 10, bottom: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.verified, color: Colors.green.shade600, size: 22),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Pilih Titik Transit yang Sudah Disetujui",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                    child: TextField(
+                      decoration: softDecoration(
+                        hint: "Cari nama pool atau alamat...",
+                        prefixIcon: const Icon(Icons.search, size: 20),
+                      ),
+                      onChanged: (val) {
+                        setModalState(() {
+                          search = val;
+                        });
+                      },
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? Center(
+                            child: Text(
+                              _approvedPools.isEmpty
+                                  ? "Belum ada titik transit yang disetujui"
+                                  : "Tidak ada titik yang cocok dengan pencarian",
+                              style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                            ),
+                          )
+                        : ListView.separated(
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            itemBuilder: (context, idx) {
+                              final p = filtered[idx];
+                              final poolName = p['nama_pool'] ?? 'Transit';
+                              final addr = p['address'] ?? '';
+                              final distMeters = p['distance_meters'];
+                              final isSelected = _selectedApprovedPool != null &&
+                                  _selectedApprovedPool!['id'] == p['id'];
+
+                              return ListTile(
+                                tileColor: isSelected ? lightOrange : null,
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? primaryOrange.withOpacity(0.2)
+                                        : Colors.green.shade50,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    Icons.place,
+                                    color: isSelected ? primaryOrange : Colors.green.shade700,
+                                    size: 22,
+                                  ),
+                                ),
+                                title: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        poolName,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: isSelected ? darkOrange : Colors.grey.shade800,
+                                        ),
+                                      ),
+                                    ),
+                                    if (distMeters != null)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange.shade50,
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: accentOrange.withOpacity(0.5)),
+                                        ),
+                                        child: Text(
+                                          distMeters < 1000
+                                              ? "~${distMeters}m"
+                                              : "~${(distMeters / 1000.0).toStringAsFixed(1)}km",
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: darkOrange,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                subtitle: Text(
+                                  addr.isNotEmpty ? addr : "Koordinat: ${p['lat']}, ${p['lon']}",
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                ),
+                                trailing: isSelected
+                                    ? Icon(Icons.check_circle, color: primaryOrange)
+                                    : const Icon(Icons.arrow_forward_ios, size: 14),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _applyApprovedPool(p);
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildNearbyApprovedPoolBanner() {
+    if (_nearbyApprovedPool == null && _selectedApprovedPool == null) {
+      return const SizedBox.shrink();
+    }
+
+    final pool = _selectedApprovedPool ?? _nearbyApprovedPool!;
+    final poolName = (pool['nama_pool'] ?? '').toString();
+    final address = (pool['address'] ?? '').toString();
+    final dist = pool['distance_meters'];
+    final isSelected = _selectedApprovedPool != null;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.green.shade50 : const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isSelected ? Colors.green.shade400 : Colors.green.shade300,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.verified, color: Colors.green.shade700, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  isSelected
+                      ? "Titik Resmi Terpilih (Langsung Aktif)"
+                      : "Titik Resmi Ditemukan di Sekitar Anda!",
+                  style: TextStyle(
+                    color: Colors.green.shade800,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              if (dist != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.green.shade300),
+                  ),
+                  child: Text(
+                    dist < 1000 ? "~${dist}m" : "~${(dist / 1000.0).toStringAsFixed(1)}km",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green.shade800,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            poolName,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey.shade900,
+            ),
+          ),
+          if (address.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              address,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              if (!isSelected)
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade700,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () => _applyApprovedPool(pool),
+                    icon: const Icon(Icons.check, size: 16),
+                    label: const Text(
+                      "Gunakan Titik Ini untuk DO Saya",
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                )
+              else ...[
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle, size: 16, color: Colors.green.shade700),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          "Titik aktif! Pilih No. DO di bawah lalu kirim.",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green.shade800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedApprovedPool = null;
+                      _namaPoolController.clear();
+                    });
+                  },
+                  child: Text(
+                    "Batal",
+                    style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _fetchAddressFromOsm(double lat, double lon) async {
@@ -367,6 +760,280 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
     }
   }
 
+  Future<void> _showOverlapConflictDialog(
+      Map<String, dynamic> conflict, String serverMsg) async {
+    final String poolName = (conflict['nama_pool'] ?? 'Transit').toString();
+    final String address = (conflict['address'] ?? '').toString();
+    final String woRef = (conflict['wonumber'] ?? '').toString();
+    final String drvRef = (conflict['drvid'] ?? '').toString();
+    final num distMeters =
+        num.tryParse(conflict['distance_meters']?.toString() ?? '0') ?? 0;
+    final num existRadius =
+        num.tryParse(conflict['existing_radius']?.toString() ?? '1000') ?? 1000;
+    final String relation = (conflict['relation'] ?? '').toString();
+
+    final bool isDiDalam = relation == "DI_DALAM" || distMeters <= existRadius;
+
+    final String headline = isDiDalam
+        ? "Koordinat di Dalam Geofence Lain"
+        : "Radius Koordinat Beririsan (Overlap)";
+
+    final String relationDesc = isDiDalam
+        ? "Titik yang diajukan berjarak ${distMeters}m dari pusat '$poolName' (berada di dalam radius geofence ${existRadius}m)."
+        : "Jarak antar titik adalah ${distMeters}m, sehingga radius geofence titik baru beririsan dengan radius geofence titik '$poolName'.";
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Icon(
+                        Icons.not_listed_location_outlined,
+                        color: Colors.red.shade700,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isDiDalam
+                                  ? Colors.red.shade100
+                                  : Colors.orange.shade100,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              isDiDalam
+                                  ? "DI DALAM GEOFENCE"
+                                  : "RADIUS BERIRISAN",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: isDiDalam
+                                    ? Colors.red.shade800
+                                    : Colors.orange.shade900,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            headline,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  relationDesc,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade700,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.place, color: darkOrange, size: 18),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              poolName,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: darkOrange,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade50,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.green.shade300),
+                            ),
+                            child: Text(
+                              "Resmi",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green.shade800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (address.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.location_on_outlined,
+                                size: 14, color: Colors.grey.shade500),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                address,
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey.shade600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      const Divider(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Jarak ke Titik:",
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey.shade600)),
+                          Text(
+                            "$distMeters meter",
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade800),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("DO Pembuat:",
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey.shade600)),
+                          Text(
+                            "$woRef ${drvRef.isNotEmpty ? '($drvRef)' : ''}",
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade800),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.verified,
+                          size: 18, color: Colors.green.shade700),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "Anda tidak perlu membuat titik baru! Cukup gunakan titik resmi '$poolName' ini. No DO Anda akan langsung aktif tanpa perlu menunggu approval baru.",
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.green.shade900,
+                              height: 1.35),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade700,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.check_circle_outline, size: 18),
+                      label: const Text(
+                        "Gunakan Titik Ini & Kirim Sekarang",
+                        style: TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _applyApprovedPool(conflict);
+                        _submitSendLocation();
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.grey.shade700,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text(
+                        "Batal / Ubah Posisi Koordinat",
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _submitSendLocation() async {
     final wonumber = _wonumberController.text.trim();
     final namaPool = _namaPoolController.text.trim();
@@ -400,6 +1067,10 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
         "created_user": _username.isNotEmpty ? _username : _drvid,
       };
 
+      if (_selectedApprovedPool != null && _selectedApprovedPool!['id'] != null) {
+        params["reuse_transit_id"] = _selectedApprovedPool!['id'].toString();
+      }
+
       final uri = Uri.parse(baseUrl).replace(queryParameters: params);
       final response = await http
           .get(uri, headers: {"Accept": "application/json"}).timeout(
@@ -422,7 +1093,11 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
               ? "Lokasi DO berhasil dikirim"
               : "Gagal mengirim data (${response.statusCode})");
 
-      if (response.statusCode == 200) {
+      final bool isAutoApproved = decoded is Map &&
+          (decoded['is_auto_approved'] == true ||
+              decoded['is_auto_approved']?.toString() == 'true');
+
+      if (statusCode == 200) {
         if (mounted) {
           await showDialog(
             context: context,
@@ -432,26 +1107,43 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
                   borderRadius: BorderRadius.circular(16)),
               title: Row(
                 children: [
-                  Icon(Icons.check_circle, color: Colors.green.shade600),
+                  Icon(
+                    isAutoApproved ? Icons.verified : Icons.check_circle,
+                    color: Colors.green.shade600,
+                  ),
                   const SizedBox(width: 8),
-                  const Text("Berhasil Dikirim!"),
+                  Text(isAutoApproved ? "Langsung Disetujui!" : "Berhasil Dikirim!"),
                 ],
               ),
-              content: const Text(
-                "Lokasi transit DO Anda berhasil dikirim.\n\nMenunggu approval CS/ADMIN sebelum dapat digunakan untuk absensi geofence.",
+              content: Text(
+                isAutoApproved
+                    ? "$message\n\nNomor DO Anda ($wonumber) telah aktif. Anda dapat langsung melakukan absensi di lokasi ini tanpa perlu menunggu persetujuan baru!"
+                    : "Lokasi transit DO Anda berhasil dikirim.\n\nMenunggu approval CS/ADMIN sebelum dapat digunakan untuk absensi geofence.",
               ),
               actions: [
                 ElevatedButton(
-                  style: ntBtnStyle(primaryOrange),
+                  style: ntBtnStyle(isAutoApproved ? Colors.green.shade700 : primaryOrange),
                   onPressed: () {
                     Navigator.pop(ctx);
                     _goBack();
                   },
-                  child: const Text("Kembali ke Dashboard"),
+                  child: Text(isAutoApproved
+                      ? "Ke Dashboard / Absensi"
+                      : "Kembali ke Dashboard"),
                 ),
               ],
             ),
           );
+        }
+      } else if (statusCode == 409 ||
+          (decoded is Map && decoded['error_type'] == 'OVERLAPPING_GEOFENCE')) {
+        final conflictData = decoded is Map && decoded['conflict_data'] is Map
+            ? Map<String, dynamic>.from(decoded['conflict_data'])
+            : null;
+        if (mounted && conflictData != null) {
+          await _showOverlapConflictDialog(conflictData, message);
+        } else {
+          alert(context, 0, message, "error");
         }
       } else {
         alert(context, 0, message, "error");
@@ -514,8 +1206,14 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
           _fetchListRequests();
         }
       } else {
-        alert(context, 0, "Gagal menyetujui data (${response.statusCode})",
-            "error");
+        dynamic decoded;
+        try {
+          decoded = json.decode(response.body);
+        } catch (_) {}
+        final String errMsg = decoded is Map && decoded['message'] != null
+            ? decoded['message'].toString()
+            : "Gagal menyetujui data (${response.statusCode})";
+        alert(context, 0, errMsg, "error");
       }
     } catch (e) {
       if (EasyLoading.isShow) EasyLoading.dismiss();
@@ -534,7 +1232,7 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
             Icon(Icons.cancel_outlined, color: Colors.red.shade600, size: 22),
             const SizedBox(width: 8),
             Text(
-              "Konfirmasi Cancel",
+              "Batalkan Approval Lokasi",
               style: TextStyle(
                 color: Colors.red.shade700,
                 fontWeight: FontWeight.bold,
@@ -543,12 +1241,13 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
           ],
         ),
         content: Text(
-          "Apakah Anda yakin membatalkan lokasi transit untuk DO $wonumber?",
+          "Apakah Anda yakin membatalkan lokasi transit untuk DO $wonumber?\n\nData ini akan dipindahkan ke tab 'Dibatalkan' dan dinonaktifkan dari master geofence.",
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text("Batal", style: TextStyle(color: Colors.grey.shade600)),
+            child: Text("Tidak / Kembali",
+                style: TextStyle(color: Colors.grey.shade600)),
           ),
           ElevatedButton(
             style: ntBtnStyle(Colors.red.shade600),
@@ -561,7 +1260,7 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
 
     if (confirm != true) return;
 
-    EasyLoading.show(status: "Memproses Cancel...");
+    EasyLoading.show(status: "Memproses Pembatalan...");
     try {
       final String baseUrl =
           "${GlobalData.baseUrlOri}mobile/api/driver/send_location_pool_do.jsp";
@@ -574,7 +1273,7 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
       final uri = Uri.parse(baseUrl).replace(queryParameters: params);
       final response = await http
           .get(uri, headers: {"Accept": "application/json"}).timeout(
-              const Duration(seconds: 15));
+              const Duration(seconds: 25));
 
       if (EasyLoading.isShow) EasyLoading.dismiss();
 
@@ -586,7 +1285,7 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
       final String message = decoded is Map && decoded['message'] != null
           ? decoded['message'].toString()
           : (response.statusCode == 200
-              ? "Lokasi transit DO berhasil di-cancel"
+              ? "Lokasi transit DO berhasil dibatalkan dan dinonaktifkan dari master geofence"
               : "Gagal membatalkan data (${response.statusCode})");
 
       if (response.statusCode == 200) {
@@ -597,7 +1296,7 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
                 (wonumber.isNotEmpty && item['wonumber']?.toString() == wonumber));
           });
           alert(context, 1, message, "success");
-          _fetchListRequests();
+          await _fetchListRequests();
         }
       } else {
         alert(context, 0, message, "error");
@@ -939,7 +1638,7 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      "Kirimkan lokasi terkini Anda bersama nomor DO saat berada di luar geofence pool resmi. Setelah disetujui CS/ADMIN, Anda dapat melakukan absensi di lokasi ini.",
+                      "Kirimkan lokasi terkini Anda bersama nomor DO saat berada di luar geofence pool resmi. Jika titik sudah pernah disetujui sebelumnya, lokasi akan langsung aktif untuk absensi.",
                       style: TextStyle(
                         color: Colors.grey.shade800,
                         fontSize: 12,
@@ -951,6 +1650,9 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
               ),
             ),
             const SizedBox(height: 16),
+
+            // Card Banner Titik Resmi Terdekat yang Sudah Diapprove
+            _buildNearbyApprovedPoolBanner(),
 
             // Card Form
             Container(
@@ -1077,13 +1779,51 @@ class _FrmSendLocationPoolDoState extends State<FrmSendLocationPoolDo>
                   const SizedBox(height: 14),
 
                   // Input Nama Pool / Lokasi
-                  Text(
-                    "Nama Pool / Keterangan Lokasi",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Nama Pool / Keterangan Lokasi",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      if (_isLoadingApprovedPools)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          child: Text(
+                            "Memuat titik...",
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontStyle: FontStyle.italic,
+                              color: primaryOrange,
+                            ),
+                          ),
+                        )
+                      else if (_approvedPools.isNotEmpty)
+                        InkWell(
+                          onTap: _showApprovedPoolsPicker,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            child: Row(
+                              children: [
+                                Icon(Icons.saved_search, size: 15, color: darkOrange),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "Pilih Titik Resmi (${_approvedPools.length})",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: darkOrange,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 6),
                   TextField(

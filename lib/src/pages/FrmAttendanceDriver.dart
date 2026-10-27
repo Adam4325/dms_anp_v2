@@ -21,7 +21,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trust_location/trust_location.dart';
 
 import '../../helpers/DeveloperModeGuard.dart';
-import '../../helpers/GpsSecurityChecker.dart';
 import '../../helpers/sim_phone_guard.dart';
 
 // Constants
@@ -127,7 +126,6 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
   final ImagePicker _picker = ImagePicker();
 
   // Location
-  bool isMockLocation = false;
   String trustLatitude = "0.0";
   String trustLongitude = "0.0";
 
@@ -146,6 +144,11 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+        return;
+      }
+    });
     _initializeData();
   }
 
@@ -168,9 +171,10 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
   Future<void> _loadUserSession() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final savedStatus = prefs.getString("status_unit") ?? "";
-    final currentStatus =
-        ((widget.statusUnit ?? "").isNotEmpty ? widget.statusUnit! : savedStatus)
-            .toUpperCase();
+    final currentStatus = ((widget.statusUnit ?? "").isNotEmpty
+            ? widget.statusUnit!
+            : savedStatus)
+        .toUpperCase();
     setState(() {
       namaKaryawan = prefs.getString("name") ?? "";
       androidID = prefs.getString("androidID") ?? "";
@@ -179,7 +183,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       }
     });
     if (_isOngoingUnit) {
-      debugPrint("FrmAttendanceDriver: Unit status ONGOING ($currentStatus) -> scan QR dibypass");
+      debugPrint(
+          "FrmAttendanceDriver: Unit status ONGOING ($currentStatus) -> scan QR dibypass");
     }
   }
 
@@ -202,21 +207,6 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: Duration(seconds: 10),
       ).timeout(Duration(seconds: 12));
-
-      // try {
-      //   isMockLocation = await TrustLocation.isMockLocation;
-      // } catch (e) {
-      //   print('TrustLocation isMockLocation check error: $e');
-      //   isMockLocation = false;
-      // }
-      // TrustLocation.start(5);
-      //
-      // TrustLocation.onChange.listen((values) {
-      //   trustLatitude = values.latitude.toString();
-      //   trustLongitude = values.longitude.toString();
-      // });
-      //
-      // TrustLocation.stop();
 
       setState(() {
         userLocation = position;
@@ -280,11 +270,11 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
                   final String wonbr = item['wonumber']?.toString() ?? '';
                   final int transitId =
                       int.tryParse(item['id']?.toString() ?? '0') ?? 99999;
-                  final String transitAddr =
-                      item['address']?.toString() ?? '';
+                  final String transitAddr = item['address']?.toString() ?? '';
                   // Ambil radius transit dari API (default 1000.0)
                   final double transitRadius =
-                      double.tryParse(item['radius']?.toString() ?? '1000') ?? 1000.0;
+                      double.tryParse(item['radius']?.toString() ?? '1000') ??
+                          1000.0;
                   loadedGeofences.add(GeofenceArea(
                     geoId: transitId,
                     name: "$poolName (DO: $wonbr)",
@@ -541,7 +531,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       // Validasi Scan QR:
       // JIKA DRIVER BERADA DI AREA TRANSIT APPROVED (isTransitApproved == true),
       // MAKA SCAN QR DITIADAKAN / DI-BYPASS!
-      final bool isBypassQr = selectedGeofence.isTransitApproved || _isOngoingUnit;
+      final bool isBypassQr =
+          selectedGeofence.isTransitApproved || _isOngoingUnit;
       if (!isBypassQr && widget.requireAttendanceQr) {
         final scannedQr = await _scanAttendanceQrForAction(type);
         if (scannedQr == null) {
@@ -625,7 +616,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       );
 
       // Special handling for default geofence (hanya jika bukan transit)
-      if (geo.geoId == AttendanceConstants.defaultGeoId && !geo.isTransitApproved) {
+      if (geo.geoId == AttendanceConstants.defaultGeoId &&
+          !geo.isTransitApproved) {
         return geo;
       }
 
@@ -652,7 +644,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
             Text("Proceed with ${type.toUpperCase()} attendance?"),
             const SizedBox(height: 10),
             Text("Lokasi: ${geofence.name}",
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             if (isTransit) ...[
               const SizedBox(height: 6),
               Container(
@@ -665,7 +658,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle, size: 14, color: Colors.green.shade700),
+                    Icon(Icons.check_circle,
+                        size: 14, color: Colors.green.shade700),
                     const SizedBox(width: 4),
                     Text(
                       "Transit DO Approved (Bebas Scan QR)",
@@ -720,9 +714,6 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String userId = prefs.getString("name") ?? "";
-      isMockLocation = false;
-      await GpsSecurityChecker.checkGpsSecurity();
-      // Jangan blokir di client karena fake GPS (banyak false positive).
       // Validation
       if (!_validateAttendanceData(userId)) {
         return;
@@ -743,7 +734,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         'shift': selectedShift,
         'geo_id': geofence.geoId.toString(),
         'geo_nm': geofence.name,
-        'is_mock': isMockLocation ? '1' : '0',
+        'is_mock': '0',
         'employeeid': "",
         'lat': userLocation!.latitude.toString(),
         'lon': userLocation!.longitude.toString(),
@@ -755,7 +746,9 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       };
 
       final qrPayload = _attendanceQrPayload;
-      if (!geofence.isTransitApproved && _needsAttendanceQr && qrPayload != null) {
+      if (!geofence.isTransitApproved &&
+          _needsAttendanceQr &&
+          qrPayload != null) {
         data.addAll({
           'qr_data': _attendanceQrRawData,
           'qr_issuer': qrPayload.issuer,
@@ -1115,7 +1108,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
               if (nearest.geoId != 0 && nearest.isTransitApproved) {
                 return Container(
                   margin: const EdgeInsets.only(top: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.green.shade100,
                     borderRadius: BorderRadius.circular(6),
@@ -1123,7 +1117,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.verified, size: 16, color: Colors.green.shade800),
+                      Icon(Icons.verified,
+                          size: 16, color: Colors.green.shade800),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -1142,9 +1137,6 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
               return const SizedBox.shrink();
             },
           ),
-          // Tidak menampilkan mock banner (banyak false positive dari TrustLocation)
-          // if (isMockLocation)
-          //   Container(... "Mock Location Detected" ...),
         ],
       ),
     );
@@ -1220,7 +1212,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
                 if (isApprovedTransitNow) {
                   return Container(
                     margin: const EdgeInsets.only(top: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.green.shade50,
                       borderRadius: BorderRadius.circular(8),
@@ -1229,7 +1222,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.check_circle, size: 16, color: Colors.green.shade700),
+                        Icon(Icons.check_circle,
+                            size: 16, color: Colors.green.shade700),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -1252,7 +1246,8 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
                     child: Text(
                       'Wajib scan QR ADMIN/OP yang masih aktif (Otomatis bebas QR jika berada di radius transit DO yang diapprove)',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey.shade700),
                     ),
                   );
                 }

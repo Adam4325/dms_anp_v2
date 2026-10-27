@@ -24,6 +24,27 @@ class _FrmMasterDataState extends State<FrmMasterData>
   String userid = '';
   late TabController _tabController;
 
+  // Theme Colors (Soft Orange Pastel)
+  final Color primaryOrange = const Color(0xFFFF8C69);
+  final Color lightOrange = const Color(0xFFFFF4E6);
+  final Color accentOrange = const Color(0xFFFFB347);
+  final Color darkOrange = const Color(0xFFE07B39);
+  final Color backgroundColor = const Color(0xFFFFFAF5);
+  final Color cardColor = const Color(0xFFFFF8F0);
+  final Color shadowColor = const Color(0x20FF8C69);
+
+  // Sub-modes per category: 0 = Daftar (List), 1 = Form Input/Edit
+  // 0: Customer, 1: Origin, 2: Destination, 3: Item Type, 4: Client, 5: Zone
+  final List<int> _subModes = [0, 0, 0, 0, 0, 0];
+
+  // Search controllers for lists
+  final TextEditingController _searchCustomerCtrl = TextEditingController();
+  final TextEditingController _searchOriginCtrl = TextEditingController();
+  final TextEditingController _searchDestCtrl = TextEditingController();
+  final TextEditingController _searchItemTypeCtrl = TextEditingController();
+  final TextEditingController _searchClientCtrl = TextEditingController();
+  final TextEditingController _searchZoneCtrl = TextEditingController();
+
   // Customer tab
   final TextEditingController txtCpyId = TextEditingController();
   final TextEditingController txtCpyname = TextEditingController();
@@ -32,6 +53,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   final TextEditingController txtCpycontactperson = TextEditingController();
   String _customerStatus = 'Active';
   List<Map<String, dynamic>> _listCustomer = [];
+  int? _selectedCustomerIndex;
 
   // Origin tab
   final TextEditingController txtCtyId = TextEditingController();
@@ -46,6 +68,8 @@ class _FrmMasterDataState extends State<FrmMasterData>
   List<dynamic> _osmAddressSuggestions = [];
   bool _osmSearching = false;
   Timer? _osmSearchDebounce;
+  int? _selectedOriginIndex;
+
   static const List<Map<String, String>> _originTypeOptions = [
     {'value': '', 'label': 'Pilih Origin Type'},
     {'value': '1', 'label': 'Normal'},
@@ -75,6 +99,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   List<dynamic> _osmDestSuggestions = [];
   bool _osmDestSearching = false;
   Timer? _osmDestSearchDebounce;
+  int? _selectedDestinationIndex;
   static const String _destinationType = 'SPECIFIC';
 
   // Item Type tab
@@ -82,6 +107,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
   final TextEditingController txtItpdescr = TextEditingController();
   final TextEditingController txtItpalias = TextEditingController();
   List<Map<String, dynamic>> _listItemType = [];
+  int? _selectedItemTypeIndex;
 
   // Client tab
   final TextEditingController txtLocid = TextEditingController();
@@ -90,12 +116,19 @@ class _FrmMasterDataState extends State<FrmMasterData>
   final TextEditingController txtLocaddress1 = TextEditingController();
   final TextEditingController txtLocaddress2 = TextEditingController();
   final TextEditingController txtLocprovince = TextEditingController();
-  static const List<Map<String, String>> _clientLocationTypeOptions = [
-    {'value': 'BENGKEL', 'title': 'BENGKEL - BENGKEL'},
-    {'value': 'CUSTOMER', 'title': 'CUSTOMER - CUSTOMER'},
-    {'value': 'INTERNAL', 'title': 'INTERNAL - INTERNAL'},
-    {'value': 'VENDOR', 'title': 'VENDOR - VENDOR'},
-  ];
+  String? _clientZone;
+  List<Map<String, dynamic>> _listZoneOptions = [];
+  final TextEditingController txtLoccompany = TextEditingController(text: 'AN');
+  final TextEditingController txtLoccontactperson = TextEditingController();
+  final TextEditingController txtLocphone1 = TextEditingController();
+  final TextEditingController txtLocphone2 = TextEditingController();
+  final TextEditingController txtLocfax1 = TextEditingController();
+  final TextEditingController txtLocfax2 = TextEditingController();
+  String _clientStatus = 'Active';
+  List<Map<String, dynamic>> _listClient = [];
+  int? _selectedClientIndex;
+  List<Map<String, dynamic>> _clientCompanyOptions = [];
+
   static const List<String> _clientProvinceOptions = [
     'Aceh (NAD)',
     'Sumatra Utara',
@@ -125,18 +158,6 @@ class _FrmMasterDataState extends State<FrmMasterData>
     'Maluku',
     'Papua',
   ];
-  String? _clientZone;
-  List<Map<String, dynamic>> _listZoneOptions = [];
-  final TextEditingController txtLoccompany = TextEditingController(text: 'AN');
-  final TextEditingController txtLoccontactperson = TextEditingController();
-  final TextEditingController txtLocphone1 = TextEditingController();
-  final TextEditingController txtLocphone2 = TextEditingController();
-  final TextEditingController txtLocfax1 = TextEditingController();
-  final TextEditingController txtLocfax2 = TextEditingController();
-  String _clientStatus = 'Active';
-  List<Map<String, dynamic>> _listClient = [];
-  int? _selectedClientIndex;
-  List<Map<String, dynamic>> _clientCompanyOptions = [];
 
   // Zone tab
   final TextEditingController txtZoneid = TextEditingController();
@@ -152,29 +173,387 @@ class _FrmMasterDataState extends State<FrmMasterData>
   List<Map<String, dynamic>> _listDefaultZoneOptions = [];
   int? _selectedZoneIndex;
 
-  int? _selectedCustomerIndex;
-  int? _selectedOriginIndex;
-  int? _selectedDestinationIndex;
-  int? _selectedItemTypeIndex;
-
-  bool getAkses(akses) {
-    var isOK = globals.akses_pages == null
-        ? globals.akses_pages
-        : globals.akses_pages.where((x) => x == akses);
-    return isOK != null && isOK.length > 0;
+  bool getAkses(String akses) {
+    return globals.akses_pages.contains(akses);
   }
 
   bool _hasAccess() {
-    return true;//username == "ADMIN" ||  getAkses("MK")
+    return true;
   }
 
-  final Color primaryOrange = Colors.orange.shade700;
-  final Color backgroundCream = Color(0xFFFFFAF5);
-  final Color cardCream = Color(0xFFFFF8F0);
-
-  _goBack(BuildContext context) {
+  void _goBack(BuildContext context) {
     Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => FrmMasterMenu()));
+      context,
+      MaterialPageRoute(builder: (context) => FrmMasterMenu()),
+    );
+  }
+
+  // --- MD Styling Helpers ---
+
+  Widget _label(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+          color: Colors.grey.shade800,
+        ),
+      ),
+    );
+  }
+
+  InputDecoration softDecoration({
+    String? label,
+    String? hint,
+    Widget? suffixIcon,
+    Widget? prefixIcon,
+    String? helperText,
+    bool readOnly = false,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      helperText: helperText,
+      helperStyle: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+      isDense: true,
+      filled: true,
+      fillColor: readOnly ? Colors.grey.shade100 : Colors.white,
+      labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: primaryOrange, width: 2),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+      ),
+    );
+  }
+
+  ButtonStyle ntBtnStyle(Color bg) {
+    return ElevatedButton.styleFrom(
+      elevation: 0,
+      backgroundColor: bg,
+      foregroundColor: Colors.white,
+      disabledForegroundColor: Colors.white70,
+      shadowColor: Colors.transparent,
+      side: BorderSide.none,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+    );
+  }
+
+  Widget ntBtnLabel(String text, {double size = 13}) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        fontSize: size,
+      ),
+    );
+  }
+
+  Widget _kv(
+    String label,
+    String value, {
+    bool dense = false,
+    Color? valueColor,
+    FontWeight? valueWeight,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: dense ? 1.5 : 2.5),
+      child: Table(
+        columnWidths: const {
+          0: IntrinsicColumnWidth(),
+          1: FixedColumnWidth(14),
+          2: FlexColumnWidth(),
+        },
+        children: [
+          TableRow(children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: dense ? 11.5 : 12.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: Text(
+                ":",
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: dense ? 11.5 : 12.5,
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                value.isEmpty ? '-' : value,
+                style: TextStyle(
+                  color: valueColor ?? Colors.grey.shade900,
+                  fontSize: dense ? 11.5 : 12.5,
+                  fontWeight: valueWeight ?? FontWeight.w600,
+                ),
+              ),
+            ),
+          ])
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color statusBg = lightOrange;
+    Color statusText = darkOrange;
+    Color statusBorder = accentOrange;
+
+    final s = status.toUpperCase().trim();
+    if (s == 'ACTIVE' || s == 'AKTIF' || s == 'APPROVED' || s == 'SELESAI') {
+      statusBg = Colors.green.shade50;
+      statusText = Colors.green.shade800;
+      statusBorder = Colors.green.shade200;
+    } else if (s == 'INACTIVE' || s == 'NONAKTIF' || s == 'CANCEL' || s == 'BATAL') {
+      statusBg = Colors.red.shade50;
+      statusText = Colors.red.shade800;
+      statusBorder = Colors.red.shade200;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: statusBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: statusBorder),
+      ),
+      child: Text(
+        s.isEmpty ? 'ACTIVE' : s,
+        style: TextStyle(
+          color: statusText,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _ntListCard({
+    required String title,
+    Widget? trailing,
+    required List<Widget> rows,
+    Widget? actions,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0x73FFB347)),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor,
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            decoration: BoxDecoration(
+              color: lightOrange,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: darkOrange,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                ),
+                if (trailing != null) trailing,
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: rows,
+            ),
+          ),
+          if (actions != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+              child: actions,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubTabBar({
+    required String entityName,
+    required int tabIndex,
+    required int itemCount,
+    required VoidCallback onAdd,
+  }) {
+    final mode = _subModes[tabIndex];
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: lightOrange,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0x59FFB347)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: () => setState(() => _subModes[tabIndex] = 0),
+              borderRadius: BorderRadius.circular(9),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: mode == 0 ? primaryOrange : Colors.transparent,
+                  borderRadius: BorderRadius.circular(9),
+                  boxShadow: mode == 0
+                      ? [BoxShadow(color: shadowColor, blurRadius: 4, offset: const Offset(0, 2))]
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.format_list_bulleted,
+                      size: 16,
+                      color: mode == 0 ? Colors.white : darkOrange,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Daftar $entityName ($itemCount)',
+                      style: TextStyle(
+                        color: mode == 0 ? Colors.white : darkOrange,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: InkWell(
+              onTap: () {
+                if (mode != 1) {
+                  onAdd();
+                }
+              },
+              borderRadius: BorderRadius.circular(9),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: mode == 1 ? primaryOrange : Colors.transparent,
+                  borderRadius: BorderRadius.circular(9),
+                  boxShadow: mode == 1
+                      ? [BoxShadow(color: shadowColor, blurRadius: 4, offset: const Offset(0, 2))]
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.edit_note_outlined,
+                      size: 18,
+                      color: mode == 1 ? Colors.white : darkOrange,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Form $entityName',
+                      style: TextStyle(
+                        color: mode == 1 ? Colors.white : darkOrange,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox_outlined, size: 48, color: accentOrange),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 13.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _smartSelectContainer({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300, width: 1),
+      ),
+      child: child,
+    );
   }
 
   Future<bool> _showConfirmDialog(String title, String message) async {
@@ -183,17 +562,28 @@ class _FrmMasterDataState extends State<FrmMasterData>
     final result = await showDialog<bool>(
       context: ctx,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: Text(title),
-        content: Text(message),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: cardColor,
+        title: Text(
+          title,
+          style: TextStyle(color: darkOrange, fontWeight: FontWeight.w700, fontSize: 16),
+        ),
+        content: Text(
+          message,
+          style: TextStyle(color: Colors.grey.shade800, fontSize: 14),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text('No'),
+            child: Text(
+              'Batal',
+              style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+            ),
           ),
           ElevatedButton(
+            style: ntBtnStyle(primaryOrange),
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Yes'),
+            child: ntBtnLabel('Ya, Lanjutkan'),
           ),
         ],
       ),
@@ -201,16 +591,16 @@ class _FrmMasterDataState extends State<FrmMasterData>
     return result == true;
   }
 
-  // --- Customer Tab ---
-  static const String _customerListApi = 'api/master/refference_api.jsp';//
-  static const String _customerSaveApi =
-      'api/master/save_new_customer_api2.jsp';
+  // =========================================================================
+  // --- Customer Tab Logic & UI ---
+  // =========================================================================
+  static const String _customerListApi = 'api/master/refference_api.jsp';
+  static const String _customerSaveApi = 'api/master/save_new_customer_api2.jsp';
 
   Future<void> getListCustomer() async {
     try {
       EasyLoading.show();
       final baseURL = '${GlobalData.baseUrlOri}$_customerListApi?method=customer';
-      print(baseURL);
       final url = Uri.parse(baseURL);
       final response = await http.get(url, headers: {"Accept": "application/json"});
       if (!mounted) return;
@@ -254,8 +644,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
       return;
     }
     if (cpycontactperson.isEmpty) {
-      alert(globalScaffoldKey.currentContext!, 0,
-          "Contact Person tidak boleh kosong", "error");
+      alert(globalScaffoldKey.currentContext!, 0, "Contact Person tidak boleh kosong", "error");
       return;
     }
     final cpyid = txtCpyId.text.trim();
@@ -270,11 +659,10 @@ class _FrmMasterDataState extends State<FrmMasterData>
           'cpyaddress': txtCpyaddress.text,
           'cpynpwp': txtCpynpwp.text,
           'cpycontcatperson': cpycontactperson,
-          'status': 'Active',
+          'status': _customerStatus,
           'userid': userid,
         },
       );
-      print(url);
       final response = await http.get(url, headers: {"Accept": "application/json"});
       if (!mounted) return;
       if (EasyLoading.isShow) EasyLoading.dismiss();
@@ -284,7 +672,8 @@ class _FrmMasterDataState extends State<FrmMasterData>
       if (statusCode == '200') {
         alert(globalScaffoldKey.currentContext!, 1, message, "success");
         resetCustomerForm();
-        getListCustomer();
+        await getListCustomer();
+        setState(() => _subModes[0] = 0); // Switch to list view
       } else {
         alert(globalScaffoldKey.currentContext!, 0, message, "error");
       }
@@ -300,7 +689,10 @@ class _FrmMasterDataState extends State<FrmMasterData>
     txtCpyaddress.clear();
     txtCpynpwp.clear();
     txtCpycontactperson.clear();
-    setState(() => _customerStatus = 'Active');
+    setState(() {
+      _customerStatus = 'Active';
+      _selectedCustomerIndex = null;
+    });
   }
 
   void _onCustomerRowTap(Map<String, dynamic> item, int index) {
@@ -315,7 +707,263 @@ class _FrmMasterDataState extends State<FrmMasterData>
     });
   }
 
-  // --- Origin Tab ---
+  Widget _buildCustomerList(List<Map<String, dynamic>> items) {
+    return Column(
+      children: [
+        // Search bar & Add Button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchCustomerCtrl,
+                  onChanged: (_) => setState(() {}),
+                  decoration: softDecoration(
+                    hint: 'Cari customer, ID, atau alamat...',
+                    prefixIcon: Icon(Icons.search, color: primaryOrange, size: 20),
+                    suffixIcon: _searchCustomerCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
+                            onPressed: () {
+                              _searchCustomerCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                style: ntBtnStyle(primaryOrange),
+                icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                label: ntBtnLabel('Tambah'),
+                onPressed: () {
+                  resetCustomerForm();
+                  setState(() => _subModes[0] = 1);
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Expanded(
+          child: RefreshIndicator(
+            color: primaryOrange,
+            onRefresh: getListCustomer,
+            child: items.isEmpty
+                ? _buildEmptyState('Tidak ada data Customer.\nTarik ke bawah untuk refresh.')
+                : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 24, top: 2),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      final cpyid = item['cpyid'] ?? item['CPYID'] ?? '';
+                      final cpyname = item['cpyname'] ?? item['CPYNAME'] ?? '';
+                      final addr = item['cpyaddress'] ?? item['cpyaddress1'] ?? item['CPYADDRESS1'] ?? '';
+                      final contact = item['cpycontactperson'] ?? item['cpyaccountnbr'] ?? item['cpycontcatperson'] ?? item['CPYACCOUNTNBR'] ?? '';
+                      final npwp = item['cpynpwp'] ?? item['cpynpwp '] ?? item['CPYNPWP'] ?? '';
+                      final st = item['status'] ?? item['cpystatus'] ?? item['CPYSTATUS'] ?? 'Active';
+
+                      return _ntListCard(
+                        title: 'Cust ID: $cpyid',
+                        trailing: _buildStatusBadge(st.toString()),
+                        rows: [
+                          _kv('Nama Customer', cpyname.toString(), valueWeight: FontWeight.w700),
+                          _kv('Alamat', addr.toString()),
+                          _kv('NPWP', npwp.toString()),
+                          _kv('Singkatan / Kontak', contact.toString()),
+                        ],
+                        actions: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton.icon(
+                              style: ntBtnStyle(primaryOrange),
+                              icon: const Icon(Icons.edit, size: 15, color: Colors.white),
+                              label: ntBtnLabel('Edit Data'),
+                              onPressed: () {
+                                _onCustomerRowTap(item, index);
+                                setState(() => _subModes[0] = 1);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCustomerForm() {
+    final isEdit = txtCpyId.text.trim().isNotEmpty || _selectedCustomerIndex != null;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0x59FFB347)),
+          boxShadow: [
+            BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Banner
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: lightOrange,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.person_outline, color: primaryOrange, size: 24),
+                  const SizedBox(width: 10),
+                  Text(
+                    isEdit ? 'Edit Data Customer' : 'Tambah Customer Baru',
+                    style: TextStyle(
+                      color: darkOrange,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Form Fields
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _label('Customer ID'),
+                  TextField(
+                    controller: txtCpyId,
+                    readOnly: true,
+                    decoration: softDecoration(
+                      hint: 'Otomatis di-generate sistem',
+                      helperText: '* Auto-generate oleh sistem',
+                      readOnly: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Nama Customer *'),
+                  TextField(
+                    controller: txtCpyname,
+                    decoration: softDecoration(hint: 'Masukkan nama customer...'),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Alamat Customer'),
+                  TextField(
+                    controller: txtCpyaddress,
+                    maxLines: 2,
+                    decoration: softDecoration(hint: 'Masukkan alamat customer...'),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('NPWP Customer'),
+                  TextField(
+                    controller: txtCpynpwp,
+                    decoration: softDecoration(hint: 'Masukkan NPWP...'),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Singkatan Customer / Contact Person *'),
+                  TextField(
+                    controller: txtCpycontactperson,
+                    decoration: softDecoration(hint: 'Masukkan singkatan atau kontak...'),
+                  ),
+                  const SizedBox(height: 20),
+                  // Action Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.grey.shade700,
+                          side: BorderSide(color: Colors.grey.shade400),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        ),
+                        icon: const Icon(Icons.arrow_back, size: 16),
+                        label: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        onPressed: () {
+                          resetCustomerForm();
+                          setState(() => _subModes[0] = 0);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ntBtnStyle(accentOrange),
+                        icon: const Icon(Icons.refresh, size: 16, color: Colors.white),
+                        label: ntBtnLabel('Reset'),
+                        onPressed: resetCustomerForm,
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ntBtnStyle(primaryOrange),
+                        icon: const Icon(Icons.save, size: 16, color: Colors.white),
+                        label: ntBtnLabel(isEdit ? 'Update' : 'Simpan'),
+                        onPressed: () async {
+                          final msg = isEdit ? 'Update data Customer?' : 'Simpan data Customer?';
+                          if (await _showConfirmDialog('Konfirmasi', msg)) {
+                            _saveOrUpdateCustomer();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomerTab() {
+    final query = _searchCustomerCtrl.text.trim().toLowerCase();
+    final filtered = _listCustomer.where((item) {
+      if (query.isEmpty) return true;
+      final id = (item['cpyid'] ?? item['CPYID'] ?? '').toString().toLowerCase();
+      final name = (item['cpyname'] ?? item['CPYNAME'] ?? '').toString().toLowerCase();
+      final contact = (item['cpycontactperson'] ?? item['cpyaccountnbr'] ?? item['cpycontcatperson'] ?? '').toString().toLowerCase();
+      final addr = (item['cpyaddress'] ?? item['cpyaddress1'] ?? '').toString().toLowerCase();
+      return id.contains(query) || name.contains(query) || contact.contains(query) || addr.contains(query);
+    }).toList();
+
+    return Column(
+      children: [
+        _buildSubTabBar(
+          entityName: 'Customer',
+          tabIndex: 0,
+          itemCount: filtered.length,
+          onAdd: () {
+            resetCustomerForm();
+            setState(() => _subModes[0] = 1);
+          },
+        ),
+        Expanded(
+          child: _subModes[0] == 0
+              ? _buildCustomerList(filtered)
+              : _buildCustomerForm(),
+        ),
+      ],
+    );
+  }
+
+  // =========================================================================
+  // --- Origin Tab Logic & UI ---
+  // =========================================================================
   static const String _refApi = 'api/master/refference_api.jsp';
   static const String _originSaveApi = 'api/master/save_new_origin_api.jsp';
 
@@ -370,7 +1018,6 @@ class _FrmMasterDataState extends State<FrmMasterData>
     }
   }
 
-  /// Proxy server dulu; jika kosong/gagal → Nominatim langsung (UA valid).
   Future<List<Map<String, dynamic>>> _fetchOsmSuggestions(String query) async {
     final q = query.trim();
     if (q.length < 2) return [];
@@ -390,7 +1037,6 @@ class _FrmMasterDataState extends State<FrmMasterData>
       }
     }
 
-    // 1) Server proxy
     try {
       final url = Uri.parse('${GlobalData.baseUrlOri}api/osm_address.jsp').replace(
         queryParameters: {'query': q},
@@ -402,7 +1048,6 @@ class _FrmMasterDataState extends State<FrmMasterData>
       }
     } catch (_) {}
 
-    // 2) Fallback langsung ke Nominatim (hindari UA generik yang di-block 403)
     try {
       final url = Uri.parse('https://nominatim.openstreetmap.org/search').replace(
         queryParameters: {
@@ -484,7 +1129,6 @@ class _FrmMasterDataState extends State<FrmMasterData>
           'userid': userid,
         },
       );
-      print(url);
       final response = await http.get(url, headers: {"Accept": "application/json"});
       if (!mounted) return;
       if (EasyLoading.isShow) EasyLoading.dismiss();
@@ -494,7 +1138,8 @@ class _FrmMasterDataState extends State<FrmMasterData>
       if (statusCode == '200') {
         alert(globalScaffoldKey.currentContext!, 1, message, "success");
         resetOriginForm();
-        getListOrigin();
+        await getListOrigin();
+        setState(() => _subModes[1] = 0); // Switch to list view
       } else {
         alert(globalScaffoldKey.currentContext!, 0, message, "error");
       }
@@ -513,6 +1158,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
     setState(() {
       _originCtyalias = null;
       _originType = null;
+      _selectedOriginIndex = null;
     });
   }
 
@@ -528,7 +1174,447 @@ class _FrmMasterDataState extends State<FrmMasterData>
     txtOsmAddress.text = '';
   }
 
-  // --- Destination Tab ---
+  Widget _buildOsmSuggestionList({
+    required List<dynamic> suggestions,
+    required bool searching,
+    required void Function(Map<String, dynamic> item) onSelected,
+  }) {
+    if (searching) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2, color: primaryOrange),
+          ),
+        ),
+      );
+    }
+    if (suggestions.isEmpty) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+      constraints: const BoxConstraints(maxHeight: 180),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        itemCount: suggestions.length,
+        separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
+        itemBuilder: (context, i) {
+          final raw = suggestions[i];
+          final item = (raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{});
+          final name = item['display_name'] ?? item['name'] ?? '';
+          return ListTile(
+            dense: true,
+            leading: Icon(Icons.place, color: primaryOrange, size: 20),
+            title: Text(
+              name is String ? name : '$name',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12),
+            ),
+            onTap: () => onSelected(item),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildOriginList(List<Map<String, dynamic>> items) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchOriginCtrl,
+                  onChanged: (_) => setState(() {}),
+                  decoration: softDecoration(
+                    hint: 'Cari origin, ID, atau alias...',
+                    prefixIcon: Icon(Icons.search, color: primaryOrange, size: 20),
+                    suffixIcon: _searchOriginCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
+                            onPressed: () {
+                              _searchOriginCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                style: ntBtnStyle(primaryOrange),
+                icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                label: ntBtnLabel('Tambah'),
+                onPressed: () {
+                  resetOriginForm();
+                  setState(() => _subModes[1] = 1);
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Expanded(
+          child: RefreshIndicator(
+            color: primaryOrange,
+            onRefresh: () async {
+              await getListOriginAlias();
+              await getListOrigin();
+            },
+            child: items.isEmpty
+                ? _buildEmptyState('Tidak ada data Origin.\nTarik ke bawah untuk refresh.')
+                : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 24, top: 2),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      final ctyid = item['ctyid'] ?? item['CTYID'] ?? '';
+                      final ctyname = item['ctyname'] ?? item['CTYNAME'] ?? '';
+                      final ctyalias = item['ctyalias'] ?? item['CTYALIAS'] ?? '';
+                      final lat = item['lat']?.toString() ?? item['LOCID5'] ?? '';
+                      final lon = item['lon']?.toString() ?? item['LOCID6'] ?? '';
+
+                      return _ntListCard(
+                        title: 'ID Origin: $ctyid',
+                        trailing: ctyalias.toString().isNotEmpty
+                            ? _buildStatusBadge(ctyalias.toString())
+                            : null,
+                        rows: [
+                          _kv('Nama Origin', ctyname.toString(), valueWeight: FontWeight.w700),
+                          _kv('Cty Alias', ctyalias.toString()),
+                          _kv('Latitude', lat.toString()),
+                          _kv('Longitude', lon.toString()),
+                        ],
+                        actions: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton.icon(
+                              style: ntBtnStyle(primaryOrange),
+                              icon: const Icon(Icons.edit, size: 15, color: Colors.white),
+                              label: ntBtnLabel('Edit Data'),
+                              onPressed: () {
+                                _onOriginRowTap(item, index);
+                                setState(() => _subModes[1] = 1);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOriginForm() {
+    final isEdit = txtCtyId.text.trim().isNotEmpty || _selectedOriginIndex != null;
+    final aliasChoices = _listOriginAlias
+        .map((e) => S2Choice<String>(
+            value: e['value'] ?? e['text'] ?? '',
+            title: e['text'] ?? e['value'] ?? ''))
+        .toList();
+    final originTypeChoices = _originTypeOptions
+        .map((e) => S2Choice<String>(value: e['value']!, title: e['label']!))
+        .toList();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0x59FFB347)),
+          boxShadow: [
+            BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: lightOrange,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.place_outlined, color: primaryOrange, size: 24),
+                  const SizedBox(width: 10),
+                  Text(
+                    isEdit ? 'Edit Data Origin' : 'Tambah Origin Baru',
+                    style: TextStyle(
+                      color: darkOrange,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _label('ID Origin'),
+                  TextField(
+                    controller: txtCtyId,
+                    readOnly: true,
+                    decoration: softDecoration(
+                      hint: 'Otomatis di-generate sistem',
+                      helperText: '* Auto-generate oleh sistem',
+                      readOnly: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Nama Origin *'),
+                  TextField(
+                    controller: txtCtyname,
+                    decoration: softDecoration(hint: 'Masukkan nama origin...'),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Cty Alias'),
+                  _smartSelectContainer(
+                    child: SmartSelect<String?>.single(
+                      title: 'Pilih Cty Alias',
+                      selectedValue: _originCtyalias,
+                      choiceItems: aliasChoices,
+                      onChange: (s) => setState(() => _originCtyalias = s.value),
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Cty Alias...',
+                      ),
+                      tileBuilder: (context, state) => S2Tile.fromState(
+                        state,
+                        dense: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Origin Type *'),
+                  _smartSelectContainer(
+                    child: SmartSelect<String?>.single(
+                      title: 'Pilih Origin Type',
+                      selectedValue: _originType,
+                      choiceItems: originTypeChoices,
+                      onChange: (s) => setState(() => _originType = s.value),
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Origin Type...',
+                      ),
+                      tileBuilder: (context, state) => S2Tile.fromState(
+                        state,
+                        dense: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Cari Alamat (OpenStreetMap)'),
+                  TextField(
+                    controller: txtOsmAddress,
+                    textInputAction: TextInputAction.search,
+                    onChanged: (q) {
+                      _osmSearchDebounce?.cancel();
+                      _osmSearchDebounce = Timer(const Duration(milliseconds: 500), () {
+                        _searchOsmAddress(q);
+                      });
+                    },
+                    onSubmitted: (q) => _searchOsmAddress(q),
+                    decoration: softDecoration(
+                      hint: 'Ketik alamat pencarian...',
+                      helperText: 'Ketik alamat lalu pilih hasil, atau ambil dari peta',
+                      suffixIcon: IconButton(
+                        icon: _osmSearching
+                            ? SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: primaryOrange),
+                              )
+                            : Icon(Icons.search, color: primaryOrange),
+                        onPressed: _osmSearching ? null : () => _searchOsmAddress(txtOsmAddress.text),
+                      ),
+                    ),
+                  ),
+                  _buildOsmSuggestionList(
+                    suggestions: _osmAddressSuggestions,
+                    searching: _osmSearching,
+                    onSelected: _onOsmAddressSelected,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: lightOrange,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0x59FFB347)),
+                    ),
+                    child: ListTile(
+                      dense: true,
+                      leading: Icon(Icons.map, color: primaryOrange),
+                      title: Text(
+                        'Ambil koordinat dari peta',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: darkOrange),
+                      ),
+                      trailing: Icon(Icons.chevron_right, color: primaryOrange),
+                      onTap: () async {
+                        final initLat = double.tryParse(txtLat.text);
+                        final initLon = double.tryParse(txtLon.text);
+                        final res = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => FrmKoordinat(initialLat: initLat, initialLon: initLon),
+                          ),
+                        );
+                        if (res is Map) {
+                          setState(() {
+                            txtLat.text = (res['lat'] ?? '').toString();
+                            txtLon.text = (res['lon'] ?? '').toString();
+                            final addr = res['address']?.toString();
+                            if (addr != null && addr.isNotEmpty) {
+                              txtOsmAddress.text = addr;
+                            }
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Latitude'),
+                            TextField(
+                              controller: txtLat,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: softDecoration(hint: '-6.xxxx'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Longitude'),
+                            TextField(
+                              controller: txtLon,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: softDecoration(hint: '106.xxxx'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.grey.shade700,
+                          side: BorderSide(color: Colors.grey.shade400),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        ),
+                        icon: const Icon(Icons.arrow_back, size: 16),
+                        label: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        onPressed: () {
+                          resetOriginForm();
+                          setState(() => _subModes[1] = 0);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ntBtnStyle(accentOrange),
+                        icon: const Icon(Icons.refresh, size: 16, color: Colors.white),
+                        label: ntBtnLabel('Reset'),
+                        onPressed: resetOriginForm,
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ntBtnStyle(primaryOrange),
+                        icon: const Icon(Icons.save, size: 16, color: Colors.white),
+                        label: ntBtnLabel(isEdit ? 'Update' : 'Simpan'),
+                        onPressed: () async {
+                          final msg = isEdit ? 'Update data Origin?' : 'Simpan data Origin?';
+                          if (await _showConfirmDialog('Konfirmasi', msg)) {
+                            _saveOrUpdateOrigin();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOriginTab() {
+    final query = _searchOriginCtrl.text.trim().toLowerCase();
+    final filtered = _listOrigin.where((item) {
+      if (query.isEmpty) return true;
+      final id = (item['ctyid'] ?? item['CTYID'] ?? '').toString().toLowerCase();
+      final name = (item['ctyname'] ?? item['CTYNAME'] ?? '').toString().toLowerCase();
+      final alias = (item['ctyalias'] ?? item['CTYALIAS'] ?? '').toString().toLowerCase();
+      return id.contains(query) || name.contains(query) || alias.contains(query);
+    }).toList();
+
+    return Column(
+      children: [
+        _buildSubTabBar(
+          entityName: 'Origin',
+          tabIndex: 1,
+          itemCount: filtered.length,
+          onAdd: () {
+            resetOriginForm();
+            setState(() => _subModes[1] = 1);
+          },
+        ),
+        Expanded(
+          child: _subModes[1] == 0
+              ? _buildOriginList(filtered)
+              : _buildOriginForm(),
+        ),
+      ],
+    );
+  }
+
+  // =========================================================================
+  // --- Destination Tab Logic & UI ---
+  // =========================================================================
   static const String _destinationSaveApi = 'api/master/save_new_destination_api.jsp';
 
   Future<void> getListDestination() async {
@@ -589,7 +1675,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
       _osmDestSuggestions = [];
     });
   }
-//
+
   Future<void> _saveOrUpdateDestination() async {
     final ctyname = txtDestCtyname.text.trim();
     if (ctyname.isEmpty) {
@@ -622,7 +1708,8 @@ class _FrmMasterDataState extends State<FrmMasterData>
       if (statusCode == '200') {
         alert(globalScaffoldKey.currentContext!, 1, message, "success");
         resetDestinationForm();
-        getListDestination();
+        await getListDestination();
+        setState(() => _subModes[2] = 0); // Switch to list view
       } else {
         alert(globalScaffoldKey.currentContext!, 0, message, "error");
       }
@@ -638,7 +1725,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
     txtDestOsmAddress.clear();
     txtDestLat.clear();
     txtDestLon.clear();
-    setState(() {});
+    setState(() => _selectedDestinationIndex = null);
   }
 
   void _onDestinationRowTap(Map<String, dynamic> item, int index) {
@@ -650,7 +1737,332 @@ class _FrmMasterDataState extends State<FrmMasterData>
     setState(() => _selectedDestinationIndex = index);
   }
 
-  // --- Item Type Tab ---
+  Widget _buildDestinationList(List<Map<String, dynamic>> items) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchDestCtrl,
+                  onChanged: (_) => setState(() {}),
+                  decoration: softDecoration(
+                    hint: 'Cari destination, ID, atau nama...',
+                    prefixIcon: Icon(Icons.search, color: primaryOrange, size: 20),
+                    suffixIcon: _searchDestCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
+                            onPressed: () {
+                              _searchDestCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                style: ntBtnStyle(primaryOrange),
+                icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                label: ntBtnLabel('Tambah'),
+                onPressed: () {
+                  resetDestinationForm();
+                  setState(() => _subModes[2] = 1);
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Expanded(
+          child: RefreshIndicator(
+            color: primaryOrange,
+            onRefresh: getListDestination,
+            child: items.isEmpty
+                ? _buildEmptyState('Tidak ada data Destination.\nTarik ke bawah untuk refresh.')
+                : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 24, top: 2),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      final ctyid = item['ctyid'] ?? item['CTYID'] ?? '';
+                      final ctyname = item['ctyname'] ?? item['CTYNAME'] ?? '';
+                      final ctytype = item['ctytype'] ?? item['CTYTYPE'] ?? '';
+                      final lat = item['lat']?.toString() ?? item['LOCID5'] ?? '';
+                      final lon = item['lon']?.toString() ?? item['LOCID6'] ?? '';
+
+                      return _ntListCard(
+                        title: 'ID Destination: $ctyid',
+                        trailing: ctytype.toString().isNotEmpty
+                            ? _buildStatusBadge(ctytype.toString())
+                            : null,
+                        rows: [
+                          _kv('Nama Proyek / Tujuan', ctyname.toString(), valueWeight: FontWeight.w700),
+                          _kv('Type', ctytype.toString()),
+                          _kv('Latitude', lat.toString()),
+                          _kv('Longitude', lon.toString()),
+                        ],
+                        actions: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton.icon(
+                              style: ntBtnStyle(primaryOrange),
+                              icon: const Icon(Icons.edit, size: 15, color: Colors.white),
+                              label: ntBtnLabel('Edit Data'),
+                              onPressed: () {
+                                _onDestinationRowTap(item, index);
+                                setState(() => _subModes[2] = 1);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDestinationForm() {
+    final isEdit = txtDestCtyId.text.trim().isNotEmpty || _selectedDestinationIndex != null;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0x59FFB347)),
+          boxShadow: [
+            BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: lightOrange,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.navigation_outlined, color: primaryOrange, size: 24),
+                  const SizedBox(width: 10),
+                  Text(
+                    isEdit ? 'Edit Data Destination' : 'Tambah Destination Baru',
+                    style: TextStyle(
+                      color: darkOrange,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _label('ID Destination'),
+                  TextField(
+                    controller: txtDestCtyId,
+                    decoration: softDecoration(
+                      hint: 'Otomatis di-generate sistem atau diisi manual',
+                      helperText: 'Generate otomatis jika dikosongkan',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Nama Proyek / Tujuan *'),
+                  TextField(
+                    controller: txtDestCtyname,
+                    decoration: softDecoration(hint: 'Masukkan nama proyek atau tujuan...'),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Cari Alamat (OpenStreetMap)'),
+                  TextField(
+                    controller: txtDestOsmAddress,
+                    onChanged: (q) {
+                      _osmDestSearchDebounce?.cancel();
+                      _osmDestSearchDebounce = Timer(const Duration(milliseconds: 500), () {
+                        _searchOsmAddressDest(q);
+                      });
+                    },
+                    decoration: softDecoration(
+                      hint: 'Ketik alamat pencarian...',
+                      helperText: 'Ketik alamat lalu pilih hasil, atau ambil dari peta',
+                      suffixIcon: IconButton(
+                        icon: _osmDestSearching
+                            ? SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: primaryOrange),
+                              )
+                            : Icon(Icons.search, color: primaryOrange),
+                        onPressed: _osmDestSearching ? null : () => _searchOsmAddressDest(txtDestOsmAddress.text),
+                      ),
+                    ),
+                  ),
+                  _buildOsmSuggestionList(
+                    suggestions: _osmDestSuggestions,
+                    searching: _osmDestSearching,
+                    onSelected: _onOsmDestSelected,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: lightOrange,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0x59FFB347)),
+                    ),
+                    child: ListTile(
+                      dense: true,
+                      leading: Icon(Icons.map, color: primaryOrange),
+                      title: Text(
+                        'Ambil koordinat dari peta',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: darkOrange),
+                      ),
+                      trailing: Icon(Icons.chevron_right, color: primaryOrange),
+                      onTap: () async {
+                        final initLat = double.tryParse(txtDestLat.text);
+                        final initLon = double.tryParse(txtDestLon.text);
+                        final res = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => FrmKoordinat(initialLat: initLat, initialLon: initLon),
+                          ),
+                        );
+                        if (res is Map) {
+                          setState(() {
+                            txtDestLat.text = (res['lat'] ?? '').toString();
+                            txtDestLon.text = (res['lon'] ?? '').toString();
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Latitude'),
+                            TextField(
+                              controller: txtDestLat,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: softDecoration(hint: '-6.xxxx'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Longitude'),
+                            TextField(
+                              controller: txtDestLon,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: softDecoration(hint: '106.xxxx'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.grey.shade700,
+                          side: BorderSide(color: Colors.grey.shade400),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        ),
+                        icon: const Icon(Icons.arrow_back, size: 16),
+                        label: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        onPressed: () {
+                          resetDestinationForm();
+                          setState(() => _subModes[2] = 0);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ntBtnStyle(accentOrange),
+                        icon: const Icon(Icons.refresh, size: 16, color: Colors.white),
+                        label: ntBtnLabel('Reset'),
+                        onPressed: resetDestinationForm,
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ntBtnStyle(primaryOrange),
+                        icon: const Icon(Icons.save, size: 16, color: Colors.white),
+                        label: ntBtnLabel(isEdit ? 'Update' : 'Simpan'),
+                        onPressed: () async {
+                          final msg = isEdit ? 'Update data Destination?' : 'Simpan data Destination?';
+                          if (await _showConfirmDialog('Konfirmasi', msg)) {
+                            _saveOrUpdateDestination();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDestinationTab() {
+    final query = _searchDestCtrl.text.trim().toLowerCase();
+    final filtered = _listDestination.where((item) {
+      if (query.isEmpty) return true;
+      final id = (item['ctyid'] ?? item['CTYID'] ?? '').toString().toLowerCase();
+      final name = (item['ctyname'] ?? item['CTYNAME'] ?? '').toString().toLowerCase();
+      return id.contains(query) || name.contains(query);
+    }).toList();
+
+    return Column(
+      children: [
+        _buildSubTabBar(
+          entityName: 'Destination',
+          tabIndex: 2,
+          itemCount: filtered.length,
+          onAdd: () {
+            resetDestinationForm();
+            setState(() => _subModes[2] = 1);
+          },
+        ),
+        Expanded(
+          child: _subModes[2] == 0
+              ? _buildDestinationList(filtered)
+              : _buildDestinationForm(),
+        ),
+      ],
+    );
+  }
+
+  // =========================================================================
+  // --- Item Type Tab Logic & UI ---
+  // =========================================================================
   static const String _itemTypeSaveApi = 'api/master/save_new_item_api.jsp';
 
   Future<void> getListItemType() async {
@@ -693,12 +2105,11 @@ class _FrmMasterDataState extends State<FrmMasterData>
       alert(globalScaffoldKey.currentContext!, 0, "Item Name tidak boleh kosong", "error");
       return;
     }
-    final method = 'add';
     try {
       EasyLoading.show();
       final url = Uri.parse('${GlobalData.baseUrlOri}$_itemTypeSaveApi').replace(
         queryParameters: {
-          'method': method,
+          'method': 'add',
           'itpid': itpid,
           'itpdescr': itpdescr,
           'itpalias': txtItpalias.text,
@@ -714,7 +2125,8 @@ class _FrmMasterDataState extends State<FrmMasterData>
       if (statusCode == '200') {
         alert(globalScaffoldKey.currentContext!, 1, message, "success");
         resetItemTypeForm();
-        getListItemType();
+        await getListItemType();
+        setState(() => _subModes[3] = 0); // Switch to list view
       } else {
         alert(globalScaffoldKey.currentContext!, 0, message, "error");
       }
@@ -755,7 +2167,8 @@ class _FrmMasterDataState extends State<FrmMasterData>
       if (statusCode == '200') {
         alert(globalScaffoldKey.currentContext!, 1, message, "success");
         resetItemTypeForm();
-        getListItemType();
+        await getListItemType();
+        setState(() => _subModes[3] = 0); // Switch to list view
       } else {
         alert(globalScaffoldKey.currentContext!, 0, message, "error");
       }
@@ -769,7 +2182,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
     txtItpid.clear();
     txtItpdescr.clear();
     txtItpalias.clear();
-    setState(() {});
+    setState(() => _selectedItemTypeIndex = null);
   }
 
   void _onItemTypeRowTap(Map<String, dynamic> item, int index) {
@@ -779,11 +2192,246 @@ class _FrmMasterDataState extends State<FrmMasterData>
     setState(() => _selectedItemTypeIndex = index);
   }
 
-  // --- Client Tab ---
-  static const String _clientSaveApi = 'api/master/save_new_client_api.jsp';
+  Widget _buildItemTypeList(List<Map<String, dynamic>> items) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchItemTypeCtrl,
+                  onChanged: (_) => setState(() {}),
+                  decoration: softDecoration(
+                    hint: 'Cari item type, ID, atau nama...',
+                    prefixIcon: Icon(Icons.search, color: primaryOrange, size: 20),
+                    suffixIcon: _searchItemTypeCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
+                            onPressed: () {
+                              _searchItemTypeCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                style: ntBtnStyle(primaryOrange),
+                icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                label: ntBtnLabel('Tambah'),
+                onPressed: () {
+                  resetItemTypeForm();
+                  setState(() => _subModes[3] = 1);
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Expanded(
+          child: RefreshIndicator(
+            color: primaryOrange,
+            onRefresh: getListItemType,
+            child: items.isEmpty
+                ? _buildEmptyState('Tidak ada data Item Type.\nTarik ke bawah untuk refresh.')
+                : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 24, top: 2),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      final itpid = item['itpid'] ?? item['ITPID'] ?? '';
+                      final itpdescr = item['itpdescr'] ?? item['ITPDESCR'] ?? '';
+                      final itpalias = item['itpalias'] ?? item['ITPALIAS'] ?? '';
 
-  // --- Zone Tab ---
-  static const String _zoneSaveApi = 'api/master/save_new_zone_api.jsp';
+                      return _ntListCard(
+                        title: 'Item ID: $itpid',
+                        trailing: itpalias.toString().isNotEmpty
+                            ? _buildStatusBadge(itpalias.toString())
+                            : null,
+                        rows: [
+                          _kv('Item Name', itpdescr.toString(), valueWeight: FontWeight.w700),
+                          _kv('Alias', itpalias.toString()),
+                        ],
+                        actions: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton.icon(
+                              style: ntBtnStyle(primaryOrange),
+                              icon: const Icon(Icons.edit, size: 15, color: Colors.white),
+                              label: ntBtnLabel('Edit Data'),
+                              onPressed: () {
+                                _onItemTypeRowTap(item, index);
+                                setState(() => _subModes[3] = 1);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildItemTypeForm() {
+    final isEdit = _selectedItemTypeIndex != null;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0x59FFB347)),
+          boxShadow: [
+            BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: lightOrange,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.category_outlined, color: primaryOrange, size: 24),
+                  const SizedBox(width: 10),
+                  Text(
+                    isEdit ? 'Edit Item Type' : 'Tambah Item Type Baru',
+                    style: TextStyle(
+                      color: darkOrange,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _label('Item ID *'),
+                  TextField(
+                    controller: txtItpid,
+                    readOnly: isEdit,
+                    decoration: softDecoration(
+                      hint: 'Masukkan Item ID...',
+                      readOnly: isEdit,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Item Name *'),
+                  TextField(
+                    controller: txtItpdescr,
+                    decoration: softDecoration(hint: 'Masukkan nama item...'),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Alias'),
+                  TextField(
+                    controller: txtItpalias,
+                    decoration: softDecoration(hint: 'Masukkan alias...'),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.grey.shade700,
+                          side: BorderSide(color: Colors.grey.shade400),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        ),
+                        icon: const Icon(Icons.arrow_back, size: 16),
+                        label: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        onPressed: () {
+                          resetItemTypeForm();
+                          setState(() => _subModes[3] = 0);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ntBtnStyle(accentOrange),
+                        icon: const Icon(Icons.refresh, size: 16, color: Colors.white),
+                        label: ntBtnLabel('Reset'),
+                        onPressed: resetItemTypeForm,
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ntBtnStyle(primaryOrange),
+                        icon: const Icon(Icons.save, size: 16, color: Colors.white),
+                        label: ntBtnLabel(isEdit ? 'Update' : 'Simpan'),
+                        onPressed: () async {
+                          final msg = isEdit ? 'Update data Item Type?' : 'Simpan data Item Type?';
+                          if (await _showConfirmDialog('Konfirmasi', msg)) {
+                            if (isEdit) {
+                              _updateItemType();
+                            } else {
+                              _saveOrUpdateItemType();
+                            }
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemTypeTab() {
+    final query = _searchItemTypeCtrl.text.trim().toLowerCase();
+    final filtered = _listItemType.where((item) {
+      if (query.isEmpty) return true;
+      final id = (item['itpid'] ?? item['ITPID'] ?? '').toString().toLowerCase();
+      final desc = (item['itpdescr'] ?? item['ITPDESCR'] ?? '').toString().toLowerCase();
+      final alias = (item['itpalias'] ?? item['ITPALIAS'] ?? '').toString().toLowerCase();
+      return id.contains(query) || desc.contains(query) || alias.contains(query);
+    }).toList();
+
+    return Column(
+      children: [
+        _buildSubTabBar(
+          entityName: 'Item Type',
+          tabIndex: 3,
+          itemCount: filtered.length,
+          onAdd: () {
+            resetItemTypeForm();
+            setState(() => _subModes[3] = 1);
+          },
+        ),
+        Expanded(
+          child: _subModes[3] == 0
+              ? _buildItemTypeList(filtered)
+              : _buildItemTypeForm(),
+        ),
+      ],
+    );
+  }
+
+  // =========================================================================
+  // --- Client Tab Logic & UI ---
+  // =========================================================================
+  static const String _clientSaveApi = 'api/master/save_new_client_api.jsp';
 
   Future<void> getListZoneOptions() async {
     try {
@@ -828,6 +2476,522 @@ class _FrmMasterDataState extends State<FrmMasterData>
       setState(() => _clientCompanyOptions = []);
     }
   }
+
+  Future<void> getListClient() async {
+    try {
+      EasyLoading.show();
+      final url = Uri.parse('${GlobalData.baseUrlOri}$_refApi?method=list-client');
+      final response = await http.get(url, headers: {"Accept": "application/json"});
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+        final body = response.body.trim();
+        List<dynamic> decoded = [];
+        if (body.isNotEmpty && body != 'Data not found') {
+          try {
+            decoded = jsonDecode(body) is List ? jsonDecode(body) as List : [];
+          } catch (_) {}
+        }
+        setState(() {
+          _listClient = decoded.map((e) => (e is Map ? e : {}) as Map<String, dynamic>).toList();
+          _selectedClientIndex = null;
+        });
+      } else {
+        setState(() => _listClient = []);
+      }
+    } catch (e) {
+      if (mounted) alert(globalScaffoldKey.currentContext!, 0, "Gagal load data Client: $e", "error");
+      setState(() => _listClient = []);
+    } finally {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+    }
+  }
+
+  Future<void> _saveOrUpdateClient() async {
+    final locid = txtLocid.text.trim();
+    final locname = txtLocname.text.trim();
+    if (locname.isEmpty) {
+      alert(globalScaffoldKey.currentContext!, 0, "Nama tidak boleh kosong", "error");
+      return;
+    }
+    final method = locid.isEmpty ? 'add' : 'update';
+    try {
+      EasyLoading.show();
+      final url = Uri.parse('${GlobalData.baseUrlOri}$_clientSaveApi').replace(
+        queryParameters: {
+          'method': method,
+          'locid': locid,
+          'locationtype': txtLocationtype.text,
+          'locname': locname,
+          'locaddress1': txtLocaddress1.text,
+          'locaddress2': txtLocaddress2.text,
+          'locprovince': txtLocprovince.text,
+          'loczone': _clientZone ?? '',
+          'loccompany': txtLoccompany.text.isEmpty ? 'AN' : txtLoccompany.text,
+          'loccontactperson': txtLoccontactperson.text,
+          'locphone1': txtLocphone1.text,
+          'locphone2': txtLocphone2.text,
+          'locfax1': txtLocfax1.text,
+          'locfax2': txtLocfax2.text,
+          'status': _clientStatus,
+          'userid': userid,
+        },
+      );
+      final response = await http.get(url, headers: {"Accept": "application/json"});
+      if (!mounted) return;
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      final map = jsonDecode(response.body) as Map<String, dynamic>? ?? {};
+      final statusCode = map['status_code']?.toString() ?? '';
+      final message = map['message']?.toString() ?? 'Unknown';
+      if (statusCode == '200') {
+        alert(globalScaffoldKey.currentContext!, 1, message, "success");
+        resetClientForm();
+        await getListClient();
+        setState(() => _subModes[4] = 0); // Switch to list view
+      } else {
+        alert(globalScaffoldKey.currentContext!, 0, message, "error");
+      }
+    } catch (e) {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      alert(globalScaffoldKey.currentContext!, 0, "Error: $e", "error");
+    }
+  }
+
+  void resetClientForm() {
+    txtLocid.clear();
+    txtLocationtype.clear();
+    txtLocname.clear();
+    txtLocaddress1.clear();
+    txtLocaddress2.clear();
+    txtLocprovince.clear();
+    setState(() => _clientZone = null);
+    txtLoccompany.text = 'AN';
+    txtLoccontactperson.clear();
+    txtLocphone1.clear();
+    txtLocphone2.clear();
+    txtLocfax1.clear();
+    txtLocfax2.clear();
+    setState(() {
+      _clientStatus = 'Active';
+      _selectedClientIndex = null;
+    });
+  }
+
+  void _onClientRowTap(Map<String, dynamic> item, int index) {
+    txtLocid.text = item['locid'] ?? item['LOCID'] ?? '';
+    txtLocationtype.text = item['locationtype'] ?? item['LOCATIONTYPE'] ?? '';
+    txtLocname.text = item['locname'] ?? item['LOCNAME'] ?? '';
+    txtLocaddress1.text = item['locaddress1'] ?? item['LOCADDRESS1'] ?? '';
+    txtLocaddress2.text = item['locaddress2'] ?? item['LOCADDRESS2'] ?? '';
+    txtLocprovince.text = item['locprovince'] ?? item['LOCPROVINCE'] ?? '';
+    txtLoccompany.text = item['loccompany'] ?? item['LOCCOMPANY'] ?? 'AN';
+    txtLoccontactperson.text = item['loccontactperson'] ?? item['LOCCONTACTPERSON'] ?? '';
+    txtLocphone1.text = item['locphone1'] ?? item['LOCPHONE1'] ?? '';
+    txtLocphone2.text = item['locphone2'] ?? item['LOCPHONE2'] ?? '';
+    txtLocfax1.text = item['locfax1'] ?? item['LOCFAX1'] ?? '';
+    txtLocfax2.text = item['locfax2'] ?? item['LOCFAX2'] ?? '';
+    setState(() {
+      _clientZone = item['loczone']?.toString() ?? item['LOCZONE']?.toString();
+      _clientStatus = item['status'] ?? item['STATUS'] ?? 'Active';
+      _selectedClientIndex = index;
+    });
+  }
+
+  Widget _buildClientList(List<Map<String, dynamic>> items) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchClientCtrl,
+                  onChanged: (_) => setState(() {}),
+                  decoration: softDecoration(
+                    hint: 'Cari client, CID, nama, kontak...',
+                    prefixIcon: Icon(Icons.search, color: primaryOrange, size: 20),
+                    suffixIcon: _searchClientCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
+                            onPressed: () {
+                              _searchClientCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                style: ntBtnStyle(primaryOrange),
+                icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                label: ntBtnLabel('Tambah'),
+                onPressed: () {
+                  resetClientForm();
+                  setState(() => _subModes[4] = 1);
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Expanded(
+          child: RefreshIndicator(
+            color: primaryOrange,
+            onRefresh: () async {
+              await getListZoneOptions();
+              await getListCompanyClient();
+              await getListClient();
+            },
+            child: items.isEmpty
+                ? _buildEmptyState('Tidak ada data Client.\nTarik ke bawah untuk refresh.')
+                : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 24, top: 2),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      final locid = item['locid'] ?? item['LOCID'] ?? '';
+                      final locname = item['locname'] ?? item['LOCNAME'] ?? '';
+                      final addr = item['locaddress1'] ?? item['LOCADDRESS1'] ?? '';
+                      final contact = item['loccontactperson'] ?? item['LOCCONTACTPERSON'] ?? '';
+                      final phone = item['locphone1'] ?? item['LOCPHONE1'] ?? '';
+                      final st = item['status'] ?? item['STATUS'] ?? 'Active';
+
+                      return _ntListCard(
+                        title: 'CID: $locid',
+                        trailing: _buildStatusBadge(st.toString()),
+                        rows: [
+                          _kv('Nama Client', locname.toString(), valueWeight: FontWeight.w700),
+                          _kv('Alamat', addr.toString()),
+                          _kv('Contact Person', contact.toString()),
+                          _kv('Phone', phone.toString()),
+                        ],
+                        actions: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton.icon(
+                              style: ntBtnStyle(primaryOrange),
+                              icon: const Icon(Icons.edit, size: 15, color: Colors.white),
+                              label: ntBtnLabel('Edit Data'),
+                              onPressed: () {
+                                _onClientRowTap(item, index);
+                                setState(() => _subModes[4] = 1);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildClientForm() {
+    final isEdit = txtLocid.text.trim().isNotEmpty || _selectedClientIndex != null;
+    final zoneChoices = _listZoneOptions
+        .map((e) => S2Choice<String>(
+            value: e['value']?.toString() ?? e['text']?.toString() ?? '',
+            title: e['text']?.toString() ?? e['value']?.toString() ?? ''))
+        .toList();
+    final companyChoices = _clientCompanyOptions
+        .map((e) => S2Choice<String>(
+            value: (e['value'] ?? e['text'] ?? '').toString(),
+            title: (e['text'] ?? e['value'] ?? '').toString()))
+        .toList();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0x59FFB347)),
+          boxShadow: [
+            BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: lightOrange,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.business_outlined, color: primaryOrange, size: 24),
+                  const SizedBox(width: 10),
+                  Text(
+                    isEdit ? 'Edit Data Client' : 'Tambah Client Baru',
+                    style: TextStyle(
+                      color: darkOrange,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _label('Location ID'),
+                  TextField(
+                    controller: txtLocid,
+                    readOnly: true,
+                    decoration: softDecoration(
+                      hint: 'Otomatis di-generate sistem',
+                      helperText: '* Auto-generate oleh sistem',
+                      readOnly: true,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Nama Client *'),
+                  TextField(
+                    controller: txtLocname,
+                    decoration: softDecoration(hint: 'Masukkan nama client...'),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Alamat 1'),
+                  TextField(
+                    controller: txtLocaddress1,
+                    decoration: softDecoration(hint: 'Masukkan alamat utama...'),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Alamat 2'),
+                  TextField(
+                    controller: txtLocaddress2,
+                    decoration: softDecoration(hint: 'Masukkan alamat tambahan...'),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Provinsi'),
+                  _smartSelectContainer(
+                    child: SmartSelect<String?>.single(
+                      title: 'Pilih Provinsi',
+                      selectedValue: txtLocprovince.text.isEmpty ? null : txtLocprovince.text,
+                      choiceItems: _clientProvinceOptions.map((v) => S2Choice<String>(value: v, title: v)).toList(),
+                      onChange: (s) => setState(() => txtLocprovince.text = s.value ?? ''),
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Provinsi...',
+                      ),
+                      tileBuilder: (context, state) => S2Tile.fromState(
+                        state,
+                        dense: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Zone'),
+                  _smartSelectContainer(
+                    child: SmartSelect<String?>.single(
+                      title: 'Pilih Zone',
+                      selectedValue: _clientZone,
+                      choiceItems: zoneChoices,
+                      onChange: (s) => setState(() => _clientZone = s.value),
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Zone...',
+                      ),
+                      tileBuilder: (context, state) => S2Tile.fromState(
+                        state,
+                        dense: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Company'),
+                  _smartSelectContainer(
+                    child: SmartSelect<String?>.single(
+                      title: 'Pilih Company',
+                      selectedValue: txtLoccompany.text.isEmpty ? null : txtLoccompany.text,
+                      choiceItems: companyChoices,
+                      onChange: (s) => setState(() => txtLoccompany.text = s.value ?? ''),
+                      modalHeader: true,
+                      modalConfig: S2ModalConfig(
+                        type: S2ModalType.bottomSheet,
+                        useFilter: true,
+                        filterAuto: true,
+                        filterHint: 'Cari Company...',
+                      ),
+                      tileBuilder: (context, state) => S2Tile.fromState(
+                        state,
+                        dense: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Contact Person'),
+                  TextField(
+                    controller: txtLoccontactperson,
+                    decoration: softDecoration(hint: 'Masukkan nama contact person...'),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Phone 1'),
+                            TextField(
+                              controller: txtLocphone1,
+                              keyboardType: TextInputType.phone,
+                              decoration: softDecoration(hint: '08xxxx'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Phone 2'),
+                            TextField(
+                              controller: txtLocphone2,
+                              keyboardType: TextInputType.phone,
+                              decoration: softDecoration(hint: '08xxxx'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Fax 1'),
+                            TextField(
+                              controller: txtLocfax1,
+                              decoration: softDecoration(hint: 'Nomor fax...'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Fax 2'),
+                            TextField(
+                              controller: txtLocfax2,
+                              decoration: softDecoration(hint: 'Nomor fax...'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.grey.shade700,
+                          side: BorderSide(color: Colors.grey.shade400),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        ),
+                        icon: const Icon(Icons.arrow_back, size: 16),
+                        label: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        onPressed: () {
+                          resetClientForm();
+                          setState(() => _subModes[4] = 0);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ntBtnStyle(accentOrange),
+                        icon: const Icon(Icons.refresh, size: 16, color: Colors.white),
+                        label: ntBtnLabel('Reset'),
+                        onPressed: resetClientForm,
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ntBtnStyle(primaryOrange),
+                        icon: const Icon(Icons.save, size: 16, color: Colors.white),
+                        label: ntBtnLabel(isEdit ? 'Update' : 'Simpan'),
+                        onPressed: () async {
+                          final msg = isEdit ? 'Update data Client?' : 'Simpan data Client?';
+                          if (await _showConfirmDialog('Konfirmasi', msg)) {
+                            _saveOrUpdateClient();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClientTab() {
+    final query = _searchClientCtrl.text.trim().toLowerCase();
+    final filtered = _listClient.where((item) {
+      if (query.isEmpty) return true;
+      final id = (item['locid'] ?? item['LOCID'] ?? '').toString().toLowerCase();
+      final name = (item['locname'] ?? item['LOCNAME'] ?? '').toString().toLowerCase();
+      final contact = (item['loccontactperson'] ?? item['LOCCONTACTPERSON'] ?? '').toString().toLowerCase();
+      final addr = (item['locaddress1'] ?? item['LOCADDRESS1'] ?? '').toString().toLowerCase();
+      return id.contains(query) || name.contains(query) || contact.contains(query) || addr.contains(query);
+    }).toList();
+
+    return Column(
+      children: [
+        _buildSubTabBar(
+          entityName: 'Client',
+          tabIndex: 4,
+          itemCount: filtered.length,
+          onAdd: () {
+            resetClientForm();
+            setState(() => _subModes[4] = 1);
+          },
+        ),
+        Expanded(
+          child: _subModes[4] == 0
+              ? _buildClientList(filtered)
+              : _buildClientForm(),
+        ),
+      ],
+    );
+  }
+
+  // =========================================================================
+  // --- Zone Tab Logic & UI ---
+  // =========================================================================
+  static const String _zoneSaveApi = 'api/master/save_new_zone_api.jsp';
 
   Future<void> getListVhtypeOptions() async {
     try {
@@ -938,7 +3102,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
           'default_zone': _zoneDefaultZone ?? '',
           'vhtype': _zoneVhtype ?? '',
           'origin': _zoneOrigin ?? '',
-          'status': 'Active',
+          'status': _zoneStatus,
           'userid': userid,
         },
       );
@@ -951,7 +3115,8 @@ class _FrmMasterDataState extends State<FrmMasterData>
       if (statusCode == '200') {
         alert(globalScaffoldKey.currentContext!, 1, message, "success");
         resetZoneForm();
-        getListZoneMasterList();
+        await getListZoneMasterList();
+        setState(() => _subModes[5] = 0); // Switch to list view
       } else {
         alert(globalScaffoldKey.currentContext!, 0, message, "error");
       }
@@ -971,6 +3136,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
       _zoneVhtype = null;
       _zoneOrigin = null;
       _zoneStatus = 'Active';
+      _selectedZoneIndex = null;
     });
   }
 
@@ -982,1116 +3148,190 @@ class _FrmMasterDataState extends State<FrmMasterData>
       _zoneDefaultZone = defaultZone;
       _zoneVhtype = item['vhctype']?.toString() ?? item['VHCTYPE']?.toString();
       _zoneOrigin = item['origin']?.toString() ?? item['ORIGIN']?.toString();
-      _zoneStatus = 'Active';
+      _zoneStatus = item['status'] ?? item['STATUS'] ?? 'Active';
       _selectedZoneIndex = index;
     });
   }
 
-  Future<void> getListClient() async {
-    try {
-      EasyLoading.show();
-      final url = Uri.parse('${GlobalData.baseUrlOri}$_refApi?method=list-client');
-      final response = await http.get(url, headers: {"Accept": "application/json"});
-      if (!mounted) return;
-      if (response.statusCode == 200) {
-        final body = response.body.trim();
-        List<dynamic> decoded = [];
-        if (body.isNotEmpty && body != 'Data not found') {
-          try {
-            decoded = jsonDecode(body) is List ? jsonDecode(body) as List : [];
-          } catch (_) {}
-        }
-        setState(() {
-          _listClient = decoded.map((e) => (e is Map ? e : {}) as Map<String, dynamic>).toList();
-          _selectedClientIndex = null;
-        });
-      } else {
-        setState(() => _listClient = []);
-      }
-    } catch (e) {
-      if (mounted) alert(globalScaffoldKey.currentContext!, 0, "Gagal load data Client: $e", "error");
-      setState(() => _listClient = []);
-    } finally {
-      if (EasyLoading.isShow) EasyLoading.dismiss();
-    }
-  }
-
-  Future<void> _saveOrUpdateClient() async {
-    final locid = txtLocid.text.trim();
-    final locname = txtLocname.text.trim();
-    if (locname.isEmpty) {
-      alert(globalScaffoldKey.currentContext!, 0, "Nama tidak boleh kosong", "error");
-      return;
-    }
-    final method = locid.isEmpty ? 'add' : 'update';
-    try {
-      EasyLoading.show();
-      final url = Uri.parse('${GlobalData.baseUrlOri}$_clientSaveApi').replace(
-        queryParameters: {
-          'method': method,
-          'locid': locid,
-          'locationtype': txtLocationtype.text,
-          'locname': locname,
-          'locaddress1': txtLocaddress1.text,
-          'locaddress2': txtLocaddress2.text,
-          'locprovince': txtLocprovince.text,
-          'loczone': _clientZone ?? '',
-          'loccompany': txtLoccompany.text.isEmpty ? 'AN' : txtLoccompany.text,
-          'loccontactperson': txtLoccontactperson.text,
-          'locphone1': txtLocphone1.text,
-          'locphone2': txtLocphone2.text,
-          'locfax1': txtLocfax1.text,
-          'locfax2': txtLocfax2.text,
-          'status': _clientStatus,
-          'userid': userid,
-        },
-      );
-      final response = await http.get(url, headers: {"Accept": "application/json"});
-      if (!mounted) return;
-      if (EasyLoading.isShow) EasyLoading.dismiss();
-      final map = jsonDecode(response.body) as Map<String, dynamic>? ?? {};
-      final statusCode = map['status_code']?.toString() ?? '';
-      final message = map['message']?.toString() ?? 'Unknown';
-      if (statusCode == '200') {
-        alert(globalScaffoldKey.currentContext!, 1, message, "success");
-        resetClientForm();
-        getListClient();
-      } else {
-        alert(globalScaffoldKey.currentContext!, 0, message, "error");
-      }
-    } catch (e) {
-      if (EasyLoading.isShow) EasyLoading.dismiss();
-      alert(globalScaffoldKey.currentContext!, 0, "Error: $e", "error");
-    }
-  }
-
-  void resetClientForm() {
-    txtLocid.clear();
-    txtLocationtype.clear();
-    txtLocname.clear();
-    txtLocaddress1.clear();
-    txtLocaddress2.clear();
-    txtLocprovince.clear();
-    setState(() => _clientZone = null);
-    txtLoccompany.text = 'AN';
-    txtLoccontactperson.clear();
-    txtLocphone1.clear();
-    txtLocphone2.clear();
-    txtLocfax1.clear();
-    txtLocfax2.clear();
-    setState(() => _clientStatus = 'Active');
-  }
-
-  void _onClientRowTap(Map<String, dynamic> item, int index) {
-    txtLocid.text = item['locid'] ?? item['LOCID'] ?? '';
-    txtLocationtype.text = item['locationtype'] ?? item['LOCATIONTYPE'] ?? '';
-    txtLocname.text = item['locname'] ?? item['LOCNAME'] ?? '';
-    txtLocaddress1.text = item['locaddress1'] ?? item['LOCADDRESS1'] ?? '';
-    txtLocaddress2.text = item['locaddress2'] ?? item['LOCADDRESS2'] ?? '';
-    txtLocprovince.text = item['locprovince'] ?? item['LOCPROVINCE'] ?? '';
-    txtLoccompany.text = item['loccompany'] ?? item['LOCCOMPANY'] ?? 'AN';
-    txtLoccontactperson.text = item['loccontactperson'] ?? item['LOCCONTACTPERSON'] ?? '';
-    txtLocphone1.text = item['locphone1'] ?? item['LOCPHONE1'] ?? '';
-    txtLocphone2.text = item['locphone2'] ?? item['LOCPHONE2'] ?? '';
-    txtLocfax1.text = item['locfax1'] ?? item['LOCFAX1'] ?? '';
-    txtLocfax2.text = item['locfax2'] ?? item['LOCFAX2'] ?? '';
-    setState(() {
-      _clientZone = item['loczone']?.toString() ?? item['LOCZONE']?.toString();
-      _clientStatus = 'Active';
-      _selectedClientIndex = index;
-    });
-  }
-
-  Widget buildTextField({
-    String? labelText,
-    required TextEditingController controller,
-    TextInputType keyboardType = TextInputType.text,
-    bool readOnly = false,
-    Widget? suffixIcon,
-    int maxLines = 1,
-    String? helperText,
-    ValueChanged<String>? onChanged,
-    VoidCallback? onEditingComplete,
-  }) {
-    return Container(
-      margin: EdgeInsets.all(12.0),
-      child: TextField(
-        readOnly: readOnly,
-        cursorColor: Colors.orange,
-        style: TextStyle(color: Colors.black87, fontSize: 14),
-        controller: controller,
-        keyboardType: keyboardType,
-        maxLines: maxLines,
-        onChanged: onChanged,
-        onEditingComplete: onEditingComplete,
-        decoration: InputDecoration(
-          fillColor: readOnly ? Colors.grey.shade100 : Colors.white,
-          filled: true,
-          isDense: true,
-          labelText: labelText,
-          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-          helperText: helperText,
-          helperStyle: TextStyle(color: Colors.grey.shade600, fontSize: 11),
-          suffixIcon: suffixIcon,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.orange, width: 1.5),
+  Widget _buildZoneList(List<Map<String, dynamic>> items) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchZoneCtrl,
+                  onChanged: (_) => setState(() {}),
+                  decoration: softDecoration(
+                    hint: 'Cari zone, ID, nama, origin...',
+                    prefixIcon: Icon(Icons.search, color: primaryOrange, size: 20),
+                    suffixIcon: _searchZoneCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
+                            onPressed: () {
+                              _searchZoneCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                style: ntBtnStyle(primaryOrange),
+                icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                label: ntBtnLabel('Tambah'),
+                onPressed: () {
+                  resetZoneForm();
+                  setState(() => _subModes[5] = 1);
+                },
+              ),
+            ],
           ),
         ),
-      ),
-    );
-  }
+        const SizedBox(height: 6),
+        Expanded(
+          child: RefreshIndicator(
+            color: primaryOrange,
+            onRefresh: () async {
+              await getListZoneOptions();
+              await getListOriginAlias();
+              await getListVhtypeOptions();
+              await getListZoneMasterList();
+            },
+            child: items.isEmpty
+                ? _buildEmptyState('Tidak ada data Zone.\nTarik ke bawah untuk refresh.')
+                : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 24, top: 2),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      final zoneid = item['zoneid'] ?? item['ZONEID'] ?? '';
+                      final zonename = item['zonename'] ?? item['ZONENAME'] ?? '';
+                      final defaultZone = item['default_zone'] ?? item['DEFAULT_ZONE'] ?? '';
+                      final vhctype = item['vhctype'] ?? item['VHCTYPE'] ?? '';
+                      final origin = item['origin'] ?? item['ORIGIN'] ?? '';
 
-  Widget _buildOsmSuggestionList({
-    required List<dynamic> suggestions,
-    required bool searching,
-    required void Function(Map<String, dynamic> item) onSelected,
-  }) {
-    if (searching) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))),
-      );
-    }
-    if (suggestions.isEmpty) return const SizedBox.shrink();
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      constraints: const BoxConstraints(maxHeight: 180),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        itemCount: suggestions.length,
-        separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
-        itemBuilder: (context, i) {
-          final raw = suggestions[i];
-          final item = (raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{});
-          final name = item['display_name'] ?? item['name'] ?? '';
-          return ListTile(
-            dense: true,
-            leading: const Icon(Icons.place, color: Colors.orange, size: 20),
-            title: Text(
-              name is String ? name : '$name',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12),
-            ),
-            onTap: () => onSelected(item),
-          );
-        },
-      ),
-    );
-  }
-  Widget _buildCustomerTab() {
-    return RefreshIndicator(
-      onRefresh: getListCustomer,
-      child: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              color: cardCream,//
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Form Customer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 12),
-                    buildTextField(labelText: 'Cust ID', controller: txtCpyId, readOnly: true, helperText: '* generate auto'),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Cust Name', controller: txtCpyname),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Cust Address', controller: txtCpyaddress, maxLines: 2),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Cust. NPWP', controller: txtCpynpwp),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Singkatan Customer', controller: txtCpycontactperson),
-                    SizedBox(height: 5),
-                    // Status dibuang, status dikirim hardcode Active di API
-                    SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        OutlinedButton(
-                          onPressed: resetCustomerForm,
-                          child: Text('Reset'),//
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                          onPressed: () async {
-                            if (txtCpyId.text.isEmpty && await _showConfirmDialog('Konfirmasi', 'Simpan data Customer?')) {
-                              _saveOrUpdateCustomer();
-                            }
-                          },
-                          child: Text('Save',style:TextStyle(color:Colors.white)),
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                          onPressed: () async {
-                            if (txtCpyId.text.isNotEmpty && await _showConfirmDialog('Konfirmasi', 'Update data Customer?')) {
-                              _saveOrUpdateCustomer();
-                            }
-                          },
-                          child: Text('Update',style:TextStyle(color:Colors.white)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-            Card(
-              color: cardCream,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Daftar Customer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 5),
-                    _listCustomer.isEmpty
-                        ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Text('Data kosong. Tarik untuk refresh.')))
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
-                              child: DataTable(
-                                showCheckboxColumn: false,
-                                columnSpacing: 10,
-                                horizontalMargin: 8,
-                                columns: [
-                                  DataColumn(label: Text('CustID', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Cust Name', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Address', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Contact Person', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.w600))),
-                                ],
-                                rows: _listCustomer.asMap().entries.map((e) {
-                                  final index = e.key;
-                                  final item = e.value;
-                                  final cpyid = item['cpyid'] ?? item['CPYID'] ?? '';
-                                  final cpyname = item['cpyname'] ?? item['CPYNAME'] ?? '';
-                                  final addr = item['cpyaddress'] ?? item['cpyaddress1'] ?? item['CPYADDRESS1'] ?? '';
-                                  final contact = item['cpycontactperson'] ?? item['cpyaccountnbr'] ?? item['cpycontcatperson'] ?? item['CPYACCOUNTNBR'] ?? '';
-                                  final st = item['status'] ?? item['cpystatus'] ?? item['CPYSTATUS'] ?? '';
-                                  return DataRow(
-                                    onSelectChanged: (_){ _onCustomerRowTap(item, index); },
-                                    color: MaterialStateProperty.resolveWith((_) => _selectedCustomerIndex == index ? Colors.orange.withOpacity(0.25) : null),
-                                    cells: [
-                                      DataCell(Text(cpyid)),
-                                      DataCell(Text(cpyname)),
-                                      DataCell(ConstrainedBox(constraints: BoxConstraints(maxWidth: 180), child: Text(addr, overflow: TextOverflow.ellipsis))),
-                                      DataCell(Text(contact)),
-                                      DataCell(Text(st)),
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
+                      return _ntListCard(
+                        title: 'Zone ID: $zoneid',
+                        trailing: defaultZone.toString().isNotEmpty
+                            ? _buildStatusBadge(defaultZone.toString())
+                            : null,
+                        rows: [
+                          _kv('Nama Zone', zonename.toString(), valueWeight: FontWeight.w700),
+                          _kv('Default Zone', defaultZone.toString()),
+                          _kv('VHC Type', vhctype.toString()),
+                          _kv('Origin', origin.toString()),
+                        ],
+                        actions: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton.icon(
+                              style: ntBtnStyle(primaryOrange),
+                              icon: const Icon(Icons.edit, size: 15, color: Colors.white),
+                              label: ntBtnLabel('Edit Data'),
+                              onPressed: () {
+                                _onZoneRowTap(item, index);
+                                setState(() => _subModes[5] = 1);
+                              },
                             ),
-                          ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildOriginTab() {
-    final aliasChoices = _listOriginAlias
-        .map((e) => S2Choice<String>(value: e['value'] ?? e['text'] ?? '', title: e['text'] ?? e['value'] ?? ''))
-        .toList();
-    final originTypeChoices = _originTypeOptions
-        .map((e) => S2Choice<String>(value: e['value']!, title: e['label']!))
-        .toList();
-    return RefreshIndicator(
-      onRefresh: () async {
-        await getListOriginAlias();
-        await getListOrigin();
-      },
-      child: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              color: cardCream,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Form Origin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 12),
-                    // TextField(
-                    //   readOnly: true,
-                    //   controller: txtCtyId,
-                    //   decoration: InputDecoration(
-                    //     labelText: 'ID Origin *',
-                    //     border: OutlineInputBorder(),
-                    //   ),
-                    // ),
-                    buildTextField(labelText: 'ID Origin', controller: txtCtyId, readOnly: true, helperText: '* generate auto'),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Nama Origin', controller: txtCtyname),
-                    SizedBox(height: 5),
-                    SmartSelect<String?>.single(
-                      title: 'Cty Alias',
-                      selectedValue: _originCtyalias,
-                      choiceItems: aliasChoices,
-                      onChange: (s) => setState(() => _originCtyalias = s.value),
-                      modalHeader: true,
-                      modalConfig: S2ModalConfig(
-                        type: S2ModalType.bottomSheet,
-                        useFilter: true,
-                        filterAuto: true,
-                        filterHint: 'Cari Cty Alias...',
-                      ),
-                      tileBuilder: (context, state) => S2Tile.fromState(
-                        state,
-                        dense: true,
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    SmartSelect<String?>.single(
-                      title: 'Origin Type',
-                      selectedValue: _originType,
-                      choiceItems: originTypeChoices,
-                      onChange: (s) => setState(() => _originType = s.value),
-                      modalHeader: true,
-                      modalConfig: S2ModalConfig(
-                        type: S2ModalType.bottomSheet,
-                        useFilter: true,
-                        filterAuto: true,
-                        filterHint: 'Cari Origin Type...',
-                      ),
-                      tileBuilder: (context, state) => S2Tile.fromState(
-                        state,
-                        dense: true,
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),//
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: TextField(
-                        controller: txtOsmAddress,
-                        textInputAction: TextInputAction.search,
-                        onChanged: (q) {
-                          _osmSearchDebounce?.cancel();
-                          _osmSearchDebounce = Timer(const Duration(milliseconds: 500), () {
-                            _searchOsmAddress(q);
-                          });
-                        },
-                        onSubmitted: (q) => _searchOsmAddress(q),
-                        decoration: InputDecoration(
-                          fillColor: Colors.white,
-                          filled: true,
-                          isDense: true,
-                          labelText: 'Cari alamat (OSM)',
-                          helperText: 'Ketik alamat lalu pilih hasil, atau ambil dari peta',
-                          helperStyle: TextStyle(color: Colors.grey.shade600, fontSize: 11),
-                          labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                          suffixIcon: IconButton(
-                            icon: _osmSearching
-                                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                                : const Icon(Icons.search, color: Colors.orange),
-                            onPressed: _osmSearching ? null : () => _searchOsmAddress(txtOsmAddress.text),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Colors.orange, width: 1.5),
-                          ),
-                        ),
-                      ),
-                    ),
-                    _buildOsmSuggestionList(
-                      suggestions: _osmAddressSuggestions,
-                      searching: _osmSearching,
-                      onSelected: _onOsmAddressSelected,
-                    ),
-                    SizedBox(height: 5),
-                    ListTile(
-                      dense: true,
-                      leading: Icon(Icons.map, color: Colors.orange),
-                      title: Text('Ambil koordinat dari peta', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                      onTap: () async {
-                        final initLat = double.tryParse(txtLat.text);
-                        final initLon = double.tryParse(txtLon.text);
-                        final res = await Navigator.push(context, MaterialPageRoute(builder: (_) => FrmKoordinat(initialLat: initLat, initialLon: initLon)));
-                        if (res is Map) {
-                          setState(() {
-                            txtLat.text = (res['lat'] ?? '').toString();
-                            txtLon.text = (res['lon'] ?? '').toString();
-                            final addr = res['address']?.toString();
-                            if (addr != null && addr.isNotEmpty) {
-                              txtOsmAddress.text = addr;
-                            }
-                          });
-                        }
-                      },
-                    ),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Latitude', controller: txtLat, keyboardType: TextInputType.numberWithOptions(decimal: true)),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Longitude', controller: txtLon, keyboardType: TextInputType.numberWithOptions(decimal: true)),
-                    SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        OutlinedButton(onPressed: resetOriginForm, child: Text('Reset')),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                          onPressed: () async {
-                            if (txtCtyId.text.isEmpty && await _showConfirmDialog('Konfirmasi', 'Simpan data Origin?')) {
-                              _saveOrUpdateOrigin();
-                            }
-                          },
-                          child: Text('Save',style:TextStyle(color:Colors.white)),
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                          onPressed: () async {
-                            if (txtCtyId.text.isNotEmpty && await _showConfirmDialog('Konfirmasi', 'Update data Origin?')) {
-                              _saveOrUpdateOrigin();
-                            }
-                          },
-                          child: Text('Update',style:TextStyle(color:Colors.white)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-            Card(
-              color: cardCream,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Daftar Origin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 5),
-                    _listOrigin.isEmpty
-                        ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
-                              child: DataTable(
-                                showCheckboxColumn: false,
-                                columnSpacing: 10,
-                                horizontalMargin: 8,
-                                columns: [
-                                  DataColumn(label: Text('ID Origin', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Nama Origin', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Cty Alias', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Lat', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Lon', style: TextStyle(fontWeight: FontWeight.w600))),
-                                ],
-                                rows: _listOrigin.asMap().entries.map((e) {
-                                  final index = e.key;
-                                  final item = e.value;
-                                  final ctyid = item['ctyid'] ?? item['CTYID'] ?? '';
-                                  final ctyname = item['ctyname'] ?? item['CTYNAME'] ?? '';
-                                  final ctyalias = item['ctyalias'] ?? item['CTYALIAS'] ?? '';
-                                  final lat = item['lat']?.toString() ?? item['LOCID5'] ?? '';
-                                  final lon = item['lon']?.toString() ?? item['LOCID6'] ?? '';
-                                  return DataRow(
-                                    onSelectChanged: (_){ _onOriginRowTap(item, index); },
-                                    color: MaterialStateProperty.resolveWith((_) => _selectedOriginIndex == index ? Colors.orange.withOpacity(0.25) : null),
-                                    cells: [
-                                      DataCell(Text(ctyid)),
-                                      DataCell(Text(ctyname)),
-                                      DataCell(ConstrainedBox(constraints: BoxConstraints(maxWidth: 150), child: Text(ctyalias, overflow: TextOverflow.ellipsis))),
-                                      DataCell(Text(lat)),
-                                      DataCell(Text(lon)),
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDestinationTab() {
-    return RefreshIndicator(
-      onRefresh: getListDestination,
-      child: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              color: cardCream,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Form Destination', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 12),
-                    buildTextField(
-                      labelText: 'ID Destination',
-                      controller: txtDestCtyId,
-                      helperText: 'generate auto, diisi manual atau generate auto',
-                    ),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Nama Proyek/Tujuan', controller: txtDestCtyname),
-                    SizedBox(height: 5),
-                    // Destination Type dihapus sesuai permintaan
-                    SizedBox(height: 5),
-                    buildTextField(
-                      labelText: 'Cari alamat (OSM)',
-                      controller: txtDestOsmAddress,
-                      helperText: 'Ketik alamat lalu pilih hasil, atau ambil dari peta',
-                      onChanged: (q) {
-                        _osmDestSearchDebounce?.cancel();
-                        _osmDestSearchDebounce = Timer(const Duration(milliseconds: 500), () {
-                          _searchOsmAddressDest(q);
-                        });
-                      },
-                      suffixIcon: IconButton(
-                        icon: _osmDestSearching
-                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.search, color: Colors.orange),
-                        onPressed: _osmDestSearching ? null : () => _searchOsmAddressDest(txtDestOsmAddress.text),
-                      ),
-                    ),
-                    _buildOsmSuggestionList(
-                      suggestions: _osmDestSuggestions,
-                      searching: _osmDestSearching,
-                      onSelected: _onOsmDestSelected,
-                    ),
-                    SizedBox(height: 5),
-                    ListTile(
-                      dense: true,
-                      leading: Icon(Icons.map, color: Colors.orange),
-                      title: Text('Ambil koordinat dari peta', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                      onTap: () async {
-                        final initLat = double.tryParse(txtDestLat.text);
-                        final initLon = double.tryParse(txtDestLon.text);
-                        final res = await Navigator.push(context, MaterialPageRoute(builder: (_) => FrmKoordinat(initialLat: initLat, initialLon: initLon)));
-                        if (res is Map) {
-                          setState(() {
-                            txtDestLat.text = (res['lat'] ?? '').toString();
-                            txtDestLon.text = (res['lon'] ?? '').toString();
-                          });
-                        }
-                      },
-                    ),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Lat', controller: txtDestLat, keyboardType: TextInputType.numberWithOptions(decimal: true)),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Lon', controller: txtDestLon, keyboardType: TextInputType.numberWithOptions(decimal: true)),
-                    SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        OutlinedButton(onPressed: resetDestinationForm, child: Text('Reset')),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                          onPressed: () async {
-                            if (txtDestCtyId.text.trim().isNotEmpty) {
-                              alert(globalScaffoldKey.currentContext!, 0, "Untuk simpan baru, kosongkan ID Destination (atau pakai Update)", "error");
-                              return;
-                            }
-                            if (await _showConfirmDialog('Konfirmasi', 'Simpan data Destination?')) {
-                              _saveOrUpdateDestination();
-                            }
-                          },
-                          child: Text('Save',style:TextStyle(color:Colors.white)),
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                          onPressed: () async {
-                            if (txtDestCtyId.text.trim().isEmpty) {
-                              alert(globalScaffoldKey.currentContext!, 0, "Pilih data dari daftar dulu untuk Update", "error");
-                              return;
-                            }
-                            if (await _showConfirmDialog('Konfirmasi', 'Update data Destination?')) {
-                              _saveOrUpdateDestination();
-                            }
-                          },
-                          child: Text('Update',style:TextStyle(color:Colors.white)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-            Card(
-              color: cardCream,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Daftar Destination', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 5),
-                    _listDestination.isEmpty
-                        ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
-                              child: DataTable(
-                                showCheckboxColumn: false,
-                                columnSpacing: 16,
-                                horizontalMargin: 12,
-                                columns: [
-                                  DataColumn(label: Text('ID Destination', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Nama Proyek/Tujuan', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Type', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Lat', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Lon', style: TextStyle(fontWeight: FontWeight.w600))),
-                                ],
-                                rows: _listDestination.asMap().entries.map((e) {
-                                  final index = e.key;
-                                  final item = e.value;
-                                  final ctyid = item['ctyid'] ?? item['CTYID'] ?? '';
-                                  final ctyname = item['ctyname'] ?? item['CTYNAME'] ?? '';
-                                  final ctytype = item['ctytype'] ?? item['CTYTYPE'] ?? '';
-                                  final lat = item['lat']?.toString() ?? item['LOCID5'] ?? '';
-                                  final lon = item['lon']?.toString() ?? item['LOCID6'] ?? '';
-                                  return DataRow(
-                                    onSelectChanged: (_){ _onDestinationRowTap(item, index); },
-                                    color: MaterialStateProperty.resolveWith((_) => _selectedDestinationIndex == index ? Colors.orange.withOpacity(0.25) : null),
-                                    cells: [
-                                      DataCell(Text(ctyid)),
-                                      DataCell(Text(ctyname)),
-                                      DataCell(Text(ctytype)),
-                                      DataCell(Text(lat)),
-                                      DataCell(Text(lon)),
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildItemTypeTab() {
-    return RefreshIndicator(
-      onRefresh: getListItemType,
-      child: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              color: cardCream,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Form Item Type', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 12),
-                    buildTextField(labelText: 'Item ID', controller: txtItpid),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Item Name', controller: txtItpdescr),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Alias', controller: txtItpalias),
-                    SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        OutlinedButton(onPressed: resetItemTypeForm, child: Text('Reset')),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                          onPressed: () async {
-                            if (await _showConfirmDialog('Konfirmasi', 'Simpan data Item Type?')) {
-                              _saveOrUpdateItemType();
-                            }
-                          },
-                          child: Text('Save',style:TextStyle(color:Colors.white)),
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                          onPressed: () async {
-                            if (await _showConfirmDialog('Konfirmasi', 'Update data Item Type?')) {
-                              _updateItemType();
-                            }
-                          },
-                          child: Text('Update',style:TextStyle(color:Colors.white)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-            Card(
-              color: cardCream,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Daftar Item Type', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 5),
-                    _listItemType.isEmpty
-                        ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
-                              child: DataTable(
-                                showCheckboxColumn: false,
-                                columnSpacing: 10,
-                                horizontalMargin: 8,
-                                columns: [
-                                  DataColumn(label: Text('Item ID', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Item Name', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Alias', style: TextStyle(fontWeight: FontWeight.w600))),
-                                ],
-                                rows: _listItemType.asMap().entries.map((e) {
-                                  final index = e.key;
-                                  final item = e.value;
-                                  final itpid = item['itpid'] ?? item['ITPID'] ?? '';
-                                  final itpdescr = item['itpdescr'] ?? item['ITPDESCR'] ?? '';
-                                  final itpalias = item['itpalias'] ?? item['ITPALIAS'] ?? '';
-                                  return DataRow(
-                                    onSelectChanged: (_){ _onItemTypeRowTap(item, index); },
-                                    color: MaterialStateProperty.resolveWith((_) => _selectedItemTypeIndex == index ? Colors.orange.withOpacity(0.25) : null),
-                                    cells: [
-                                      DataCell(Text(itpid)),
-                                      DataCell(ConstrainedBox(constraints: BoxConstraints(maxWidth: 180), child: Text(itpdescr, overflow: TextOverflow.ellipsis))),
-                                      DataCell(Text(itpalias)),
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildClientTab() {
-    final zoneChoices = _listZoneOptions
-        .map((e) => S2Choice<String>(value: e['value']?.toString() ?? e['text']?.toString() ?? '', title: e['text']?.toString() ?? e['value']?.toString() ?? ''))
-        .toList();
-    return RefreshIndicator(
-      onRefresh: () async {
-        await getListZoneOptions();
-        await getListCompanyClient();
-        await getListClient();
-      },
-      child: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              color: cardCream,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Form Client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 12),
-                    buildTextField(labelText: 'Location ID', controller: txtLocid, readOnly: true, helperText: '* generate auto'),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Type', controller: txtLocationtype, readOnly: true, helperText: '* generate auto'),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Nama', controller: txtLocname),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Address 1', controller: txtLocaddress1),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Address 2', controller: txtLocaddress2),
-                    SizedBox(height: 5),
-                    SmartSelect<String?>.single(
-                      title: 'Provinsi', //SEL
-                      selectedValue: txtLocprovince.text.isEmpty ? null : txtLocprovince.text,
-                      choiceItems: _clientProvinceOptions.map((v) => S2Choice<String>(value: v, title: v)).toList(),
-                      onChange: (s) => setState(() => txtLocprovince.text = s.value ?? ''),
-                      modalHeader: true,
-                      modalConfig: S2ModalConfig(
-                        type: S2ModalType.bottomSheet,
-                        useFilter: true,
-                        filterAuto: true,
-                        filterHint: 'Cari Provinsi...',//LIST
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    SmartSelect<String?>.single(
-                      title: 'Zone',
-                      selectedValue: _clientZone,
-                      choiceItems: zoneChoices,
-                      onChange: (s) => setState(() => _clientZone = s.value),
-                      modalHeader: true,
-                      modalConfig: S2ModalConfig(
-                        type: S2ModalType.bottomSheet,
-                        useFilter: true,
-                        filterAuto: true,
-                        filterHint: 'Cari Zone...',
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    SmartSelect<String?>.single(
-                      title: 'Company',
-                      selectedValue: txtLoccompany.text.isEmpty ? null : txtLoccompany.text,
-                      choiceItems: _clientCompanyOptions.map((e) => S2Choice<String>(value: (e['value'] ?? e['text'] ?? '').toString(), title: (e['text'] ?? e['value'] ?? '').toString())).toList(),
-                      onChange: (s) => setState(() => txtLoccompany.text = s.value ?? ''),
-                      modalHeader: true,
-                      modalConfig: S2ModalConfig(
-                        type: S2ModalType.bottomSheet,
-                        useFilter: true,
-                        filterAuto: true,
-                        filterHint: 'Cari Company...',
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Contact Person', controller: txtLoccontactperson),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Phone 1', controller: txtLocphone1, keyboardType: TextInputType.phone),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Phone 2', controller: txtLocphone2, keyboardType: TextInputType.phone),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Fax 1', controller: txtLocfax1),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Fax 2', controller: txtLocfax2),
-                    SizedBox(height: 5),
-                    SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        OutlinedButton(onPressed: resetClientForm, child: Text('Reset')),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                          onPressed: () async {
-                            if (await _showConfirmDialog('Konfirmasi', 'Simpan data Client?')) _saveOrUpdateClient();
-                          },
-                          child: Text('Save',style:TextStyle(color:Colors.white)),
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                          onPressed: () async {
-                            if (await _showConfirmDialog('Konfirmasi', 'Update data Client?')) _saveOrUpdateClient();
-                          },
-                          child: Text('Update',style:TextStyle(color:Colors.white)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-            Card(
-              color: cardCream,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Daftar Client', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 5),
-                    _listClient.isEmpty
-                        ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
-                              child: DataTable(
-                                showCheckboxColumn: false,
-                                columnSpacing: 10,
-                                horizontalMargin: 8,
-                                columns: [
-                                  DataColumn(label: Text('CID', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Nama', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Address 1', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Contact Person', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Phone 1', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.w600))),
-                                ],
-                                rows: _listClient.asMap().entries.map((e) {
-                                  final index = e.key;
-                                  final item = e.value;
-                                  final locid = item['locid'] ?? item['LOCID'] ?? '';
-                                  final locname = item['locname'] ?? item['LOCNAME'] ?? '';
-                                  final addr = item['locaddress1'] ?? item['LOCADDRESS1'] ?? '';
-                                  final contact = item['loccontactperson'] ?? item['LOCCONTACTPERSON'] ?? '';
-                                  final phone = item['locphone1'] ?? item['LOCPHONE1'] ?? '';
-                                  final st = item['status'] ?? item['STATUS'] ?? '';
-                                  return DataRow(
-                                    onSelectChanged: (_){ _onClientRowTap(item, index); },
-                                    color: MaterialStateProperty.resolveWith((_) => _selectedClientIndex == index ? Colors.orange.withOpacity(0.25) : null),
-                                    cells: [
-                                      DataCell(Text(locid)),
-                                      DataCell(ConstrainedBox(constraints: BoxConstraints(maxWidth: 120), child: Text(locname, overflow: TextOverflow.ellipsis))),
-                                      DataCell(ConstrainedBox(constraints: BoxConstraints(maxWidth: 150), child: Text(addr, overflow: TextOverflow.ellipsis))),
-                                      DataCell(Text(contact)),
-                                      DataCell(Text(phone)),
-                                      DataCell(Text(st)),
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildZoneTab() {
+  Widget _buildZoneForm() {
+    final isEdit = txtZoneid.text.trim().isNotEmpty || _selectedZoneIndex != null;
     final vhtypeChoices = _listVhtypeOptions
-        .map((e) => S2Choice<String>(value: e['value']?.toString() ?? e['text']?.toString() ?? '', title: e['text']?.toString() ?? e['value']?.toString() ?? ''))
+        .map((e) => S2Choice<String>(
+            value: e['value']?.toString() ?? e['text']?.toString() ?? '',
+            title: e['text']?.toString() ?? e['value']?.toString() ?? ''))
         .toList();
     final originChoices = _listOriginAlias
-        .map((e) => S2Choice<String>(value: e['value']?.toString() ?? e['text']?.toString() ?? '', title: e['text']?.toString() ?? e['value']?.toString() ?? ''))
+        .map((e) => S2Choice<String>(
+            value: e['value']?.toString() ?? e['text']?.toString() ?? '',
+            title: e['text']?.toString() ?? e['value']?.toString() ?? ''))
         .toList();
-    return RefreshIndicator(
-      onRefresh: () async {
-        await getListZoneOptions();
-        await getListOriginAlias();
-        await getListVhtypeOptions();
-        await getListZoneMasterList();
-      },
-      child: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+    final defaultZoneChoices = _listDefaultZoneOptions
+        .map((e) => S2Choice<String>(
+            value: (e['value'] ?? e['text'] ?? '').toString(),
+            title: (e['text'] ?? e['value'] ?? '').toString()))
+        .toList();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0x59FFB347)),
+          boxShadow: [
+            BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Card(
-              color: Colors.deepOrangeAccent.withValues(alpha: 0.12),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: lightOrange,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Form Zone', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 12),
-                    buildTextField(
-                      labelText: 'Zone ID',
-                      controller: txtZoneid,
-                      helperText: 'generate auto, diisi manual atau generate auto',
+              child: Row(
+                children: [
+                  Icon(Icons.map_outlined, color: primaryOrange, size: 24),
+                  const SizedBox(width: 10),
+                  Text(
+                    isEdit ? 'Edit Data Zone' : 'Tambah Zone Baru',
+                    style: TextStyle(
+                      color: darkOrange,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
                     ),
-                    SizedBox(height: 5),
-                    buildTextField(labelText: 'Zone Name', controller: txtZonename),
-                    SizedBox(height: 5),
-                    SmartSelect<String?>.single(//
-                      title: 'Default Zone',
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _label('Zone ID'),
+                  TextField(
+                    controller: txtZoneid,
+                    decoration: softDecoration(
+                      hint: 'Otomatis di-generate sistem atau diisi manual',
+                      helperText: 'Generate otomatis jika dikosongkan',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Zone Name *'),
+                  TextField(
+                    controller: txtZonename,
+                    decoration: softDecoration(hint: 'Masukkan nama zone...'),
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Default Zone *'),
+                  _smartSelectContainer(
+                    child: SmartSelect<String?>.single(
+                      title: 'Pilih Default Zone',
                       selectedValue: _zoneDefaultZone,
-                      choiceItems: _listDefaultZoneOptions
-                          .map((e) => S2Choice<String>(
-                                value: (e['value'] ?? e['text'] ?? '').toString(),
-                                title: (e['text'] ?? e['value'] ?? '').toString(),
-                              ))
-                          .toList(),
+                      choiceItems: defaultZoneChoices,
                       onChange: (s) => setState(() => _zoneDefaultZone = s.value),
                       modalHeader: true,
                       modalConfig: S2ModalConfig(
@@ -2100,10 +3340,18 @@ class _FrmMasterDataState extends State<FrmMasterData>
                         filterAuto: true,
                         filterHint: 'Cari Default Zone...',
                       ),
+                      tileBuilder: (context, state) => S2Tile.fromState(
+                        state,
+                        dense: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
                     ),
-                    SizedBox(height: 5),
-                    SmartSelect<String?>.single(
-                      title: 'Origin',
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Origin *'),
+                  _smartSelectContainer(
+                    child: SmartSelect<String?>.single(
+                      title: 'Pilih Origin',
                       selectedValue: _zoneOrigin,
                       choiceItems: originChoices,
                       onChange: (s) => setState(() => _zoneOrigin = s.value),
@@ -2114,10 +3362,18 @@ class _FrmMasterDataState extends State<FrmMasterData>
                         filterAuto: true,
                         filterHint: 'Cari Origin...',
                       ),
+                      tileBuilder: (context, state) => S2Tile.fromState(
+                        state,
+                        dense: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
                     ),
-                    SizedBox(height: 5),
-                    SmartSelect<String?>.single(
-                      title: 'Vehicle Type',
+                  ),
+                  const SizedBox(height: 12),
+                  _label('Vehicle Type *'),
+                  _smartSelectContainer(
+                    child: SmartSelect<String?>.single(
+                      title: 'Pilih Vehicle Type',
                       selectedValue: _zoneVhtype,
                       choiceItems: vhtypeChoices,
                       onChange: (s) => setState(() => _zoneVhtype = s.value),
@@ -2128,88 +3384,53 @@ class _FrmMasterDataState extends State<FrmMasterData>
                         filterAuto: true,
                         filterHint: 'Cari Vehicle Type...',
                       ),
+                      tileBuilder: (context, state) => S2Tile.fromState(
+                        state,
+                        dense: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
                     ),
-                    SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        OutlinedButton(onPressed: resetZoneForm, child: Text('Reset')),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                          onPressed: () async {
-                            if (await _showConfirmDialog('Konfirmasi', 'Simpan data Zone?')) _saveOrUpdateZone();
-                          },
-                          child: Text('Save',style:TextStyle(color:Colors.white)),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.grey.shade700,
+                          side: BorderSide(color: Colors.grey.shade400),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                         ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                          onPressed: () async {
-                            if (await _showConfirmDialog('Konfirmasi', 'Update data Zone?')) _saveOrUpdateZone();
-                          },
-                          child: Text('Update',style:TextStyle(color:Colors.white)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-            Card(
-              color: cardCream,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Daftar Zone', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 5),
-                    _listZone.isEmpty
-                        ? Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('Data kosong. Tarik untuk refresh.')))
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
-                              child: DataTable(
-                                showCheckboxColumn: false,
-                                columnSpacing: 10,
-                                horizontalMargin: 8,
-                                columns: [
-                                  DataColumn(label: Text('Zone ID', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Zone Name', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Default Zone', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('VHC Type', style: TextStyle(fontWeight: FontWeight.w600))),
-                                  DataColumn(label: Text('Origin', style: TextStyle(fontWeight: FontWeight.w600))),
-                                ],
-                                rows: _listZone.asMap().entries.map((e) {
-                                  final index = e.key;
-                                  final item = e.value;
-                                  final zoneid = item['zoneid'] ?? item['ZONEID'] ?? '';
-                                  final zonename = item['zonename'] ?? item['ZONENAME'] ?? '';
-                                  final defaultZone = item['default_zone'] ?? item['DEFAULT_ZONE'] ?? '';
-                                  final vhctype = item['vhctype'] ?? item['VHCTYPE'] ?? '';
-                                  final origin = item['origin'] ?? item['ORIGIN'] ?? '';
-                                  return DataRow(
-                                    onSelectChanged: (_){ _onZoneRowTap(item, index); },
-                                    color: MaterialStateProperty.resolveWith((_) => _selectedZoneIndex == index ? Colors.orange.withOpacity(0.25) : null),
-                                    cells: [
-                                      DataCell(Text(zoneid)),
-                                      DataCell(ConstrainedBox(constraints: BoxConstraints(maxWidth: 140), child: Text(zonename, overflow: TextOverflow.ellipsis))),
-                                      DataCell(Text(defaultZone)),
-                                      DataCell(Text(vhctype)),
-                                      DataCell(Text(origin)),
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ),
-                  ],
-                ),
+                        icon: const Icon(Icons.arrow_back, size: 16),
+                        label: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        onPressed: () {
+                          resetZoneForm();
+                          setState(() => _subModes[5] = 0);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ntBtnStyle(accentOrange),
+                        icon: const Icon(Icons.refresh, size: 16, color: Colors.white),
+                        label: ntBtnLabel('Reset'),
+                        onPressed: resetZoneForm,
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ntBtnStyle(primaryOrange),
+                        icon: const Icon(Icons.save, size: 16, color: Colors.white),
+                        label: ntBtnLabel(isEdit ? 'Update' : 'Simpan'),
+                        onPressed: () async {
+                          final msg = isEdit ? 'Update data Zone?' : 'Simpan data Zone?';
+                          if (await _showConfirmDialog('Konfirmasi', msg)) {
+                            _saveOrUpdateZone();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -2218,28 +3439,41 @@ class _FrmMasterDataState extends State<FrmMasterData>
     );
   }
 
-  Widget _buildTabContent(String title, IconData icon) {
-    return Container(
-      constraints: BoxConstraints.expand(),
-      color: Theme.of(context).colorScheme.onPrimary,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 48, color: Colors.orange.shade300),
-            SizedBox(height: 16),
-            Text(
-              title,
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade700),
-            ),
-          ],
+  Widget _buildZoneTab() {
+    final query = _searchZoneCtrl.text.trim().toLowerCase();
+    final filtered = _listZone.where((item) {
+      if (query.isEmpty) return true;
+      final id = (item['zoneid'] ?? item['ZONEID'] ?? '').toString().toLowerCase();
+      final name = (item['zonename'] ?? item['ZONENAME'] ?? '').toString().toLowerCase();
+      final defZone = (item['default_zone'] ?? item['DEFAULT_ZONE'] ?? '').toString().toLowerCase();
+      final origin = (item['origin'] ?? item['ORIGIN'] ?? '').toString().toLowerCase();
+      final vhc = (item['vhctype'] ?? item['VHCTYPE'] ?? '').toString().toLowerCase();
+      return id.contains(query) || name.contains(query) || defZone.contains(query) || origin.contains(query) || vhc.contains(query);
+    }).toList();
+
+    return Column(
+      children: [
+        _buildSubTabBar(
+          entityName: 'Zone',
+          tabIndex: 5,
+          itemCount: filtered.length,
+          onAdd: () {
+            resetZoneForm();
+            setState(() => _subModes[5] = 1);
+          },
         ),
-      ),
+        Expanded(
+          child: _subModes[5] == 0
+              ? _buildZoneList(filtered)
+              : _buildZoneForm(),
+        ),
+      ],
     );
   }
+
+  // =========================================================================
+  // --- Lifecycle & Build ---
+  // =========================================================================
 
   @override
   void initState() {
@@ -2280,6 +3514,12 @@ class _FrmMasterDataState extends State<FrmMasterData>
     _osmSearchDebounce?.cancel();
     _osmDestSearchDebounce?.cancel();
     _tabController.dispose();
+    _searchCustomerCtrl.dispose();
+    _searchOriginCtrl.dispose();
+    _searchDestCtrl.dispose();
+    _searchItemTypeCtrl.dispose();
+    _searchClientCtrl.dispose();
+    _searchZoneCtrl.dispose();
     txtCpyId.dispose();
     txtCpyname.dispose();
     txtCpyaddress.dispose();
@@ -2326,9 +3566,12 @@ class _FrmMasterDataState extends State<FrmMasterData>
     if (!_hasAccess()) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && globalScaffoldKey.currentContext != null) {
-          alert(globalScaffoldKey.currentContext!, 0,
-              "Akses ditolak. Hanya HTRD dan ADMIN yang dapat mengakses halaman ini.",
-              "error");
+          alert(
+            globalScaffoldKey.currentContext!,
+            0,
+            "Akses ditolak. Hanya HTRD dan ADMIN yang dapat mengakses halaman ini.",
+            "error",
+          );
           _goBack(context);
         }
       });
@@ -2342,35 +3585,53 @@ class _FrmMasterDataState extends State<FrmMasterData>
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          _goBack(context);
+        if (didPop) return;
+        // If in Form mode, pressing back goes back to List mode
+        final currentTab = _tabController.index;
+        if (_subModes[currentTab] == 1) {
+          setState(() => _subModes[currentTab] = 0);
+          return;
         }
+        _goBack(context);
       },
       child: Scaffold(
         key: globalScaffoldKey,
-        backgroundColor: backgroundCream,
+        backgroundColor: backgroundColor,
         appBar: AppBar(
           backgroundColor: primaryOrange,
+          foregroundColor: Colors.white,
           elevation: 2,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.white),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
             iconSize: 20.0,
-            onPressed: () => _goBack(context),
+            onPressed: () {
+              final currentTab = _tabController.index;
+              if (_subModes[currentTab] == 1) {
+                setState(() => _subModes[currentTab] = 0);
+                return;
+              }
+              _goBack(context);
+            },
           ),
           centerTitle: true,
-          title: Text('Master Data Lainnya',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 18)),
+          title: const Text(
+            'Master Data Lainnya',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 17,
+            ),
+          ),
           bottom: _hasAccess()
               ? TabBar(
                   controller: _tabController,
                   isScrollable: true,
                   indicatorColor: Colors.white,
+                  indicatorWeight: 3,
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.white70,
-                  tabs: [
+                  labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  tabs: const [
                     Tab(text: 'Customer'),
                     Tab(text: 'Origin'),
                     Tab(text: 'Destination'),
@@ -2393,7 +3654,7 @@ class _FrmMasterDataState extends State<FrmMasterData>
                   _buildZoneTab(),
                 ],
               )
-            : SizedBox.shrink(),
+            : const SizedBox.shrink(),
       ),
     );
   }

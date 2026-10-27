@@ -57,7 +57,6 @@ class FrmAttendanceNewState extends State<FrmAttendanceNew> {
   double _lon = 0.0;
 
   bool _serviceEnabled = true;
-  bool _isisMock = false;
   File? _imageProfile;
   String filePathImageProfile = "";
   String noImage =
@@ -259,7 +258,6 @@ class FrmAttendanceNewState extends State<FrmAttendanceNew> {
 
     location.onLocationChanged.listen((LocationData cLoc) {
       currentLocation = cLoc;
-      _isisMock = currentLocation?.isMock ?? false;
       //print("currentLocation.latitude ${currentLocation.latitude}");
       //print("currentLocation.longitude ${currentLocation.longitude}");
       _lat = currentLocation?.latitude ?? 0;
@@ -288,7 +286,6 @@ class FrmAttendanceNewState extends State<FrmAttendanceNew> {
             "error");
       } else {
         print('SAVE ATTENDANCE');
-        var isMOCK = _isisMock;
         var encoded =
             Uri.encodeFull("${BASE_URL}api/check_in_out_geofence_new2.jsp");
         print(encoded);
@@ -301,7 +298,7 @@ class FrmAttendanceNewState extends State<FrmAttendanceNew> {
           'shift': dropdownvalue.toString(),
           'geo_id': geo_id.toString(),
           'geo_nm': geo_nm,
-          'is_mock': isMOCK == true ? 1 : 0,
+          'is_mock': 0,
           'employeeid': "",
           'lat': lat,
           'lon': lon,
@@ -1022,5 +1019,10 @@ class FrmAttendanceNewState extends State<FrmAttendanceNew> {
       EasyLoading.dismiss();
     }
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+        return;
+      }
+    });
   }
 }

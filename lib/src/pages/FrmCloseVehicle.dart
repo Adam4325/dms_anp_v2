@@ -11,6 +11,7 @@ import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/ViewImageDo.dart';
 import 'package:dms_anp/src/pages/ViewListDo.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dms_anp/src/Color/hex_color.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -1265,10 +1266,7 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
     );
   }
 
-  void _onShareRatePressed() {
-    setState(() {
-      _isRateShared = true;
-    });
+  void _onShareRatePressed() async {
     String currentDrvId = drvid.trim().isNotEmpty
         ? drvid.trim()
         : GlobalData.frmDrvId.trim();
@@ -1286,16 +1284,173 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
       return;
     }
 
-    final int expiryMs = DateTime.now().millisecondsSinceEpoch + (60 * 1000);
+    final int expiryMs = DateTime.now().millisecondsSinceEpoch +
+        (3 * 24 * 60 * 60 * 1000); // Masa berlaku 3 hari
     final String raw = '$currentDrvId:::$currentNoDo:::$expiryMs';
-    final String token = base64Url.encode(utf8.encode(raw)).replaceAll('=', '');
+    final String token =
+        base64Url.encode(utf8.encode(raw)).replaceAll('=', '');
     final String shareUrl =
         'https://apps.tuluatas.com/trucking/given_rate.jsp?q=$token';
 
-    final String shareText =
-        'Halo Customer, mohon kesediaan Anda memberikan rating penilaian pelayanan pengiriman kami untuk No DO: $currentNoDo melalui tautan berikut (berlaku 1 menit):\n$shareUrl';
+    EasyLoading.show(status: 'Mengambil data customer...');
+    final phoneRes = await DeliveryRateService.getCustomerPhone(currentNoDo);
+    EasyLoading.dismiss();
 
-    Share.share(shareText, subject: 'Penilaian Layanan DO $currentNoDo');
+    final String initialPhone = phoneRes["customer_phone"] ?? "";
+
+    _showShareRateDialog(currentNoDo, shareUrl, initialPhone);
+  }
+
+  void _showShareRateDialog(
+      String noDo, String shareUrl, String initialPhone) {
+    final TextEditingController urlController =
+        TextEditingController(text: shareUrl);
+    final TextEditingController phoneController =
+        TextEditingController(text: initialPhone);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.share, color: Color(0xFFF57C00), size: 24),
+            SizedBox(width: 8),
+            Text(
+              'Bagikan Rate',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Link Rating Customer (Bisa Copas):',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: Color(0xFFE65100),
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: urlController,
+                readOnly: true,
+                maxLines: 3,
+                style: const TextStyle(fontSize: 11, color: Colors.black87),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xFFFFF3E0),
+                  contentPadding: const EdgeInsets.all(10),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFFFB74D)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFFFB74D)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: Color(0xFFF57C00), width: 1.5),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.copy,
+                        color: Color(0xFFF57C00), size: 20),
+                    tooltip: 'Salin Link',
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: shareUrl));
+                      alert(context, 1, 'Link rating berhasil disalin',
+                          'success');
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Nomor WhatsApp Customer:',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: Color(0xFFE65100),
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
+                  hintText: 'Contoh: 628123456789 atau 08123456789',
+                  hintStyle: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade400,
+                      fontWeight: FontWeight.normal),
+                  prefixIcon: const Icon(Icons.phone_android,
+                      color: Colors.green, size: 20),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: Colors.green, width: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.send, size: 16, color: Colors.white),
+            label: const Text('OK / Kirim ke WA',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green.shade600,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              final String targetPhone = phoneController.text.trim();
+              if (targetPhone.isEmpty) {
+                alert(context, 0,
+                    'Nomor WhatsApp customer tidak boleh kosong', 'warning');
+                return;
+              }
+              Navigator.of(ctx).pop();
+              setState(() {
+                _isRateShared = true;
+              });
+              await DeliveryRateService.openWhatsApp(
+                phoneWa: targetPhone,
+                doNumber: noDo,
+                ratingUrl: shareUrl,
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _onSubmitPressed() async {
@@ -1440,15 +1595,6 @@ class _FrmCloseVehicleState extends State<FrmCloseVehicle> {
                           if (dialogCtx == null) {
                             Navigator.of(confirmCtx).pop(false);
                           } else {
-                            var gpsResult =
-                                await GpsSecurityChecker.checkGpsSecurity();
-                            if (gpsResult["isFake"] == true) {
-                              final fakeReason = gpsResult["reason"] ?? "";
-                              alert(dialogCtx, 0,
-                                  "FAKE GPS terdeteksi: $fakeReason",
-                                  "error");
-                              return;
-                            }
                             if (GlobalData.frmDloDoNumber == null ||
                                 GlobalData.frmDloDoNumber == "") {
                               Navigator.of(confirmCtx).pop(false);

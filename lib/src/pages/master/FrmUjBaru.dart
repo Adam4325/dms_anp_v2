@@ -20,11 +20,13 @@ class FrmUjBaru extends StatefulWidget {
 }
 
 class _FrmUjBaruState extends State<FrmUjBaru> {
-  final Color primaryOrange = Color(0xFFFF8C69);
-  final Color lightOrange = Color(0xFFFFF4E6);
-  final Color darkOrange = Color(0xFFE07B39);
-  final Color backgroundColor = Color(0xFFFFFAF5);
-  final Color cardColor = Color(0xFFFFF8F0);
+  final Color primaryOrange = const Color(0xFFFF8C69);
+  final Color lightOrange = const Color(0xFFFFF4E6);
+  final Color accentOrange = const Color(0xFFFFB347);
+  final Color darkOrange = const Color(0xFFE07B39);
+  final Color backgroundColor = const Color(0xFFFFFAF5);
+  final Color cardColor = const Color(0xFFFFF8F0);
+  final Color shadowColor = const Color(0x20FF8C69);
 
   final _tariffCtrl = TextEditingController();
   final _ruteCtrl = TextEditingController();
@@ -146,7 +148,7 @@ class _FrmUjBaruState extends State<FrmUjBaru> {
   String? _ensureInList(String? value, List<Map<String, dynamic>> list) {
     if (value == null || value.isEmpty) return null;
     final exists = list.any((e) => _s(e['id']) == value);
-    return exists ? value : value; // keep value even if not in list (edit)
+    return exists ? value : value;
   }
 
   Future<void> _pickDate() async {
@@ -176,25 +178,98 @@ class _FrmUjBaruState extends State<FrmUjBaru> {
     }
   }
 
+  Widget _label(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+          color: Colors.grey.shade800,
+        ),
+      ),
+    );
+  }
+
+  InputDecoration softDecoration({
+    String? hint,
+    Widget? suffixIcon,
+    Widget? prefixIcon,
+    bool readOnly = false,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      isDense: true,
+      filled: true,
+      fillColor: readOnly ? Colors.grey.shade100 : Colors.white,
+      labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: primaryOrange, width: 2),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+      ),
+    );
+  }
+
+  ButtonStyle ntBtnStyle(Color bg) {
+    return ElevatedButton.styleFrom(
+      elevation: 0,
+      backgroundColor: bg,
+      foregroundColor: Colors.white,
+      disabledForegroundColor: Colors.white70,
+      shadowColor: Colors.transparent,
+      side: BorderSide.none,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    );
+  }
+
+  Widget ntBtnLabel(String text, {double size = 13}) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        fontSize: size,
+      ),
+    );
+  }
+
   Future<void> _showSuccessDialog(String message) async {
     if (!mounted) return;
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Color(0xFFFFFAF5),
+        backgroundColor: cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
             Container(
-              padding: EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: lightOrange,
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.check_circle, color: darkOrange, size: 28),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Berhasil',
@@ -210,25 +285,17 @@ class _FrmUjBaruState extends State<FrmUjBaru> {
         content: Text(
           message,
           style: TextStyle(
-            fontSize: 15,
-            color: Colors.black87,
+            fontSize: 14.5,
+            color: Colors.grey.shade800,
             height: 1.4,
           ),
         ),
-        actionsPadding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         actions: [
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryOrange,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
+              style: ntBtnStyle(primaryOrange),
               onPressed: () {
                 Navigator.of(ctx).pop();
                 Navigator.pushReplacement(
@@ -236,10 +303,7 @@ class _FrmUjBaruState extends State<FrmUjBaru> {
                   MaterialPageRoute(builder: (_) => ListUjBaru()),
                 );
               },
-              child: Text(
-                'OK',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-              ),
+              child: ntBtnLabel('OK, Kembali ke List', size: 14),
             ),
           ),
         ],
@@ -354,37 +418,46 @@ class _FrmUjBaruState extends State<FrmUjBaru> {
         .toList();
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 12),
-      child: AbsorbPointer(
-        absorbing: !enabled,
-        child: Opacity(
-          opacity: enabled ? 1 : 0.55,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.grey.shade400),
-            ),
-            child: SmartSelect<String?>.single(
-              title: label,
-              selectedValue: (value == null || value.isEmpty) ? null : value,
-              choiceItems: choices,
-              onChange: (s) => onChanged(s.value),
-              modalType: S2ModalType.bottomSheet,
-              modalFilter: true,
-              modalFilterAuto: true,
-              modalFilterHint: 'Cari $label...',
-              tileBuilder: (context, state) {
-                return S2Tile.fromState(
-                  state,
-                  dense: true,
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  trailing: Icon(Icons.search, color: primaryOrange, size: 20),
-                );
-              },
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _label(label),
+          AbsorbPointer(
+            absorbing: !enabled,
+            child: Opacity(
+              opacity: enabled ? 1 : 0.65,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: enabled ? Colors.white : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300, width: 1),
+                ),
+                child: SmartSelect<String?>.single(
+                  title: label,
+                  selectedValue: (value == null || value.isEmpty) ? null : value,
+                  choiceItems: choices,
+                  onChange: (s) => onChanged(s.value),
+                  modalHeader: true,
+                  modalConfig: S2ModalConfig(
+                    type: S2ModalType.bottomSheet,
+                    useFilter: true,
+                    filterAuto: true,
+                    filterHint: 'Cari $label...',
+                  ),
+                  tileBuilder: (context, state) {
+                    return S2Tile.fromState(
+                      state,
+                      dense: true,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      trailing: Icon(Icons.search, color: primaryOrange, size: 20),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -396,28 +469,29 @@ class _FrmUjBaruState extends State<FrmUjBaru> {
     TextInputType? keyboardType,
     VoidCallback? onTap,
     int maxLines = 1,
+    String? hint,
   }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12),
-      child: TextField(
-        controller: controller,
-        readOnly: readOnly || onTap != null,
-        onTap: onTap,
-        keyboardType: keyboardType,
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: Colors.white,
-          suffixIcon: onTap != null
-              ? Icon(Icons.calendar_today, color: primaryOrange, size: 18)
-              : null,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: primaryOrange, width: 2),
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _label(label),
+          TextField(
+            controller: controller,
+            readOnly: readOnly || onTap != null,
+            onTap: onTap,
+            keyboardType: keyboardType,
+            maxLines: maxLines,
+            decoration: softDecoration(
+              hint: hint ?? 'Masukkan $label...',
+              readOnly: readOnly,
+              suffixIcon: onTap != null
+                  ? Icon(Icons.calendar_today, color: primaryOrange, size: 18)
+                  : null,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -428,132 +502,194 @@ class _FrmUjBaruState extends State<FrmUjBaru> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: primaryOrange,
+        foregroundColor: Colors.white,
+        elevation: 2,
+        centerTitle: true,
         title: Text(
           _isEdit ? 'Edit UJ Baru' : 'Add UJ Baru',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 17,
+          ),
         ),
-        iconTheme: IconThemeData(color: Colors.white),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: _loadingLookups
           ? Center(child: CircularProgressIndicator(color: primaryOrange))
           : SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
               child: Container(
-                padding: EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: cardColor,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: primaryOrange.withOpacity(0.35)),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0x59FFB347)),
+                  boxShadow: [
+                    BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4)),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (_isEdit)
-                      _textField(
-                        label: 'Number',
-                        controller: _numberCtrl,
-                        readOnly: true,
-                      ),
-                    if (!_isEdit)
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 12),
-                        child: Text(
-                          'Number akan digenerate otomatis (TL...) saat Save',
-                          style: TextStyle(
-                            color: darkOrange,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
+                    // Header Banner
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: lightOrange,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
                         ),
                       ),
-                    _dropdown(
-                      label: 'Customer *',
-                      value: _cpyid,
-                      items: _customers,
-                      onChanged: (v) => setState(() => _cpyid = v),
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_note_outlined, color: primaryOrange, size: 24),
+                          const SizedBox(width: 10),
+                          Text(
+                            _isEdit ? 'Edit Form Uang Jalan (UJ Baru)' : 'Form Tambah Uang Jalan (UJ Baru)',
+                            style: TextStyle(
+                              color: darkOrange,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    _dropdown(
-                      label: 'Origin *',
-                      value: _origin,
-                      items: _origins,
-                      enabled: !_isEdit,
-                      onChanged: (v) => setState(() => _origin = v),
-                    ),
-                    _dropdown(
-                      label: 'Destination *',
-                      value: _destination,
-                      items: _destinations,
-                      onChanged: (v) => setState(() => _destination = v),
-                    ),
-                    _dropdown(
-                      label: 'Vehicle Type Alias *',
-                      value: _vhtalias,
-                      items: _aliases,
-                      enabled: !_isEdit,
-                      onChanged: (v) => setState(() => _vhtalias = v),
-                    ),
-                    _dropdown(
-                      label: 'Item Type',
-                      value: _itemtype,
-                      items: _items,
-                      onChanged: (v) => setState(() => _itemtype = v),
-                    ),
-                    _dropdown(
-                      label: 'Type UJ *',
-                      value: _ritase,
-                      items: _typeUj,
-                      onChanged: (v) => setState(() => _ritase = v),
-                    ),
-                    _textField(
-                      label: 'Tariff *',
-                      controller: _tariffCtrl,
-                      keyboardType: TextInputType.number,
-                    ),
-                    _dropdown(
-                      label: 'Tariff UOM *',
-                      value: _uom,
-                      items: _uoms,
-                      onChanged: (v) => setState(() => _uom = v),
-                    ),
-                    _textField(
-                      label: 'Effective Date *',
-                      controller: _effDateCtrl,
-                      onTap: _pickDate,
-                    ),
-                    _textField(
-                      label: 'Rute',
-                      controller: _ruteCtrl,
-                      maxLines: 2,
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_isEdit)
+                            _textField(
+                              label: 'Number (CUSNBR)',
+                              controller: _numberCtrl,
+                              readOnly: true,
+                            ),
+                          if (!_isEdit)
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 14),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: lightOrange,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0x59FFB347)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.info_outline, color: darkOrange, size: 18),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Nomor UJ akan digenerate otomatis (TL...) saat data disimpan.',
+                                      style: TextStyle(
+                                        color: darkOrange,
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          _dropdown(
+                            label: 'Customer *',
+                            value: _cpyid,
+                            items: _customers,
+                            onChanged: (v) => setState(() => _cpyid = v),
+                          ),
+                          _dropdown(
+                            label: 'Origin *',
+                            value: _origin,
+                            items: _origins,
+                            enabled: !_isEdit,
+                            onChanged: (v) => setState(() => _origin = v),
+                          ),
+                          _dropdown(
+                            label: 'Destination *',
+                            value: _destination,
+                            items: _destinations,
+                            onChanged: (v) => setState(() => _destination = v),
+                          ),
+                          _dropdown(
+                            label: 'Vehicle Type Alias *',
+                            value: _vhtalias,
+                            items: _aliases,
+                            enabled: !_isEdit,
+                            onChanged: (v) => setState(() => _vhtalias = v),
+                          ),
+                          _dropdown(
+                            label: 'Item Type',
+                            value: _itemtype,
+                            items: _items,
+                            onChanged: (v) => setState(() => _itemtype = v),
+                          ),
+                          _dropdown(
+                            label: 'Type UJ *',
+                            value: _ritase,
+                            items: _typeUj,
+                            onChanged: (v) => setState(() => _ritase = v),
+                          ),
+                          _textField(
+                            label: 'Tariff *',
+                            controller: _tariffCtrl,
+                            keyboardType: TextInputType.number,
+                            hint: 'Masukkan nominal tarif...',
+                          ),
+                          _dropdown(
+                            label: 'Tariff UOM *',
+                            value: _uom,
+                            items: _uoms,
+                            onChanged: (v) => setState(() => _uom = v),
+                          ),
+                          _textField(
+                            label: 'Effective Date *',
+                            controller: _effDateCtrl,
+                            onTap: _pickDate,
+                          ),
+                          _textField(
+                            label: 'Rute',
+                            controller: _ruteCtrl,
+                            maxLines: 2,
+                            hint: 'Masukkan keterangan rute...',
+                          ),
+                          const SizedBox(height: 12),
+                          // Action Buttons inside form container
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.grey.shade700,
+                                  side: BorderSide(color: Colors.grey.shade400),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                                ),
+                                icon: const Icon(Icons.arrow_back, size: 16),
+                                label: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton.icon(
+                                icon: const Icon(Icons.save, color: Colors.white, size: 16),
+                                label: ntBtnLabel(_isEdit ? 'Update UJ' : 'Simpan UJ'),
+                                style: ntBtnStyle(primaryOrange),
+                                onPressed: _loadingLookups ? null : _save,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: SizedBox(
-            height: 48,
-            child: ElevatedButton.icon(
-              icon: Icon(Icons.save, color: Colors.white),
-              label: Text(
-                _isEdit ? 'Update' : 'Save',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: darkOrange,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: _loadingLookups ? null : _save,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
