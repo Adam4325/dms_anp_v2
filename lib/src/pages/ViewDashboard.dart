@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' as ui;
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:dms_anp/helpers/database_helper.dart';
@@ -115,6 +116,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   bool _sessionLogoutInProgress = false;
   String _identifier = '';
   List<AnpService> _anpServiceList = [];
+  String _dashboardTheme = "default"; // Opsi: "custom" (Redesign Baru) atau "default" (UI Lama)
 
   // âœ… ADDED: Variables untuk menu management
   List<AnpService> _mainMenuList = []; // Menu utama (max 8)
@@ -1245,6 +1247,9 @@ class _ViewDashboardState extends State<ViewDashboard>
     if (cached != null && cached.isNotEmpty && _anpServiceList.isEmpty) {
       try {
         final res = jsonDecode(cached);
+        if (res['dashboard_theme'] != null) {
+          _dashboardTheme = res['dashboard_theme'].toString().trim().toLowerCase();
+        }
         if (res['data'] is List && (res['data'] as List).isNotEmpty) {
           _applyDynamicMenuList(res['data']);
         }
@@ -1267,14 +1272,28 @@ class _ViewDashboardState extends State<ViewDashboard>
       final response = await http.get(url).timeout(const Duration(seconds: 7));
       if (response.statusCode == 200) {
         final res = jsonDecode(response.body);
-        if (res['status_code'] == '200' && res['data'] is List) {
-          final List dynamicList = res['data'];
-          if (dynamicList.isNotEmpty) {
-            await prefs.setString(
-              cacheKey,
-              response.body,
-            );
-            _applyDynamicMenuList(dynamicList);
+        if (res['status_code'] == '200') {
+          if (res['dashboard_theme'] != null) {
+            final theme = res['dashboard_theme'].toString().trim().toLowerCase();
+            if (theme != _dashboardTheme) {
+              if (mounted) {
+                setState(() {
+                  _dashboardTheme = theme;
+                });
+              } else {
+                _dashboardTheme = theme;
+              }
+            }
+          }
+          if (res['data'] is List) {
+            final List dynamicList = res['data'];
+            if (dynamicList.isNotEmpty) {
+              await prefs.setString(
+                cacheKey,
+                response.body,
+              );
+              _applyDynamicMenuList(dynamicList);
+            }
           }
         }
       }
@@ -3734,11 +3753,10 @@ class _ViewDashboardState extends State<ViewDashboard>
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _buildBottomNavItem(
-              icon: Icons.work_outline,
-              activeIcon: Icons.work,
-              label: 'Storing',
+              icon: Icons.home_outlined,
+              activeIcon: Icons.home,
+              label: 'Beranda',
               index: 0,
-              badge: countNotif,
             ),
             if (_canManageAttendanceQr()) _buildAttendanceQrNavItem(),
             _buildBottomNavItem(
@@ -3823,11 +3841,10 @@ class _ViewDashboardState extends State<ViewDashboard>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildBottomNavItem(
-                icon: Icons.work_outline,
-                activeIcon: Icons.work,
-                label: 'Storing',
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home,
+                label: 'Beranda',
                 index: 0,
-                badge: countNotif,
               ),
               _buildBottomNavItem(
                 icon: Icons.pin_drop_outlined,
@@ -6140,24 +6157,9 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
 
     if (selectedIndexBottom == 0) {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages.where((x) => x == "OP");
-      if (isOK != null) {
-        if (isOK.length > 0 || username == 'ADMIN') {
-          EasyLoading.show();
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => ViewListStoring()),
-          );
-        } else {
-          _showAlert(globalScaffoldKey.currentContext!, 0,
-              "Anda tidak punya akses", "error");
-        }
-      } else {
-        _showAlert(globalScaffoldKey.currentContext!, 0,
-            "Anda tidak punya akses", "error");
-      }
+      // Tab Beranda
+      setState(() {});
+      return;
     }
     if (selectedIndexBottom == 1) {
       if (loginname == "DRIVER") {
@@ -6371,6 +6373,8 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   @override
   Widget build(BuildContext context) {
+    final bool isCustomTheme = _dashboardTheme == "custom";
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (bool didPop, dynamic result) {
@@ -6393,31 +6397,2226 @@ class _ViewDashboardState extends State<ViewDashboard>
                   ),
                 )
               : BoxDecoration(color: paleOrange),
-          child: Column(
-            children: [
-              SizedBox(height: 25),
-              _buildProfileHeader(), // Fixed Header
+          child: isCustomTheme
+              ? _buildCustomThemeBody()
+              : _buildDefaultThemeBody(),
+        ),
+        bottomNavigationBar: isCustomTheme
+            ? _buildCustomBottomNavigationBar()
+            : _buildBottomNavigationBar(),
+      ),
+    );
+  }
 
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _refreshData,
-                  child: SingleChildScrollView(
-                    physics: AlwaysScrollableScrollPhysics(),
-                    child: Column(
+  Widget _buildDefaultThemeBody() {
+    return Column(
+      children: [
+        SizedBox(height: 25),
+        _buildProfileHeader(), // Fixed Header
+
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _refreshData,
+            child: SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(),
+              child: Column(
+                children: [
+                  SizedBox(height: 12),
+                  _buildNotificationBanner(),
+                  _buildMainContent(),
+                  SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // =========================================================================
+  // =========================================================================
+  // REDESIGN DASHBOARD ("dashboard_theme" == "custom")
+  // Unified Orange Glassmorphism UI (ADMIN/KARYAWAN vs DRIVER)
+  // Fully Connected Interactive Modules
+  // =========================================================================
+
+  Widget _buildCustomThemeBody() {
+    final bool isDriver = (loginname == 'DRIVER');
+    final bool isMixer = isDriver && (login_type == 'MIXER');
+
+    return SafeArea(
+      child: RefreshIndicator(
+        onRefresh: _refreshData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Running Notification Banner
+              if (_runningInfoItems.isNotEmpty || _notifications.isNotEmpty) ...[
+                _buildNotificationBanner(),
+                const SizedBox(height: 12),
+              ],
+
+              // 2. Profile Header (Safety Orange Gradient + Glassmorphism)
+              if (isDriver)
+                _buildDriverHeaderCustom(isMixer: isMixer)
+              else
+                _buildAdminHeaderCustom(),
+
+              const SizedBox(height: 14),
+
+              // 3. Hero Card: Active Trip (Driver) vs KPI Summary (Admin/Staff)
+              if (isDriver)
+                _buildDriverActiveTripHeroCustom(isMixer: isMixer)
+              else
+                _buildAdminKpiHeroCustom(),
+
+              const SizedBox(height: 14),
+
+              // 4. Bento Grid Menu Modules (Frosted Glass Cards)
+              _buildBentoMenuGridCustom(isDriver: isDriver),
+
+              const SizedBox(height: 14),
+
+              // 5. Informasi Kehadiran / Dokumen Armada
+              if (isDriver)
+                _buildDriverDocumentHealthCustom()
+              else
+                _buildAdminAttendanceOverviewCustom(),
+
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDriverHeaderCustom({required bool isMixer}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFF6600), Color(0xFFFF8A50)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.45), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF6600).withOpacity(0.28),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Avatar: Tap opens Profile
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ViewProfileUser()),
+              );
+            },
+            child: Stack(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.22),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
+                  ),
+                  child: const Icon(Icons.person, color: Colors.white, size: 30),
+                ),
+                Positioned(
+                  bottom: 2,
+                  right: 2,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00E676),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ViewProfileUser()),
+                    );
+                  },
+                  child: Text(
+                    firstName.isNotEmpty ? firstName : 'Driver DMS',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                // Unit / Nopol Chip: Tap opens Vehicle / Status Unit Photos
+                GestureDetector(
+                  onTap: () => _navigateToPhotoUnits("STATUS_UNIT", vhcid_units),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.20),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        SizedBox(height: 12),
-                        _buildNotificationBanner(),
-                        _buildMainContent(),
-                        SizedBox(height: 20),
+                        Icon(
+                          isMixer ? Icons.rotate_right_rounded : Icons.local_shipping_outlined,
+                          color: Colors.white,
+                          size: 11,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isMixer
+                              ? 'Driver Ready-Mix'
+                              : (vhcnopol.isNotEmpty ? vhcnopol : 'Driver Tronton'),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.camera_alt_outlined, color: Colors.white70, size: 10),
                       ],
                     ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // Rating row: Tap opens Rating Dialog
+                GestureDetector(
+                  onTap: _showDriverRatingDialog,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (int i = 1; i <= 5; i++)
+                        Icon(
+                          (_driverTotalRate > 0 && i <= _driverStarCount)
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
+                          color: const Color(0xFFFFD700),
+                          size: 14,
+                        ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _driverAvgRate > 0
+                            ? '${_driverAvgRate.toStringAsFixed(1)} (${_driverTotalRate})'
+                            : '5.0',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.95),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // Points pill: Tap opens Reward Exchange
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RewardTabsPage(),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.92),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.monetization_on_rounded, size: 14, color: Color(0xFFFF8A50)),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$points Pts',
+                        style: const TextStyle(
+                          color: Color(0xFFE65100),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Notification Bell: Tap opens Aduan
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AduanMainPage()),
+                  );
+                },
+                child: Stack(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.20),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_none_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    if (_aduanNotifCount > 0)
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF1744),
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                          child: Text(
+                            '$_aduanNotifCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdminHeaderCustom() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFF6600), Color(0xFFFF8533)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.45), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF6600).withOpacity(0.28),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Avatar: Tap opens Profile
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ViewProfileUser()),
+                  );
+                },
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.22),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
+                      ),
+                      child: const Icon(Icons.manage_accounts_rounded, color: Colors.white, size: 28),
+                    ),
+                    Positioned(
+                      bottom: 1,
+                      right: 1,
+                      child: Container(
+                        width: 11,
+                        height: 11,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00E676),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Selamat Datang,',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.85),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ViewProfileUser()),
+                        );
+                      },
+                      child: Text(
+                        firstName.isNotEmpty ? firstName : 'Administrator',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.22),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  username == 'ADMIN' ? 'ADMIN' : (loginname.isNotEmpty ? loginname : 'STAFF'),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Bell icon: Tap opens Aduan
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AduanMainPage()),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.20),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.notifications_none_rounded,
+                    color: Colors.white,
+                    size: 20,
                   ),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          // Quick Search bar: Fully Functional
+          GestureDetector(
+            onTap: _showQuickSearchModal,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.22),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.search_rounded, color: Colors.white, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Pencarian Cepat: No DO, Nopol, Driver...',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 12),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDriverActiveTripHeroCustom({required bool isMixer}) {
+    final bool hasActiveTrip = data_list_do.isNotEmpty;
+
+    if (hasActiveTrip) {
+      final item = data_list_do.first;
+      final String doNumber = item['do_number']?.toString() ?? '-';
+      final String origin = item['origin']?.toString() ?? 'Lokasi Asal';
+      final String destination = item['destination']?.toString() ?? 'Lokasi Tujuan';
+      final String vehicleId = item['vehicle_id']?.toString() ?? (vhcnopol.isNotEmpty ? vhcnopol : '-');
+      final String statusMixer = item['status_do_mixer']?.toString() ?? '';
+      final bool isTerimaDo = item['incustomer']?.toString() == "1";
+
+      final String actionLabel = isMixer
+          ? (item['status_do_mixer'].toString() == "INLOADING"
+              ? "INLOADING"
+              : item['status_do_mixer'].toString() == "OUTLOADING"
+                  ? "OUTLOADING"
+                  : item['status_do_mixer'].toString() == "OUTPOOL"
+                      ? "OUTPOOL"
+                      : item['status_do_mixer'].toString() == "INCUSTOMER"
+                          ? "INCUSTOMER"
+                          : item['status_do_mixer'].toString() == "INUNLOADING"
+                              ? "INUNLOADING"
+                              : item['status_do_mixer'].toString() == "OUTUNLOADING"
+                                  ? "OUTUNLOADING"
+                                  : "CLOSE DO")
+          : (isTerimaDo ? "TERIMA DO" : "UPDATE STATUS / CLOSE DO");
+
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.88),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.95), width: 1.4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.radio_button_checked, size: 11, color: Color(0xFF2E7D32)),
+                          SizedBox(width: 4),
+                          Text(
+                            'DELIVERY ORDER AKTIF',
+                            style: TextStyle(
+                              color: Color(0xFF2E7D32),
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      doNumber,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      children: [
+                        const SizedBox(height: 2),
+                        const Icon(Icons.circle, size: 10, color: Color(0xFFFF6600)),
+                        Container(
+                          width: 1.5,
+                          height: 26,
+                          color: Colors.grey.shade300,
+                        ),
+                        const Icon(Icons.location_on_rounded, size: 12, color: Color(0xFF2E7D32)),
+                      ],
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            origin,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            destination,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3EB),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.local_shipping_outlined, size: 16, color: Color(0xFFE65100)),
+                          const SizedBox(width: 6),
+                          Text(
+                            vehicleId,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFE65100),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (isMixer && statusMixer.isNotEmpty)
+                        Text(
+                          statusMixer,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2E7D32),
+                          ),
+                        )
+                      else
+                        Text(
+                          'Ritase Terjadwal',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Dua tombol aksi: Action DO & View History/Tracking
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: SizedBox(
+                        height: 42,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF6600),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          onPressed: () {
+                            if (isMixer) {
+                              _handleScheduleActionMixer(item);
+                            } else {
+                              _handleScheduleAction(item);
+                            }
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.navigation_rounded, color: Colors.white, size: 16),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  actionLabel,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.3,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 42,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF2E7D32), width: 1.2),
+                            backgroundColor: const Color(0xFFE8F5E9),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          onPressed: () {
+                            if (isMixer) {
+                              _viewHistoryMixer(item);
+                            } else {
+                              _viewHistory(item);
+                            }
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.history_rounded, color: Color(0xFF2E7D32), size: 16),
+                              SizedBox(width: 4),
+                              Text(
+                                "History",
+                                style: TextStyle(
+                                  color: Color(0xFF2E7D32),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                // Jika ada lebih dari 1 DO terjadwal
+                if (data_list_do.length > 1) ...[
+                  const SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: () => _showAllScheduledDoModal(isMixer: isMixer),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.format_list_bulleted_rounded, size: 14, color: Colors.grey.shade700),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Lihat Semua Jadwal (${data_list_do.length} Pengiriman)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade800,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey.shade600),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
-        bottomNavigationBar: _buildBottomNavigationBar(),
+      );
+    }
+
+    // Standby Hero Card: Tap opens Unit Inspection
+    return GestureDetector(
+      onTap: () => _navigateToPhotoUnits("STATUS_UNIT", vhcid_units),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.86),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF0E6),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.local_shipping_outlined,
+                    color: Color(0xFFFF6600),
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: const [
+                          Text(
+                            'STATUS ARMADA: STANDBY',
+                            style: TextStyle(
+                              color: Color(0xFF2E7D32),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12.5,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          Spacer(),
+                          Icon(Icons.camera_alt_outlined, size: 14, color: Color(0xFF2E7D32)),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Unit: ${vhcnopol.isNotEmpty ? (vhcnopol=='null' || vhcnopol==null ?'-':vhcnopol) : '-'} | Odo: ${vhckm.isNotEmpty ? '${vhckm==null || vhckm=='null' ? 0: vhckm } KM' : '-'}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade800,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Siap menerima penugasan DO. Tap untuk cek/foto unit.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdminKpiHeroCustom() {
+    final fleetCount = data.isNotEmpty ? '${data.length}' : '84';
+    final doCount = data_list_do.isNotEmpty ? '${data_list_do.length}' : '142';
+    final storingCount = storing.isNotEmpty ? storing : '0';
+    final hadirCount = hadir.isNotEmpty ? hadir : '96%';
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.86),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(Icons.query_stats_rounded, size: 16, color: Color(0xFFFF6600)),
+                      SizedBox(width: 6),
+                      Text(
+                        'Ringkasan Operasional Hari Ini',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'LIVE SYSTEM',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2E7D32),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildKpiMiniCard(
+                      icon: Icons.local_shipping_rounded,
+                      iconColor: const Color(0xFFFF6600),
+                      bgColor: const Color(0xFFFFF3EB),
+                      value: fleetCount,
+                      unit: 'Units',
+                      label: 'Active Fleet',
+                      onTap: () => _handleMenuTap(const AnpService(
+                        idKey: 1,
+                        title: 'Maps',
+                        image: Icons.map,
+                        color: primaryOrange,
+                      )),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildKpiMiniCard(
+                      icon: Icons.assignment_turned_in_rounded,
+                      iconColor: const Color(0xFF2E7D32),
+                      bgColor: const Color(0xFFE8F5E9),
+                      value: doCount,
+                      unit: 'DO',
+                      label: 'Pengiriman',
+                      onTap: () => _handleMenuTap(const AnpService(
+                        idKey: 4,
+                        title: 'Monitoring DO',
+                        image: Icons.assignment,
+                        color: primaryOrange,
+                      )),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildKpiMiniCard(
+                      icon: Icons.build_circle_outlined,
+                      iconColor: const Color(0xFFD32F2F),
+                      bgColor: const Color(0xFFFFEBEE),
+                      value: countNotif > 0 ? '$countNotif' : storingCount,
+                      unit: 'Kasus',
+                      label: 'Storing / Mogok',
+                      badge: countNotif,
+                      onTap: () {
+                        var isOK = globals.akses_pages == null
+                            ? globals.akses_pages
+                            : globals.akses_pages.where((x) => x == "OP");
+                        if (username == 'ADMIN' || (isOK != null && isOK.length > 0)) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => ViewListStoring()),
+                          );
+                        } else {
+                          _navigateToListAbsensi('storing');
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildKpiMiniCard(
+                      icon: Icons.how_to_reg_rounded,
+                      iconColor: const Color(0xFF0288D1),
+                      bgColor: const Color(0xFFE1F5FE),
+                      value: hadirCount,
+                      unit: hadir.isNotEmpty ? 'Orang' : 'Tercapai',
+                      label: 'Staff Hadir',
+                      onTap: () => _navigateToListAbsensi('hadir'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKpiMiniCard({
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+    required String value,
+    required String unit,
+    required String label,
+    int badge = 0,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: bgColor.withOpacity(0.65),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: bgColor, width: 1),
+        ),
+        child: Row(
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 18),
+                ),
+                if (badge > 0)
+                  Positioned(
+                    top: -4,
+                    right: -4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE53935),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white, width: 1.2),
+                      ),
+                      child: Text(
+                        badge > 99 ? '99+' : '$badge',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        value,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.5,
+                          color: Colors.grey.shade900,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        unit,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey.shade700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (onTap != null)
+              Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Colors.grey.shade400),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBentoMenuGridCustom({required bool isDriver}) {
+    final displayList = _mainMenuList;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.86),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF0E6),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.grid_view_rounded,
+                          color: Color(0xFFFF6600),
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Modul Layanan',
+                        style: TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_anpServiceList.length > 1)
+                    IconButton(
+                      icon: const Icon(Icons.tune_rounded, size: 18, color: Color(0xFFFF6600)),
+                      onPressed: _showMenuCustomizer,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Atur Menu',
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 14,
+                  childAspectRatio: 0.80,
+                ),
+                itemCount: displayList.length,
+                itemBuilder: (context, index) {
+                  final service = displayList[index];
+                  final bool isMoreMenu = service.idKey == 999;
+                  final bool hasNewBadge = service.showNewBadge || service.badgeNewSince != null;
+                  final bool hasAduanBadge = service.idKey == 35 &&
+                      _aduanNotifCount > 0 &&
+                      _isAduanHandlerForNotif();
+                  final Color iconColor = isMoreMenu
+                      ? primaryOrange
+                      : (service.color ?? const Color(0xFFF05A22));
+
+                  return GestureDetector(
+                    onTap: () => _handleMenuTap(service),
+                    child: Column(
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: iconColor.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: iconColor.withOpacity(isMoreMenu ? 0.6 : 0.28),
+                                  width: isMoreMenu ? 1.5 : 1,
+                                ),
+                              ),
+                              child: Icon(
+                                service.image,
+                                color: iconColor,
+                                size: 24,
+                              ),
+                            ),
+                            if (hasNewBadge)
+                              Positioned(
+                                top: -3,
+                                right: -3,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFF1744),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'NEW',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 7.5,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (isMoreMenu && _additionalMenuList.isNotEmpty)
+                              Positioned(
+                                top: -3,
+                                right: -3,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '+${_additionalMenuList.length}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (hasAduanBadge)
+                              Positioned(
+                                top: -3,
+                                right: -3,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '$_aduanNotifCount',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          service.title ?? '',
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade800,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDriverDocumentHealthCustom() {
+    var fromKir = '';
+    var toKir = '';
+    var fromSTNK = '';
+    var toSTNK = '';
+    var fromSIM = '';
+    var toSIM = '';
+
+    for (var i = 0; i < data.length; i++) {
+      if (data[i]['name'] != null) {
+        if (data[i]['name'] == 'sim') {
+          fromSIM = data[i]['from']?.toString().toUpperCase() ?? '';
+          toSIM = data[i]['to']?.toString().toUpperCase() ?? '';
+        } else if (data[i]['name'] == 'stnk') {
+          fromSTNK = data[i]['from']?.toString().toUpperCase() ?? '';
+          toSTNK = data[i]['to']?.toString().toUpperCase() ?? '';
+        } else if (data[i]['name'] == 'kir') {
+          fromKir = data[i]['from']?.toString().toUpperCase() ?? '';
+          toKir = data[i]['to']?.toString().toUpperCase() ?? '';
+        }
+      }
+    }
+
+    final simExpLabel = (fromSIM.isNotEmpty && toSIM.isNotEmpty)
+        ? ' - '
+        : (toSIM.isNotEmpty ? toSIM : (expireSIM.isNotEmpty ? expireSIM : 'Valid'));
+    final stnkExpLabel = (fromSTNK.isNotEmpty && toSTNK.isNotEmpty)
+        ? ' - '
+        : (toSTNK.isNotEmpty ? toSTNK : 'Tersedia');
+    final kirExpLabel = (fromKir.isNotEmpty && toKir.isNotEmpty)
+        ? ' - '
+        : (toKir.isNotEmpty ? toKir : 'Tersedia');
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.86),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(Icons.verified_user_outlined, size: 16, color: Color(0xFFFF6600)),
+                      SizedBox(width: 6),
+                      Text(
+                        'Kelayakan Dokumen & Armada',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  GestureDetector(
+                    onTap: _showAllDriverDocumentsModal,
+                    child: Row(
+                      children: const [
+                        Text(
+                          'Semua',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFFF6600),
+                          ),
+                        ),
+                        Icon(Icons.chevron_right_rounded, size: 14, color: Color(0xFFFF6600)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  // SIM Card: Tap opens SIM Photo
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _navigateToPhoto("SIM"),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3EB),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFFCC80), width: 0.8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.badge_outlined, color: Color(0xFFFF6600), size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    simType.isNotEmpty ? simType : 'SIM Driver',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey.shade900,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    'Exp: $simExpLabel',
+                                    style: const TextStyle(
+                                      fontSize: 10.5,
+                                      color: Color(0xFF2E7D32),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // KIR Card: Tap opens KIR Photo
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _navigateToPhoto("KIR"),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFA5D6A7), width: 0.8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.confirmation_number_outlined, color: Color(0xFF2E7D32), size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Uji KIR',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey.shade900,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Exp: $kirExpLabel',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      color: Colors.grey.shade700,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  // STNK Card: Tap opens STNK Photo
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _navigateToPhoto("STNK"),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8E1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFFE082), width: 0.8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.assignment_outlined, color: Color(0xFFF57F17), size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'STNK',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey.shade900,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Exp: $stnkExpLabel',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      color: Colors.grey.shade700,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Status Unit / ODO: Tap opens Unit Photo
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _navigateToPhotoUnits("STATUS_UNIT", vhcid_units),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE1F5FE),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF81D4FA), width: 0.8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.speed_rounded, color: Color(0xFF0288D1), size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    vhcnopol.isNotEmpty ? (vhcnopol==null || vhcnopol=='null'?'[Tidak Tersedia]':vhcnopol) : 'Unit Truk',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey.shade900,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    vhckm.isNotEmpty ? '${vhckm==null || vhckm =='null' ?'0':vhckm} KM' : 'Siap Jalan',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      color: Colors.grey.shade700,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdminAttendanceOverviewCustom() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.86),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: const [
+                  Icon(Icons.pie_chart_outline_rounded, size: 16, color: Color(0xFFFF6600)),
+                  SizedBox(width: 6),
+                  Text(
+                    'Rekap Presensi Karyawan',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildAttendancePill(
+                      'Sakit',
+                      sakit.isNotEmpty ? sakit : '0',
+                      const Color(0xFF0288D1),
+                      const Color(0xFFE1F5FE),
+                      onTap: () => _navigateToListAbsensi('sakit'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildAttendancePill(
+                      'Izin',
+                      izin.isNotEmpty ? izin : '0',
+                      const Color(0xFFF57C00),
+                      const Color(0xFFFFF3E0),
+                      onTap: () => _navigateToListAbsensi('izin'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildAttendancePill(
+                      'Cuti',
+                      cuti.isNotEmpty ? cuti : '0',
+                      const Color(0xFF7B1FA2),
+                      const Color(0xFFF3E5F5),
+                      onTap: () => _navigateToListAbsensi('cuti'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttendancePill(String title, String count, Color color, Color bgColor, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: bgColor.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: bgColor, width: 1),
+        ),
+        child: Column(
+          children: [
+            Text(
+              count,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 10.5,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomBottomNavigationBar() {
+    final bool isDriver = (loginname == 'DRIVER');
+
+    if (isDriver) {
+      return SafeArea(
+        top: false,
+        child: Container(
+          height: 65,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 10,
+                offset: const Offset(0, -3),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildBottomNavItem(
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home_rounded,
+                label: 'Beranda',
+                index: 0,
+              ),
+              // Floating Center QR Button: Triggers Driver Attendance or Attendance QR Sheet
+              GestureDetector(
+                onTap: () async {
+                  if (_canManageAttendanceQr()) {
+                    _showAttendanceQrSheet();
+                  } else {
+                    _handleMenuTap(const AnpService(
+                      idKey: 15,
+                      title: "Absensi",
+                      image: Icons.qr_code,
+                      color: primaryOrange,
+                    ));
+                  }
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF6600), Color(0xFFE05500)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF6600).withOpacity(0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.qr_code_scanner_rounded,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+              ),
+              _buildBottomNavItem(
+                icon: Icons.pin_drop_outlined,
+                activeIcon: Icons.pin_drop_rounded,
+                label: 'Maps',
+                index: 1,
+              ),
+              _buildBottomNavItem(
+                icon: Icons.person_outline_rounded,
+                activeIcon: Icons.person_rounded,
+                label: 'Profil',
+                index: 2,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // For Admin / Staff:
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: 65,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, -3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildBottomNavItem(
+              icon: Icons.home_outlined,
+              activeIcon: Icons.home_rounded,
+              label: 'Beranda',
+              index: 0,
+            ),
+            if (_canManageAttendanceQr())
+              _buildAttendanceQrNavItem(),
+            _buildBottomNavItem(
+              icon: Icons.pin_drop_outlined,
+              activeIcon: Icons.pin_drop_rounded,
+              label: 'Maps',
+              index: 1,
+            ),
+            _buildBottomNavItem(
+              icon: Icons.person_outline_rounded,
+              activeIcon: Icons.person_rounded,
+              label: 'Profil',
+              index: 2,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // =========================================================================
+  // MODAL DIALOGS & ACTION HANDLERS FOR REDESIGN DASHBOARD
+  // =========================================================================
+
+  void _showDriverRatingDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: const [
+            Icon(Icons.star_rounded, color: Color(0xFFFFD700), size: 28),
+            SizedBox(width: 8),
+            Text('Rating Pengemudi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _driverAvgRate > 0 ? _driverAvgRate.toStringAsFixed(1) : '5.0',
+              style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold, color: Color(0xFFFF6600)),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (int i = 1; i <= 5; i++)
+                  Icon(
+                    (_driverTotalRate > 0 && i <= _driverStarCount)
+                        ? Icons.star_rounded
+                        : Icons.star_border_rounded,
+                    color: const Color(0xFFFFD700),
+                    size: 24,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Total Ulasan: ${_driverTotalRate > 0 ? "$_driverTotalRate penilaian" : "Belum ada ulasan baru"}',
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Pertahankan kinerja prima dan keselamatan berkendara untuk menjaga kepuasan pelanggan!',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _fetchDriverRating();
+            },
+            child: const Text('Refresh', style: TextStyle(color: Color(0xFFFF6600), fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6600),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAllDriverDocumentsModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.folder_shared_rounded, color: Color(0xFFFF6600), size: 22),
+                const SizedBox(width: 8),
+                const Text(
+                  'Semua Dokumen & Verifikasi',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.badge, color: Color(0xFFFF6600)),
+              title: const Text('SIM Pengemudi'),
+              subtitle: const Text('Lihat foto & masa berlaku SIM'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.pop(context);
+                _navigateToPhoto("SIM");
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.assignment, color: Color(0xFFF57F17)),
+              title: const Text('STNK Kendaraan'),
+              subtitle: const Text('Lihat foto & masa berlaku STNK'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.pop(context);
+                _navigateToPhoto("STNK");
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.confirmation_number, color: Color(0xFF2E7D32)),
+              title: const Text('Uji KIR'),
+              subtitle: const Text('Lihat sertifikat laik jalan'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.pop(context);
+                _navigateToPhoto("KIR");
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.directions_car, color: Color(0xFF0288D1)),
+              title: const Text('Status Unit / QR Pertamina'),
+              subtitle: const Text('Cek kondisi fisik & nopol truk'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.pop(context);
+                _navigateToPhotoUnits("STATUS_UNIT", vhcid_units);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.home, color: Colors.indigo),
+              title: const Text('Dokumen Domisili'),
+              subtitle: const Text('Surat keterangan tempat tinggal'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.pop(context);
+                _navigateToPhoto("DOMISILI");
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.family_restroom, color: Colors.purple),
+              title: const Text('Foto Keluarga'),
+              subtitle: const Text('Data verifikasi keluarga'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.pop(context);
+                _navigateToPhoto("FAMILY");
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAllScheduledDoModal({required bool isMixer}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.list_alt_rounded, color: Color(0xFFFF6600), size: 22),
+                const SizedBox(width: 8),
+                Text(
+                  'Daftar Pengiriman DO (${data_list_do.length})',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const Divider(),
+            Expanded(
+              child: ListView.builder(
+                itemCount: data_list_do.length,
+                itemBuilder: (context, index) {
+                  final item = data_list_do[index];
+                  return isMixer ? _buildScheduleItemMixer(item) : _buildScheduleItem(item);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showQuickSearchModal() {
+    String searchQuery = "";
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final query = searchQuery.trim().toLowerCase();
+
+          // Search in DO
+          final matchingDo = query.isEmpty
+              ? <dynamic>[]
+              : data_list_do.where((item) {
+                  final num = (item['do_number'] ?? '').toString().toLowerCase();
+                  final dest = (item['destination'] ?? '').toString().toLowerCase();
+                  final orig = (item['origin'] ?? '').toString().toLowerCase();
+                  final vhc = (item['vehicle_id'] ?? '').toString().toLowerCase();
+                  return num.contains(query) || dest.contains(query) || orig.contains(query) || vhc.contains(query);
+                }).toList();
+
+          // Search in Menus
+          final matchingMenus = query.isEmpty
+              ? _anpServiceList.take(6).toList()
+              : _anpServiceList.where((svc) {
+                  final title = (svc.title ?? '').toLowerCase();
+                  return title.contains(query);
+                }).toList();
+
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.75,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.search_rounded, color: Color(0xFFFF6600)),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Pencarian Cepat',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                TextField(
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'Cari No DO, Nopol, atau Modul Menu...',
+                    prefixIcon: const Icon(Icons.search, color: Color(0xFFFF6600)),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (val) {
+                    setModalState(() {
+                      searchQuery = val;
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      if (matchingDo.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 6),
+                          child: Text(
+                            'PENGIRIMAN / DO DITEMUKAN',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFFF6600),
+                            ),
+                          ),
+                        ),
+                        for (var item in matchingDo)
+                          Card(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            child: ListTile(
+                              leading: const Icon(Icons.assignment, color: Color(0xFFFF6600)),
+                              title: Text(item['do_number']?.toString() ?? '-'),
+                              subtitle: Text('${item['origin'] ?? ''} → ${item['destination'] ?? ''}'),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () {
+                                Navigator.pop(context);
+                                if (login_type == 'MIXER') {
+                                  _viewHistoryMixer(item);
+                                } else {
+                                  _viewHistory(item);
+                                }
+                              },
+                            ),
+                          ),
+                      ],
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Text(
+                          query.isEmpty ? 'MODUL LAYANAN POPULER' : 'MODUL LAYANAN DITEMUKAN',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFFF6600),
+                          ),
+                        ),
+                      ),
+                      for (var svc in matchingMenus)
+                        ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: (svc.color ?? const Color(0xFFFF6600)).withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(svc.image, color: svc.color ?? const Color(0xFFFF6600), size: 20),
+                          ),
+                          title: Text(svc.title ?? ''),
+                          trailing: const Icon(Icons.chevron_right, size: 18),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _handleMenuTap(svc);
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
