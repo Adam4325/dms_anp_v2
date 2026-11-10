@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi';
 import 'package:dms_anp/src/Color/color_constants.dart';
 import 'package:dms_anp/src/pages/driver/RegistrasiNewDriver.dart';
 import 'package:flutter/material.dart';

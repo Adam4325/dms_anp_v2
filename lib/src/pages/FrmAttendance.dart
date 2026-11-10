@@ -22,6 +22,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helpers/sim_phone_guard.dart';
 import '../../helpers/DeveloperModeGuard.dart';
+import '../../helpers/fake_gps_guard.dart';
+import '../../helpers/vpn_guard.dart';
 class FrmAttendance extends StatefulWidget {
   @override
   FrmAttendanceState createState() => FrmAttendanceState();
@@ -32,6 +34,8 @@ final globalScaffoldKey = GlobalKey<ScaffoldState>();
 class FrmAttendanceState extends State<FrmAttendance> {
   final String BASE_URL = GlobalData.baseUrlOri;
   String androidID = "";
+  bool _isVpnActive = false;
+  List<String> _vpnAppNames = [];
   List listGeofence = [];
   List<Map<String, dynamic>> listInfoAbsensi = [];
   String address = "";
@@ -78,6 +82,20 @@ class FrmAttendanceState extends State<FrmAttendance> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
         return;
+      }
+      if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: true)) {
+        return;
+      }
+    });
+    VpnGuard.isVpnDetected().then((detected) async {
+      if (detected) {
+        final apps = await VpnGuard.getInstalledVpnApps();
+        if (mounted) {
+          setState(() {
+            _isVpnActive = true;
+            _vpnAppNames = apps;
+          });
+        }
       }
     });
   }
@@ -164,10 +182,14 @@ class FrmAttendanceState extends State<FrmAttendance> {
 
 
     final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    final bool isMock = FakeGpsGuard.isMock(position);
     setState(() {
       userLocation = position;
       address = "${position.latitude},${position.longitude}";
     });
+    if (isMock && mounted) {
+      FakeGpsGuard.showWarningSnackBar(context);
+    }
     return position;
   }
 
@@ -272,6 +294,9 @@ class FrmAttendanceState extends State<FrmAttendance> {
       if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
         return "";
       }
+      if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: true)) {
+        return "";
+      }
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       var user_id = prefs.getString("name");
@@ -292,6 +317,11 @@ class FrmAttendanceState extends State<FrmAttendance> {
         print(encoded);
         Uri urlEncode = Uri.parse(encoded);
 
+        final bool isMock = FakeGpsGuard.isMock(userLocation);
+        if (isMock && mounted) {
+          FakeGpsGuard.showWarningSnackBar(context);
+        }
+
         var data = {
           'method': inorout == "IN" ? "checkin-attendance-v3" : "checkout-attendance-v3",
           'imeiid': androidID.toString(),
@@ -302,7 +332,7 @@ class FrmAttendanceState extends State<FrmAttendance> {
           'geo_id': geo_id.toString(),
           'geo_nm': geo_nm,
           'shift': dropdownvalue,
-          'is_mock': '0',
+          'is_mock': isMock ? '1' : '0',
         };
         print('data param ${data}');
         final response = await http.post(urlEncode, body: data);
@@ -421,9 +451,12 @@ class FrmAttendanceState extends State<FrmAttendance> {
   }
 
   Future _updatePositionInner(String inorout) async {
-    // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
-    //   return;
-    // }
+    if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+      return;
+    }
+    if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: true)) {
+      return;
+    }
     if (!await _ensureApprovedAndLive(inorout)) {
       return;
     }
@@ -483,7 +516,40 @@ class FrmAttendanceState extends State<FrmAttendance> {
             context: context,
             builder: (context) => AlertDialog(
               title: Text('Information'),
-              content: Text("checked ${inorout.toUpperCase()} absensi?"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("checked ${inorout.toUpperCase()} absensi?"),
+                  if (userLocation?.isMocked ?? false) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, size: 20, color: Colors.red.shade700),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "Anda menggunakan Fake GPS! Absensi akan ditandai FAKE pada sistem.",
+                              style: TextStyle(
+                                color: Colors.red.shade900,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
               actions: [
                 ElevatedButton.icon(
                   icon: Icon(Icons.close, color: Colors.white, size: 20.0),
@@ -663,6 +729,13 @@ class FrmAttendanceState extends State<FrmAttendance> {
       padding: EdgeInsets.all(16),
       child: Column(
         children: [
+          if (userLocation?.isMocked ?? false)
+            FakeGpsGuard.buildWarningBanner(),
+          if (_isVpnActive)
+            VpnGuard.buildWarningBanner(
+              appNames: _vpnAppNames,
+              onPressedSettings: () => VpnGuard.openVpnSettings(),
+            ),
           _buildPhotoSection(),
           SizedBox(height: 20),
           _buildFaceStatusSection(),
@@ -926,6 +999,31 @@ class FrmAttendanceState extends State<FrmAttendance> {
             Text(
               "Accuracy: ${userLocation!.accuracy.toStringAsFixed(1)}m",
               style: TextStyle(color: Colors.green.shade600, fontSize: 11),
+            ),
+          if (userLocation?.isMocked ?? false)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.red.shade100,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.red.shade300),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.gpp_bad, size: 14, color: Colors.red.shade800),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Terdeteksi Fake GPS (Mock Location)",
+                    style: TextStyle(
+                      color: Colors.red.shade900,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
         ],
       ),

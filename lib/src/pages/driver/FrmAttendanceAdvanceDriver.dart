@@ -15,6 +15,7 @@ import '../../Helper/globals.dart' as globals;
 import '../ViewDashboard.dart';
 import 'ViewApprovalAttendanceDriver.dart';
 import '../../../helpers/DeveloperModeGuard.dart';
+import '../../../helpers/vpn_guard.dart';
 
 /// Halaman Absen Advance Khusus Driver (Attendance Advance Driver).
 /// ATURAN KETAT:
@@ -74,6 +75,8 @@ class _FrmAttendanceAdvanceDriverState extends State<FrmAttendanceAdvanceDriver>
   String _filterStatus = 'ALL'; // ALL, PENDING, APPROVED, REJECTED
   String _filterType = 'ALL'; // ALL, IZIN, SAKIT
   final TextEditingController _txtSearch = TextEditingController();
+  bool _isVpnActive = false;
+  List<String> _vpnAppNames = [];
 
   @override
   void initState() {
@@ -81,6 +84,20 @@ class _FrmAttendanceAdvanceDriverState extends State<FrmAttendanceAdvanceDriver>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
         return;
+      }
+      if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: true)) {
+        return;
+      }
+    });
+    VpnGuard.isVpnDetected().then((detected) async {
+      if (detected) {
+        final apps = await VpnGuard.getInstalledVpnApps();
+        if (mounted) {
+          setState(() {
+            _isVpnActive = true;
+            _vpnAppNames = apps;
+          });
+        }
       }
     });
     // Pastikan tidak ada overlay loading EasyLoading yang tertinggal dari dashboard
@@ -327,6 +344,9 @@ class _FrmAttendanceAdvanceDriverState extends State<FrmAttendanceAdvanceDriver>
     if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
       return;
     }
+    if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: true)) {
+      return;
+    }
     // 1. Strict Validation: Tipe hanya boleh IZIN atau SAKIT
     final typeUpper = _selectedType.toUpperCase().trim();
     if (!_allowedTypes.contains(typeUpper)) {
@@ -464,7 +484,7 @@ class _FrmAttendanceAdvanceDriverState extends State<FrmAttendanceAdvanceDriver>
         'status_absensi': typeUpper.toLowerCase(),
         'geo_id': '0',
         'geo_nm': 'MOBILE DRIVER',
-        'is_mock': '0',
+        'is_mock': (_currentPosition?.isMocked ?? false) ? '1' : '0',
         'employeeid': driverId,
         'lat': lat,
         'lon': lon,
@@ -676,6 +696,11 @@ class _FrmAttendanceAdvanceDriverState extends State<FrmAttendanceAdvanceDriver>
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       child: Column(
         children: [
+          if (_isVpnActive)
+            VpnGuard.buildWarningBanner(
+              appNames: _vpnAppNames,
+              onPressedSettings: () => VpnGuard.openVpnSettings(),
+            ),
           // Header Card Info Driver
           Container(
             padding: const EdgeInsets.all(14),

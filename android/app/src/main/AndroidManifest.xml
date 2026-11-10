@@ -12,14 +12,12 @@
         <uses-permission android:name="android.hardware.location.gps" />
         <uses-permission android:name="android.permission.CAMERA" />
         <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-        <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
         <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
         <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
         <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
         <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
         <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
         <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-        <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
         <uses-permission android:name="android.permission.WAKE_LOCK" />
         <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
         <!-- Bluetooth thermal printer -->
@@ -35,9 +33,15 @@
 
         <!-- Speech to text -->
         <uses-permission android:name="android.permission.RECORD_AUDIO" />
+        <!-- Deteksi instalasi VPN (Turbo VPN dll) untuk pengamanan absensi -->
+        <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
 
     <queries>
         <package android:name="com.google.android.verifier" />
+        <!-- Query seluruh aplikasi yang mengimplementasikan VpnService (Turbo VPN, Warp, OpenVPN, dll) -->
+        <intent>
+            <action android:name="android.net.VpnService" />
+        </intent>
         <!-- If your app opens https URLs -->
         <intent>
             <action android:name="android.intent.action.VIEW" />

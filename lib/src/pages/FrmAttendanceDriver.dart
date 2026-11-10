@@ -18,10 +18,11 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:trust_location/trust_location.dart';
 
 import '../../helpers/DeveloperModeGuard.dart';
 import '../../helpers/sim_phone_guard.dart';
+import '../../helpers/fake_gps_guard.dart';
+import '../../helpers/vpn_guard.dart';
 
 // Constants
 class AttendanceConstants {
@@ -140,12 +141,17 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
 
   // Controllers
   TextEditingController addressController = TextEditingController();
+  bool _isVpnActive = false;
+  List<String> _vpnAppNames = [];
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
+        return;
+      }
+      if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: true)) {
         return;
       }
     });
@@ -160,6 +166,18 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
 
   Future<void> _initializeData() async {
     if (EasyLoading.isShow) EasyLoading.dismiss();
+
+    VpnGuard.isVpnDetected().then((detected) async {
+      if (detected) {
+        final apps = await VpnGuard.getInstalledVpnApps();
+        if (mounted) {
+          setState(() {
+            _isVpnActive = true;
+            _vpnAppNames = apps;
+          });
+        }
+      }
+    });
 
     await _loadUserSession();
     await _loadStoredPhoto();
@@ -202,17 +220,32 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
 
   Future<void> _getCurrentLocation() async {
     try {
-      Position? position = await Geolocator.getLastKnownPosition();
-      position ??= await Geolocator.getCurrentPosition(
+      Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 10),
-      ).timeout(Duration(seconds: 12));
+        timeLimit: const Duration(seconds: 10),
+      ).timeout(const Duration(seconds: 12));
+
+      final bool isMock = FakeGpsGuard.isMock(position);
 
       setState(() {
         userLocation = position;
       });
+
+      if (isMock && mounted) {
+        FakeGpsGuard.showWarningSnackBar(context);
+      }
     } on TimeoutException {
       print("Getting location timeout");
+      final position = await Geolocator.getLastKnownPosition();
+      if (position != null) {
+        final bool isMock = FakeGpsGuard.isMock(position);
+        setState(() {
+          userLocation = position;
+        });
+        if (isMock && mounted) {
+          FakeGpsGuard.showWarningSnackBar(context);
+        }
+      }
     } catch (e) {
       print("Error getting location: $e");
     }
@@ -487,6 +520,9 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
     if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
       return;
     }
+    if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: true)) {
+      return;
+    }
 
     // if (await SimPhoneGuard.blockIfPhoneInvalid(context)) {
     //   return;
@@ -646,6 +682,33 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
             Text("Lokasi: ${geofence.name}",
                 style:
                     const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            if (userLocation?.isMocked ?? false) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade300),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, size: 20, color: Colors.red.shade700),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Anda menggunakan Fake GPS! Absensi akan ditandai FAKE pada sistem.",
+                        style: TextStyle(
+                          color: Colors.red.shade900,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (isTransit) ...[
               const SizedBox(height: 6),
               Container(
@@ -705,6 +768,10 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
 
   Future<void> _submitAttendance(
       String type, GeofenceArea geofence, String address) async {
+    if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: true)) {
+      return;
+    }
+
     // Tidak blokir submit di client (TrustLocation sering false positive).
     // is_mock dikirim ke server. Server: pakai is_mock hanya sebagai SALAH SATU sinyal,
     // jangan reject HANYA karena is_mock=='1' (gabungkan dengan geofence/pola/lokasi).
@@ -724,6 +791,11 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         return;
       }
 
+      final bool isMock = FakeGpsGuard.isMock(userLocation);
+      if (isMock && mounted) {
+        FakeGpsGuard.showWarningSnackBar(context);
+      }
+
       String url =
           "${GlobalData.baseUrlOri}mobile/api/absensi/check_in_out_geofence_driver.jsp";
 
@@ -734,7 +806,7 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
         'shift': selectedShift,
         'geo_id': geofence.geoId.toString(),
         'geo_nm': geofence.name,
-        'is_mock': '0',
+        'is_mock': isMock ? '1' : '0',
         'employeeid': "",
         'lat': userLocation!.latitude.toString(),
         'lon': userLocation!.longitude.toString(),
@@ -931,6 +1003,13 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
       padding: EdgeInsets.all(16),
       child: Column(
         children: [
+          if (userLocation?.isMocked ?? false)
+            FakeGpsGuard.buildWarningBanner(),
+          if (_isVpnActive)
+            VpnGuard.buildWarningBanner(
+              appNames: _vpnAppNames,
+              onPressedSettings: () => VpnGuard.openVpnSettings(),
+            ),
           _buildPhotoSection(),
           SizedBox(height: 20),
           _buildInfoSection(),
@@ -1101,6 +1180,31 @@ class FrmAttendanceDriverState extends State<FrmAttendanceDriver> {
             Text(
               "Accuracy: ${userLocation?.accuracy.toStringAsFixed(1)}m",
               style: TextStyle(color: Colors.green.shade600, fontSize: 11),
+            ),
+          if (userLocation?.isMocked ?? false)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.red.shade100,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.red.shade300),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.gpp_bad, size: 14, color: Colors.red.shade800),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Terdeteksi Fake GPS (Mock Location)",
+                    style: TextStyle(
+                      color: Colors.red.shade900,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
           Builder(
             builder: (context) {

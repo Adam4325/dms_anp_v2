@@ -91,22 +91,33 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   String _identifier = '';
-  Future<void> initUniqueIdentifierState() async {
+  Future<String> initUniqueIdentifierState() async {
     String? identifier;
     try {
       //identifier = "3d011a9d72e23c29"; //await UniqueIdentifier.serial;
       identifier = await UniqueIdentifier.serial;
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setString("androidID", identifier ?? '');
+      if (identifier != null &&
+          identifier.isNotEmpty &&
+          identifier != 'Failed to get Unique Identifier') {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString("androidID", identifier);
+      }
     } catch (platformException) {
-      identifier = 'Failed to get Unique Identifier';
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      identifier = prefs.getString("androidID");
+      if (identifier == null || identifier.isEmpty) {
+        identifier = 'Failed to get Unique Identifier';
+      }
     }
 
-    if (!mounted) return;
-
-    setState(() {
+    if (mounted) {
+      setState(() {
+        _identifier = identifier ?? '';
+      });
+    } else {
       _identifier = identifier ?? '';
-    });
+    }
+    return _identifier;
   }
 
   void showToast(String? message) {
@@ -126,7 +137,8 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _authenticate() async {
     try {
       bool isAuthenticated = await _localAuth.authenticate(
-        localizedReason: 'Please authenticate to login',
+        localizedReason: 'Silakan scan sidik jari untuk login',
+        persistAcrossBackgrounding: true,
       );
 
       if (isAuthenticated) {
@@ -170,52 +182,114 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _updateImeiOnServer(
+  Future<bool> _updateImeiOnServer(
       {required String imeiid,
       required String statusKaryawan,
       required String drvid,
-      required String kryid}) async {
+      required String kryid,
+      String? username}) async {
     try {
-      final status =
-          statusKaryawan.toLowerCase() == 'driver' ? 'driver' : 'karyawan';
-      final id = status == 'driver' ? drvid : kryid;
-      final baseUrl = GlobalData.baseUrl + "api/imeiid/update_imeiid.jsp";
-      final uri = Uri.parse(baseUrl).replace(queryParameters: {
-        'method': 'update-imeiid-anp',
-        'imeiid': imeiid,
-        'status': status,
-        'id': id,
-      });
-      print('update-imeiid url: ${uri.toString()}');
-      final response = await http.get(uri);
-      if (response.statusCode == 200) {}
-    } catch (e) {}
+      if (imeiid.isEmpty || imeiid == 'Failed to get Unique Identifier') {
+        print('update-imeiid skipped: imeiid is empty');
+        return false;
+      }
+      bool isSuccess = false;
+      final bool isDriver = statusKaryawan.toLowerCase() == 'driver';
+      final String effectiveUser = (username != null && username.isNotEmpty)
+          ? username
+          : (isDriver ? drvid : (kryid.isNotEmpty ? kryid : drvid));
+
+      // 1. Panggil change_imeiid_user.jsp (aktif di server produksi, mengupdate TBLUSER.LOCID5 & TBLUSERDRIVER)
+      try {
+        final changeUri = Uri.parse(GlobalData.baseUrl + "api/change_imeiid_user.jsp")
+            .replace(queryParameters: {
+          'method': 'change-imeiid-v1',
+          'id': isDriver ? drvid : effectiveUser,
+          'username': effectiveUser,
+          'userid': effectiveUser,
+          'loginname': isDriver ? 'DRIVER' : 'DISPATCHER',
+          'imeiid': imeiid,
+        });
+        print('change_imeiid url: ${changeUri.toString()}');
+        final responseChange =
+            await http.get(changeUri).timeout(const Duration(seconds: 7));
+        print(
+            'change_imeiid statusCode: ${responseChange.statusCode}, body: ${responseChange.body}');
+        if (responseChange.statusCode == 200) {
+          final resJson = jsonDecode(responseChange.body);
+          if (resJson['status_code']?.toString() == '200') {
+            isSuccess = true;
+          }
+        }
+      } catch (e) {
+        print('change_imeiid exception: $e');
+      }
+
+      // 2. Panggil juga update_imeiid.jsp (untuk pembaruan tabel tbldriver / tblkaryawan)
+      try {
+        final status = isDriver ? 'driver' : 'karyawan';
+        final targetId =
+            isDriver ? drvid : (kryid.isNotEmpty ? kryid : effectiveUser);
+        final baseUrl = GlobalData.baseUrl + "api/imeiid/update_imeiid.jsp";
+        final Map<String, String> params = {
+          'method': 'update-imeiid-anp',
+          'imeiid': imeiid,
+          'status': status,
+          'id': targetId,
+          if (username != null && username.isNotEmpty) 'username': username,
+        };
+        final uri = Uri.parse(baseUrl).replace(queryParameters: params);
+        print('update-imeiid url: ${uri.toString()}');
+        final response =
+            await http.get(uri).timeout(const Duration(seconds: 7));
+        print(
+            'update-imeiid statusCode: ${response.statusCode}, body: ${response.body}');
+        if (response.statusCode == 200) {
+          final resJson = jsonDecode(response.body);
+          if (resJson['status'] == 'success') {
+            isSuccess = true;
+          }
+        }
+      } catch (e) {
+        print('update-imeiid exception: $e');
+      }
+
+      return isSuccess;
+    } catch (e) {
+      print('update-imeiid general exception: $e');
+      return false;
+    }
   }
 
   Future doLogin(BuildContext context, bool isFinger) async {
     EasyLoading.show();
     try {
       final JsonDecoder _decoder = new JsonDecoder();
-      var endpointUrl = GlobalData.baseUrl + "api/authorize_v13.jsp";
+      var endpointUrl = GlobalData.baseUrl + "api/authorize_v14.jsp";
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String username = TxtUsername.text.trim();
       String password = TxtPassword.text;
-      // Fingerprint: username/password tidak wajib, yang wajib imeiid
+      // Fingerprint: langsung kirim imeiid perangkat tanpa username dan password
       if (isFinger) {
-        if (username.isEmpty) username = prefs.getString('username') ?? '';
-        if (password.isEmpty) password = prefs.getString('password') ?? '';
+        username = "";
+        password = "";
+        if (_identifier.isEmpty ||
+            _identifier == 'Failed to get Unique Identifier') {
+          _identifier = prefs.getString('androidID') ?? '';
+        }
+        if (_identifier.isEmpty) {
+          _identifier = await initUniqueIdentifierState();
+        }
         if (_identifier.isEmpty ||
             _identifier == 'Failed to get Unique Identifier') {
           EasyLoading.dismiss();
-          final ctx = globalScaffoldKey.currentContext;
-          if (ctx != null) {
-            alert(
-                ctx,
-                0,
-                "IMEIID/Device ID tidak tersedia. Pastikan permission telah diberikan.",
-                "error");
-          }
+          final ctx = globalScaffoldKey.currentContext ?? context;
+          alert(
+              ctx,
+              0,
+              "Device ID (IMEIID) tidak dapat dibaca dari perangkat. Pastikan izin telah diberikan.",
+              "error");
           return;
         }
       }
@@ -270,18 +344,14 @@ class _LoginPageState extends State<LoginPage> {
       var response = await http.get(myUri, headers: headers);
       if (response.statusCode != 200) {
         EasyLoading.dismiss();
-        final ctx = globalScaffoldKey.currentContext;
-        if (ctx != null) {
-          alert(ctx, 0, "Error while fetching data", "error");
-        }
+        final ctx = globalScaffoldKey.currentContext ?? context;
+        alert(ctx, 0, "Error while fetching data", "error");
       } else {
         var result = _decoder.convert(response.body);
         if (int.parse(result["status_code"]) == 100) {
           EasyLoading.dismiss();
-          final ctx = globalScaffoldKey.currentContext;
-          if (ctx != null) {
-            alert(ctx, 0, result["message"], "error");
-          }
+          final ctx = globalScaffoldKey.currentContext ?? context;
+          alert(ctx, 0, result["message"], "error");
         } else {
           SharedPreferences prefs = await SharedPreferences.getInstance();
           var drvid = result["data"][0]["drvid"];
@@ -340,9 +410,53 @@ class _LoginPageState extends State<LoginPage> {
             }
           }
 
+          // Bersihkan string 'null' dari backend
+          if (loginname != null &&
+              loginname.toString().trim().toLowerCase() == 'null') {
+            loginname = '';
+          }
+          if (nickname != null &&
+              nickname.toString().trim().toLowerCase() == 'null') {
+            nickname = '';
+          }
+
           // Fingerprint: username kosong → pakai name/drvid dari API (sama seperti login manual)
           if (username.isEmpty) {
             username = (name ?? drvid ?? '').toString().trim();
+          }
+
+          // Normalisasi akun ADMIN / Staff / Karyawan
+          final String effUser = username.toUpperCase();
+          final bool isAdminUser = effUser == 'ADMIN' ||
+              (drvid != null && drvid.toString().toUpperCase() == 'ADMIN') ||
+              (name != null && name.toString().toUpperCase() == 'ADMIN');
+          final bool isNonDriver = nickname == 'DISPATCHER' ||
+              isAdminUser ||
+              (loginname != null &&
+                  loginname.toString().isNotEmpty &&
+                  loginname.toString().toUpperCase() != 'DRIVER');
+
+          if (isAdminUser) {
+            status_karyawan = 'KARYAWAN';
+            if (loginname == null ||
+                loginname.toString().trim().isEmpty ||
+                loginname.toString().toLowerCase() == 'null') {
+              loginname = 'IT';
+            }
+            if (kryid.isEmpty || kryid.toLowerCase() == 'null') {
+              kryid = '1184-020118.81';
+            }
+          } else if (isNonDriver &&
+              (status_karyawan == null ||
+                  status_karyawan.toString().toUpperCase() == 'DRIVER')) {
+            status_karyawan = 'KARYAWAN';
+            if (loginname == null ||
+                loginname.toString().trim().isEmpty ||
+                loginname.toString().toLowerCase() == 'null') {
+              loginname = (nickname != null && nickname.toString().isNotEmpty)
+                  ? nickname
+                  : 'STAFF';
+            }
           }
 
           print(drvid);
@@ -394,30 +508,136 @@ class _LoginPageState extends State<LoginPage> {
           UserInactivityController.resetTimer();
           UserInactivityController.reloadIdleDuration();
 
-          final imeiToSend = (prefs.getString('androidID') ?? _identifier);
-          await _updateImeiOnServer(
-              imeiid: imeiToSend,
-              statusKaryawan: status_karyawan,
-              drvid: drvid,
-              kryid: kryid);
+          String imeiToSend = (prefs.getString('androidID') ?? _identifier);
+          if (imeiToSend.isEmpty ||
+              imeiToSend == 'Failed to get Unique Identifier') {
+            try {
+              final newId = await UniqueIdentifier.serial;
+              if (newId != null && newId.isNotEmpty) {
+                imeiToSend = newId;
+                await prefs.setString('androidID', newId);
+              }
+            } catch (_) {}
+          }
+          // Jika login manual (bukan finger), cek apakah IMEI perangkat sudah terdaftar untuk akun ini
+          if (!isFinger &&
+              imeiToSend.isNotEmpty &&
+              imeiToSend != 'Failed to get Unique Identifier') {
+            bool isImeiRegistered = false;
+            try {
+              final checkUri = Uri.parse(endpointUrl).replace(queryParameters: {
+                'method': 'authorize-v1',
+                'username': '',
+                'password': '',
+                'imeiid': imeiToSend,
+                'isfinger': '1',
+              });
+              final checkRes =
+                  await http.get(checkUri).timeout(const Duration(seconds: 4));
+              if (checkRes.statusCode == 200) {
+                final checkResult = _decoder.convert(checkRes.body);
+                if (int.tryParse(checkResult["status_code"]?.toString() ?? '') ==
+                    200) {
+                  final checkData = checkResult["data"];
+                  if (checkData != null &&
+                      checkData is List &&
+                      checkData.isNotEmpty) {
+                    final matchedUser = (checkData[0]["drvid"] ??
+                            checkData[0]["name"] ??
+                            '')
+                        .toString()
+                        .toUpperCase();
+                    if (matchedUser == effUser ||
+                        matchedUser == drvid.toString().toUpperCase()) {
+                      isImeiRegistered = true;
+                    }
+                  }
+                }
+              }
+            } catch (_) {}
+
+            if (!isImeiRegistered) {
+              if (EasyLoading.isShow) EasyLoading.dismiss();
+              final ctx = globalScaffoldKey.currentContext ?? context;
+              bool? activateFinger = await showDialog<bool>(
+                context: ctx,
+                barrierDismissible: false,
+                builder: (dCtx) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  title: const Row(
+                    children: [
+                      Icon(Icons.fingerprint, color: primaryOrange, size: 28),
+                      SizedBox(width: 8),
+                      Text("Aktifkan Fingerprint?",
+                          style: TextStyle(
+                              fontSize: 17, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  content: const Text(
+                    "Device ID perangkat ini belum terdaftar untuk login Fingerprint.\n\n"
+                    "Apakah Anda ingin mengaktifkan login Fingerprint menggunakan perangkat ini?",
+                    style: TextStyle(fontSize: 14, height: 1.4),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dCtx, false),
+                      child: const Text("No",
+                          style: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15)),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryOrange,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () => Navigator.pop(dCtx, true),
+                      child: const Text("Yes",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15)),
+                    ),
+                  ],
+                ),
+              );
+
+              if (activateFinger == true) {
+                EasyLoading.show(status: 'Mengaktifkan Fingerprint...');
+                final bool success = await _updateImeiOnServer(
+                  imeiid: imeiToSend,
+                  statusKaryawan: status_karyawan,
+                  drvid: drvid,
+                  kryid: kryid,
+                  username: username,
+                );
+                if (EasyLoading.isShow) EasyLoading.dismiss();
+                if (success) {
+                  showToast("Fingerprint berhasil diaktifkan");
+                } else {
+                  showToast("Gagal mengaktifkan Fingerprint di server");
+                }
+              }
+            }
+          }
+
           await FcmAduanService.instance.syncTokenIfPossible();
           unawaited(MasterDataPreloader.preloadCommon(forceRefresh: true));
 
-          Timer(Duration(seconds: 1), () {
-            EasyLoading.dismiss();
-            final ctx = globalScaffoldKey.currentContext;
-            if (ctx != null) {
-              if (loginname == "MECHANIC" && isMenuForeman == false) {
-                Navigator.pushReplacement(ctx,
-                    MaterialPageRoute(builder: (context) => ViewListWoMCN()));
-              } else {
-                prefs.setString(
-                    'isMenuForeman', (isMenuForeman == true ? "1" : "0"));
-                Navigator.pushReplacement(ctx,
-                    MaterialPageRoute(builder: (context) => ViewDashboard()));
-              }
-            }
-          });
+          if (EasyLoading.isShow) EasyLoading.dismiss();
+          final ctx = globalScaffoldKey.currentContext ?? context;
+          if (loginname == "MECHANIC" && isMenuForeman == false) {
+            Navigator.pushReplacement(
+                ctx, MaterialPageRoute(builder: (context) => ViewListWoMCN()));
+          } else {
+            prefs.setString(
+                'isMenuForeman', (isMenuForeman == true ? "1" : "0"));
+            Navigator.pushReplacement(
+                ctx, MaterialPageRoute(builder: (context) => ViewDashboard()));
+          }
         }
       }
     } catch (e) {
@@ -692,7 +912,7 @@ class _LoginPageState extends State<LoginPage> {
                                   onPressed: () async {
                                     try {
                                       print('Fingerprint check available');
-                                      initUniqueIdentifierState();
+                                      await initUniqueIdentifierState();
                                       print("_identifier ${_identifier}");
                                       await _authenticate();
                                     } catch (e) {
@@ -732,7 +952,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 30),
                   Text(
-                    "Version 3.13",
+                    "Version 3.16",
                     style: TextStyle(
                       color: textSecondary,
                       fontSize: 14,

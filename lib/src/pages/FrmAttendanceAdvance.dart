@@ -21,6 +21,7 @@ import 'package:dms_anp/src/pages/ViewDetailCuti.dart';
 import 'package:dms_anp/src/pages/driver/FrmAttendanceAdvanceDriver.dart';
 import 'package:dms_anp/src/pages/driver/ViewApprovalAttendanceDriver.dart';
 import '../../helpers/DeveloperModeGuard.dart';
+import '../../helpers/vpn_guard.dart';
 
 final globalScaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -32,6 +33,8 @@ class FrmAttendanceAdvance extends StatefulWidget {
 }
 
 class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
+  bool _isVpnActive = false;
+  List<String> _vpnAppNames = [];
   // Design Tokens (Soft Orange Pastel)
   static const Color primaryOrange = Color(0xFFFF8C69);
   static const Color lightOrange = Color(0xFFFFF4E6);
@@ -285,6 +288,9 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
       if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
         return "";
       }
+      if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: true)) {
+        return "";
+      }
       SharedPreferences prefs = await SharedPreferences.getInstance();
       var user_id = prefs.getString("name");
       if (androidID.isEmpty) {
@@ -338,7 +344,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
           'status_absensi': dropdownvalue.toString(),
           'geo_id': geo_id.toString(),
           'geo_nm': geo_nm,
-          'is_mock': '0',
+          'is_mock': (userLocation?.isMocked ?? false) ? '1' : '0',
           'employeeid': "",
           'lat': lat,
           'lon': lon,
@@ -570,6 +576,11 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          if (_isVpnActive)
+            VpnGuard.buildWarningBanner(
+              appNames: _vpnAppNames,
+              onPressedSettings: () => VpnGuard.openVpnSettings(),
+            ),
           // 1. Employee Info & Profile Card
           Container(
             padding: const EdgeInsets.all(14),
@@ -1189,6 +1200,20 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context)) {
         return;
+      }
+      if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: true)) {
+        return;
+      }
+    });
+    VpnGuard.isVpnDetected().then((detected) async {
+      if (detected) {
+        final apps = await VpnGuard.getInstalledVpnApps();
+        if (mounted) {
+          setState(() {
+            _isVpnActive = true;
+            _vpnAppNames = apps;
+          });
+        }
       }
     });
     _getLocation().then((position) {

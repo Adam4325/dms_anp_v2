@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
 
 class RewardExchangePage extends StatefulWidget {
@@ -33,11 +34,19 @@ class _RewardExchangePageState extends State<RewardExchangePage> {
 
   List<Map<String, dynamic>> rewards = [];
   bool loading = false;
+  late int currentPoints;
+  String currentDrvId = '';
+  String currentUser = '';
+  String currentLoc = '';
   final TextEditingController quantityController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    currentPoints = widget.pts;
+    currentDrvId = widget.drvId;
+    currentUser = widget.usr;
+    currentLoc = widget.loc;
     load();
   }
 
@@ -51,6 +60,37 @@ class _RewardExchangePageState extends State<RewardExchangePage> {
     setState(() => loading = true);
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      if (currentDrvId.isEmpty) {
+        currentDrvId = prefs.getString('drvid') ?? '';
+      }
+      if (currentUser.isEmpty) {
+        currentUser = prefs.getString('name') ?? '';
+      }
+      if (currentLoc.isEmpty) {
+        currentLoc = prefs.getString('locid') ?? '';
+      }
+
+      // Fetch latest points directly from API
+      if (currentDrvId.isNotEmpty) {
+        try {
+          final pUrl = Uri.parse(
+              '${GlobalData.baseUrl}api/list_point_driver.jsp?method=get-points&drvid=$currentDrvId');
+          final pRes = await http.get(pUrl);
+          if (pRes.statusCode == 200) {
+            final pData = jsonDecode(pRes.body);
+            if (pData['status_code'] == '200' && pData['jumlah'] != null) {
+              final val = int.tryParse(pData['jumlah'].toString());
+              if (val != null) {
+                currentPoints = val;
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint("Error fetching driver points: $e");
+        }
+      }
+
       final response = await http.get(Uri.parse(
           '${GlobalData.baseUrl}api/points/reward_list.jsp?method=list-reward'));
       if (response.statusCode == 200) {
@@ -283,26 +323,30 @@ class _RewardExchangePageState extends State<RewardExchangePage> {
 
     final int p = r['pts'] ?? 0;
     final int totalPointsNeeded = p * qty;
-    if (widget.pts < totalPointsNeeded) {
+    if (currentPoints < totalPointsNeeded) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Poin tidak cukup! Butuh $totalPointsNeeded poin, poin Anda saat ini ${widget.pts}.'),
+              'Poin tidak cukup! Butuh $totalPointsNeeded poin, poin Anda saat ini $currentPoints.'),
         ),
       );
       return;
     }
 
     try {
+      final effectiveDrvId = currentDrvId.isNotEmpty ? currentDrvId : widget.drvId;
+      final effectiveUser = currentUser.isNotEmpty ? currentUser : widget.usr;
+      final effectiveLoc = currentLoc.isNotEmpty ? currentLoc : widget.loc;
+
       final String baseUrl = '${GlobalData.baseUrl}api/points/redeem_reward.jsp';
       final String fullUrl = "$baseUrl?"
           "method=create-point"
           "&id=${r['id']}"
           "&points=${r['pts']}"
           "&qty=${r['qty']}"
-          "&driverId=${widget.drvId}"
-          "&createdBy=${widget.usr}"
-          "&locId=${widget.loc}"
+          "&driverId=$effectiveDrvId"
+          "&createdBy=$effectiveUser"
+          "&locId=$effectiveLoc"
           "&type=${r['type']}"
           "&quantity_beli=$qtyText";
 
@@ -398,7 +442,7 @@ class _RewardExchangePageState extends State<RewardExchangePage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${widget.pts} Poin',
+                        '$currentPoints Poin',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,

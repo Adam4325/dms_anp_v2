@@ -51,6 +51,7 @@ import 'package:dms_anp/src/pages/pb/PbHeaderPage.dart';
 import 'package:dms_anp/src/pages/tuker_point/RewardTabsPage.dart';
 import 'package:dms_anp/src/pages/vehicle/FrmRequestMovingUnits.dart';
 import 'package:dms_anp/src/pages/vehicle/ViewPhotoVehicle.dart';
+import 'package:dms_anp/helpers/app_update_helper.dart';
 import 'package:dms_anp/src/services/NotificationServices.dart';
 import 'package:dms_anp/src/widgets/user_inactivity_scope.dart';
 import 'package:flutter/cupertino.dart';
@@ -93,6 +94,7 @@ import 'mekanik/ListMekanikInspeksiV2.dart';
 import 'aduan/AduanMainPage.dart';
 import 'package:dms_anp/src/services/AduanService.dart';
 import 'driver/ViewListDriverRate.dart';
+import '../../helpers/vpn_guard.dart';
 
 class ViewDashboard extends StatefulWidget {
   @override
@@ -116,7 +118,8 @@ class _ViewDashboardState extends State<ViewDashboard>
   bool _sessionLogoutInProgress = false;
   String _identifier = '';
   List<AnpService> _anpServiceList = [];
-  String _dashboardTheme = "default"; // Opsi: "custom" (Redesign Baru) atau "default" (UI Lama)
+  String _dashboardTheme =
+      "default"; // Opsi: "custom" (Redesign Baru) atau "default" (UI Lama)
 
   // âœ… ADDED: Variables untuk menu management
   List<AnpService> _mainMenuList = []; // Menu utama (max 8)
@@ -191,7 +194,10 @@ class _ViewDashboardState extends State<ViewDashboard>
   bool _isRunningInfoAllowedRole() => true;
   String _runningInfoTypeForRole() {
     final role = _normalizedStatusKaryawan();
-    return (role == 'DRIVER' || role == 'KARYAWAN') ? role : 'ALL'; //
+    if (loginname == 'DRIVER' || role == 'DRIVER') {
+      return 'DRIVER';
+    }
+    return 'KARYAWAN';
   }
 
   bool _canManageAttendanceQr() => username == "ADMIN" || getAkses("OP");
@@ -797,6 +803,9 @@ class _ViewDashboardState extends State<ViewDashboard>
         redirectToDashboard: false)) {
       return;
     }
+    if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: false)) {
+      return;
+    }
     final bool isOngoing = _isStatusUnitOngoing();
     Navigator.pushReplacement(
       context,
@@ -813,6 +822,9 @@ class _ViewDashboardState extends State<ViewDashboard>
     if (!mounted) return;
     if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
         redirectToDashboard: false)) {
+      return;
+    }
+    if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: false)) {
       return;
     }
     EasyLoading.show(status: 'Cek enroll wajah...');
@@ -1078,9 +1090,17 @@ class _ViewDashboardState extends State<ViewDashboard>
   String _menuOrderPrefKey() =>
       'dashboard_menu_order_${username.trim().toUpperCase()}';
 
-  bool _shouldSplitMenus() =>
-      (username == "ADMIN" || getAkses("OP")) &&
-      _anpServiceList.length > MAX_MAIN_MENU;
+  bool _shouldSplitMenus() {
+    final String curLoginName = loginname.isNotEmpty
+        ? loginname
+        : (spLoginName.isNotEmpty
+            ? spLoginName
+            : (sharedPreferences?.getString("loginname") ?? ''));
+    return (username == "ADMIN" ||
+            getAkses("OP") ||
+            curLoginName == "DRIVER") &&
+        _anpServiceList.length > MAX_MAIN_MENU;
+  }
 
   void _applySavedMenuOrder() {
     final saved = sharedPreferences?.getStringList(_menuOrderPrefKey());
@@ -1248,7 +1268,8 @@ class _ViewDashboardState extends State<ViewDashboard>
       try {
         final res = jsonDecode(cached);
         if (res['dashboard_theme'] != null) {
-          _dashboardTheme = res['dashboard_theme'].toString().trim().toLowerCase();
+          _dashboardTheme =
+              res['dashboard_theme'].toString().trim().toLowerCase();
         }
         if (res['data'] is List && (res['data'] as List).isNotEmpty) {
           _applyDynamicMenuList(res['data']);
@@ -1274,7 +1295,8 @@ class _ViewDashboardState extends State<ViewDashboard>
         final res = jsonDecode(response.body);
         if (res['status_code'] == '200') {
           if (res['dashboard_theme'] != null) {
-            final theme = res['dashboard_theme'].toString().trim().toLowerCase();
+            final theme =
+                res['dashboard_theme'].toString().trim().toLowerCase();
             if (theme != _dashboardTheme) {
               if (mounted) {
                 setState(() {
@@ -1350,8 +1372,8 @@ class _ViewDashboardState extends State<ViewDashboard>
       ));
     }
 
-    if (isAdminOrOp && _anpServiceList.length > MAX_MAIN_MENU) {
-      // Jika ADMIN/OP dan menu lebih dari 7, pisahkan
+    if (_shouldSplitMenus()) {
+      // Jika ADMIN/OP/DRIVER dan menu lebih dari 7, pisahkan (7 menu + 1 "More" = 8 / 2 baris grid)
       _mainMenuList = _anpServiceList.take(MAX_MAIN_MENU).toList();
       _additionalMenuList = _anpServiceList.skip(MAX_MAIN_MENU).toList();
 
@@ -2130,6 +2152,11 @@ class _ViewDashboardState extends State<ViewDashboard>
     GetListDo();
     _loadSavedBackground();
     //print('widget_isMenuForeman ${widget.widget_isMenuForeman}');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        AppUpdateHelper.checkAndPromptUpdate(context);
+      }
+    });
     Future.delayed(Duration(milliseconds: 1000), () {
       if (mounted) {
         _setupNotifications();
@@ -2276,7 +2303,9 @@ class _ViewDashboardState extends State<ViewDashboard>
             final itemType =
                 (e['intype'] ?? '').toString().trim().toUpperCase();
             if (filteredType == 'ALL') return true;
-            return itemType == filteredType || itemType == 'ALL';
+            return itemType == filteredType ||
+                itemType == 'ALL' ||
+                itemType.isEmpty;
           })
           .map((e) => (e['teks_informasi'] ?? '').toString().trim())
           .where((text) => text.isNotEmpty)
@@ -2406,6 +2435,11 @@ class _ViewDashboardState extends State<ViewDashboard>
   Widget _buildRunningInfoBanner() {
     if (!_isRunningInfoAllowedRole()) {
       return SizedBox.shrink();
+    }
+
+    if (_runningInfoItems.isNotEmpty &&
+        (_runningTextTimer == null || !_runningTextTimer!.isActive)) {
+      _startRunningText();
     }
 
     return Material(
@@ -3514,6 +3548,30 @@ class _ViewDashboardState extends State<ViewDashboard>
               ),
             ],
           ),
+          SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _handleScanQrLogkarMixer(item),
+              icon: const Icon(Icons.qr_code_scanner,
+                  size: 16, color: Colors.white),
+              label: const Text(
+                'SCAN QR LOGKAR',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E88E5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -3753,10 +3811,11 @@ class _ViewDashboardState extends State<ViewDashboard>
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _buildBottomNavItem(
-              icon: Icons.home_outlined,
-              activeIcon: Icons.home,
-              label: 'Beranda',
+              icon: Icons.work_outline,
+              activeIcon: Icons.work,
+              label: 'Storing',
               index: 0,
+              badge: countNotif,
             ),
             if (_canManageAttendanceQr()) _buildAttendanceQrNavItem(),
             _buildBottomNavItem(
@@ -3841,10 +3900,11 @@ class _ViewDashboardState extends State<ViewDashboard>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildBottomNavItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home,
-                label: 'Beranda',
+                icon: Icons.work_outline,
+                activeIcon: Icons.work,
+                label: 'Storing',
                 index: 0,
+                badge: countNotif,
               ),
               _buildBottomNavItem(
                 icon: Icons.pin_drop_outlined,
@@ -3974,6 +4034,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     });
     _fetchMenusFromApi();
     _loadSavedBackground();
+    _fetchRunningInfo();
   }
 
   void _showNotificationList() {
@@ -4316,7 +4377,15 @@ class _ViewDashboardState extends State<ViewDashboard>
                 onPressed: () async {
                   SharedPreferences preferences =
                       await SharedPreferences.getInstance();
+                  final savedAndroidId = preferences.getString('androidID');
+                  final savedUsername = preferences.getString('username');
                   await preferences.clear();
+                  if (savedAndroidId != null && savedAndroidId.isNotEmpty) {
+                    await preferences.setString('androidID', savedAndroidId);
+                  }
+                  if (savedUsername != null && savedUsername.isNotEmpty) {
+                    await preferences.setString('username', savedUsername);
+                  }
 
                   Navigator.pushAndRemoveUntil(
                     context,
@@ -4360,7 +4429,15 @@ class _ViewDashboardState extends State<ViewDashboard>
                 onPressed: () async {
                   SharedPreferences preferences =
                       await SharedPreferences.getInstance();
+                  final savedAndroidId = preferences.getString('androidID');
+                  final savedUsername = preferences.getString('username');
                   await preferences.clear();
+                  if (savedAndroidId != null && savedAndroidId.isNotEmpty) {
+                    await preferences.setString('androidID', savedAndroidId);
+                  }
+                  if (savedUsername != null && savedUsername.isNotEmpty) {
+                    await preferences.setString('username', savedUsername);
+                  }
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => LoginPage()),
@@ -4537,18 +4614,13 @@ class _ViewDashboardState extends State<ViewDashboard>
               context,
               MaterialPageRoute(builder: (context) => ViewListDo()),
             );
-          } else if (isOK != null) {
-            if (isOK.length > 0) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => ViewListDoOpr()),
-              );
-            } else {
-              alert(context, 0, "Anda tidak punya akses", "error");
-            }
+          } else if (_isAdminUser || (isOK != null && isOK.length > 0)) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => ViewListDoOpr()),
+            );
           } else {
-            Navigator.of(context).pop(false);
-            alert(context, 0, "Access Denied", "error");
+            alert(context, 0, "Anda tidak punya akses", "error");
           }
         });
       }
@@ -4904,78 +4976,25 @@ class _ViewDashboardState extends State<ViewDashboard>
       }
 
       final String statusDoMixer = item['status_do_mixer']?.toString() ?? '';
-      // INLOADING: setiap submit wajib scan QR → Logkar sync/tm (bukan cek flag harian).
-      // Status lain → skip scan Motive TM.
-      if (globals.isApiLokarRUN && statusDoMixer == 'INLOADING') {
-        final okTm = await _scanAndCheckInMotiveTm(
-          loadingStatus: 'Check-in Motive TM (INLOADING)...',
-        );
-        if (!okTm) {
-          return;
-        }
-        if (!mounted) return;
-
-        try {
-          final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
-          final latitude = gpsResult["latitude"] ?? 0;
-          final longitude = gpsResult["longitude"] ?? 0;
-          final apiLokar = sharedPreferences!.getString("api_lokar") ?? '';
-          final lokarClientId =
-              sharedPreferences!.getString("lokar_client_id") ?? '';
-          final lokarApiToken =
-              sharedPreferences!.getString("lokar_api_token") ?? '';
-
-          EasyLoading.show(status: 'Mengirim posisi...');
-          final logkarResult = await _sendLokarOrderPosition(
-            apiLokar: apiLokar,
-            clientId: lokarClientId,
-            apiToken: lokarApiToken,
-            no_do: item['do_number'].toString(),
-            latitude: latitude.toString(),
-            longitude: longitude.toString(),
-          );
-          if (!mounted) return;
-          EasyLoading.dismiss();
-          // Logkar position gagal: tetap lanjut update status ke JSP
-          if (!logkarResult.ok) {
-            await _showLogkarPositionDialog(
-              success: false,
-              message: logkarResult.message,
-            );
-            if (!mounted) return;
-            print('LOGKAR position FAIL (lanjut JSP): ${logkarResult.message}');
-          } else {
-            print('LOGKAR position OK (silent): ${logkarResult.message}');
-          }
-        } catch (e) {
-          if (EasyLoading.isShow) {
-            EasyLoading.dismiss();
-          }
-          alert(globalScaffoldKey.currentContext!, 0,
-              "Gagal mengirim posisi Logkar: $e", "error");
-          return;
-        } finally {
-          if (EasyLoading.isShow) {
-            EasyLoading.dismiss();
-          }
-        }
-      }
+      final bool isInloading = statusDoMixer.toUpperCase() == 'INLOADING';
 
       final confirm = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: Text('Konfirmasi'),
-          content: Text('Yakin update status DO mixer ini?'),
+          title: const Text('Konfirmasi'),
+          content: Text(isInloading
+              ? 'Yakin update status INLOADING DO mixer ini?'
+              : 'Yakin update status DO mixer ini?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Tidak'),
+              child: const Text('Tidak'),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text('Ya'),
+              child: const Text('Ya'),
             ),
           ],
         ),
@@ -4985,7 +5004,10 @@ class _ViewDashboardState extends State<ViewDashboard>
         return;
       }
 
-      EasyLoading.show(status: 'Memproses update status DO mixer...'); //
+      EasyLoading.show(
+          status: isInloading
+              ? 'Memproses update status INLOADING...'
+              : 'Memproses update status DO mixer...');
 
       var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
       if (!mounted) {
@@ -5010,22 +5032,39 @@ class _ViewDashboardState extends State<ViewDashboard>
       final String imeiidPref =
           (prefs.getString("androidID") ?? prefs.getString("imeiid") ?? "")
               .trim();
-      // Pakai queryParameters agar do_number tidak rusak karena encode api_lokar
-      final Uri myUri = Uri.parse(
-              '${GlobalData.baseUrl}api/do_mixer/update_status_do_mixerv2_v2.jsp')
-          .replace(queryParameters: {
-        'method': 'update-status-do-mixer',
-        'api_lokar': api_lokar,
-        'do_number': doNumberAndroid,
-        'bujnbr': bujnbrAndroid,
-        'status_do_mixer': statusMixer,
-        'latitude': latitude.toString(),
-        'longitude': longitude.toString(),
-        'bujdestination': bujDest,
-        'userid': loginname?.toString() ?? '',
-        'drvid': drvid,
-        'imeiid': imeiidPref,
-      });
+
+      // Untuk INLOADING hanya update tblbuJ_MIX via update_inloading_mixer.jsp
+      // Status lainnya tetap melalui update_status_do_mixerv2_v2.jsp
+      final String endpointPath = isInloading
+          ? '${GlobalData.baseUrl}api/do_mixer/update_inloading_mixer.jsp'
+          : '${GlobalData.baseUrl}api/do_mixer/update_status_do_mixerv2_v2.jsp';
+
+      final Map<String, String> qParams = isInloading
+          ? {
+              'method': 'update-inloading-mixer',
+              'do_number': doNumberAndroid,
+              'bujnbr': bujnbrAndroid,
+              'latitude': latitude.toString(),
+              'longitude': longitude.toString(),
+              'drvid': drvid,
+              'imeiid': imeiidPref,
+              'userid': loginname?.toString() ?? '',
+            }
+          : {
+              'method': 'update-status-do-mixer',
+              'api_lokar': api_lokar,
+              'do_number': doNumberAndroid,
+              'bujnbr': bujnbrAndroid,
+              'status_do_mixer': statusMixer,
+              'latitude': latitude.toString(),
+              'longitude': longitude.toString(),
+              'bujdestination': bujDest,
+              'userid': loginname?.toString() ?? '',
+              'drvid': drvid,
+              'imeiid': imeiidPref,
+            };
+
+      final Uri myUri = Uri.parse(endpointPath).replace(queryParameters: qParams);
       print('LOGKAR JSP url: $myUri');
       print(
           'LOGKAR JSP do_number(android)=$doNumberAndroid bujnbr=$bujnbrAndroid');
@@ -5073,6 +5112,151 @@ class _ViewDashboardState extends State<ViewDashboard>
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
+    }
+  }
+
+  Future<void> _handleScanQrLogkarMixer(dynamic item) async {
+    try {
+      sharedPreferences ??= await SharedPreferences.getInstance();
+      final String doNumber = item['do_number']?.toString().trim() ?? '';
+      if (doNumber.isEmpty) {
+        alert(globalScaffoldKey.currentContext ?? context, 0,
+            'Nomor DO tidak valid', 'error');
+        return;
+      }
+
+      final String drvid = (item['driver_id'] ??
+              item['drvid'] ??
+              sharedPreferences!.getString("drvid") ??
+              '')
+          .toString()
+          .trim();
+
+      // Validasi IMEI driver
+      EasyLoading.show(status: 'Memvalidasi perangkat...');
+      bool isImeiValid = await _checkImeiDriver(drvid);
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
+      if (!isImeiValid) {
+        return;
+      }
+
+      // 1. Cek dulu ke database tblbuJ_MIX via check_scan_qr_logkar.jsp
+      // Query: select bujnbr, dlocustdonbr, bujstatus, drvid, vhcid from tblbuJ_MIX
+      // where dlocustdonbr LIKE ? and bujstatus like 'ONGOING' and OUTLOADING is null
+      EasyLoading.show(status: 'Memeriksa status DO...');
+      final checkUri = Uri.parse(
+              '${GlobalData.baseUrl}api/do_mixer/check_scan_qr_logkar.jsp')
+          .replace(queryParameters: {
+        'do_number': doNumber,
+      });
+
+      final checkResponse =
+          await http.get(checkUri, headers: {'Accept': 'application/json'});
+      if (EasyLoading.isShow) {
+        EasyLoading.dismiss();
+      }
+      if (!mounted) return;
+
+      if (checkResponse.statusCode != 200) {
+        alert(globalScaffoldKey.currentContext ?? context, 0,
+            'Gagal menghubungi server (${checkResponse.statusCode})', 'error');
+        return;
+      }
+
+      final checkResult = json.decode(checkResponse.body);
+      final bool isAllowed = checkResult['allowed'] == true;
+      final String message = checkResult['message']?.toString() ?? '';
+
+      if (!isAllowed) {
+        alert(
+          globalScaffoldKey.currentContext ?? context,
+          0,
+          message.isNotEmpty
+              ? message
+              : 'DO tidak memenuhi syarat untuk Scan QR Logkar (status bukan ONGOING atau OUTLOADING sudah terisi).',
+          'error',
+        );
+        return;
+      }
+
+      // 2. Jika ada maka lanjut scan ("kalau ada maka lanjut SCAN nya")
+      final String? qrData = await openQrScanner(context);
+      if (!mounted) return;
+      if (qrData == null || qrData.trim().isEmpty) {
+        alert(globalScaffoldKey.currentContext ?? context, 0,
+            'Scan QR Logkar dibatalkan', 'warning');
+        return;
+      }
+
+      EasyLoading.show(status: 'Check-in Motive TM (Logkar)...');
+      final gpsResult = await GpsSecurityChecker.checkGpsSecurity();
+      final lat = (gpsResult['latitude'] ?? 0).toString();
+      final lon = (gpsResult['longitude'] ?? 0).toString();
+      final phone = sharedPreferences!.getString('phone') ?? '';
+
+      final result = await LogkarApiService.checkInMotiveTm(
+        driverPhone: phone,
+        qrData: qrData.trim(),
+        latitude: lat,
+        longitude: lon,
+      );
+      if (!mounted) return;
+
+      if (!result.ok) {
+        if (EasyLoading.isShow) EasyLoading.dismiss();
+        alert(
+          globalScaffoldKey.currentContext ?? context,
+          0,
+          result.message.isNotEmpty
+              ? result.message
+              : 'Gagal check-in Motive TM',
+          'error',
+        );
+        return;
+      }
+
+      // Kirim posisi jika berhasil
+      try {
+        final apiLokar = sharedPreferences!.getString("api_lokar") ?? '';
+        final lokarClientId =
+            sharedPreferences!.getString("lokar_client_id") ?? '';
+        final lokarApiToken =
+            sharedPreferences!.getString("lokar_api_token") ?? '';
+
+        await _sendLokarOrderPosition(
+          apiLokar: apiLokar,
+          clientId: lokarClientId,
+          apiToken: lokarApiToken,
+          no_do: doNumber,
+          latitude: lat,
+          longitude: lon,
+        );
+      } catch (e) {
+        print('Send lokar position error: $e');
+      }
+
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      showDialog(
+        context: globalScaffoldKey.currentContext ?? context,
+        builder: (ctx) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: const Text('Success'),
+          content: const Text('Check-in Motive TM (Logkar) berhasil!'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      alert(globalScaffoldKey.currentContext ?? context, 0,
+          'Terjadi kesalahan: $e', 'error');
     }
   }
 
@@ -5224,32 +5408,16 @@ class _ViewDashboardState extends State<ViewDashboard>
     } else if (anpService.idKey == 2) {
       EasyLoading.show();
       Timer(Duration(seconds: 1), () {
-        var isOK = globals.akses_pages == null
-            ? globals.akses_pages
-            : globals.akses_pages
-                .where((x) => x == "OP" || x == "OK" || x == "OT" || x == "UA");
         if (loginname == "DRIVER") {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => ViewListDo()),
           );
-        } else if (isOK != null) {
-          if (isOK.length > 0) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => ViewListDoOpr()),
-            );
-          } else {
-            if (EasyLoading.isShow) {
-              EasyLoading.dismiss();
-            }
-            _showAlert(globalScaffoldKey.currentContext!, 0,
-                "Anda tidak punya akses", "error");
-          }
         } else {
-          Navigator.of(context).pop(false);
-          _showAlert(
-              globalScaffoldKey.currentContext!, 0, "Access Denied", "error");
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ViewListDoOpr()),
+          );
         }
       });
     } else if (anpService.idKey == 4) {
@@ -5262,58 +5430,22 @@ class _ViewDashboardState extends State<ViewDashboard>
           );
         });
       } else {
-        final ctx = globalScaffoldKey.currentContext!;
-        if (ctx != null) {
-          await showDialog(
-            context: ctx,
-            builder: (context) => new AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
-              title: new Text('Information'),
-              content: new Text("Acces Menu For Driver"),
-              actions: <Widget>[
-                new TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop(true);
-                  },
-                  child: new Text('Ok'),
-                ),
-              ],
-            ),
-          );
-        }
-      }
-    } else if (anpService.idKey == 7) {
-      if (loginname == "DRIVER") {
         EasyLoading.show();
         Timer(Duration(seconds: 1), () {
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ViewListPelanggaran()),
+            MaterialPageRoute(builder: (context) => ViewListDoOpr()),
           );
         });
-      } else {
-        final ctx = globalScaffoldKey.currentContext!;
-        if (ctx != null) {
-          await showDialog(
-            context: ctx,
-            builder: (context) => new AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
-              title: new Text('Information'),
-              content: new Text("Acces Menu For Driver"),
-              actions: <Widget>[
-                new TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop(true);
-                  },
-                  child: new Text('Ok'),
-                ),
-              ],
-            ),
-          );
-        }
       }
+    } else if (anpService.idKey == 7) {
+      EasyLoading.show();
+      Timer(Duration(seconds: 1), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ViewListPelanggaran()),
+        );
+      });
     } else if (anpService.idKey == 22) {
       if (loginname != "DRIVER") {
         EasyLoading.show();
@@ -5325,36 +5457,13 @@ class _ViewDashboardState extends State<ViewDashboard>
         });
       }
     } else if (anpService.idKey == 6) {
-      if (loginname == "DRIVER") {
-        EasyLoading.show();
-        Timer(Duration(seconds: 1), () {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => PieChartSample2()),
-          );
-        });
-      } else {
-        final ctx = globalScaffoldKey.currentContext!;
-        if (ctx != null) {
-          await showDialog(
-            context: ctx,
-            builder: (context) => new AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
-              title: new Text('Information'),
-              content: new Text("Acces Menu For Driver"),
-              actions: <Widget>[
-                new TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop(true);
-                  },
-                  child: new Text('Ok'),
-                ),
-              ],
-            ),
-          );
-        }
-      }
+      EasyLoading.show();
+      Timer(Duration(seconds: 1), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => PieChartSample2()),
+        );
+      });
     } else if (anpService.idKey == 5) {
       if (loginname == "DRIVER") {
         EasyLoading.show();
@@ -5478,26 +5587,13 @@ class _ViewDashboardState extends State<ViewDashboard>
           );
         });
       } else {
-        final ctx = globalScaffoldKey.currentContext!;
-        if (ctx != null) {
-          await showDialog(
-            context: ctx,
-            builder: (context) => new AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
-              title: new Text('Information'),
-              content: new Text("Acces Menu For Driver"),
-              actions: <Widget>[
-                new TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop(true);
-                  },
-                  child: new Text('Ok'),
-                ),
-              ],
-            ),
+        EasyLoading.show();
+        Timer(Duration(seconds: 1), () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ViewListDoOpr()),
           );
-        }
+        });
       }
     } else if (anpService.idKey == 8) {
       if (loginname == "DRIVER") {
@@ -6004,6 +6100,13 @@ class _ViewDashboardState extends State<ViewDashboard>
             "error");
       }
     } else if (anpService.idKey == 20) {
+      if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
+          redirectToDashboard: false)) {
+        return;
+      }
+      if (await VpnGuard.blockIfVpnDetected(context, popOnDismiss: false)) {
+        return;
+      }
       // Absen ADV: Conditional Routing berdasarkan role / login_type
       sharedPreferences ??= await SharedPreferences.getInstance();
       final currentLoginType =
@@ -6157,8 +6260,23 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
 
     if (selectedIndexBottom == 0) {
-      // Tab Beranda
-      setState(() {});
+      if (_dashboardTheme == 'custom') {
+        // Tab Beranda pada Custom Theme
+        setState(() {});
+        return;
+      }
+      var isOK = globals.akses_pages == null
+          ? globals.akses_pages
+          : globals.akses_pages.where((x) => x == "OP");
+      if (username == 'ADMIN' || (isOK != null && isOK.length > 0)) {
+        EasyLoading.show();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ViewListStoring()),
+        );
+      } else {
+        _navigateToListAbsensi('storing');
+      }
       return;
     }
     if (selectedIndexBottom == 1) {
@@ -6284,11 +6402,20 @@ class _ViewDashboardState extends State<ViewDashboard>
     });
   }
 
+  bool get _isAdminUser {
+    final u = username.trim().toUpperCase();
+    final l = loginname.trim().toUpperCase();
+    return u == 'ADMIN' || l == 'ADMIN' || u.startsWith('ADMIN');
+  }
+
   bool getAkses(akses) {
+    if (_isAdminUser) return true;
     var isAkses = false;
     var isOK = globals.akses_pages == null
         ? globals.akses_pages
-        : globals.akses_pages.where((x) => x == akses);
+        : globals.akses_pages.where((x) =>
+            x.toString().trim().toUpperCase() ==
+            akses.toString().trim().toUpperCase());
     if (isOK != null) {
       if (isOK.length > 0) {
         isAkses = true;
@@ -6454,8 +6581,8 @@ class _ViewDashboardState extends State<ViewDashboard>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Running Notification Banner
-              if (_runningInfoItems.isNotEmpty || _notifications.isNotEmpty) ...[
+              // 1. Notification Banner
+              if (_notifications.isNotEmpty) ...[
                 _buildNotificationBanner(),
                 const SizedBox(height: 12),
               ],
@@ -6532,9 +6659,11 @@ class _ViewDashboardState extends State<ViewDashboard>
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.22),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
+                    border: Border.all(
+                        color: Colors.white.withOpacity(0.6), width: 1.5),
                   ),
-                  child: const Icon(Icons.person, color: Colors.white, size: 30),
+                  child:
+                      const Icon(Icons.person, color: Colors.white, size: 30),
                 ),
                 Positioned(
                   bottom: 2,
@@ -6561,7 +6690,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ViewProfileUser()),
+                      MaterialPageRoute(
+                          builder: (context) => ViewProfileUser()),
                     );
                   },
                   child: Text(
@@ -6578,9 +6708,11 @@ class _ViewDashboardState extends State<ViewDashboard>
                 const SizedBox(height: 3),
                 // Unit / Nopol Chip: Tap opens Vehicle / Status Unit Photos
                 GestureDetector(
-                  onTap: () => _navigateToPhotoUnits("STATUS_UNIT", vhcid_units),
+                  onTap: () =>
+                      _navigateToPhotoUnits("STATUS_UNIT", vhcid_units),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.20),
                       borderRadius: BorderRadius.circular(8),
@@ -6589,7 +6721,9 @@ class _ViewDashboardState extends State<ViewDashboard>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          isMixer ? Icons.rotate_right_rounded : Icons.local_shipping_outlined,
+                          isMixer
+                              ? Icons.rotate_right_rounded
+                              : Icons.local_shipping_outlined,
                           color: Colors.white,
                           size: 11,
                         ),
@@ -6597,7 +6731,9 @@ class _ViewDashboardState extends State<ViewDashboard>
                         Text(
                           isMixer
                               ? 'Driver Ready-Mix'
-                              : (vhcnopol.isNotEmpty ? vhcnopol : 'Driver Tronton'),
+                              : (vhcnopol.isNotEmpty
+                                  ? vhcnopol
+                                  : 'Driver Tronton'),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10.5,
@@ -6605,7 +6741,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.camera_alt_outlined, color: Colors.white70, size: 10),
+                        const Icon(Icons.camera_alt_outlined,
+                            color: Colors.white70, size: 10),
                       ],
                     ),
                   ),
@@ -6647,16 +6784,29 @@ class _ViewDashboardState extends State<ViewDashboard>
             children: [
               // Points pill: Tap opens Reward Exchange
               GestureDetector(
-                onTap: () {
+                onTap: () async {
+                  final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
+                  final drvid = prefs.getString('drvid') ?? '';
+                  final name = prefs.getString('name') ?? '';
+                  final locid = prefs.getString('locid') ?? '';
+                  if (!context.mounted) return;
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const RewardTabsPage(),
+                      builder: (context) => RewardTabsPage(
+                        driverPoints: points,
+                        driverId: drvid,
+                        createdBy: name,
+                        locId: locid,
+                      ),
                     ),
-                  );
+                  ).then((_) {
+                    fetchPoints();
+                  });
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.92),
                     borderRadius: BorderRadius.circular(14),
@@ -6671,7 +6821,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.monetization_on_rounded, size: 14, color: Color(0xFFFF8A50)),
+                      const Icon(Icons.monetization_on_rounded,
+                          size: 14, color: Color(0xFFFF8A50)),
                       const SizedBox(width: 4),
                       Text(
                         '$points Pts',
@@ -6718,7 +6869,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                             color: Color(0xFFFF1744),
                             shape: BoxShape.circle,
                           ),
-                          constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                          constraints:
+                              const BoxConstraints(minWidth: 14, minHeight: 14),
                           child: Text(
                             '$_aduanNotifCount',
                             style: const TextStyle(
@@ -6779,9 +6931,11 @@ class _ViewDashboardState extends State<ViewDashboard>
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.22),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.6), width: 1.5),
                       ),
-                      child: const Icon(Icons.manage_accounts_rounded, color: Colors.white, size: 28),
+                      child: const Icon(Icons.manage_accounts_rounded,
+                          color: Colors.white, size: 28),
                     ),
                     Positioned(
                       bottom: 1,
@@ -6816,7 +6970,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => ViewProfileUser()),
+                          MaterialPageRoute(
+                              builder: (context) => ViewProfileUser()),
                         );
                       },
                       child: Text(
@@ -6840,7 +6995,9 @@ class _ViewDashboardState extends State<ViewDashboard>
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  username == 'ADMIN' ? 'ADMIN' : (loginname.isNotEmpty ? loginname : 'STAFF'),
+                  username == 'ADMIN'
+                      ? 'ADMIN'
+                      : (loginname.isNotEmpty ? loginname : 'STAFF'),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -6882,11 +7039,13 @@ class _ViewDashboardState extends State<ViewDashboard>
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.22),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
+                border:
+                    Border.all(color: Colors.white.withOpacity(0.4), width: 1),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.search_rounded, color: Colors.white, size: 18),
+                  const Icon(Icons.search_rounded,
+                      color: Colors.white, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -6899,7 +7058,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 12),
+                  const Icon(Icons.arrow_forward_ios_rounded,
+                      color: Colors.white70, size: 12),
                 ],
               ),
             ),
@@ -6916,8 +7076,10 @@ class _ViewDashboardState extends State<ViewDashboard>
       final item = data_list_do.first;
       final String doNumber = item['do_number']?.toString() ?? '-';
       final String origin = item['origin']?.toString() ?? 'Lokasi Asal';
-      final String destination = item['destination']?.toString() ?? 'Lokasi Tujuan';
-      final String vehicleId = item['vehicle_id']?.toString() ?? (vhcnopol.isNotEmpty ? vhcnopol : '-');
+      final String destination =
+          item['destination']?.toString() ?? 'Lokasi Tujuan';
+      final String vehicleId = item['vehicle_id']?.toString() ??
+          (vhcnopol.isNotEmpty ? vhcnopol : '-');
       final String statusMixer = item['status_do_mixer']?.toString() ?? '';
       final bool isTerimaDo = item['incustomer']?.toString() == "1";
 
@@ -6932,7 +7094,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                           ? "INCUSTOMER"
                           : item['status_do_mixer'].toString() == "INUNLOADING"
                               ? "INUNLOADING"
-                              : item['status_do_mixer'].toString() == "OUTUNLOADING"
+                              : item['status_do_mixer'].toString() ==
+                                      "OUTUNLOADING"
                                   ? "OUTUNLOADING"
                                   : "CLOSE DO")
           : (isTerimaDo ? "TERIMA DO" : "UPDATE STATUS / CLOSE DO");
@@ -6946,7 +7109,8 @@ class _ViewDashboardState extends State<ViewDashboard>
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.88),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.95), width: 1.4),
+              border:
+                  Border.all(color: Colors.white.withOpacity(0.95), width: 1.4),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
@@ -6962,7 +7126,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE8F5E9),
                         borderRadius: BorderRadius.circular(8),
@@ -6970,7 +7135,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: const [
-                          Icon(Icons.radio_button_checked, size: 11, color: Color(0xFF2E7D32)),
+                          Icon(Icons.radio_button_checked,
+                              size: 11, color: Color(0xFF2E7D32)),
                           SizedBox(width: 4),
                           Text(
                             'DELIVERY ORDER AKTIF',
@@ -7001,13 +7167,15 @@ class _ViewDashboardState extends State<ViewDashboard>
                     Column(
                       children: [
                         const SizedBox(height: 2),
-                        const Icon(Icons.circle, size: 10, color: Color(0xFFFF6600)),
+                        const Icon(Icons.circle,
+                            size: 10, color: Color(0xFFFF6600)),
                         Container(
                           width: 1.5,
                           height: 26,
                           color: Colors.grey.shade300,
                         ),
-                        const Icon(Icons.location_on_rounded, size: 12, color: Color(0xFF2E7D32)),
+                        const Icon(Icons.location_on_rounded,
+                            size: 12, color: Color(0xFF2E7D32)),
                       ],
                     ),
                     const SizedBox(width: 10),
@@ -7053,7 +7221,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.local_shipping_outlined, size: 16, color: Color(0xFFE65100)),
+                          const Icon(Icons.local_shipping_outlined,
+                              size: 16, color: Color(0xFFE65100)),
                           const SizedBox(width: 6),
                           Text(
                             vehicleId,
@@ -7112,7 +7281,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.navigation_rounded, color: Colors.white, size: 16),
+                              const Icon(Icons.navigation_rounded,
+                                  color: Colors.white, size: 16),
                               const SizedBox(width: 5),
                               Flexible(
                                 child: Text(
@@ -7138,7 +7308,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                         height: 42,
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF2E7D32), width: 1.2),
+                            side: const BorderSide(
+                                color: Color(0xFF2E7D32), width: 1.2),
                             backgroundColor: const Color(0xFFE8F5E9),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -7155,7 +7326,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [
-                              Icon(Icons.history_rounded, color: Color(0xFF2E7D32), size: 16),
+                              Icon(Icons.history_rounded,
+                                  color: Color(0xFF2E7D32), size: 16),
                               SizedBox(width: 4),
                               Text(
                                 "History",
@@ -7172,13 +7344,43 @@ class _ViewDashboardState extends State<ViewDashboard>
                     ),
                   ],
                 ),
+                if (isMixer) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 38,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E88E5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 1,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      onPressed: () => _handleScanQrLogkarMixer(item),
+                      icon: const Icon(Icons.qr_code_scanner,
+                          color: Colors.white, size: 16),
+                      label: const Text(
+                        'SCAN QR LOGKAR',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 // Jika ada lebih dari 1 DO terjadwal
                 if (data_list_do.length > 1) ...[
                   const SizedBox(height: 10),
                   GestureDetector(
                     onTap: () => _showAllScheduledDoModal(isMixer: isMixer),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 6, horizontal: 10),
                       decoration: BoxDecoration(
                         color: Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(8),
@@ -7186,7 +7388,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.format_list_bulleted_rounded, size: 14, color: Colors.grey.shade700),
+                          Icon(Icons.format_list_bulleted_rounded,
+                              size: 14, color: Colors.grey.shade700),
                           const SizedBox(width: 6),
                           Text(
                             'Lihat Semua Jadwal (${data_list_do.length} Pengiriman)',
@@ -7197,7 +7400,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey.shade600),
+                          Icon(Icons.chevron_right_rounded,
+                              size: 16, color: Colors.grey.shade600),
                         ],
                       ),
                     ),
@@ -7222,7 +7426,8 @@ class _ViewDashboardState extends State<ViewDashboard>
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.86),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
+              border:
+                  Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.04),
@@ -7263,12 +7468,13 @@ class _ViewDashboardState extends State<ViewDashboard>
                             ),
                           ),
                           Spacer(),
-                          Icon(Icons.camera_alt_outlined, size: 14, color: Color(0xFF2E7D32)),
+                          Icon(Icons.camera_alt_outlined,
+                              size: 14, color: Color(0xFF2E7D32)),
                         ],
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Unit: ${vhcnopol.isNotEmpty ? (vhcnopol=='null' || vhcnopol==null ?'-':vhcnopol) : '-'} | Odo: ${vhckm.isNotEmpty ? '${vhckm==null || vhckm=='null' ? 0: vhckm } KM' : '-'}',
+                        'Unit: ${vhcnopol.isNotEmpty ? (vhcnopol == 'null' || vhcnopol == null ? '-' : vhcnopol) : '-'} | Odo: ${vhckm.isNotEmpty ? '${vhckm == null || vhckm == 'null' ? 0 : vhckm} KM' : '-'}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade800,
@@ -7297,8 +7503,12 @@ class _ViewDashboardState extends State<ViewDashboard>
   Widget _buildAdminKpiHeroCustom() {
     final fleetCount = data.isNotEmpty ? '${data.length}' : '84';
     final doCount = data_list_do.isNotEmpty ? '${data_list_do.length}' : '142';
-    final storingCount = storing.isNotEmpty ? storing : '0';
-    final hadirCount = hadir.isNotEmpty ? hadir : '96%';
+    final storingDigits = storing.replaceAll(RegExp(r'[^0-9]'), '').trim();
+    final storingValue = countNotif > 0
+        ? '$countNotif'
+        : (storingDigits.isNotEmpty ? storingDigits : '0');
+    final hadirDigits = hadir.replaceAll(RegExp(r'[^0-9]'), '').trim();
+    final hadirValue = hadirDigits.isNotEmpty ? hadirDigits : '0';
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
@@ -7309,7 +7519,8 @@ class _ViewDashboardState extends State<ViewDashboard>
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.86),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
+            border:
+                Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.04),
@@ -7326,7 +7537,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                 children: [
                   Row(
                     children: const [
-                      Icon(Icons.query_stats_rounded, size: 16, color: Color(0xFFFF6600)),
+                      Icon(Icons.query_stats_rounded,
+                          size: 16, color: Color(0xFFFF6600)),
                       SizedBox(width: 6),
                       Text(
                         'Ringkasan Operasional Hari Ini',
@@ -7339,7 +7551,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(6),
@@ -7383,12 +7596,21 @@ class _ViewDashboardState extends State<ViewDashboard>
                       value: doCount,
                       unit: 'DO',
                       label: 'Pengiriman',
-                      onTap: () => _handleMenuTap(const AnpService(
-                        idKey: 4,
-                        title: 'Monitoring DO',
-                        image: Icons.assignment,
-                        color: primaryOrange,
-                      )),
+                      onTap: () {
+                        if (loginname == "DRIVER") {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ViewListRitase()),
+                          );
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ViewListDoOpr()),
+                          );
+                        }
+                      },
                     ),
                   ),
                 ],
@@ -7401,7 +7623,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                       icon: Icons.build_circle_outlined,
                       iconColor: const Color(0xFFD32F2F),
                       bgColor: const Color(0xFFFFEBEE),
-                      value: countNotif > 0 ? '$countNotif' : storingCount,
+                      value: storingValue,
                       unit: 'Kasus',
                       label: 'Storing / Mogok',
                       badge: countNotif,
@@ -7409,10 +7631,12 @@ class _ViewDashboardState extends State<ViewDashboard>
                         var isOK = globals.akses_pages == null
                             ? globals.akses_pages
                             : globals.akses_pages.where((x) => x == "OP");
-                        if (username == 'ADMIN' || (isOK != null && isOK.length > 0)) {
+                        if (username == 'ADMIN' ||
+                            (isOK != null && isOK.length > 0)) {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => ViewListStoring()),
+                            MaterialPageRoute(
+                                builder: (context) => ViewListStoring()),
                           );
                         } else {
                           _navigateToListAbsensi('storing');
@@ -7426,8 +7650,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                       icon: Icons.how_to_reg_rounded,
                       iconColor: const Color(0xFF0288D1),
                       bgColor: const Color(0xFFE1F5FE),
-                      value: hadirCount,
-                      unit: hadir.isNotEmpty ? 'Orang' : 'Tercapai',
+                      value: hadirValue,
+                      unit: 'Orang',
                       label: 'Staff Hadir',
                       onTap: () => _navigateToListAbsensi('hadir'),
                     ),
@@ -7478,7 +7702,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                     top: -4,
                     right: -4,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1.5),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4.5, vertical: 1.5),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE53935),
                         borderRadius: BorderRadius.circular(10),
@@ -7501,15 +7726,22 @@ class _ViewDashboardState extends State<ViewDashboard>
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14.5,
-                          color: Colors.grey.shade900,
+                      Flexible(
+                        child: Text(
+                          value,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: Colors.grey.shade900,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 3),
@@ -7517,11 +7749,13 @@ class _ViewDashboardState extends State<ViewDashboard>
                         unit,
                         style: TextStyle(
                           fontSize: 10,
+                          fontWeight: FontWeight.w500,
                           color: Colors.grey.shade600,
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 1),
                   Text(
                     label,
                     style: TextStyle(
@@ -7535,7 +7769,8 @@ class _ViewDashboardState extends State<ViewDashboard>
               ),
             ),
             if (onTap != null)
-              Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Colors.grey.shade400),
+              Icon(Icons.arrow_forward_ios_rounded,
+                  size: 10, color: Colors.grey.shade400),
           ],
         ),
       ),
@@ -7554,7 +7789,8 @@ class _ViewDashboardState extends State<ViewDashboard>
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.86),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
+            border:
+                Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.04),
@@ -7596,7 +7832,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                   ),
                   if (_anpServiceList.length > 1)
                     IconButton(
-                      icon: const Icon(Icons.tune_rounded, size: 18, color: Color(0xFFFF6600)),
+                      icon: const Icon(Icons.tune_rounded,
+                          size: 18, color: Color(0xFFFF6600)),
                       onPressed: _showMenuCustomizer,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -7604,6 +7841,10 @@ class _ViewDashboardState extends State<ViewDashboard>
                     ),
                 ],
               ),
+              if (_isRunningInfoAllowedRole()) ...[
+                const SizedBox(height: 12),
+                _buildRunningInfoBanner(),
+              ],
               const SizedBox(height: 14),
               GridView.builder(
                 shrinkWrap: true,
@@ -7618,7 +7859,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                 itemBuilder: (context, index) {
                   final service = displayList[index];
                   final bool isMoreMenu = service.idKey == 999;
-                  final bool hasNewBadge = service.showNewBadge || service.badgeNewSince != null;
+                  final bool hasNewBadge =
+                      service.showNewBadge || service.badgeNewSince != null;
                   final bool hasAduanBadge = service.idKey == 35 &&
                       _aduanNotifCount > 0 &&
                       _isAduanHandlerForNotif();
@@ -7640,7 +7882,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                                 color: iconColor.withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: iconColor.withOpacity(isMoreMenu ? 0.6 : 0.28),
+                                  color: iconColor
+                                      .withOpacity(isMoreMenu ? 0.6 : 0.28),
                                   width: isMoreMenu ? 1.5 : 1,
                                 ),
                               ),
@@ -7655,7 +7898,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                                 top: -3,
                                 right: -3,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 1.5),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFFF1744),
                                     borderRadius: BorderRadius.circular(6),
@@ -7675,7 +7919,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                                 top: -3,
                                 right: -3,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 1.5),
                                   decoration: BoxDecoration(
                                     color: Colors.red,
                                     borderRadius: BorderRadius.circular(6),
@@ -7695,7 +7940,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                                 top: -3,
                                 right: -3,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 1.5),
                                   decoration: BoxDecoration(
                                     color: Colors.red,
                                     borderRadius: BorderRadius.circular(6),
@@ -7762,7 +8008,9 @@ class _ViewDashboardState extends State<ViewDashboard>
 
     final simExpLabel = (fromSIM.isNotEmpty && toSIM.isNotEmpty)
         ? ' - '
-        : (toSIM.isNotEmpty ? toSIM : (expireSIM.isNotEmpty ? expireSIM : 'Valid'));
+        : (toSIM.isNotEmpty
+            ? toSIM
+            : (expireSIM.isNotEmpty ? expireSIM : 'Valid'));
     final stnkExpLabel = (fromSTNK.isNotEmpty && toSTNK.isNotEmpty)
         ? ' - '
         : (toSTNK.isNotEmpty ? toSTNK : 'Tersedia');
@@ -7779,7 +8027,8 @@ class _ViewDashboardState extends State<ViewDashboard>
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.86),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
+            border:
+                Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.04),
@@ -7795,7 +8044,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                 children: [
                   Row(
                     children: const [
-                      Icon(Icons.verified_user_outlined, size: 16, color: Color(0xFFFF6600)),
+                      Icon(Icons.verified_user_outlined,
+                          size: 16, color: Color(0xFFFF6600)),
                       SizedBox(width: 6),
                       Text(
                         'Kelayakan Dokumen & Armada',
@@ -7819,7 +8069,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                             color: Color(0xFFFF6600),
                           ),
                         ),
-                        Icon(Icons.chevron_right_rounded, size: 14, color: Color(0xFFFF6600)),
+                        Icon(Icons.chevron_right_rounded,
+                            size: 14, color: Color(0xFFFF6600)),
                       ],
                     ),
                   ),
@@ -7837,11 +8088,13 @@ class _ViewDashboardState extends State<ViewDashboard>
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFF3EB),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFFFCC80), width: 0.8),
+                          border: Border.all(
+                              color: const Color(0xFFFFCC80), width: 0.8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.badge_outlined, color: Color(0xFFFF6600), size: 20),
+                            const Icon(Icons.badge_outlined,
+                                color: Color(0xFFFF6600), size: 20),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Column(
@@ -7885,11 +8138,13 @@ class _ViewDashboardState extends State<ViewDashboard>
                         decoration: BoxDecoration(
                           color: const Color(0xFFE8F5E9),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFA5D6A7), width: 0.8),
+                          border: Border.all(
+                              color: const Color(0xFFA5D6A7), width: 0.8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.confirmation_number_outlined, color: Color(0xFF2E7D32), size: 20),
+                            const Icon(Icons.confirmation_number_outlined,
+                                color: Color(0xFF2E7D32), size: 20),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Column(
@@ -7925,7 +8180,7 @@ class _ViewDashboardState extends State<ViewDashboard>
               ),
               const SizedBox(height: 8),
               Row(
-                children: [
+                children: [//
                   // STNK Card: Tap opens STNK Photo
                   Expanded(
                     child: GestureDetector(
@@ -7935,11 +8190,13 @@ class _ViewDashboardState extends State<ViewDashboard>
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFF8E1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFFFE082), width: 0.8),
+                          border: Border.all(
+                              color: const Color(0xFFFFE082), width: 0.8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.assignment_outlined, color: Color(0xFFF57F17), size: 20),
+                            const Icon(Icons.assignment_outlined,
+                                color: Color(0xFFF57F17), size: 20),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Column(
@@ -7975,34 +8232,44 @@ class _ViewDashboardState extends State<ViewDashboard>
                   // Status Unit / ODO: Tap opens Unit Photo
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => _navigateToPhotoUnits("STATUS_UNIT", vhcid_units),
+                      onTap: () =>
+                          _navigateToPhotoUnits("STATUS_UNIT", vhcid_units),
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: const Color(0xFFE1F5FE),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF81D4FA), width: 0.8),
+                          border: Border.all(
+                              color: const Color(0xFF81D4FA), width: 0.8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.speed_rounded, color: Color(0xFF0288D1), size: 20),
+                            const Icon(Icons.speed_rounded,
+                                color: Color(0xFF0288D1), size: 20),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    vhcnopol.isNotEmpty ? (vhcnopol==null || vhcnopol=='null'?'[Tidak Tersedia]':vhcnopol) : 'Unit Truk',
+                                    vhcnopol.isNotEmpty
+                                        ? (vhcnopol == null ||
+                                                vhcnopol == 'null'
+                                            ? '[Tidak Tersedia]'
+                                            : vhcnopol)
+                                        : 'Unit Truk',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.grey.shade900,
                                     ),
-                                    maxLines: 1,
+                                    maxLines: 1, //
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   Text(
-                                    vhckm.isNotEmpty ? '${vhckm==null || vhckm =='null' ?'0':vhckm} KM' : 'Siap Jalan',
+                                    vhckm.isNotEmpty
+                                        ? '${vhckm == null || vhckm == 'null' ? '0' : vhckm} KM'
+                                        : 'Siap Jalan',
                                     style: TextStyle(
                                       fontSize: 10.5,
                                       color: Colors.grey.shade700,
@@ -8029,6 +8296,40 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   Widget _buildAdminAttendanceOverviewCustom() {
+    String cleanSakit = sakit.replaceAll(RegExp(r'[^0-9]'), '').trim();
+    if (cleanSakit.isEmpty) cleanSakit = '0';
+
+    String cleanIzin = izin.replaceAll(RegExp(r'[^0-9]'), '').trim();
+    if (cleanIzin.isEmpty) cleanIzin = '0';
+
+    String cleanCuti = '0';
+    String lastCuti = '0';
+    String currentCuti = '0';
+
+    if (cuti.isNotEmpty) {
+      final matchCuti =
+          RegExp(r'Cuti\s*:\s*(\d+)', caseSensitive: false).firstMatch(cuti);
+      if (matchCuti != null) {
+        cleanCuti = matchCuti.group(1) ?? '0';
+      } else {
+        final digits = cuti.replaceAll(RegExp(r'[^0-9]'), '').trim();
+        if (digits.isNotEmpty) cleanCuti = digits;
+      }
+
+      final matchLast =
+          RegExp(r'last\s*:?\s*(-?\d+)', caseSensitive: false).firstMatch(cuti);
+      if (matchLast != null) {
+        lastCuti = matchLast.group(1) ?? '0';
+      }
+
+      final matchCurrent =
+          RegExp(r'current\s*:?\s*(-?\d+)', caseSensitive: false)
+              .firstMatch(cuti);
+      if (matchCurrent != null) {
+        currentCuti = matchCurrent.group(1) ?? '0';
+      }
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -8038,7 +8339,8 @@ class _ViewDashboardState extends State<ViewDashboard>
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.86),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
+            border:
+                Border.all(color: Colors.white.withOpacity(0.9), width: 1.4),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.04),
@@ -8051,52 +8353,100 @@ class _ViewDashboardState extends State<ViewDashboard>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
-                  Icon(Icons.pie_chart_outline_rounded, size: 16, color: Color(0xFFFF6600)),
-                  SizedBox(width: 6),
-                  Text(
-                    'Rekap Presensi Karyawan',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(Icons.pie_chart_outline_rounded,
+                          size: 16, color: Color(0xFFFF6600)),
+                      SizedBox(width: 6),
+                      Text(
+                        'Rekap Presensi Karyawan',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Icon(Icons.swipe_outlined,
+                          size: 13, color: Colors.grey.shade400),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Geser',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey.shade400,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildAttendancePill(
-                      'Sakit',
-                      sakit.isNotEmpty ? sakit : '0',
-                      const Color(0xFF0288D1),
-                      const Color(0xFFE1F5FE),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _buildAttendancePill(
+                      title: 'Sakit',
+                      count: cleanSakit,
+                      icon: Icons.sick_rounded,
+                      color: const Color(0xFF0288D1),
+                      bgColor: const Color(0xFFE1F5FE),
+                      width: 96,
                       onTap: () => _navigateToListAbsensi('sakit'),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildAttendancePill(
-                      'Izin',
-                      izin.isNotEmpty ? izin : '0',
-                      const Color(0xFFF57C00),
-                      const Color(0xFFFFF3E0),
+                    const SizedBox(width: 8),
+                    _buildAttendancePill(
+                      title: 'Izin',
+                      count: cleanIzin,
+                      icon: Icons.event_busy_rounded,
+                      color: const Color(0xFFF57C00),
+                      bgColor: const Color(0xFFFFF3E0),
+                      width: 96,
                       onTap: () => _navigateToListAbsensi('izin'),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildAttendancePill(
-                      'Cuti',
-                      cuti.isNotEmpty ? cuti : '0',
-                      const Color(0xFF7B1FA2),
-                      const Color(0xFFF3E5F5),
+                    const SizedBox(width: 8),
+                    _buildAttendancePill(
+                      title: 'Cuti',
+                      count: cleanCuti,
+                      icon: Icons.beach_access_rounded,
+                      color: const Color(0xFF7B1FA2),
+                      bgColor: const Color(0xFFF3E5F5),
+                      width: 96,
+                      tooltip: 'Jumlah Cuti Diambil',
                       onTap: () => _navigateToListAbsensi('cuti'),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    _buildAttendancePill(
+                      title: 'Last',
+                      count: lastCuti,
+                      icon: Icons.history_rounded,
+                      color: const Color(0xFF5E35B1),
+                      bgColor: const Color(0xFFEDE7F6),
+                      width: 96,
+                      tooltip: 'Sisa Cuti Tahun Lalu (Last)',
+                      onTap: () => _navigateToListAbsensi('cuti'),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildAttendancePill(
+                      title: 'Current',
+                      count: currentCuti,
+                      icon: Icons.event_available_rounded,
+                      color: const Color(0xFF00897B),
+                      bgColor: const Color(0xFFE0F2F1),
+                      width: 96,
+                      tooltip: 'Sisa Cuti Tahun Ini (Current)',
+                      onTap: () => _navigateToListAbsensi('cuti'),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -8105,35 +8455,59 @@ class _ViewDashboardState extends State<ViewDashboard>
     );
   }
 
-  Widget _buildAttendancePill(String title, String count, Color color, Color bgColor, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: bgColor.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: bgColor, width: 1),
-        ),
-        child: Column(
-          children: [
-            Text(
-              count,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: color,
+  Widget _buildAttendancePill({
+    required String title,
+    required String count,
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    double? width,
+    String? tooltip,
+    VoidCallback? onTap,
+  }) {
+    return Tooltip(
+      message: tooltip ?? title,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: width,
+          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 8),
+          decoration: BoxDecoration(
+            color: bgColor.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: bgColor, width: 1.2),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 14, color: color),
+                  const SizedBox(width: 4),
+                  Text(
+                    count,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: color,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 10.5,
-                color: Colors.grey.shade700,
+              const SizedBox(height: 3),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -8247,8 +8621,7 @@ class _ViewDashboardState extends State<ViewDashboard>
               label: 'Beranda',
               index: 0,
             ),
-            if (_canManageAttendanceQr())
-              _buildAttendanceQrNavItem(),
+            if (_canManageAttendanceQr()) _buildAttendanceQrNavItem(),
             _buildBottomNavItem(
               icon: Icons.pin_drop_outlined,
               activeIcon: Icons.pin_drop_rounded,
@@ -8280,7 +8653,8 @@ class _ViewDashboardState extends State<ViewDashboard>
           children: const [
             Icon(Icons.star_rounded, color: Color(0xFFFFD700), size: 28),
             SizedBox(width: 8),
-            Text('Rating Pengemudi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Text('Rating Pengemudi',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ],
         ),
         content: Column(
@@ -8288,7 +8662,10 @@ class _ViewDashboardState extends State<ViewDashboard>
           children: [
             Text(
               _driverAvgRate > 0 ? _driverAvgRate.toStringAsFixed(1) : '5.0',
-              style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold, color: Color(0xFFFF6600)),
+              style: const TextStyle(
+                  fontSize: 42,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFFF6600)),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -8322,12 +8699,15 @@ class _ViewDashboardState extends State<ViewDashboard>
               Navigator.pop(context);
               _fetchDriverRating();
             },
-            child: const Text('Refresh', style: TextStyle(color: Color(0xFFFF6600), fontWeight: FontWeight.bold)),
+            child: const Text('Refresh',
+                style: TextStyle(
+                    color: Color(0xFFFF6600), fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFF6600),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () => Navigator.pop(context),
             child: const Text('Tutup', style: TextStyle(color: Colors.white)),
@@ -8352,7 +8732,8 @@ class _ViewDashboardState extends State<ViewDashboard>
           children: [
             Row(
               children: [
-                const Icon(Icons.folder_shared_rounded, color: Color(0xFFFF6600), size: 22),
+                const Icon(Icons.folder_shared_rounded,
+                    color: Color(0xFFFF6600), size: 22),
                 const SizedBox(width: 8),
                 const Text(
                   'Semua Dokumen & Verifikasi',
@@ -8387,7 +8768,8 @@ class _ViewDashboardState extends State<ViewDashboard>
               },
             ),
             ListTile(
-              leading: const Icon(Icons.confirmation_number, color: Color(0xFF2E7D32)),
+              leading: const Icon(Icons.confirmation_number,
+                  color: Color(0xFF2E7D32)),
               title: const Text('Uji KIR'),
               subtitle: const Text('Lihat sertifikat laik jalan'),
               trailing: const Icon(Icons.chevron_right),
@@ -8397,7 +8779,8 @@ class _ViewDashboardState extends State<ViewDashboard>
               },
             ),
             ListTile(
-              leading: const Icon(Icons.directions_car, color: Color(0xFF0288D1)),
+              leading:
+                  const Icon(Icons.directions_car, color: Color(0xFF0288D1)),
               title: const Text('Status Unit / QR Pertamina'),
               subtitle: const Text('Cek kondisi fisik & nopol truk'),
               trailing: const Icon(Icons.chevron_right),
@@ -8446,11 +8829,13 @@ class _ViewDashboardState extends State<ViewDashboard>
           children: [
             Row(
               children: [
-                const Icon(Icons.list_alt_rounded, color: Color(0xFFFF6600), size: 22),
+                const Icon(Icons.list_alt_rounded,
+                    color: Color(0xFFFF6600), size: 22),
                 const SizedBox(width: 8),
                 Text(
                   'Daftar Pengiriman DO (${data_list_do.length})',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 IconButton(
@@ -8465,7 +8850,9 @@ class _ViewDashboardState extends State<ViewDashboard>
                 itemCount: data_list_do.length,
                 itemBuilder: (context, index) {
                   final item = data_list_do[index];
-                  return isMixer ? _buildScheduleItemMixer(item) : _buildScheduleItem(item);
+                  return isMixer
+                      ? _buildScheduleItemMixer(item)
+                      : _buildScheduleItem(item);
                 },
               ),
             ),
@@ -8491,11 +8878,17 @@ class _ViewDashboardState extends State<ViewDashboard>
           final matchingDo = query.isEmpty
               ? <dynamic>[]
               : data_list_do.where((item) {
-                  final num = (item['do_number'] ?? '').toString().toLowerCase();
-                  final dest = (item['destination'] ?? '').toString().toLowerCase();
+                  final num =
+                      (item['do_number'] ?? '').toString().toLowerCase();
+                  final dest =
+                      (item['destination'] ?? '').toString().toLowerCase();
                   final orig = (item['origin'] ?? '').toString().toLowerCase();
-                  final vhc = (item['vehicle_id'] ?? '').toString().toLowerCase();
-                  return num.contains(query) || dest.contains(query) || orig.contains(query) || vhc.contains(query);
+                  final vhc =
+                      (item['vehicle_id'] ?? '').toString().toLowerCase();
+                  return num.contains(query) ||
+                      dest.contains(query) ||
+                      orig.contains(query) ||
+                      vhc.contains(query);
                 }).toList();
 
           // Search in Menus
@@ -8518,7 +8911,8 @@ class _ViewDashboardState extends State<ViewDashboard>
                     const SizedBox(width: 8),
                     const Text(
                       'Pencarian Cepat',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const Spacer(),
                     IconButton(
@@ -8531,10 +8925,12 @@ class _ViewDashboardState extends State<ViewDashboard>
                   autofocus: true,
                   decoration: InputDecoration(
                     hintText: 'Cari No DO, Nopol, atau Modul Menu...',
-                    prefixIcon: const Icon(Icons.search, color: Color(0xFFFF6600)),
+                    prefixIcon:
+                        const Icon(Icons.search, color: Color(0xFFFF6600)),
                     filled: true,
                     fillColor: Colors.grey.shade100,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -8565,11 +8961,14 @@ class _ViewDashboardState extends State<ViewDashboard>
                         for (var item in matchingDo)
                           Card(
                             margin: const EdgeInsets.only(bottom: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
                             child: ListTile(
-                              leading: const Icon(Icons.assignment, color: Color(0xFFFF6600)),
+                              leading: const Icon(Icons.assignment,
+                                  color: Color(0xFFFF6600)),
                               title: Text(item['do_number']?.toString() ?? '-'),
-                              subtitle: Text('${item['origin'] ?? ''} → ${item['destination'] ?? ''}'),
+                              subtitle: Text(
+                                  '${item['origin'] ?? ''} → ${item['destination'] ?? ''}'),
                               trailing: const Icon(Icons.chevron_right),
                               onTap: () {
                                 Navigator.pop(context);
@@ -8585,7 +8984,9 @@ class _ViewDashboardState extends State<ViewDashboard>
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         child: Text(
-                          query.isEmpty ? 'MODUL LAYANAN POPULER' : 'MODUL LAYANAN DITEMUKAN',
+                          query.isEmpty
+                              ? 'MODUL LAYANAN POPULER'
+                              : 'MODUL LAYANAN DITEMUKAN',
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -8598,10 +8999,13 @@ class _ViewDashboardState extends State<ViewDashboard>
                           leading: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: (svc.color ?? const Color(0xFFFF6600)).withOpacity(0.12),
+                              color: (svc.color ?? const Color(0xFFFF6600))
+                                  .withOpacity(0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(svc.image, color: svc.color ?? const Color(0xFFFF6600), size: 20),
+                            child: Icon(svc.image,
+                                color: svc.color ?? const Color(0xFFFF6600),
+                                size: 20),
                           ),
                           title: Text(svc.title ?? ''),
                           trailing: const Icon(Icons.chevron_right, size: 18),

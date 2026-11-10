@@ -85,4 +85,5 @@ class GlobalData {
   static String foreman_mcn_id = "";
   static String vehicle_mcn_id = "";
   static bool checkDeveloperMode = true;
+  static bool checkVpn = true;
 }
