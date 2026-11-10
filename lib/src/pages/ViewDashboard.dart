@@ -3548,30 +3548,33 @@ class _ViewDashboardState extends State<ViewDashboard>
               ),
             ],
           ),
-          SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _handleScanQrLogkarMixer(item),
-              icon: const Icon(Icons.qr_code_scanner,
-                  size: 16, color: Colors.white),
-              label: const Text(
-                'SCAN QR LOGKAR',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+          if ((item['status_do_mixer'] ?? '').toString().trim().toUpperCase() == "INLOADING" ||
+              (item['status_do_mixer'] ?? '').toString().trim().toUpperCase() == "OUTLOADING") ...[
+            SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _handleScanQrLogkarMixer(item),
+                icon: const Icon(Icons.qr_code_scanner,
+                    size: 16, color: Colors.white),
+                label: const Text(
+                  'SCAN QR LOGKAR',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E88E5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E88E5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 8),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -5122,6 +5125,18 @@ class _ViewDashboardState extends State<ViewDashboard>
       if (doNumber.isEmpty) {
         alert(globalScaffoldKey.currentContext ?? context, 0,
             'Nomor DO tidak valid', 'error');
+        return;
+      }
+
+      final String statusDoMixer =
+          (item['status_do_mixer'] ?? '').toString().trim().toUpperCase();
+      if (statusDoMixer != 'INLOADING' && statusDoMixer != 'OUTLOADING') {
+        alert(
+          globalScaffoldKey.currentContext ?? context,
+          0,
+          'Scan QR Logkar hanya dapat dilakukan saat status INLOADING atau OUTLOADING.',
+          'error',
+        );
         return;
       }
 
@@ -7081,6 +7096,9 @@ class _ViewDashboardState extends State<ViewDashboard>
       final String vehicleId = item['vehicle_id']?.toString() ??
           (vhcnopol.isNotEmpty ? vhcnopol : '-');
       final String statusMixer = item['status_do_mixer']?.toString() ?? '';
+      final String statusMixerUpper = statusMixer.trim().toUpperCase();
+      final bool canShowScanQr = isMixer &&
+          (statusMixerUpper == "INLOADING" || statusMixerUpper == "OUTLOADING");
       final bool isTerimaDo = item['incustomer']?.toString() == "1";
 
       final String actionLabel = isMixer
@@ -7344,7 +7362,7 @@ class _ViewDashboardState extends State<ViewDashboard>
                     ),
                   ],
                 ),
-                if (isMixer) ...[
+                if (canShowScanQr) ...[
                   const SizedBox(height: 8),
                   SizedBox(
                     width: double.infinity,
