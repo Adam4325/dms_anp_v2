@@ -84,103 +84,195 @@ class _ViewDetailApprovedState extends State<ViewDetailApproved> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEAE6E6),
+      backgroundColor: const Color(0xFFFFFAF5),
       appBar: AppBar(
+        elevation: 2,
         backgroundColor: const Color(0xFFFF8C69),
         foregroundColor: Colors.white,
-        title: Text("List PO Approved ${widget.ponbr}",style: TextStyle(fontSize: 16)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          "List PO Approved ${widget.ponbr}",
+          style:
+              const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
       ),
       body: loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFFF8C69)))
           : (error != null
-              ? Center(child: Text(error!, style: const TextStyle(color: Colors.black87)))
+              ? Center(
+                  child: Text(error!,
+                      style: const TextStyle(color: Colors.black87)))
               : SafeArea(
                   child: Column(
                     children: [
                       Container(
-                        margin: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+                        margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
                         child: TextField(
                           controller: _searchCtrl,
                           onChanged: _applyFilter,
+                          cursorColor: const Color(0xFFFF8C69),
+                          style: const TextStyle(fontSize: 13),
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: const Color(0xFFFFF4E6),
                             isDense: true,
-                            labelText: 'Search',
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            suffixIcon: const Icon(Icons.search, size: 20),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                            hintText: 'Cari part name / merk / item id...',
+                            hintStyle: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade500),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                            prefixIcon: const Icon(Icons.search,
+                                color: Color(0xFFFF8C69), size: 20),
+                            suffixIcon: _searchCtrl.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, size: 18),
+                                    onPressed: () {
+                                      _searchCtrl.clear();
+                                      _applyFilter('');
+                                    },
+                                  )
+                                : null,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                  color: Color(0x59FFB347), width: 1),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                  color: Color(0x59FFB347), width: 1),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                  color: Color(0xFFFF8C69), width: 1.5),
+                            ),
                           ),
                         ),
                       ),
                       Expanded(
                         child: ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(8, 4, 8, 24),
+                          padding: const EdgeInsets.fromLTRB(10, 4, 10, 24),
                           itemCount: viewItems.length,
                           itemBuilder: (context, index) {
                             final it = viewItems[index] as Map<String, dynamic>;
-                            return Card(
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              clipBehavior: Clip.antiAlias,
-                              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                            final partname =
+                                (it['PARTNAME'] ?? '').toString();
+                            return Container(
+                              margin: const EdgeInsets.symmetric(vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF8F0),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                    color: const Color(0x59FFB347), width: 0.8),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x20FF8C69),
+                                    spreadRadius: 1,
+                                    blurRadius: 6,
+                                    offset: Offset(0, 3),
+                                  ),
+                                ],
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   Container(
-                                    color: const Color(0xFFFFE8D6),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 10),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFFFF4E6),
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(14),
+                                        topRight: Radius.circular(14),
+                                      ),
+                                    ),
                                     child: Text(
-                                      (it['PARTNAME'] ?? '').toString(),
-                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+                                      partname.isNotEmpty
+                                          ? partname
+                                          : 'Item ${index + 1}',
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFE07B39),
+                                      ),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(12),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        _kv("PB Nbr", (it['PBNBR'] ?? '').toString()),
-                                        _kv("Item ID", (it['ITDITEMID'] ?? '').toString()),
-                                        _kv("Merk", (it['MERK'] ?? '').toString()),
-                                        _kv("Type", (it['IDTYPE'] ?? '').toString()),
-                                        _kv("Access", (it['IDACCESS'] ?? '').toString()),
-                                        _kv("UOM", (it['UOMID'] ?? '').toString()),
-                                        _kv("Qty", (it['ITDQTY'] ?? '').toString()),
-                                        _kv("Unit Cost", _rupiah(it['ITDUNITCOST'])),
-                                        _kv("Ext. Cost", _rupiah(it['ITDEXTCOST'])),
-                                        _kv("Ext. After Disc", _rupiah(it['ITDEXTCOSTAFTERDISCOUNT'])),
-                                        //_kv("Real Harga", _rupiah(it['REALHARGA'])),
-                                        _kv("Loc", (it['LOCID'] ?? '').toString()),
-                                        _kv("Status", (it['STATUS'] ?? '').toString()),
-                                        const SizedBox(height: 6),
-                                        _kv("PO Line", (it['POLINENBR'] ?? '').toString()),
-                                        _kv("PB Line", (it['PBLINENBR'] ?? '').toString()),
-
+                                        _kv("PB Nbr",
+                                            (it['PBNBR'] ?? '').toString()),
+                                        _kv("Item ID",
+                                            (it['ITDITEMID'] ?? '').toString()),
+                                        _kv("Merk",
+                                            (it['MERK'] ?? '').toString()),
+                                        _kv("Type",
+                                            (it['IDTYPE'] ?? '').toString()),
+                                        _kv("Access",
+                                            (it['IDACCESS'] ?? '').toString()),
+                                        _kv("UOM",
+                                            (it['UOMID'] ?? '').toString()),
+                                        _kv("Qty",
+                                            (it['ITDQTY'] ?? '').toString()),
+                                        _kv("Unit Cost",
+                                            _rupiah(it['ITDUNITCOST'])),
+                                        _kv("Ext. Cost",
+                                            _rupiah(it['ITDEXTCOST'])),
+                                        _kv(
+                                            "Ext. After Disc",
+                                            _rupiah(
+                                                it['ITDEXTCOSTAFTERDISCOUNT'])),
+                                        _kv("Loc",
+                                            (it['LOCID'] ?? '').toString()),
+                                        _kv("Status",
+                                            (it['STATUS'] ?? '').toString()),
+                                        _kv("PO Line",
+                                            (it['POLINENBR'] ?? '').toString()),
+                                        _kv("PB Line",
+                                            (it['PBLINENBR'] ?? '').toString()),
+                                        const SizedBox(height: 10),
+                                        const Divider(
+                                            height: 1,
+                                            color: Color(0x25FF8C69)),
+                                        const SizedBox(height: 10),
+                                        ElevatedButton.icon(
+                                          icon: const Icon(Icons.search,
+                                              size: 16, color: Colors.white),
+                                          label: const Text("Cek Harga Barang",
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white)),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color(0xFFFF8C69),
+                                            foregroundColor: Colors.white,
+                                            elevation: 0,
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 14, vertical: 8),
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                          ),
+                                          onPressed: () {
+                                            final merk =
+                                                (it['MERK'] ?? '').toString();
+                                            final partname =
+                                                (it['PARTNAME'] ?? '')
+                                                    .toString();
+                                            _showHargaDialog(partname, merk);
+                                          },
+                                        ),
                                       ],
                                     ),
-                                  ),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.deepOrange,
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 8),
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                          BorderRadius.circular(6)),
-                                    ),
-                                    onPressed: () {
-                                      final merk = (it['MERK'] ?? '').toString();
-                                      final partname = (it['PARTNAME'] ?? '').toString();
-                                      _showHargaDialog(partname, merk);
-                                    },
-                                    child: Text("Cek Harga Barang",
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight:
-                                            FontWeight.w500)),
                                   ),
                                 ],
                               ),
@@ -195,35 +287,39 @@ class _ViewDetailApprovedState extends State<ViewDetailApproved> {
   }
 
   Widget _kv(String label, String value) {
+    if (value.trim().isEmpty || value == 'null') return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Label
           Expanded(
-            flex: 3,
+            flex: 4,
             child: Text(
               label,
-              style: const TextStyle(color: Colors.black),
+              style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500),
             ),
           ),
-          // Titik dua
           const SizedBox(
-            width: 10, // jarak tetap
+            width: 10,
             child: Text(
               ":",
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black),
+              style: TextStyle(color: Colors.grey, fontSize: 12),
             ),
           ),
-          // Value
           Expanded(
-            flex: 5,
+            flex: 6,
             child: Text(
               value,
-              textAlign: TextAlign.right,
-              style: const TextStyle(color: Colors.black),
+              textAlign: TextAlign.left,
+              style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600),
             ),
           ),
         ],

@@ -138,8 +138,8 @@ class _FrmAttendanceAdvanceDriverState extends State<FrmAttendanceAdvanceDriver>
     if (globals.akses_pages.isEmpty) {
       globals.akses_pages = aksesList;
     }
-    final isOp = globals.akses_pages.any((x) => x == 'OP') ||
-        u.toUpperCase() == 'ADMIN';
+    final isOp =
+        globals.akses_pages.any((x) => x == 'OP') || u.toUpperCase() == 'ADMIN';
 
     setState(() {
       namaDriver = prefs.getString('name') ?? 'Driver';
@@ -156,14 +156,18 @@ class _FrmAttendanceAdvanceDriverState extends State<FrmAttendanceAdvanceDriver>
       final prefs = await SharedPreferences.getInstance();
       final drvId = prefs.getString("drvid") ?? driverId;
       if (drvId.isNotEmpty) {
-        final url = "${GlobalData.baseUrlOri}api/do/refference_master.jsp?method=get_photo_driver&drvid=$drvId";
-        final resp = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 4));
+        final url =
+            "${GlobalData.baseUrlOri}api/do/refference_master.jsp?method=get_photo_driver&drvid=$drvId";
+        final resp =
+            await http.get(Uri.parse(url)).timeout(const Duration(seconds: 4));
         if (resp.statusCode == 200) {
           final data = json.decode(resp.body);
           if (data is Map && data['status'] == 'success') {
             final photoUrl = (data['photo_url'] ?? '').toString();
             if (photoUrl.isNotEmpty) {
-              final fullUrl = photoUrl.startsWith('http') ? photoUrl : '${GlobalData.baseUrlOri}$photoUrl';
+              final fullUrl = photoUrl.startsWith('http')
+                  ? photoUrl
+                  : '${GlobalData.baseUrlOri}$photoUrl';
               if (mounted) setState(() => _driverPhotoUrl = fullUrl);
             }
           }

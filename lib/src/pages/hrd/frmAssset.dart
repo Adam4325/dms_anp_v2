@@ -25,12 +25,15 @@ class _FrmAssetState extends State<FrmAsset> {
   final GlobalKey<ScaffoldState> globalScaffoldKey = GlobalKey<ScaffoldState>();
   final ImagePicker picker = ImagePicker();
 
-  // Design Tokens - Material Design 3 & ANP Theme
-  static const Color primaryOrange = Color(0xFFFF8C69);
-  static const Color lightOrange = Color(0xFFFFF4E6);
-  static const Color darkOrange = Color(0xFFE07B39);
-  static const Color backgroundColor = Color(0xFFF8F9FA);
-  static const Color borderColor = Color(0xFFE2E8F0);
+  // Design Tokens - Material Design 3 & ANP Theme (design_tab.md)
+  static const Color primaryOrange = Color(0xFFFF8C69); // Soft orange
+  static const Color lightOrange = Color(0xFFFFF4E6); // Very light orange
+  static const Color accentOrange = Color(0xFFFFB347); // Peach orange/*  */
+  static const Color darkOrange = Color(0xFFE07B39); // Darker orange
+  static const Color backgroundColor = Color(0xFFFFFAF5); // Cream white
+  static const Color cardColor = Color(0xFFFFF8F0); // Light cream
+  static const Color shadowColor = Color(0x20FF8C69); // Soft orange shadow
+  static const Color borderColor = Color(0x59FFB347); // accentOrange 0.35
 
   // Controllers
   final TextEditingController txtAssetID = TextEditingController();
@@ -655,26 +658,38 @@ class _FrmAssetState extends State<FrmAsset> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: const [
-            Icon(Icons.help_outline_rounded, color: primaryOrange),
-            SizedBox(width: 8),
-            Text('Konfirmasi',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
+        backgroundColor: cardColor,
+        title: const Text(
+          'Konfirmasi',
+          style: TextStyle(
+            color: darkOrange,
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+          ),
         ),
-        content:
-            Text(isEdit ? "Update data asset ini?" : "Simpan data asset baru?"),
+        content: Text(
+          isEdit ? "Update data asset ini?" : "Simpan data asset baru?",
+          style: TextStyle(color: Colors.grey.shade800, fontSize: 14),
+        ),
         actions: <Widget>[
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: Colors.grey.shade500,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
             onPressed: () => Navigator.of(context).pop(),
-            child: Text("Batal", style: TextStyle(color: Colors.grey.shade700)),
+            child: const Text("Batal",
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
+              elevation: 0,
               backgroundColor: primaryOrange,
               foregroundColor: Colors.white,
-              elevation: 0,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
@@ -686,7 +701,11 @@ class _FrmAssetState extends State<FrmAsset> {
                 saveAsset();
               }
             },
-            child: Text(isEdit ? "Update" : "Simpan"),
+            child: Text(
+              isEdit ? "Update" : "Simpan",
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
@@ -705,26 +724,26 @@ class _FrmAssetState extends State<FrmAsset> {
         key: globalScaffoldKey,
         backgroundColor: backgroundColor,
         appBar: AppBar(
-          elevation: 0.5,
-          backgroundColor: Colors.white,
+          backgroundColor: primaryOrange,
+          foregroundColor: Colors.white,
+          elevation: 2,
           centerTitle: true,
-          surfaceTintColor: Colors.transparent,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: Colors.black87, size: 20),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            iconSize: 20.0,
             onPressed: () => _goBack(context),
           ),
           title: Text(
             buttonEvent == "Update" ? 'Form Edit Asset' : 'Form Create Asset',
             style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
               fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
             ),
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.refresh_rounded, color: darkOrange),
+              icon: const Icon(Icons.refresh, color: Colors.white),
               tooltip: 'Reset Form',
               onPressed: () => resetTeks(),
             ),
@@ -953,12 +972,12 @@ class _FrmAssetState extends State<FrmAsset> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x08000000),
+            color: shadowColor,
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -1146,9 +1165,8 @@ class _FrmAssetState extends State<FrmAsset> {
                           hasValue ? selectedValue : placeholder,
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: hasValue
-                                ? FontWeight.w600
-                                : FontWeight.normal,
+                            fontWeight:
+                                hasValue ? FontWeight.w600 : FontWeight.normal,
                             color: hasValue
                                 ? Colors.black87
                                 : Colors.grey.shade400,
@@ -1388,11 +1406,11 @@ class _FrmAssetState extends State<FrmAsset> {
   Widget _buildBottomBar(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: const [
+      decoration: const BoxDecoration(
+        color: cardColor,
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0F000000),
+            color: shadowColor,
             blurRadius: 10,
             offset: Offset(0, -3),
           ),
@@ -1403,15 +1421,25 @@ class _FrmAssetState extends State<FrmAsset> {
           children: [
             Expanded(
               flex: 1,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Reset'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.grey.shade700,
-                  side: BorderSide(color: Colors.grey.shade300),
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.refresh, color: Colors.white, size: 16),
+                label: const Text(
+                  'Reset',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  backgroundColor: Colors.grey.shade500,
+                  foregroundColor: Colors.white,
+                  shadowColor: Colors.transparent,
+                  side: BorderSide.none,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 13),
+                      borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 onPressed: () {
                   removeSesion();
@@ -1424,37 +1452,52 @@ class _FrmAssetState extends State<FrmAsset> {
               flex: 2,
               child: ElevatedButton.icon(
                 icon: Icon(
-                  buttonEvent == "Update"
-                      ? Icons.update_rounded
-                      : Icons.save_rounded,
+                  buttonEvent == "Update" ? Icons.update : Icons.save,
                   color: Colors.white,
-                  size: 18,
+                  size: 16,
                 ),
                 label: Text(
                   buttonEvent == "Update" ? "Update Asset" : "Simpan Asset",
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 13),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
+                  elevation: 0,
                   backgroundColor: primaryOrange,
                   foregroundColor: Colors.white,
-                  elevation: 0,
+                  shadowColor: Colors.transparent,
+                  side: BorderSide.none,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 13),
+                      borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 onPressed: () => _handleSaveOrUpdate(context),
               ),
             ),
             const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.list_alt_rounded, color: primaryOrange),
-              tooltip: 'Daftar Asset',
-              style: IconButton.styleFrom(
-                backgroundColor: lightOrange,
+            ElevatedButton.icon(
+              icon: const Icon(Icons.list_alt, color: Colors.white, size: 16),
+              label: const Text(
+                'List',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                elevation: 0,
+                backgroundColor: accentOrange,
+                foregroundColor: Colors.white,
+                shadowColor: Colors.transparent,
+                side: BorderSide.none,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.all(12),
+                    borderRadius: BorderRadius.circular(10)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               ),
               onPressed: () async {
                 await removeSesion();

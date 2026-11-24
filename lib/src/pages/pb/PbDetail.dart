@@ -1,4 +1,4 @@
-﻿import 'package:dms_anp/src/Helper/Provider.dart';
+import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/pages/pb/PbHeaderPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -130,20 +130,21 @@ class _PbDetailState extends State<PbDetail> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        elevation: 0,
+        elevation: 2,
         backgroundColor: primaryOrange,
         foregroundColor: Colors.white,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.white),
           onPressed: () {
             _goBack(context);
           },
         ),
-        title: Text("Detail PO ${widget.pbnbr}",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text("Detail PR ${widget.pbnbr}",
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.white)),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: fetchDetailData,
           ),
         ],
@@ -153,7 +154,7 @@ class _PbDetailState extends State<PbDetail> {
           : detailList.isEmpty
               ? Center(
                   child: Padding(
-                    padding: EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(24),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -164,32 +165,42 @@ class _PbDetailState extends State<PbDetail> {
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.grey.shade700),
                         ),
-                        SizedBox(height: 12),
-                        ElevatedButton(
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.refresh,
+                              size: 16, color: Colors.white),
+                          label: const Text('Coba lagi',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryOrange),
+                            backgroundColor: primaryOrange,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                          ),
                           onPressed: fetchDetailData,
-                          child: Text('Coba lagi',
-                              style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
                   ),
                 )
               : ListView.builder(
-                  padding: EdgeInsets.fromLTRB(10, 10, 10, 40),
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 40),
                   itemCount: detailList.length,
                   itemBuilder: (context, index) {
                     var item = detailList[index];
+                    final partname = (item['partname'] ?? '').toString();
                     return Container(
-                      margin: EdgeInsets.symmetric(vertical: 6),
-                      padding: EdgeInsets.all(12),
+                      margin: const EdgeInsets.symmetric(vertical: 6),
                       decoration: BoxDecoration(
                         color: cardColor,
                         borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
+                        border: Border.all(
+                            color: const Color(0x59FFB347), width: 0.8),
+                        boxShadow: const [
                           BoxShadow(
-                            color: shadowColor,
+                            color: Color(0x20FF8C69),
                             spreadRadius: 1,
                             blurRadius: 6,
                             offset: Offset(0, 3),
@@ -197,23 +208,47 @@ class _PbDetailState extends State<PbDetail> {
                         ],
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text(item['partname'] ?? '',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: darkOrange)),
-                          SizedBox(height: 6),
-                          _kv("Item ID",
-                              (item['itditemid'] ?? '').toString()),
-                          _kv("Genuine No",
-                              (item['genuineno'] ?? '').toString()),
-                          _kv("Merk", (item['merk'] ?? '').toString()),
-                          _kv("Harga", (item['harga'] ?? '').toString()),
-                          _kv("Qty Pesan",
-                              (item['qty_pesan'] ?? '').toString()),
-                          _kv("Qty Terima",
-                              (item['qty_terima'] ?? '0').toString()),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFFFF4E6),
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(14),
+                                topRight: Radius.circular(14),
+                              ),
+                            ),
+                            child: Text(
+                              partname.isNotEmpty
+                                  ? partname
+                                  : 'Item ${index + 1}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFE07B39),
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _kv("Item ID",
+                                    (item['itditemid'] ?? '').toString()),
+                                _kv("Genuine No",
+                                    (item['genuineno'] ?? '').toString()),
+                                _kv("Merk", (item['merk'] ?? '').toString()),
+                                _kv("Harga", (item['harga'] ?? '').toString()),
+                                _kv("Qty Pesan",
+                                    (item['qty_pesan'] ?? '').toString()),
+                                _kv("Qty Terima",
+                                    (item['qty_terima'] ?? '0').toString()),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -223,25 +258,34 @@ class _PbDetailState extends State<PbDetail> {
   }
 
   Widget _kv(String label, String value) {
+    if (value.trim().isEmpty || value == 'null') return const SizedBox.shrink();
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             flex: 3,
             child: Text(label,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade700)),
           ),
           const SizedBox(
             width: 10,
             child: Text(":",
-                textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Colors.grey)),
           ),
           Expanded(
             flex: 5,
             child: Text(value,
-                textAlign: TextAlign.right, style: TextStyle(fontSize: 12)),
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87)),
           ),
         ],
       ),

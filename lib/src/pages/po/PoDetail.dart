@@ -210,34 +210,35 @@ class _PoDetailState extends State<PoDetail> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
+        backgroundColor: cardColor,
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 28),
-            SizedBox(width: 8),
+            Icon(Icons.help_outline, color: darkOrange, size: 24),
+            const SizedBox(width: 8),
             Text(
               "Konfirmasi",
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: darkOrange,
+                fontSize: 16,
               ),
             ),
           ],
         ),
-        content: Text(
+        content: const Text(
           "Apakah Anda yakin ingin update data ini?",
-          style: TextStyle(fontSize: 15, color: Colors.black54, height: 1.4),
+          style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.4),
         ),
-        actionsPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        actionsPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         actions: [
           TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.grey.shade600,
-            ),
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text("Batal"),
+            child: Text("Batal", style: TextStyle(color: Colors.grey.shade700)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryOrange,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -248,22 +249,27 @@ class _PoDetailState extends State<PoDetail> {
               Navigator.of(ctx).pop();
               updateData();
             },
-            child: Text("Ya"),
+            child: const Text("Ya, Update",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-
   Widget buildRowLabelValue(String label, Widget valueWidget) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-          Container(width: 140, child: valueWidget),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade700)),
+          SizedBox(width: 140, child: valueWidget),
         ],
       ),
     );
@@ -274,116 +280,198 @@ class _PoDetailState extends State<PoDetail> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        elevation: 0,
+        elevation: 2,
         backgroundColor: primaryOrange,
         foregroundColor: Colors.white,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.white),
           onPressed: () {
             _goBack(context);
           },
         ),
         title: Text("Detail PO ${widget.ponbr}",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.white)),
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator(color: primaryOrange))
           : detailList.isEmpty
-          ? Center(
-          child: Text("Tidak ada detail data",
-              style: TextStyle(color: Colors.grey)))
-          : Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.all(10),
-              itemCount: detailList.length,
-              itemBuilder: (context, index) {
-                var item = detailList[index];
-                return Container(
-                  margin: EdgeInsets.symmetric(vertical: 6),
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: cardColor,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: shadowColor,
-                        spreadRadius: 1,
-                        blurRadius: 6,
-                        offset: Offset(0, 3),
+              ? const Center(
+                  child: Text("Tidak ada detail data",
+                      style: TextStyle(color: Colors.grey)))
+              : Column(
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
+                        itemCount: detailList.length,
+                        itemBuilder: (context, index) {
+                          var item = detailList[index];
+                          final partname =
+                              (item['partname'] ?? '').toString();
+                          return Container(
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            decoration: BoxDecoration(
+                              color: cardColor,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                  color: const Color(0x59FFB347), width: 0.8),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x20FF8C69),
+                                  spreadRadius: 1,
+                                  blurRadius: 6,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 10),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFFFF4E6),
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(14),
+                                      topRight: Radius.circular(14),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    partname.isNotEmpty
+                                        ? partname
+                                        : 'Item ${index + 1}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFE07B39),
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _kv("Item ID",
+                                          (item['itditemid'] ?? '').toString()),
+                                      _kv("Genuine No",
+                                          (item['genuineno'] ?? '').toString()),
+                                      _kv("Merk",
+                                          (item['merk'] ?? '').toString()),
+                                      _kv("Harga",
+                                          (item['harga'] ?? '').toString()),
+                                      _kv(
+                                          "Qty Pesan",
+                                          (item['qty_pesan'] ?? '')
+                                              .toString()),
+                                      const SizedBox(height: 4),
+                                      buildRowLabelValue(
+                                        "Qty Terima:",
+                                        TextField(
+                                          controller: qtyControllers[index],
+                                          keyboardType: TextInputType.number,
+                                          style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold),
+                                          decoration: InputDecoration(
+                                            isDense: true,
+                                            filled: true,
+                                            fillColor: Colors.white,
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 8),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: const BorderSide(
+                                                  color: Color(0x59FFB347)),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: const BorderSide(
+                                                  color: Color(0x59FFB347)),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              borderSide: BorderSide(
+                                                  color: primaryOrange,
+                                                  width: 1.5),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(item['partname'] ?? '',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: darkOrange)),
-                      SizedBox(height: 6),
-                      _kv("Item ID", (item['itditemid'] ?? '').toString()),
-                      _kv("Genuine No", (item['genuineno'] ?? '').toString()),
-                      _kv("Merk", (item['merk'] ?? '').toString()),
-                      _kv("Harga", (item['harga'] ?? '').toString()),
-                      _kv("Qty Pesan", (item['qty_pesan'] ?? '').toString()),
-                      buildRowLabelValue(
-                        "Qty Terima:",
-                        TextField(
-                          controller: qtyControllers[index],
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            contentPadding:
-                            EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                          ),
+                    ),
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.save_outlined,
+                            size: 20, color: Colors.white),
+                        label: const Text("Simpan Update",
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryOrange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
+                        onPressed: confirmUpdate,
                       ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-          Container(
-            width: double.infinity,
-            margin: EdgeInsets.fromLTRB(12, 12, 12, 60),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: accentOrange,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: confirmUpdate,
-              child: Text("Update", style: TextStyle(fontSize: 16)),
-            ),
-          ),
-        ],
-      ),
+                    ),
+                  ],
+                ),
     );
   }
 
   Widget _kv(String label, String value) {
+    if (value.trim().isEmpty || value == 'null') return const SizedBox.shrink();
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             flex: 3,
-            child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+            child: Text(label,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade700)),
           ),
           const SizedBox(
             width: 10,
-            child: Text(":", textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
+            child: Text(":",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Colors.grey)),
           ),
           Expanded(
             flex: 5,
-            child: Text(value, textAlign: TextAlign.right, style: TextStyle(fontSize: 12)),
+            child: Text(value,
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87)),
           ),
         ],
       ),

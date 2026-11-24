@@ -202,8 +202,9 @@ class _LoginPageState extends State<LoginPage> {
 
       // 1. Panggil change_imeiid_user.jsp (aktif di server produksi, mengupdate TBLUSER.LOCID5 & TBLUSERDRIVER)
       try {
-        final changeUri = Uri.parse(GlobalData.baseUrl + "api/change_imeiid_user.jsp")
-            .replace(queryParameters: {
+        final changeUri =
+            Uri.parse(GlobalData.baseUrl + "api/change_imeiid_user.jsp")
+                .replace(queryParameters: {
           'method': 'change-imeiid-v1',
           'id': isDriver ? drvid : effectiveUser,
           'username': effectiveUser,
@@ -544,17 +545,17 @@ class _LoginPageState extends State<LoginPage> {
                   await http.get(checkUri).timeout(const Duration(seconds: 4));
               if (checkRes.statusCode == 200) {
                 final checkResult = _decoder.convert(checkRes.body);
-                if (int.tryParse(checkResult["status_code"]?.toString() ?? '') ==
+                if (int.tryParse(
+                        checkResult["status_code"]?.toString() ?? '') ==
                     200) {
                   final checkData = checkResult["data"];
                   if (checkData != null &&
                       checkData is List &&
                       checkData.isNotEmpty) {
-                    final matchedUser = (checkData[0]["drvid"] ??
-                            checkData[0]["name"] ??
-                            '')
-                        .toString()
-                        .toUpperCase();
+                    final matchedUser =
+                        (checkData[0]["drvid"] ?? checkData[0]["name"] ?? '')
+                            .toString()
+                            .toUpperCase();
                     if (matchedUser == effUser ||
                         matchedUser == drvid.toString().toUpperCase()) {
                       isImeiRegistered = true;
@@ -641,9 +642,9 @@ class _LoginPageState extends State<LoginPage> {
             Navigator.pushReplacement(
                 ctx, MaterialPageRoute(builder: (context) => ViewListWoMCN()));
           } else {
-            final bool effectiveForeman = (loginname != "DRIVER" && isMenuForeman == true);
-            prefs.setString(
-                'isMenuForeman', (effectiveForeman ? "1" : "0"));
+            final bool effectiveForeman =
+                (loginname != "DRIVER" && isMenuForeman == true);
+            prefs.setString('isMenuForeman', (effectiveForeman ? "1" : "0"));
             Navigator.pushReplacement(
                 ctx, MaterialPageRoute(builder: (context) => ViewDashboard()));
           }
@@ -734,7 +735,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 30),
 
-                  // Login Form
+                  // Login Form 2
                   Container(
                     padding: const EdgeInsets.all(20.0),
                     decoration: BoxDecoration(

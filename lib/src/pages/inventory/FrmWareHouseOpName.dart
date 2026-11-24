@@ -26,25 +26,38 @@ class FrmWareHouseOpName extends StatefulWidget {
 final globalScaffoldKey = GlobalKey<ScaffoldState>();
 
 class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
-  static const Color primaryOrange = Color(0xFFFF8A50);
-  static const Color lightOrange = Color(0xFFFFB085);
+  // Design Tokens - Material Design 3 & ANP Theme (design_form.md)
+  static const Color primaryOrange = Color(0xFFFF8C69); // Soft orange
+  static const Color lightOrange = Color(0xFFFFF4E6);   // Very light orange
+  static const Color accentOrange = Color(0xFFFFB347);  // Peach orange
+  static const Color darkOrange = Color(0xFFE07B39);    // Darker orange
+  static const Color backgroundColor = Color(0xFFFFFAF5); // Cream white
+  static const Color cardColor = Color(0xFFFFF8F0);     // Light cream
+  static const Color shadowColor = Color(0x20FF8C69);   // Soft orange shadow
+  static const Color borderColor = Color(0x59FFB347);   // accentOrange 35%
+  static const Color borderOrange = Color(0x59FFB347);
+
   InputDecoration softDecoration({String? label, required bool readOnly}) {
     return InputDecoration(
       labelText: label,
       isDense: true,
       filled: true,
-      fillColor: readOnly ? Colors.black12 : Colors.white,
-      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey.shade400),
+      fillColor: readOnly ? const Color(0xFFF1F5F9) : const Color(0xFFFAFAFA),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: borderColor),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: primaryOrange, width: 1.5),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: borderColor),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+        borderSide: BorderSide(color: primaryOrange, width: 1.8),
       ),
       disabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
     );
@@ -765,291 +778,782 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
 
   ProgressDialog? pr;
   @override
+  @override
   Widget build(BuildContext context) {
-
     return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (!didPop) {
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => ViewDashboard()));
-          }
-        },
-        child:Scaffold(
-          backgroundColor: Color(0xFFEAE6E6),
-          appBar: AppBar(
-              backgroundColor: Color(0xFFFF8C69), // Soft orange
-              foregroundColor: Colors.white,
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back),
-                iconSize: 20.0,
-                onPressed: () {
-                  _goBack(context);
-                },
-              ),
-              centerTitle: true,
-              title: Text('Form WH. Opname', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
-          body: Container(
-            key: scafoldGlobal,
-            constraints: BoxConstraints.expand(),
-            color: HexColor("#f0eff4"),
-            child: Stack(
-              children: <Widget>[
-                ImgHeader1(context),
-                ImgHeader2(context),
-                BuildHeader(context),
-                _getContent(context),
-                // _getContentNewDriver(context),
-              ],
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _goBack(context);
+        }
+      },
+      child: Scaffold(
+        key: scafoldGlobal,
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          backgroundColor: primaryOrange,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            iconSize: 20.0,
+            onPressed: () => _goBack(context),
+          ),
+          title: Text(
+            globals.wh_method == "edit" ? 'Edit WH. Opname' : 'Form WH. Opname',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
             ),
           ),
-        )
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              tooltip: 'Reset Form',
+              onPressed: () => reseTeks(false),
+            ),
+          ],
+        ),
+        body: _getContent(context),
+        bottomNavigationBar: _buildBottomBar(context),
+      ),
     );
   }
 
   Widget _buildWHID(BuildContext context) {
     if (globals.wh_method != "edit") {
-      return SmartSelect<String?>.single(
-        title: 'WH ID',
-        selectedValue: selWareHouseID,
-        placeholder: 'Pilih satu',
-        onChange: (selected) {
-          setState(() {
-            selWareHouseID = selected.value!;
-            txtIDWareHouse.text = selected.value!;
-            witwarehouseid = selected.value!;
-          });
-        },
-        choiceItems: S2Choice.listFrom<String, Map>(
-          source: lstWareHouseID,
-          value: (index, item) => item['whswarehouseid'],
-          title: (index, item) => item['whswarehouseid'] + " - " + item['whsdescr'],
+      final hasValue = selWareHouseID.isNotEmpty;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'WH ID',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Text('*',
+                    style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            SmartSelect<String?>.single(
+              title: 'Pilih Warehouse',
+              selectedValue: selWareHouseID,
+              placeholder: 'Pilih Gudang / Warehouse...',
+              onChange: (selected) {
+                setState(() {
+                  selWareHouseID = selected.value ?? '';
+                  txtIDWareHouse.text = selected.value ?? '';
+                  witwarehouseid = selected.value ?? '';
+                });
+              },
+              choiceItems: S2Choice.listFrom<String, Map>(
+                source: lstWareHouseID,
+                value: (index, item) => item['whswarehouseid'],
+                title: (index, item) =>
+                    "${item['whswarehouseid']} - ${item['whsdescr']}",
+              ),
+              modalFilter: true,
+              modalFilterAuto: true,
+              modalType: S2ModalType.bottomSheet,
+              modalConfig: const S2ModalConfig(
+                style: S2ModalStyle(
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                ),
+              ),
+              tileBuilder: (context, state) {
+                return InkWell(
+                  onTap: () => state.showModal(),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAFAFA),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warehouse_outlined,
+                            color: primaryOrange, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            hasValue
+                                ? selWareHouseID
+                                : 'Pilih Gudang / Warehouse...',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: hasValue
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                              color: hasValue
+                                  ? Colors.black87
+                                  : Colors.grey.shade400,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.keyboard_arrow_down_rounded,
+                            color: Colors.grey, size: 20),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
-        modalFilter: true,
-        modalFilterAuto: true,
       );
     }
-    // Edit: WH ID sudah fixed dari data existing
-    return TextField(
-      readOnly: true,
+    return _buildTextField(
       controller: txtIDWareHouse,
-      style: TextStyle(color: Colors.grey.shade800),
-      decoration: softDecoration(
-        label: 'WH ID',
-        readOnly: true,
+      label: 'WH ID',
+      icon: Icons.warehouse_outlined,
+      readOnly: true,
+    );
+  }
+
+  Widget _buildCard({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+    Widget? trailing,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderOrange.withValues(alpha: 0.5)),
+        boxShadow: const [
+          BoxShadow(
+            color: shadowColor,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: lightOrange,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: primaryOrange, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                ),
+                if (trailing != null) trailing,
+              ],
+            ),
+          ),
+          Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _builButtonUpdate(BuildContext context) {
-    if (globals.wh_method == "edit") {
-      return new ElevatedButton.icon(
-        icon: Icon(
-          Icons.save,
-          color: Colors.white,
-          size: 15.0,
-        ),
-        label: Text("Update"),
-        onPressed: () async {
-          SharedPreferences prefs =
-              await SharedPreferences.getInstance(); //SEMENTARA
-          showDialog(
-            context: context,
-            builder: (context) => new AlertDialog(
-              title: new Text('Information'),
-              content: new Text("Update Inventory?"),
-              actions: <Widget>[
-                new ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 20.0,
-                  ),
-                  label: Text("No"),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.grey.shade600,
-                          foregroundColor: Colors.white,
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                          textStyle:
-                              TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool readOnly = false,
+    bool isRequired = false,
+    TextInputType keyboardType = TextInputType.text,
+    FocusNode? focusNode,
+    Widget? suffix,
+    ValueChanged<String>? onChanged,
+    String? hintText,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700,
                 ),
-                new ElevatedButton.icon(
-                  icon: Icon(
-                    Icons.save,
-                    color: Colors.white,
-                    size: 20.0,
+              ),
+              if (isRequired) ...[
+                const SizedBox(width: 4),
+                const Text('*',
+                    style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold)),
+              ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: controller,
+            readOnly: readOnly,
+            focusNode: focusNode,
+            keyboardType: keyboardType,
+            style: TextStyle(
+              fontSize: 14,
+              color: readOnly ? Colors.grey.shade700 : Colors.black87,
+              fontWeight: readOnly ? FontWeight.w500 : FontWeight.normal,
+            ),
+            cursorColor: primaryOrange,
+            onChanged: onChanged,
+            decoration: softDecoration(
+              label: label,
+              readOnly: readOnly,
+            ).copyWith(
+              prefixIcon: Icon(icon, color: primaryOrange, size: 20),
+              suffixIcon: suffix,
+              hintText: hintText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemIdField(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Item ID',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Text('*',
+                  style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: txtItemID,
+            readOnly: globals.wh_method == "edit",
+            style: TextStyle(
+              fontSize: 14,
+              color: globals.wh_method == "edit"
+                  ? Colors.grey.shade700
+                  : Colors.black87,
+            ),
+            cursorColor: primaryOrange,
+            keyboardType: TextInputType.text,
+            onChanged: (value) async {
+              if (globals.wh_method != 'edit') {
+                if (value.isNotEmpty && value.length > 5) {
+                  if (isScan == true) {
+                    await getItemID(value);
+                  }
+                }
+              }
+            },
+            decoration: softDecoration(
+              label: 'Item ID',
+              readOnly: globals.wh_method == "edit",
+            ).copyWith(
+              prefixIcon: const Icon(Icons.qr_code_2_rounded,
+                  color: primaryOrange, size: 20),
+              suffixIcon: globals.wh_method == "edit"
+                  ? null
+                  : Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.qr_code_scanner_rounded,
+                          color: primaryOrange,
+                          size: 22,
+                        ),
+                        tooltip: 'Scan atau Cari Item',
+                        onPressed: () => _showItemSearchChoiceModal(context),
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showItemSearchChoiceModal(BuildContext parentContext) {
+    showDialog(
+      context: parentContext,
+      builder: (choiceCtx) {
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: lightOrange,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: primaryOrange,
+                      width: 1.5,
+                    ),
                   ),
-                  label: Text("Ok"),
-                  onPressed: () async {
-                    Navigator.of(context).pop(false);
-                    SharedPreferences prefs =
-                        await SharedPreferences.getInstance();
-                    var username = prefs.getString("name") ?? "";
-                    if (globals.wh_method == "edit") {
-                      UpdateStockOpname(username);
-                    } else {
-                      alert(scafoldGlobal.currentContext!!, 2,
-                          "Pilih Item Id yang akan dipilih", "error");
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                      elevation: 0.0,
+                  child: const Icon(
+                    Icons.qr_code_2_rounded,
+                    color: primaryOrange,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Pilih Metode Input Item',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: darkOrange,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Scan QR Code item atau cari berdasarkan nama item.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 18),
+                    label: const Text(
+                      'Scan QRCode',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                    onPressed: () {
+                      Navigator.of(choiceCtx).pop();
+                      setState(() {
+                        isScan = true;
+                      });
+                      scanQRCode();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      elevation: 1,
                       backgroundColor: primaryOrange,
                       foregroundColor: Colors.white,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                      textStyle:
-                          TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.search, color: Colors.white, size: 18),
+                    label: const Text(
+                      'Search By Name',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                    onPressed: () async {
+                      Navigator.of(choiceCtx).pop();
+                      setState(() {
+                        isScan = false;
+                      });
+                      await Future.delayed(const Duration(milliseconds: 120));
+                      if (!mounted) return;
+                      showDialog(
+                        context: parentContext,
+                        builder: (dialogCtx) {
+                          return Dialog(
+                            insetPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 24,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            backgroundColor: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: lightOrange,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: primaryOrange,
+                                            width: 1.2,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.search,
+                                          color: primaryOrange,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const Expanded(
+                                        child: Text(
+                                          'Search Item',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: darkOrange,
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        icon: Icon(
+                                          Icons.close,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                        onPressed: () => Navigator.of(dialogCtx).pop(),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 14),
+                                  setupAlertDialoadContainer(dialogCtx),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      elevation: 1,
+                      backgroundColor: accentOrange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.of(choiceCtx).pop(),
+                  child: Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-            elevation: 0.0,
-            backgroundColor: primaryOrange,
-            foregroundColor: Colors.white,
-            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-            textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
-      );
-    } else {
-      return new Container();
-    }
+          ),
+        );
+      },
+    );
   }
 
-  Widget _buildButtonCreateOrUpdate(BuildContext context) {
-    if (globals.wh_method == "edit") {
-      return new ElevatedButton.icon(
-          icon: Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 15.0,
+  Widget _buildStockDifferenceBadge() {
+    final booksQty = double.tryParse(txtQuantityOnHands.text.trim()) ?? 0.0;
+    final actualQty = double.tryParse(txtQuantityOnActual.text.trim());
+
+    if (actualQty == null) {
+      return const SizedBox.shrink();
+    }
+
+    final diff = actualQty - booksQty;
+    final isMatch = diff == 0;
+    final isOver = diff > 0;
+
+    final Color badgeBg = isMatch
+        ? const Color(0xFFE8F5E9)
+        : (isOver ? const Color(0xFFFFF3E0) : const Color(0xFFFFEBEE));
+    final Color badgeBorder = isMatch
+        ? const Color(0xFF81C784)
+        : (isOver ? const Color(0xFFFFB74D) : const Color(0xFFE57373));
+    final Color badgeText = isMatch
+        ? const Color(0xFF2E7D32)
+        : (isOver ? const Color(0xFFE65100) : const Color(0xFFC62828));
+    final IconData icon = isMatch
+        ? Icons.check_circle_outline_rounded
+        : (isOver
+            ? Icons.arrow_circle_up_rounded
+            : Icons.arrow_circle_down_rounded);
+
+    final diffStr = isMatch
+        ? 'Sesuai dengan sistem (0)'
+        : (isOver
+            ? 'Selisih Lebih: +${diff % 1 == 0 ? diff.toInt() : diff}'
+            : 'Selisih Kurang: ${diff % 1 == 0 ? diff.toInt() : diff}');
+
+    return Container(
+      margin: const EdgeInsets.only(top: 4, bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: badgeBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: badgeBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: badgeText, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            diffStr,
+            style: TextStyle(
+              color: badgeText,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
           ),
-          label: Text("Add"),
-          onPressed: () async {
-            setState(() {
-              globals.wh_method = "";
-            });
-          },
-          style: ElevatedButton.styleFrom(
-              elevation: 0.0,
-              backgroundColor: primaryOrange,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-              textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)));
-    } else {
-      return new ElevatedButton.icon(
-          icon: Icon(
-            Icons.save,
-            color: Colors.white,
-            size: 15.0,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context) {
+    final isEdit = globals.wh_method == "edit";
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        MediaQuery.of(context).padding.bottom + 12,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey.shade200,
+            width: 1.0,
           ),
-          label: Text("Save"),
-          onPressed: () async {
-            SharedPreferences prefs =
-                await SharedPreferences.getInstance(); //SEMENTARA
-            showDialog(
-              context: context,
-              builder: (context) => new AlertDialog(
-                title: new Text('Information'),
-                content: new Text("Input Stock Opname?"),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                ),
-                actions: <Widget>[
-                  new ElevatedButton.icon(
-                    icon: Icon(Icons.close, color: Colors.white, size: 20.0),
-                    label: Text("No"),
-                    onPressed: () {
-                      Navigator.of(context).pop(false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: Colors.grey.shade600,
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                  ),
-                  new ElevatedButton.icon(
-                    icon: Icon(
-                      Icons.save,
-                      color: Colors.white,
-                      size: 20.0,
-                    ),
-                    label: Text("Ok"),
-                    onPressed: () async {
-                      Navigator.of(context).pop(false);
-                      SharedPreferences prefs =
-                          await SharedPreferences.getInstance();
-                      var username = prefs.getString("name") ?? "";
-                      if (globals.wh_method == "") {
-                        CreateStockOpname(username);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                        elevation: 0.0,
-                        backgroundColor: primaryOrange,
-                        foregroundColor: Colors.white,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                        textStyle: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.bold)),
-                  ),
-                ],
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Reset Button
+          OutlinedButton.icon(
+            onPressed: () => reseTeks(false),
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('Reset'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.grey.shade700,
+              side: BorderSide(color: Colors.grey.shade300),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-              elevation: 0.0,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Save / Update Button
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => _handleSaveOrUpdate(context),
+              icon: Icon(isEdit ? Icons.update_rounded : Icons.save_rounded,
+                  size: 18, color: Colors.white),
+              label: Text(
+                isEdit ? 'Update Opname' : 'Simpan Opname',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryOrange,
+                foregroundColor: Colors.white,
+                elevation: 1,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Detail / List Button
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => ListWareHouseOpName()),
+              );
+            },
+            icon: const Icon(Icons.list_alt_rounded,
+                size: 18, color: Colors.white),
+            label: const Text(
+              'Detail',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: Colors.white,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accentOrange,
+              foregroundColor: Colors.white,
+              elevation: 1,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleSaveOrUpdate(BuildContext context) async {
+    final isEdit = globals.wh_method == "edit";
+    final actualText = txtQuantityOnActual.text.trim();
+    if (actualText.isEmpty) {
+      alert(context, 2, "Quantity Actual tidak boleh kosong", "error");
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              isEdit ? Icons.update_rounded : Icons.save_rounded,
+              color: primaryOrange,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              isEdit ? 'Update Opname' : 'Simpan Opname',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          isEdit
+              ? "Apakah Anda yakin ingin memperbarui data Stock Opname ini?"
+              : "Apakah Anda yakin ingin menyimpan data Stock Opname ini?",
+          style: const TextStyle(fontSize: 13),
+        ),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: Colors.grey.shade400),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text('Batal', style: TextStyle(color: Colors.grey.shade700)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
               backgroundColor: primaryOrange,
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-              textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)));
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Ya, Lanjutkan'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final username = prefs.getString("name") ?? "";
+
+    if (isEdit) {
+      UpdateStockOpname(username);
+    } else {
+      if (txtItemID.text.trim().isEmpty) {
+        alert(context, 2, "Pilih Item ID terlebih dahulu", "error");
+        return;
+      }
+      CreateStockOpname(username);
     }
-  }
-
-  Widget _buildButtonShowDetail(BuildContext context) {
-    return new ElevatedButton.icon(
-        icon: Icon(
-          Icons.book,
-          color: Colors.white,
-          size: 15.0,
-        ),
-        label: Text("Detail",style: TextStyle(color:Colors.white)),
-        onPressed: () async {
-          Timer(Duration(seconds: 1), () {
-            // 5s over, navigate to a new page
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => ListWareHouseOpName()));
-          });
-        },
-        style: ElevatedButton.styleFrom(
-            elevation: 0.0,
-            backgroundColor: primaryOrange,
-            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-            textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)));
-  }
-
-  Widget _buildButtonCancel(BuildContext context) {
-    return new ElevatedButton.icon(
-        icon: Icon(
-          Icons.cancel,
-          color: Colors.white,
-          size: 15.0,
-        ),
-        label: Text("Cancel",style: TextStyle(color:Colors.white)),
-        onPressed: () async {
-          reseTeks(false);
-        },
-        style: ElevatedButton.styleFrom(
-            elevation: 0.0,
-            backgroundColor: Colors.orange,
-            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-            textStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)));
   }
 
   List<Map<String, dynamic>> dataListNewItem = [];
@@ -1340,666 +1844,90 @@ class _FrmWareHouseOpNameState extends State<FrmWareHouseOpName> {
   }
 
   Widget _getContent(BuildContext context) {
-    print('globals.wh_method ${globals.wh_method}');
-    return Container(
-      padding: EdgeInsets.fromLTRB(1.0, 1.0, 1.0, 1.0),
-      child: ListView(
-        children: <Widget>[
-          Container(
-            child: Card(
-              elevation: 0.0,
-              shadowColor: Color(0x802196F3),
-              // shape: RoundedRectangleBorder(
-              //     borderRadius: BorderRadius.circular(15.0)),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: <Widget>[
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                  child: _buildWHID(context),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: TextField(
-                      readOnly: globals.wh_method != "edit" ? false : true,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtItemID,
-                      keyboardType: TextInputType.text,
-                      onChanged: (value) async {
-                        if (globals.wh_method != 'edit') {
-                          if (value != null && value != '') {
-                            if (value.length > 5) {
-                              if (isScan == true) {
-                                await getItemID(value);
-                                print(lstItemID);
-                              }
-                            }
-                          }
-                        }
-                      },
-                      decoration: softDecoration(
-                        label: 'Item ID',
-                        readOnly: globals.wh_method == "edit",
-                      ).copyWith(
-                        suffixIcon: globals.wh_method == "edit"
-                            ? null
-                            : Padding(
-                                padding: EdgeInsets.only(right: 4),
-                                child: Material(
-                                  color: Color(0xFFFFF4E6),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(10),
-                                    onTap: () {
-                                      final parentCtx = context;
-                                      showDialog(
-                                        context: parentCtx,
-                                        builder: (choiceCtx) {
-                                          return Dialog(
-                                            insetPadding: EdgeInsets.symmetric(
-                                              horizontal: 20,
-                                              vertical: 24,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(18),
-                                            ),
-                                            backgroundColor: Colors.white,
-                                            child: Padding(
-                                              padding: EdgeInsets.fromLTRB(
-                                                  18, 20, 18, 16),
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Container(
-                                                    width: 64,
-                                                    height: 64,
-                                                    decoration: BoxDecoration(
-                                                      color: Color(0xFFFFF4E6),
-                                                      shape: BoxShape.circle,
-                                                      border: Border.all(
-                                                        color: primaryOrange,
-                                                        width: 1.5,
-                                                      ),
-                                                    ),
-                                                    child: Icon(
-                                                      Icons.qr_code_2_rounded,
-                                                      color: primaryOrange,
-                                                      size: 34,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 14),
-                                                  Text(
-                                                    'Pilih Cara Input',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                      fontSize: 17,
-                                                      fontWeight: FontWeight.w700,
-                                                      color: Color(0xFFE07B39),
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 8),
-                                                  Text(
-                                                    'Scan QR Code item, atau cari berdasarkan nama / Item ID.',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      color: Colors.grey.shade700,
-                                                      height: 1.35,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 18),
-                                                  SizedBox(
-                                                    width: double.infinity,
-                                                    child: ElevatedButton.icon(
-                                                      icon: Icon(
-                                                        Icons.qr_code_scanner,
-                                                        color: Colors.white,
-                                                        size: 20,
-                                                      ),
-                                                      label: Text(
-                                                        'Scan QRCode',
-                                                        style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
-                                                      ),
-                                                      onPressed: () {
-                                                        Navigator.of(choiceCtx)
-                                                            .pop();
-                                                        setState(() {
-                                                          isScan = true;
-                                                        });
-                                                        scanQRCode();
-                                                      },
-                                                      style: ElevatedButton
-                                                          .styleFrom(
-                                                        elevation: 2,
-                                                        backgroundColor:
-                                                            primaryOrange,
-                                                        foregroundColor:
-                                                            Colors.white,
-                                                        padding:
-                                                            EdgeInsets.symmetric(
-                                                                vertical: 12),
-                                                        shape:
-                                                            RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(10),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 10),
-                                                  SizedBox(
-                                                    width: double.infinity,
-                                                    child: ElevatedButton.icon(
-                                                      icon: Icon(
-                                                        Icons.search,
-                                                        color: Colors.white,
-                                                        size: 20,
-                                                      ),
-                                                      label: Text(
-                                                        'Search By Name',
-                                                        style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
-                                                      ),
-                                                      onPressed: () async {
-                                                        Navigator.of(choiceCtx)
-                                                            .pop();
-                                                        setState(() {
-                                                          isScan = false;
-                                                        });
-                                                        await Future.delayed(
-                                                            Duration(
-                                                                milliseconds:
-                                                                    120));
-                                                        if (!mounted) return;
-                                                        showDialog(
-                                                          context: parentCtx,
-                                                          builder: (dialogCtx) {
-                                                            return Dialog(
-                                                              insetPadding:
-                                                                  EdgeInsets
-                                                                      .symmetric(
-                                                                horizontal: 12,
-                                                                vertical: 24,
-                                                              ),
-                                                              shape:
-                                                                  RoundedRectangleBorder(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            18),
-                                                              ),
-                                                              backgroundColor:
-                                                                  Colors.white,
-                                                              child: Padding(
-                                                                padding: EdgeInsets
-                                                                    .fromLTRB(16,
-                                                                        18, 16, 14),
-                                                                child: Column(
-                                                                  mainAxisSize:
-                                                                      MainAxisSize
-                                                                          .min,
-                                                                  crossAxisAlignment:
-                                                                      CrossAxisAlignment
-                                                                          .stretch,
-                                                                  children: [
-                                                                    Row(
-                                                                      children: [
-                                                                        Container(
-                                                                          padding:
-                                                                              EdgeInsets.all(8),
-                                                                          decoration:
-                                                                              BoxDecoration(
-                                                                            color:
-                                                                                Color(0xFFFFF4E6),
-                                                                            shape:
-                                                                                BoxShape.circle,
-                                                                            border:
-                                                                                Border.all(
-                                                                              color: primaryOrange,
-                                                                              width: 1.2,
-                                                                            ),
-                                                                          ),
-                                                                          child:
-                                                                              Icon(
-                                                                            Icons
-                                                                                .search,
-                                                                            color:
-                                                                                primaryOrange,
-                                                                            size:
-                                                                                20,
-                                                                          ),
-                                                                        ),
-                                                                        SizedBox(
-                                                                            width:
-                                                                                10),
-                                                                        Expanded(
-                                                                          child:
-                                                                              Text(
-                                                                            'Search Item',
-                                                                            style:
-                                                                                TextStyle(
-                                                                              fontSize: 17,
-                                                                              fontWeight: FontWeight.w700,
-                                                                              color: Color(0xFFE07B39),
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                        IconButton(
-                                                                          padding:
-                                                                              EdgeInsets.zero,
-                                                                          constraints:
-                                                                              BoxConstraints(),
-                                                                          icon:
-                                                                              Icon(
-                                                                            Icons
-                                                                                .close,
-                                                                            color:
-                                                                                Colors.grey.shade600,
-                                                                          ),
-                                                                          onPressed:
-                                                                              () =>
-                                                                                  Navigator.of(dialogCtx).pop(),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    SizedBox(
-                                                                        height:
-                                                                            14),
-                                                                    setupAlertDialoadContainer(
-                                                                        dialogCtx),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                            );
-                                                          },
-                                                        );
-                                                      },
-                                                      style: ElevatedButton
-                                                          .styleFrom(
-                                                        elevation: 2,
-                                                        backgroundColor:
-                                                            Color(0xFFFFB347),
-                                                        foregroundColor:
-                                                            Colors.white,
-                                                        padding:
-                                                            EdgeInsets.symmetric(
-                                                                vertical: 12),
-                                                        shape:
-                                                            RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(10),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 8),
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.of(choiceCtx)
-                                                            .pop(),
-                                                    child: Text(
-                                                      'Batal',
-                                                      style: TextStyle(
-                                                        color:
-                                                            Colors.grey.shade600,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                    child: Padding(
-                                      padding: EdgeInsets.all(6),
-                                      child: Icon(
-                                        Icons.qr_code_scanner_rounded,
-                                        color: primaryOrange,
-                                        size: 24,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: TextField(
-                      readOnly: globals.wh_method != "edit" ? false : true,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtPartName,
-                      keyboardType: TextInputType.text,
-                      decoration: softDecoration(label: 'Part Name', readOnly: globals.wh_method == "edit"),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: TextField(
-                      readOnly: globals.wh_method != "edit" ? false : true,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtType,
-                      keyboardType: TextInputType.text,
-                      decoration: softDecoration(label: 'Type', readOnly: globals.wh_method == "edit"),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: TextField(
-                      readOnly: globals.wh_method != "edit" ? false : true,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtVHTID,
-                      keyboardType: TextInputType.text,
-                      decoration: softDecoration(label: 'VHTID', readOnly: globals.wh_method == "edit"),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: TextField(
-                      readOnly: globals.wh_method != "edit" ? false : true,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtGenuinoNumber,
-                      keyboardType: TextInputType.text,
-                      decoration: softDecoration(label: 'Genuine No', readOnly: globals.wh_method == "edit"),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: TextField(
-                      readOnly: globals.wh_method != "edit" ? false : true,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtTypeAccessories,
-                      keyboardType: TextInputType.text,
-                      decoration: softDecoration(label: 'Type Accessories', readOnly: globals.wh_method == "edit"),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: TextField(
-                      readOnly: globals.wh_method != "edit" ? false : true,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtMerk,
-                      keyboardType: TextInputType.text,
-                      decoration: softDecoration(label: 'Merk', readOnly: globals.wh_method == "edit"),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: TextField(
-                      readOnly: globals.wh_method != "edit" ? false : true,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtItemSize,
-                      keyboardType: TextInputType.number,
-                      decoration: softDecoration(label: 'Item Size', readOnly: globals.wh_method == "edit"),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: TextField(
-                      readOnly: true,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtQuantityOnHands,
-                      keyboardType: TextInputType.number,
-                      //focusNode: myFocusNode,
-                      decoration: softDecoration(label: 'Quantity On Books', readOnly: true),
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.only(
-                        left: 10, top: 10, right: 10, bottom: 10),
-                    child: TextField(
-                      readOnly: false,
-                      cursorColor: Colors.black,
-                      style: TextStyle(color: Colors.grey.shade800),
-                      controller: txtQuantityOnActual,
-                      keyboardType: TextInputType.number,
-                      focusNode: myFocusNode,
-                      decoration: softDecoration(
-                          label: 'Quantity Actual', readOnly: false),
-                    ),
-                  ),
-                  // Container(
-                  //   margin: EdgeInsets.only(
-                  //       left: 10, top: 10, right: 10, bottom: 10),
-                  //   child: new Row(
-                  //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  //       children: <Widget>[
-                  //         new Flexible(
-                  //           child: SmartSelect<String?>.single(
-                  //             title: 'Type PO',
-                  //             selectedValue: selTypePO,
-                  //             onChange: (selected) {
-                  //               setState(() {
-                  //                 selTypePO = selected.value!;
-                  //                 print('selTypePO ${selTypePO}');
-                  //                 txtTypePO.text = selTypePO;
-                  //               });
-                  //             },
-                  //             choiceType: S2ChoiceType.radios,
-                  //             choiceItems: choices.listTypePO,
-                  //             modalType: S2ModalType.popupDialog,
-                  //             modalHeader: false,
-                  //             modalConfig: const S2ModalConfig(
-                  //               style: S2ModalStyle(
-                  //                 elevation: 0,
-                  //                 shape: RoundedRectangleBorder(
-                  //                   borderRadius:
-                  //                       BorderRadius.all(Radius.circular(20.0)),
-                  //                 ),
-                  //               ),
-                  //             ),
-                  //           ),
-                  //         ),//OK
-                  //         SizedBox(width: 5),
-                  //         new Flexible(
-                  //             child: new TextField(
-                  //           readOnly: true,
-                  //           cursorColor: Colors.black,
-                  //           style: TextStyle(color: Colors.grey.shade800),
-                  //           controller: txtTypePO,
-                  //           keyboardType: TextInputType.text,
-                  //           decoration: softDecoration(label: 'Type Po', readOnly: true),
-                  //         )),
-                  //       ]),
-                  // ),
-                  // Container(
-                  //   margin: EdgeInsets.only(
-                  //       left: 10, top: 10, right: 10, bottom: 10),
-                  //   child: new Row(
-                  //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  //       children: <Widget>[
-                  //         new Flexible(
-                  //           child: SmartSelect<String?>.single(
-                  //             title: 'Curr.',
-                  //             selectedValue: selCuryID,
-                  //             onChange: (selected) {
-                  //               setState(() {
-                  //                 selCuryID = selected.value!;
-                  //                 txtCurrencyTypeID.text = selCuryID;
-                  //                 print('selCuryID ${selCuryID}');
-                  //               });
-                  //             },
-                  //             choiceType: S2ChoiceType.radios,
-                  //             choiceItems: choices.currencyID,
-                  //             modalType: S2ModalType.popupDialog,
-                  //             modalHeader: false,
-                  //             modalConfig: const S2ModalConfig(
-                  //               style: S2ModalStyle(
-                  //                 elevation: 3,
-                  //                 shape: RoundedRectangleBorder(
-                  //                   borderRadius:
-                  //                       BorderRadius.all(Radius.circular(20.0)),
-                  //                 ),
-                  //               ),
-                  //             ),
-                  //           ),
-                  //         ),
-                  //         SizedBox(
-                  //           width: 5.0,
-                  //         ),
-                  //         new Flexible(
-                  //             child: new TextField(
-                  //           readOnly: true,
-                  //           cursorColor: Colors.black,
-                  //           style: TextStyle(color: Colors.grey.shade800),
-                  //           controller: txtCurrencyTypeID,
-                  //           keyboardType: TextInputType.text,
-                  //           decoration: softDecoration(readOnly: true, label: 'Curr.'),
-                  //         )),
-                  //       ]),
-                  // ),
-                  // Container(
-                  //   margin: EdgeInsets.only(
-                  //       left: 10, top: 10, right: 10, bottom: 10),
-                  //   child: TextField(
-                  //     cursorColor: Colors.black,
-                  //     style: TextStyle(color: Colors.grey.shade800),
-                  //     controller: txtItemCost,
-                  //     keyboardType: TextInputType.number,
-                  //     //focusNode: myFocusNode,
-                  //     decoration: new InputDecoration(
-                  //       fillColor: Colors.white,
-                  //       filled: true,
-                  //       labelText: 'Item Cost',
-                  //       isDense: true,
-                  //       contentPadding: EdgeInsets.all(2.0),
-                  //     ),
-                  //   ),
-                  // ),
-                  // Container(
-                  //   margin: EdgeInsets.only(
-                  //       left: 10, top: 10, right: 10, bottom: 10),
-                  //   child: TextField(
-                  //     cursorColor: Colors.black,
-                  //     style: TextStyle(color: Colors.grey.shade800),
-                  //     controller: txtCurrencyTypeID,
-                  //     keyboardType: TextInputType.text,
-                  //     //focusNode: myFocusNode,
-                  //     decoration: new InputDecoration(
-                  //       fillColor: Colors.white,
-                  //       filled: true,
-                  //       labelText: 'Currency Type ID',
-                  //       isDense: true,
-                  //       contentPadding: EdgeInsets.all(2.0),
-                  //     ),
-                  //   ),
-                  // ),
-                  Container(
-                      margin: EdgeInsets.all(10.0),
-                      child: Row(children: <Widget>[
-                        Expanded(
-                          child: _buildButtonCreateOrUpdate(context),
-                        ),
-                        SizedBox(
-                          width: 5,
-                        ),
-                        Expanded(
-                          child: _buildButtonShowDetail(context),
-                        ),
-                        SizedBox(
-                          width: globals.wh_method == "edit" ? 10 : 0,
-                        ),
-                        globals.wh_method == "edit"
-                            ? Expanded(
-                                child: _builButtonUpdate(context),
-                              )
-                            : Container(),
-                      ])),
-                  Container(
-                      margin: EdgeInsets.all(10.0),
-                      child: Row(children: <Widget>[
-                        Expanded(
-                          child: _buildButtonCancel(context),
-                        ),
-                        SizedBox(
-                          width: 5,
-                        )
-                      ]))
-                ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildCard(
+            title: 'Informasi Gudang & Item',
+            icon: Icons.warehouse_rounded,
+            children: [
+              _buildWHID(context),
+              _buildItemIdField(context),
+              _buildTextField(
+                controller: txtPartName,
+                label: 'Part Name',
+                icon: Icons.label_outline_rounded,
+                readOnly: globals.wh_method == "edit",
               ),
-            ),
+              _buildTextField(
+                controller: txtType,
+                label: 'Type',
+                icon: Icons.category_outlined,
+                readOnly: globals.wh_method == "edit",
+              ),
+              _buildTextField(
+                controller: txtVHTID,
+                label: 'VHTID',
+                icon: Icons.tag_rounded,
+                readOnly: globals.wh_method == "edit",
+              ),
+              _buildTextField(
+                controller: txtGenuinoNumber,
+                label: 'Genuine No',
+                icon: Icons.verified_outlined,
+                readOnly: globals.wh_method == "edit",
+              ),
+              _buildTextField(
+                controller: txtTypeAccessories,
+                label: 'Type Accessories',
+                icon: Icons.extension_outlined,
+                readOnly: globals.wh_method == "edit",
+              ),
+              _buildTextField(
+                controller: txtMerk,
+                label: 'Merk / Brand',
+                icon: Icons.branding_watermark_outlined,
+                readOnly: globals.wh_method == "edit",
+              ),
+              _buildTextField(
+                controller: txtItemSize,
+                label: 'Item Size',
+                icon: Icons.straighten_rounded,
+                keyboardType: TextInputType.number,
+                readOnly: globals.wh_method == "edit",
+              ),
+            ],
+          ),
+          _buildCard(
+            title: 'Perhitungan Stok Opname',
+            icon: Icons.calculate_outlined,
+            children: [
+              _buildTextField(
+                controller: txtQuantityOnHands,
+                label: 'Quantity On Books (Sistem)',
+                icon: Icons.auto_stories_outlined,
+                readOnly: true,
+                keyboardType: TextInputType.number,
+              ),
+              _buildTextField(
+                controller: txtQuantityOnActual,
+                label: 'Quantity Actual (Fisik)',
+                icon: Icons.edit_note_rounded,
+                focusNode: myFocusNode,
+                keyboardType: TextInputType.number,
+                isRequired: true,
+                onChanged: (val) {
+                  setState(() {});
+                },
+              ),
+              _buildStockDifferenceBadge(),
+            ],
           ),
         ],
       ),
     );
-  }
-
-  Widget ImgHeader1(BuildContext context) {
-    return Container(
-      child: new Image.asset(
-        "assets/img/truck_header.jpg",
-        fit: BoxFit.cover,
-        height: 300.0,
-      ),
-      constraints: new BoxConstraints.expand(height: 295.0),
-    );
-  }
-
-  Widget ImgHeader2(BuildContext context) {
-    return Container(
-      margin: new EdgeInsets.only(top: 190.0),
-      height: 110.0,
-      decoration: new BoxDecoration(
-        gradient: new LinearGradient(
-          //colors: <Color>[new Color(0x00736AB7), new Color(0xFF736AB7)],
-          colors: <Color>[new Color(0x00736AB7), HexColor("#f0eff4")],
-          stops: [0.0, 0.9],
-          begin: const FractionalOffset(0.0, 0.0),
-          end: const FractionalOffset(0.0, 1.0),
-        ),
-      ),
-    );
-  }
-
-  Widget BuildHeader(BuildContext context) {
-    return ListTile(
-        contentPadding: EdgeInsets.only(left: 20, right: 20, top: 20),
-        title: Text(
-          'Driver Management System',
-          style: TextStyle(
-              color: AppTheme.nearlyWhite,
-              fontWeight: FontWeight.w500,
-              fontSize: 16.0),
-        ),
-        trailing: Icon(Icons.account_circle,
-            size: 35,
-            color: AppTheme
-                .nearlyBlack) //CircleAvatar(backgroundColor: AppTheme.white),
-        );
   }
 }
 

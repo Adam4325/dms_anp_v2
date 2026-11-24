@@ -16,11 +16,15 @@ class FrmOpenDO extends StatefulWidget {
 
 class _FrmOpenDOState extends State<FrmOpenDO>
     with SingleTickerProviderStateMixin {
-  // 🎨 Warna
-  final Color primaryOrange = const Color(0xFFFF8C69);
-  final Color lightOrange = const Color(0xFFFFF4E6);
-  final Color cardColor = const Color(0xFFFFF8F0);
-  final Color backgroundColor = const Color(0xFFFFFAF5);
+  // 🎨 Warna (design_tab.md & design_form.md)
+  static const Color primaryOrange = Color(0xFFFF8C69);
+  static const Color lightOrange = Color(0xFFFFF4E6);
+  static const Color accentOrange = Color(0xFFFFB347);
+  static const Color darkOrange = Color(0xFFE07B39);
+  static const Color cardColor = Color(0xFFFFF8F0);
+  static const Color backgroundColor = Color(0xFFFFFAF5);
+  static const Color shadowColor = Color(0x20FF8C69);
+  static const Color borderColor = Color(0x59FFB347);
 
   late TabController tabController;
   final formKey = GlobalKey<FormState>();
@@ -419,18 +423,49 @@ class _FrmOpenDOState extends State<FrmOpenDO>
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: primaryOrange,
-        title: const Text("Form Open DO"),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        elevation: 1,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          widget.item.isNotEmpty ? "Edit Open DO" : "Form Open DO",
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
         bottom: TabBar(
           controller: tabController,
           indicatorColor: Colors.white,
+          indicatorWeight: 3,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          unselectedLabelStyle:
+              const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
           tabs: const [
-            Tab(text: "Page 1"),
-            Tab(text: "Page 2"),
+            Tab(
+              icon: Icon(Icons.description_outlined, size: 20),
+              text: "Info DO & Customer",
+            ),
+            Tab(
+              icon: Icon(Icons.local_shipping_outlined, size: 20),
+              text: "Pengiriman & Lokasi",
+            ),
           ],
         ),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(40.0),
+                child: CircularProgressIndicator(color: primaryOrange),
+              ),
+            )
           : Form(
               key: formKey,
               child: TabBarView(
@@ -444,125 +479,230 @@ class _FrmOpenDOState extends State<FrmOpenDO>
     );
   }
 
-  // 📄 PAGE 1
+  // 📄 PAGE 1 (Info DO & Customer)
   Widget _buildPage1() {
-    // Debug: Print nilai dropdown untuk troubleshooting
-    print('DEBUG _buildPage1:');
-    print(
-        '  statusValue: "$statusValue" (in list: ${statusList.contains(statusValue)})');
-    print(
-        '  destination: "$destination" (in list: ${destinationList.contains(destination)})');
-    print(
-        '  doStatus: "$doStatus" (in list: ${doStatusList.contains(doStatus)})');
-
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Card(
-        color: cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 3,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              _inputField2("Delivery Order Number", doNumber),
-              _dateField("Delivery Order Date", doDate),
-              _dropdownField(
-                  "Status",
-                  statusValue,
-                  statusList,
-                  (val) => setState(() => statusValue =
-                      (val != null && val.isNotEmpty) ? val : "OPEN")),
-              _searchableDropdown(
-                "Company",
-                customerId,
-                companyList,
-                (val) => setState(() => customerId = val ?? ""),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor),
+          boxShadow: const [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: const BoxDecoration(
+                color: lightOrange,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
               ),
-              _inputField("Sub Customer", subCustomer),
-              _inputField("Sales Order Number", salesOrder),
-              _inputField("Customer Delivery Order Number", custDONumber),
-              _dateField("Customer Order Date", custOrderDate),
-              _searchableDropdown(
-                "Type Truck",
-                truckTypeId,
-                truckTypeList,
-                (val) => setState(() => truckTypeId = val ?? ""),
+              child: Row(
+                children: const [
+                  Icon(Icons.inventory_2_outlined, color: darkOrange, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    "Informasi Delivery Order & Customer",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: darkOrange,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
-              _searchableDropdown(
-                "Item Type",
-                itemTypeId,
-                itemTypeList,
-                (val) => setState(() => itemTypeId = val ?? ""),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _inputField2("Delivery Order Number", doNumber),
+                  _dateField("Delivery Order Date", doDate),
+                  _dropdownField(
+                      "Status",
+                      statusValue,
+                      statusList,
+                      (val) => setState(() => statusValue =
+                          (val != null && val.isNotEmpty) ? val : "OPEN")),
+                  _searchableDropdown(
+                    "Company",
+                    customerId,
+                    companyList,
+                    (val) => setState(() => customerId = val ?? ""),
+                  ),
+                  _inputField("Sub Customer", subCustomer),
+                  _inputField("Sales Order Number", salesOrder),
+                  _inputField("Customer Delivery Order Number", custDONumber),
+                  _dateField("Customer Order Date", custOrderDate),
+                  _searchableDropdown(
+                    "Type Truck",
+                    truckTypeId,
+                    truckTypeList,
+                    (val) => setState(() => truckTypeId = val ?? ""),
+                  ),
+                  _searchableDropdown(
+                    "Item Type",
+                    itemTypeId,
+                    itemTypeList,
+                    (val) => setState(() => itemTypeId = val ?? ""),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => tabController.animateTo(1),
+                      icon: const Icon(Icons.arrow_forward_rounded,
+                          color: Colors.white, size: 18),
+                      label: const Text(
+                        "Lanjut ke Pengiriman & Lokasi",
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentOrange,
+                        elevation: 1,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // 📄 PAGE 2
+  // 📄 PAGE 2 (Pengiriman & Lokasi)
   Widget _buildPage2() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Card(
-        color: cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 3,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              _searchableDropdown(
-                "Uom Type",
-                itemUomId,
-                itemUomList,
-                (val) => setState(() => itemUomId = val ?? ""),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor),
+          boxShadow: const [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: const BoxDecoration(
+                color: lightOrange,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
               ),
-              _inputField("Qty", qty, keyboardType: TextInputType.number),
-              _searchableDropdown(
-                "Origin",
-                originId,
-                originList,
-                (val) => setState(() => originId = val ?? ""),
+              child: Row(
+                children: const [
+                  Icon(Icons.local_shipping_outlined,
+                      color: darkOrange, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    "Rincian Pengiriman & Lokasi",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: darkOrange,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
-              _dropdownField(
-                  "Destination",
-                  destination,
-                  destinationList,
-                  (val) => setState(() => destination =
-                      (val != null && val.isNotEmpty) ? val : "-")),
-              _searchableDropdown(
-                "Zone",
-                zoneId,
-                itemZoneList,
-                (val) => setState(() => zoneId = val ?? ""),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _searchableDropdown(
+                    "Uom Type",
+                    itemUomId,
+                    itemUomList,
+                    (val) => setState(() => itemUomId = val ?? ""),
+                  ),
+                  _inputField("Qty", qty, keyboardType: TextInputType.number),
+                  _searchableDropdown(
+                    "Origin",
+                    originId,
+                    originList,
+                    (val) => setState(() => originId = val ?? ""),
+                  ),
+                  _dropdownField(
+                      "Destination",
+                      destination,
+                      destinationList,
+                      (val) => setState(() => destination =
+                          (val != null && val.isNotEmpty) ? val : "-")),
+                  _searchableDropdown(
+                    "Zone",
+                    zoneId,
+                    itemZoneList,
+                    (val) => setState(() => zoneId = val ?? ""),
+                  ),
+                  _dateField("Delivery Date", deliveryDate),
+                  _inputField("Notes", notes),
+                  _dropdownField(
+                      "DO Status",
+                      doStatus,
+                      doStatusList,
+                      (val) => setState(() => doStatus =
+                          (val != null && val.isNotEmpty) ? val : "NORMAL")),
+                  _searchableDropdown(
+                    "Location",
+                    locationId,
+                    itemLokasiList,
+                    (val) => setState(() => locationId = val ?? ""),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () => tabController.animateTo(0),
+                        icon: const Icon(Icons.arrow_back_rounded, size: 16),
+                        label: const Text("Info DO"),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.grey.shade700,
+                          side: BorderSide(color: Colors.grey.shade400),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(child: _buttonSimpan()),
+                    ],
+                  ),
+                ],
               ),
-              _dateField("Delivery Date", deliveryDate),
-              _inputField("Notes", notes),
-              _dropdownField(
-                  "DO Status",
-                  doStatus,
-                  doStatusList,
-                  (val) => setState(() => doStatus =
-                      (val != null && val.isNotEmpty) ? val : "NORMAL")),
-              _searchableDropdown(
-                "Location",
-                locationId,
-                itemLokasiList,
-                (val) => setState(() => locationId = val ?? ""),
-              ),
-              const SizedBox(height: 20),
-              _buttonSimpan(),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // 🟠 Input field
+  // 🟠 Input field (Read-only)
   Widget _inputField2(String label, TextEditingController controller,
       {TextInputType keyboardType = TextInputType.text}) {
     return Padding(
@@ -571,22 +711,29 @@ class _FrmOpenDOState extends State<FrmOpenDO>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-          const SizedBox(height: 4),
+              style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: Colors.grey.shade700)),
+          const SizedBox(height: 5),
           TextFormField(
             readOnly: true,
             controller: controller,
             keyboardType: keyboardType,
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
             decoration: InputDecoration(
               isDense: true,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               filled: true,
-              fillColor: lightOrange,
+              fillColor: const Color(0xFFF1F5F9),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: borderColor),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: borderColor),
               ),
             ),
             validator: (val) {
@@ -601,6 +748,7 @@ class _FrmOpenDOState extends State<FrmOpenDO>
     );
   }
 
+  // 🟠 Input field
   Widget _inputField(String label, TextEditingController controller,
       {TextInputType keyboardType = TextInputType.text}) {
     return Padding(
@@ -609,21 +757,33 @@ class _FrmOpenDOState extends State<FrmOpenDO>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-          const SizedBox(height: 4),
+              style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: Colors.grey.shade700)),
+          const SizedBox(height: 5),
           TextFormField(
             controller: controller,
             keyboardType: keyboardType,
+            cursorColor: primaryOrange,
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
             decoration: InputDecoration(
               isDense: true,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               filled: true,
-              fillColor: lightOrange,
+              fillColor: Colors.white,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: borderColor),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: borderColor),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: primaryOrange, width: 1.5),
               ),
             ),
             validator: (val) {
@@ -646,21 +806,32 @@ class _FrmOpenDOState extends State<FrmOpenDO>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-          const SizedBox(height: 4),
+              style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: Colors.grey.shade700)),
+          const SizedBox(height: 5),
           TextFormField(
             controller: controller,
             readOnly: true,
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
             decoration: InputDecoration(
               isDense: true,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               filled: true,
-              fillColor: lightOrange,
+              fillColor: Colors.white,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: borderColor),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: borderColor),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: primaryOrange, width: 1.5),
               ),
               suffixIcon:
                   Icon(Icons.calendar_today, size: 18, color: primaryOrange),
@@ -687,9 +858,7 @@ class _FrmOpenDOState extends State<FrmOpenDO>
                     data: ThemeData.light().copyWith(
                       primaryColor: primaryOrange,
                       hintColor: primaryOrange,
-                      colorScheme: ColorScheme.light(onPrimary: primaryOrange),
-                      buttonTheme:
-                          ButtonThemeData(textTheme: ButtonTextTheme.primary),
+                      colorScheme: ColorScheme.light(primary: primaryOrange),
                     ),
                     child: child ?? Container(),
                   );
@@ -717,9 +886,8 @@ class _FrmOpenDOState extends State<FrmOpenDO>
   // 🟠 Dropdown
   Widget _dropdownField(String label, String value, List<String> items,
       ValueChanged<String?> onChanged) {
-    // Validasi ketat: value harus ada di items DAN tidak boleh empty string
     String? validValue;
-    if (value != null && value.isNotEmpty && items.contains(value)) {
+    if (value.isNotEmpty && items.contains(value)) {
       validValue = value;
     } else {
       validValue = null;
@@ -731,21 +899,31 @@ class _FrmOpenDOState extends State<FrmOpenDO>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-          const SizedBox(height: 4),
+              style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: Colors.grey.shade700)),
+          const SizedBox(height: 5),
           DropdownButtonFormField<String>(
             value: validValue,
             isExpanded: true,
             decoration: InputDecoration(
               isDense: true,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               filled: true,
-              fillColor: lightOrange,
+              fillColor: Colors.white,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: borderColor),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: borderColor),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: primaryOrange, width: 1.5),
               ),
             ),
             items: items
@@ -774,9 +952,11 @@ class _FrmOpenDOState extends State<FrmOpenDO>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-          const SizedBox(height: 4),
+              style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: Colors.grey.shade700)),
+          const SizedBox(height: 5),
           InkWell(
             onTap: items.isEmpty
                 ? null
@@ -790,14 +970,14 @@ class _FrmOpenDOState extends State<FrmOpenDO>
                     );
                   },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: items.isEmpty ? Colors.grey.shade200 : lightOrange,
-                borderRadius: BorderRadius.circular(8),
+                color: items.isEmpty ? Colors.grey.shade200 : Colors.white,
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: (isRequired && selectedId.isEmpty)
-                      ? Colors.red.withOpacity(0.3)
-                      : Colors.transparent,
+                      ? Colors.red.withValues(alpha: 0.5)
+                      : borderColor,
                   width: 1,
                 ),
               ),
@@ -810,13 +990,14 @@ class _FrmOpenDOState extends State<FrmOpenDO>
                           ? "Loading..."
                           : _getTextFromId(selectedId, items),
                       style: TextStyle(
+                        fontSize: 14,
                         color: selectedId.isEmpty
-                            ? Colors.grey.shade600
+                            ? Colors.grey.shade500
                             : Colors.black87,
                       ),
                     ),
                   ),
-                  Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
+                  Icon(Icons.arrow_drop_down, color: primaryOrange),
                 ],
               ),
             ),
@@ -1114,17 +1295,30 @@ class _SearchableDialogState extends State<_SearchableDialog> {
             ),
             // Search Field
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               child: TextField(
                 controller: searchController,
+                cursorColor: const Color(0xFFFF8C69),
+                style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
                   hintText: "Cari...",
-                  prefixIcon: const Icon(Icons.search),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFFFF8C69)),
+                  filled: true,
+                  fillColor: const Color(0xFFFFFAF5),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0x59FFB347)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0x59FFB347)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFFF8C69), width: 1.5),
                   ),
                   contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
                 onChanged: _filterItems,
               ),
@@ -1139,9 +1333,16 @@ class _SearchableDialogState extends State<_SearchableDialog> {
                         final item = filteredItems[index];
                         final isSelected = item['id'] == widget.selectedId;
                         return ListTile(
-                          title: Text(item['text']!),
+                          title: Text(
+                            item['text']!,
+                            style: TextStyle(
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected ? const Color(0xFFE07B39) : Colors.black87,
+                            ),
+                          ),
+                          tileColor: isSelected ? const Color(0xFFFFF4E6) : null,
                           trailing: isSelected
-                              ? const Icon(Icons.check, color: Colors.green)
+                              ? const Icon(Icons.check_circle, color: Color(0xFFFF8C69))
                               : null,
                           selected: isSelected,
                           onTap: () {
