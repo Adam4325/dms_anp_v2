@@ -52,6 +52,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
   String geo_id = "";
   String geo_nm = "";
   String namaKaryawan = "";
+  String _userPhotoUrl = "";
   String jamAbsen = "";
   String tglAbsen = "";
   String timeIN = "";
@@ -112,6 +113,215 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
 
   void getProfileImage() async {
     filePathImageProfile = '';
+  }
+
+  Future<void> _loadUserPhoto() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final statusKaryawan =
+          (prefs.getString("status_karyawan") ?? "").trim().toUpperCase();
+      final loginname =
+          (prefs.getString("loginname") ?? "").trim().toUpperCase();
+      final isDriver =
+          statusKaryawan == "DRIVER" || loginname == "DRIVER";
+
+      if (isDriver) {
+        final photoDriver = (prefs.getString("photo_driver") ?? "").trim();
+        if (photoDriver.isNotEmpty && photoDriver.toLowerCase() != "null") {
+          final url =
+              "${GlobalData.baseUrlOri}photo_trucking/PHOTO_DRIVER/$photoDriver";
+          if (mounted) setState(() => _userPhotoUrl = url);
+        }
+      } else {
+        final photoKry = (prefs.getString("photo_karyawan") ?? "").trim();
+        if (photoKry.isNotEmpty && photoKry.toLowerCase() != "null") {
+          if (mounted) setState(() => _userPhotoUrl = photoKry);
+        } else {
+          final kryid = (prefs.getString("kryid") ?? "").trim();
+          final imeiid = (prefs.getString("androidID") ?? "").trim();
+          if (kryid.isNotEmpty || imeiid.isNotEmpty) {
+            final uri = Uri.parse(
+                    "${GlobalData.baseUrlProd}api/absensi/face_enroll.jsp")
+                .replace(queryParameters: {
+              "method": "status",
+              if (kryid.isNotEmpty) "kryid": kryid,
+              if (imeiid.isNotEmpty) "imeiid": imeiid,
+            });
+            final res =
+                await http.get(uri).timeout(const Duration(seconds: 10));
+            if (res.statusCode == 200) {
+              final dynamic jsonRes = json.decode(res.body);
+              if (jsonRes is Map && jsonRes['data'] != null) {
+                final data = jsonRes['data'];
+                final String photoUrl =
+                    (data['photo_url'] ?? '').toString().trim();
+                final String photoFile =
+                    (data['photo_file'] ?? '').toString().trim();
+                String fullUrl = '';
+                if (photoUrl.isNotEmpty && photoUrl.toLowerCase() != 'null') {
+                  fullUrl = photoUrl.startsWith('http')
+                      ? photoUrl
+                      : '${GlobalData.baseUrlOri}$photoUrl';
+                } else if (photoFile.isNotEmpty &&
+                    photoFile.toLowerCase() != 'null') {
+                  fullUrl =
+                      '${GlobalData.baseUrlOri}photo_trucking/PHOTO_FACE/$photoFile';
+                }
+                if (fullUrl.isNotEmpty && mounted) {
+                  setState(() => _userPhotoUrl = fullUrl);
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  Widget _buildPhotoUploadSection() {
+    if (_imageProfile != null || filePathImageProfile.isNotEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green.shade400, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: _imageProfile != null
+                  ? Image.file(
+                      _imageProfile!,
+                      width: 70,
+                      height: 70,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.memory(
+                      _bytesImageProfile ?? Uint8List.fromList(const []),
+                      width: 70,
+                      height: 70,
+                      fit: BoxFit.cover,
+                    ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.check_circle,
+                          color: Colors.green, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        dropdownvalue.toLowerCase() == 'sakit'
+                            ? 'Surat Dokter Terlampir'
+                            : 'Dokumen / Foto Terlampir',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    dropdownvalue.toLowerCase() == 'sakit'
+                        ? 'Foto surat keterangan dokter siap dikirim'
+                        : 'Foto bukti siap dikirim',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () => getImageFromCamera(context, "PROFILE"),
+                        child: const Text(
+                          'Ganti Foto',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: primaryOrange,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      InkWell(
+                        onTap: () => setState(() {
+                          _imageProfile = null;
+                          filePathImageProfile = '';
+                          _bytesImageProfile = null;
+                        }),
+                        child: Text(
+                          'Hapus',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red.shade600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final bool isSakit = dropdownvalue.toLowerCase() == 'sakit';
+    return InkWell(
+      onTap: () => getImageFromCamera(context, "PROFILE"),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF9F3),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: primaryOrange,
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: const BoxDecoration(
+                color: lightOrange,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.add_a_photo_outlined,
+                  color: primaryOrange, size: 26),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isSakit
+                  ? 'Unggah Foto Surat Keterangan Dokter (Wajib)'
+                  : 'Unggah Foto Bukti / Dokumen (Opsional)',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: darkOrange,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isSakit
+                  ? 'Ketuk untuk foto surat dokter via Kamera atau Galeri'
+                  : 'Ketuk untuk foto via Kamera atau Galeri',
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future getImageFromCamera(BuildContext contexs, String namaPhoto) async {
@@ -308,6 +518,10 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
           (txtNote.text.isEmpty)) {
         alert(globalScaffoldKey.currentContext!, 0, "Catatan tidak boleh kosong",
             "error");
+      } else if (dropdownvalue.toString().toLowerCase() == 'sakit' &&
+          (_imageProfile == null && filePathImageProfile.isEmpty)) {
+        alert(globalScaffoldKey.currentContext!, 0,
+            "Foto surat keterangan dokter wajib diunggah untuk pengajuan sakit.", "error");
       } else if ((dropdownvalue.toString() == 'cuti') &&
           (start_date.isEmpty)) {
         alert(globalScaffoldKey.currentContext!, 0,
@@ -601,7 +815,20 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
                 CircleAvatar(
                   radius: 24,
                   backgroundColor: lightOrange,
-                  child: const Icon(Icons.badge_outlined, color: darkOrange, size: 28),
+                  child: _userPhotoUrl.isNotEmpty
+                      ? ClipOval(
+                          child: Image.network(
+                            _userPhotoUrl,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.badge_outlined,
+                                    color: darkOrange, size: 28),
+                          ),
+                        )
+                      : const Icon(Icons.badge_outlined,
+                          color: darkOrange, size: 28),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -657,126 +884,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
 
           const SizedBox(height: 14),
 
-          // 2. Photo Profile Card
-          Container(
-            decoration: BoxDecoration(
-              color: cardColor,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0x59FFB347)),
-              boxShadow: const [
-                BoxShadow(
-                  color: shadowColor,
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: const BoxDecoration(
-                    color: lightOrange,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
-                    ),
-                  ),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.camera_alt_outlined, color: primaryOrange, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        "Foto Bukti / Kehadiran",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: darkOrange,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Center(
-                    child: GestureDetector(
-                      onTap: () async {
-                        await getImageFromCamera(context, "PROFILE");
-                      },
-                      child: Container(
-                        width: 170,
-                        height: 190,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          color: Colors.white,
-                          border: Border.all(color: const Color(0x73FFB347)),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: shadowColor,
-                              blurRadius: 6,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: _imageProfile != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: Image.file(
-                                  _imageProfile!,
-                                  width: 170,
-                                  height: 190,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : filePathImageProfile.isNotEmpty
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(14),
-                                    child: Image.memory(
-                                      _bytesImageProfile ?? Uint8List.fromList(const []),
-                                      width: 170,
-                                      height: 190,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: lightOrange,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.add_a_photo_outlined,
-                                          size: 32,
-                                          color: primaryOrange,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        "Ketuk untuk foto",
-                                        style: TextStyle(
-                                          color: Colors.grey.shade700,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
-          // 3. Form Input Container
+          // 2. Form Input Container
           Container(
             decoration: BoxDecoration(
               color: cardColor,
@@ -893,6 +1001,10 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
                             ],
                           ),
                         ),
+                        const SizedBox(height: 14),
+                        _label('Foto Bukti / Storing (Opsional)'),
+                        const SizedBox(height: 8),
+                        _buildPhotoUploadSection(),
                         const SizedBox(height: 14),
                         Row(
                           children: [
@@ -1013,7 +1125,28 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            _label(dropdownvalue.toLowerCase() == 'sakit'
+                                ? 'Foto Surat Keterangan Dokter (Wajib)'
+                                : 'Foto Bukti / Dokumen (Opsional)'),
+                            if (dropdownvalue.toLowerCase() == 'sakit') ...[
+                              const SizedBox(width: 4),
+                              const Text(
+                                '*',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        _buildPhotoUploadSection(),
+                        const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
@@ -1162,6 +1295,7 @@ class FrmAttendanceAdvanceState extends State<FrmAttendanceAdvance> {
       namaKaryawan = prefs.getString("name") ?? "";
       androidID = prefs.getString("androidID") ?? "";
     });
+    _loadUserPhoto();
 
     // Guard: Driver dialihkan ke FrmAttendanceAdvanceDriver
     final loginType = (prefs.getString("login_type") ?? "").toLowerCase().trim();

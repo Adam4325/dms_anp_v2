@@ -50,6 +50,7 @@ class _FrmAttendanceAdvanceDriverState extends State<FrmAttendanceAdvanceDriver>
   String androidID = '';
   String username = '';
   bool _isOpOrAdmin = false;
+  String _driverPhotoUrl = '';
 
   // Form State (HANYA 'IZIN' atau 'SAKIT')
   String _selectedType = 'IZIN'; // Default: IZIN
@@ -147,6 +148,28 @@ class _FrmAttendanceAdvanceDriverState extends State<FrmAttendanceAdvanceDriver>
       username = u;
       _isOpOrAdmin = isOp;
     });
+    _loadDriverPhoto();
+  }
+
+  Future<void> _loadDriverPhoto() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final drvId = prefs.getString("drvid") ?? driverId;
+      if (drvId.isNotEmpty) {
+        final url = "${GlobalData.baseUrlOri}api/do/refference_master.jsp?method=get_photo_driver&drvid=$drvId";
+        final resp = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 4));
+        if (resp.statusCode == 200) {
+          final data = json.decode(resp.body);
+          if (data is Map && data['status'] == 'success') {
+            final photoUrl = (data['photo_url'] ?? '').toString();
+            if (photoUrl.isNotEmpty) {
+              final fullUrl = photoUrl.startsWith('http') ? photoUrl : '${GlobalData.baseUrlOri}$photoUrl';
+              if (mounted) setState(() => _driverPhotoUrl = fullUrl);
+            }
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _getCurrentLocation() async {
@@ -721,7 +744,19 @@ class _FrmAttendanceAdvanceDriverState extends State<FrmAttendanceAdvanceDriver>
                 CircleAvatar(
                   radius: 24,
                   backgroundColor: lightOrange,
-                  child: const Icon(Icons.person, color: darkOrange, size: 28),
+                  child: _driverPhotoUrl.isNotEmpty
+                      ? ClipOval(
+                          child: Image.network(
+                            _driverPhotoUrl,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.person,
+                                    color: darkOrange, size: 28),
+                          ),
+                        )
+                      : const Icon(Icons.person, color: darkOrange, size: 28),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
