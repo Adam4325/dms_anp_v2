@@ -38,10 +38,6 @@
 
     <queries>
         <package android:name="com.google.android.verifier" />
-        <!-- Query seluruh aplikasi yang mengimplementasikan VpnService (Turbo VPN, Warp, OpenVPN, dll) -->
-        <intent>
-            <action android:name="android.net.VpnService" />
-        </intent>
         <!-- If your app opens https URLs -->
         <intent>
             <action android:name="android.intent.action.VIEW" />

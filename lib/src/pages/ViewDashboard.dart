@@ -36,6 +36,7 @@ import 'package:dms_anp/src/pages/FrmFaceEnroll.dart';
 import 'package:dms_anp/src/pages/hrd/ListAbsensiKaryawanV1.dart';
 import 'package:dms_anp/src/pages/hrd/ListApvFaceEnroll.dart';
 import 'package:dms_anp/src/pages/FrmTestScanLogkar.dart';
+import 'package:dms_anp/features/hse_inspection/presentation/pages/hse_main_page.dart';
 import 'package:dms_anp/src/services/face_enroll_service.dart';
 import 'package:dms_anp/src/pages/hrd/frmAssset.dart';
 import 'package:dms_anp/src/pages/inventory/FrmWareHouseOpName.dart';
@@ -121,6 +122,10 @@ class _ViewDashboardState extends State<ViewDashboard>
   String _dashboardTheme =
       "default"; // Opsi: "custom" (Redesign Baru) atau "default" (UI Lama)
 
+  // Debouncing & guard untuk update status mixer agar driver tidak double tap
+  bool _isUpdatingStatusMixer = false;
+  int _lastMixerActionTapTimestamp = 0;
+
   // âœ… ADDED: Variables untuk menu management
   List<AnpService> _mainMenuList = []; // Menu utama (max 8)
   List<AnpService> _additionalMenuList = []; // Menu tambahan
@@ -165,6 +170,8 @@ class _ViewDashboardState extends State<ViewDashboard>
   int pageIndex = 0;
   bool extended = true;
   List<dynamic> data_list_do = [];
+  bool _canScanQrLogkarStandby = false;
+  Map<String, dynamic>? _scanQrLogkarStandbyData;
   var status_unit = '';
   int points = 0;
   double _driverAvgRate = 0.0;
@@ -992,13 +999,16 @@ class _ViewDashboardState extends State<ViewDashboard>
     sharedPreferences = await SharedPreferences.getInstance();
     setState(() {
       sharedPreferences!.setString("lat_lon", "");
-      isMenuForeman =
-          sharedPreferences!.getString("isMenuForeman") == "1" ? true : false;
-      globals.akses_pages =
-          sharedPreferences!.getStringList("akses_pages") ?? [];
-      print(globals.akses_pages);
       username = sharedPreferences!.getString("username") ?? '';
       loginname = sharedPreferences!.getString("loginname") ?? '';
+      final bool isDriverUser = loginname.trim().toUpperCase() == "DRIVER";
+      isMenuForeman = isDriverUser
+          ? false
+          : (sharedPreferences!.getString("isMenuForeman") == "1");
+      globals.akses_pages = isDriverUser
+          ? []
+          : (sharedPreferences!.getStringList("akses_pages") ?? []);
+      print(globals.akses_pages);
       statusKaryawanInfo =
           sharedPreferences!.getString("status_karyawan") ?? '';
       login_type = sharedPreferences!.getString("login_type") ?? ''; //
@@ -1091,15 +1101,8 @@ class _ViewDashboardState extends State<ViewDashboard>
       'dashboard_menu_order_${username.trim().toUpperCase()}';
 
   bool _shouldSplitMenus() {
-    final String curLoginName = loginname.isNotEmpty
-        ? loginname
-        : (spLoginName.isNotEmpty
-            ? spLoginName
-            : (sharedPreferences?.getString("loginname") ?? ''));
-    return (username == "ADMIN" ||
-            getAkses("OP") ||
-            curLoginName == "DRIVER") &&
-        _anpServiceList.length > MAX_MAIN_MENU;
+    // Jika menu lebih dari 2 baris (lebih dari 8 menu), pisahkan ke tombol More
+    return _anpServiceList.length > 8;
   }
 
   void _applySavedMenuOrder() {
@@ -1237,6 +1240,12 @@ class _ViewDashboardState extends State<ViewDashboard>
         return Icons.closed_caption;
       case 'location_on':
         return Icons.location_on;
+      case 'verified_user_outlined':
+      case 'verified_user':
+        return Icons.verified_user_outlined;
+      case 'health_and_safety':
+      case 'health_and_safety_outlined':
+        return Icons.health_and_safety_outlined;
       default:
         return Icons.widgets_outlined;
     }
@@ -1279,16 +1288,20 @@ class _ViewDashboardState extends State<ViewDashboard>
 
     // 2. Tarik data realtime dari database melalui API
     try {
-      final rolesList =
-          globals.akses_pages ?? prefs.getStringList("akses_pages") ?? [];
+      final bool isDriverUser = (currentLoginname.trim().toUpperCase() == "DRIVER" ||
+          (loginname ?? '').trim().toUpperCase() == "DRIVER");
+      final rolesList = isDriverUser
+          ? <String>[]
+          : (globals.akses_pages ?? prefs.getStringList("akses_pages") ?? []);
       final roles = rolesList.join(',');
+      final bool effectiveForeman = !isDriverUser && isMenuForeman;
       final url = Uri.parse(
         "${GlobalData.baseUrl}api/menu/api_menu_dashboard.jsp?method=list-user-menus"
         "&username=${Uri.encodeComponent(currentUsername)}"
         "&loginname=${Uri.encodeComponent(currentLoginname)}"
         "&roles=${Uri.encodeComponent(roles)}"
         "&ismixer=${ismixer == 'true' ? 'true' : 'false'}"
-        "&isforeman=${isMenuForeman ? 'true' : 'false'}",
+        "&isforeman=${effectiveForeman ? 'true' : 'false'}",
       );
       final response = await http.get(url).timeout(const Duration(seconds: 7));
       if (response.statusCode == 200) {
@@ -1337,6 +1350,11 @@ class _ViewDashboardState extends State<ViewDashboard>
         badgeNewDate = DateTime(2026, 6, 3);
       }
 
+      final bool isDriverUser = ((loginname ?? '').trim().toUpperCase() == "DRIVER");
+      if (isDriverUser && (idKey == 27 || title.toLowerCase().contains("foreman"))) {
+        continue;
+      }
+
       if (idKey > 0 && title.isNotEmpty) {
         fetchedServices.add(AnpService(
           image: _resolveMenuIcon(iconName),
@@ -1369,6 +1387,19 @@ class _ViewDashboardState extends State<ViewDashboard>
         color: Color(0xFFFF8A50),
         idKey: 42,
         title: "List Driver",
+      ));
+    }
+
+    bool hasHseRole = (username == "ADMIN" || getAkses("HD") || getAkses("OP"));
+    if (hasHseRole &&
+        !_anpServiceList.any((m) =>
+            m.idKey == 43 ||
+            (m.title != null && m.title!.trim().toUpperCase() == "HSE"))) {
+      _anpServiceList.add(const AnpService(
+        image: Icons.verified_user_outlined,
+        color: Color(0xFFFF8C69),
+        idKey: 43,
+        title: "HSE",
       ));
     }
 
@@ -1637,37 +1668,23 @@ class _ViewDashboardState extends State<ViewDashboard>
 
   Future GetCountStoring() async {
     try {
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages.where((x) => x == "OP");
-      bool isValid = false;
-      if (isOK != null) {
-        if (isOK.length > 0) {
-          isValid = true;
-        }
-      }
-      if (username == "ADMIN") {
-        isValid = true;
-      }
-      print('isvalid ${isValid} ${username}');
-      if (isValid) {
-        var urlData =
-            "${GlobalData.baseUrlProd}api/list_storing.jsp?method=count-data-storing";
-        Uri myUri = Uri.parse(urlData);
-        print(myUri.toString());
-        var response =
-            await http.get(myUri, headers: {"Accept": "application/json"});
-        if (response.statusCode == 200) {
-          var result = json.decode(response.body);
-          print(result['total']);
+      var urlData =
+          "${GlobalData.baseUrlProd}api/list_storing.jsp?method=count-data-storing";
+      Uri myUri = Uri.parse(urlData);
+      var response =
+          await http.get(myUri, headers: {"Accept": "application/json"});
+      if (response.statusCode == 200) {
+        var result = json.decode(response.body);
+        if (mounted) {
           setState(() {
-            countNotif =
-                result['total'] == null ? 0 : int.parse(result['total']);
+            countNotif = result['total'] == null
+                ? 0
+                : int.tryParse(result['total'].toString()) ?? 0;
           });
         }
       }
     } catch (e) {
-      print(e);
+      print("GetCountStoring error: $e");
     }
   }
 
@@ -2163,8 +2180,12 @@ class _ViewDashboardState extends State<ViewDashboard>
       }
     });
 
-    timer =
-        Timer.periodic(Duration(seconds: 5), (Timer t) => GetCountStoring());
+    timer = Timer.periodic(Duration(seconds: 5), (Timer t) {
+      GetCountStoring();
+      if (login_type == "MIXER" || loginname == 'DRIVER') {
+        GetListDo();
+      }
+    });
   }
 
   @override
@@ -2767,11 +2788,11 @@ class _ViewDashboardState extends State<ViewDashboard>
               data_list_do.isNotEmpty) ...[
             _buildScheduleCard(),
             SizedBox(height: 16),
-          ] else if (login_type == "MIXER" &&
-              loginname == 'DRIVER' &&
-              data_list_do.isNotEmpty) ...[
-            _buildScheduleCardMixer(),
-            SizedBox(height: 16),
+          ] else if (login_type == "MIXER" && loginname == 'DRIVER') ...[
+            if (data_list_do.isNotEmpty || _canScanQrLogkarStandby) ...[
+              _buildScheduleCardMixer(),
+              SizedBox(height: 16),
+            ],
           ],
           _buildInfoCards(),
         ],
@@ -3338,17 +3359,103 @@ class _ViewDashboardState extends State<ViewDashboard>
           ),
           if (extended) ...[
             SizedBox(height: 16),
-            Container(
-              height: 300,
-              child: ListView.builder(
-                itemCount: data_list_do.length,
-                itemBuilder: (context, index) {
-                  final item = data_list_do[index];
-                  return _buildScheduleItemMixer(item); //HISTORY
-                },
+            if (data_list_do.isNotEmpty)
+              Container(
+                height: 300,
+                child: ListView.builder(
+                  itemCount: data_list_do.length,
+                  itemBuilder: (context, index) {
+                    final item = data_list_do[index];
+                    return _buildScheduleItemMixer(item); //HISTORY
+                  },
+                ),
+              )
+            else if (_canScanQrLogkarStandby)
+              _buildStandbyScheduleItemMixer(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStandbyScheduleItemMixer() {
+    final vhc =
+        _scanQrLogkarStandbyData?['vhcid']?.toString().isNotEmpty == true
+            ? _scanQrLogkarStandbyData!['vhcid'].toString()
+            : (sharedPreferences?.getString("vhcid") ?? vhcnopol);
+    final displayVhc = (vhc.isNotEmpty && vhc != 'null') ? vhc : '-';
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: primaryOrange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: primaryOrange.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primaryOrange,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  'STANDBY',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Spacer(),
+              Text(
+                displayVhc,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Belum ada DO aktif. Kendaraan standby & absensi hari ini valid.',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+          ),
+          SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _handleScanQrLogkarMixer({
+                'vehicle_id': displayVhc,
+                'status_do_mixer': 'STANDBY',
+              }),
+              icon: const Icon(Icons.qr_code_scanner,
+                  size: 16, color: Colors.white),
+              label: const Text(
+                'SCAN QR LOGKAR',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E88E5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 8),
               ),
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -3448,6 +3555,13 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   Widget _buildScheduleItemMixer(dynamic item) {
+    final String statusDo =
+        (item['status_do_mixer'] ?? '').toString().toUpperCase();
+    final bool isOutpoolDone = statusDo == 'INCUSTOMER' ||
+        statusDo == 'INUNLOADING' ||
+        statusDo == 'OUTUNLOADING' ||
+        statusDo == 'CLOSE';
+
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(12),
@@ -3500,33 +3614,46 @@ class _ViewDashboardState extends State<ViewDashboard>
             children: [
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => _handleScheduleActionMixer(item),
+                  onPressed: _isUpdatingStatusMixer
+                      ? null
+                      : () => _handleScheduleActionMixer(item),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryOrange,
+                    backgroundColor:
+                        _isUpdatingStatusMixer ? Colors.grey : primaryOrange,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     padding: EdgeInsets.symmetric(vertical: 8),
                   ),
-                  child: Text(
-                    item['status_do_mixer'].toString() == "INLOADING"
-                        ? "INLOADING"
-                        : item['status_do_mixer'].toString() == "OUTLOADING"
-                            ? "OUTLOADING"
-                            : item['status_do_mixer'].toString() == "OUTPOOL"
-                                ? "OUTPOOL"
-                                : item['status_do_mixer'].toString() ==
-                                        "INCUSTOMER"
-                                    ? "INCUSTOMER"
-                                    : item['status_do_mixer'].toString() ==
-                                            "INUNLOADING"
-                                        ? "INUNLOADING"
-                                        : item['status_do_mixer'].toString() ==
-                                                "OUTUNLOADING"
-                                            ? "OUTUNLOADING"
-                                            : "Close DO",
-                    style: TextStyle(fontSize: 11, color: Colors.white),
-                  ),
+                  child: _isUpdatingStatusMixer
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          item['status_do_mixer'].toString() == "INLOADING"
+                              ? "INLOADING"
+                              : item['status_do_mixer'].toString() == "OUTLOADING"
+                                  ? "OUTLOADING"
+                                  : item['status_do_mixer'].toString() == "OUTPOOL"
+                                      ? "OUTPOOL"
+                                      : item['status_do_mixer'].toString() ==
+                                              "INCUSTOMER"
+                                          ? "INCUSTOMER"
+                                          : item['status_do_mixer'].toString() ==
+                                                  "INUNLOADING"
+                                              ? "INUNLOADING"
+                                              : item['status_do_mixer'].toString() ==
+                                                      "OUTUNLOADING"
+                                                  ? "OUTUNLOADING"
+                                                  : "Close DO",
+                          style: const TextStyle(fontSize: 11, color: Colors.white),
+                        ),
                 ),
               ),
               SizedBox(width: 8),
@@ -3548,8 +3675,7 @@ class _ViewDashboardState extends State<ViewDashboard>
               ),
             ],
           ),
-          if ((item['status_do_mixer'] ?? '').toString().trim().toUpperCase() == "INLOADING" ||
-              (item['status_do_mixer'] ?? '').toString().trim().toUpperCase() == "OUTLOADING") ...[
+          if (_canScanQrLogkarStandby && !isOutpoolDone) ...[
             SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
@@ -3938,6 +4064,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     bool isActive = pageIndex == index;
     return Flexible(
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () {
           setState(() {
             pageIndex = index!;
@@ -4888,7 +5015,21 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   void _handleScheduleActionMixer(dynamic item) async {
-    //EasyLoading.show();
+    // Debouncing: cegah multi-tap / double tap dalam interval 1.5 detik atau saat request sedang berjalan
+    final int nowTap = DateTime.now().millisecondsSinceEpoch;
+    if (_isUpdatingStatusMixer || (nowTap - _lastMixerActionTapTimestamp < 1500)) {
+      print('DEBOUNCE: _handleScheduleActionMixer diabaikan (sedang memproses atau tap beruntun).');
+      return;
+    }
+    _lastMixerActionTapTimestamp = nowTap;
+    if (mounted) {
+      setState(() {
+        _isUpdatingStatusMixer = true;
+      });
+    } else {
+      _isUpdatingStatusMixer = true;
+    }
+
     var items = item['status_do_mixer'].toString() == "INLOADING"
         ? "INLOADING"
         : item['status_do_mixer'].toString() == "OUTLOADING"
@@ -4911,18 +5052,23 @@ class _ViewDashboardState extends State<ViewDashboard>
           .toString()
           .trim();
       if (drvid.isEmpty) {
+        if (mounted) setState(() => _isUpdatingStatusMixer = false); else _isUpdatingStatusMixer = false;
         alert(globalScaffoldKey.currentContext!, 0,
             "Data driver tidak ditemukan", "error");
         return;
       }
 
       // Validasi IMEI driver berdasarkan DRVID
-      EasyLoading.show(status: 'Memvalidasi perangkat...');
+      EasyLoading.show(
+        status: 'Memvalidasi perangkat...',
+        maskType: EasyLoadingMaskType.black,
+      );
       bool isImeiValid = await _checkImeiDriver(drvid);
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
       if (!isImeiValid) {
+        if (mounted) setState(() => _isUpdatingStatusMixer = false); else _isUpdatingStatusMixer = false;
         return;
       }
 
@@ -4932,6 +5078,7 @@ class _ViewDashboardState extends State<ViewDashboard>
           sharedPreferences ??= await SharedPreferences.getInstance();
           await sharedPreferences!.setString('logkar_mixer_no_do', logkarNoDo);
         }
+        if (mounted) setState(() => _isUpdatingStatusMixer = false); else _isUpdatingStatusMixer = false;
         GetVhcidDo();
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
@@ -4950,6 +5097,7 @@ class _ViewDashboardState extends State<ViewDashboard>
           await sharedPreferences!.setString('do_maps', logkarNoDo);
           print('LOGKAR save android do_number (Close DO)=$logkarNoDo');
         }
+        if (mounted) setState(() => _isUpdatingStatusMixer = false); else _isUpdatingStatusMixer = false;
         GetVhcidDo();
         Timer(Duration(seconds: 1), () {
           Navigator.pushReplacement(
@@ -5004,13 +5152,16 @@ class _ViewDashboardState extends State<ViewDashboard>
       );
 
       if (confirm != true) {
+        if (mounted) setState(() => _isUpdatingStatusMixer = false); else _isUpdatingStatusMixer = false;
         return;
       }
 
       EasyLoading.show(
-          status: isInloading
-              ? 'Memproses update status INLOADING...'
-              : 'Memproses update status DO mixer...');
+        status: isInloading
+            ? 'Memproses update status INLOADING...'
+            : 'Memproses update status DO mixer...',
+        maskType: EasyLoadingMaskType.black,
+      );
 
       var gpsResult = await GpsSecurityChecker.checkGpsSecurity();
       if (!mounted) {
@@ -5067,7 +5218,8 @@ class _ViewDashboardState extends State<ViewDashboard>
               'imeiid': imeiidPref,
             };
 
-      final Uri myUri = Uri.parse(endpointPath).replace(queryParameters: qParams);
+      final Uri myUri =
+          Uri.parse(endpointPath).replace(queryParameters: qParams);
       print('LOGKAR JSP url: $myUri');
       print(
           'LOGKAR JSP do_number(android)=$doNumberAndroid bujnbr=$bujnbrAndroid');
@@ -5112,6 +5264,13 @@ class _ViewDashboardState extends State<ViewDashboard>
       alert(globalScaffoldKey.currentContext!, 0, "Terjadi kesalahan: $e",
           "error");
     } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdatingStatusMixer = false;
+        });
+      } else {
+        _isUpdatingStatusMixer = false;
+      }
       if (EasyLoading.isShow) {
         EasyLoading.dismiss();
       }
@@ -5121,31 +5280,24 @@ class _ViewDashboardState extends State<ViewDashboard>
   Future<void> _handleScanQrLogkarMixer(dynamic item) async {
     try {
       sharedPreferences ??= await SharedPreferences.getInstance();
-      final String doNumber = item['do_number']?.toString().trim() ?? '';
-      if (doNumber.isEmpty) {
-        alert(globalScaffoldKey.currentContext ?? context, 0,
-            'Nomor DO tidak valid', 'error');
-        return;
-      }
+      final String doNumber = (item != null && item['do_number'] != null)
+          ? item['do_number'].toString().trim()
+          : '';
 
       final String statusDoMixer =
-          (item['status_do_mixer'] ?? '').toString().trim().toUpperCase();
-      if (statusDoMixer != 'INLOADING' && statusDoMixer != 'OUTLOADING') {
-        alert(
-          globalScaffoldKey.currentContext ?? context,
-          0,
-          'Scan QR Logkar hanya dapat dilakukan saat status INLOADING atau OUTLOADING.',
-          'error',
-        );
-        return;
-      }
+          (item != null && item['status_do_mixer'] != null)
+              ? item['status_do_mixer'].toString().trim().toUpperCase()
+              : '';
 
-      final String drvid = (item['driver_id'] ??
-              item['drvid'] ??
-              sharedPreferences!.getString("drvid") ??
-              '')
-          .toString()
-          .trim();
+      final String drvid =
+          (item != null && (item['driver_id'] ?? item['drvid']) != null)
+              ? (item['driver_id'] ?? item['drvid']).toString().trim()
+              : (sharedPreferences!.getString("drvid") ?? '').trim();
+
+      final String vhcid =
+          (item != null && (item['vehicle_id'] ?? item['vhcid']) != null)
+              ? (item['vehicle_id'] ?? item['vhcid']).toString().trim()
+              : (sharedPreferences!.getString("vhcid") ?? vhcnopol).trim();
 
       // Validasi IMEI driver
       EasyLoading.show(status: 'Memvalidasi perangkat...');
@@ -5164,7 +5316,9 @@ class _ViewDashboardState extends State<ViewDashboard>
       final checkUri = Uri.parse(
               '${GlobalData.baseUrl}api/do_mixer/check_scan_qr_logkar.jsp')
           .replace(queryParameters: {
-        'do_number': doNumber,
+        'do_number': doNumber.isNotEmpty ? doNumber : 'STANDBY',
+        'drvid': drvid,
+        'vhcid': vhcid,
       });
 
       final checkResponse =
@@ -5232,24 +5386,26 @@ class _ViewDashboardState extends State<ViewDashboard>
         return;
       }
 
-      // Kirim posisi jika berhasil
-      try {
-        final apiLokar = sharedPreferences!.getString("api_lokar") ?? '';
-        final lokarClientId =
-            sharedPreferences!.getString("lokar_client_id") ?? '';
-        final lokarApiToken =
-            sharedPreferences!.getString("lokar_api_token") ?? '';
+      // Kirim posisi jika berhasil dan no_do ada
+      if (doNumber.isNotEmpty) {
+        try {
+          final apiLokar = sharedPreferences!.getString("api_lokar") ?? '';
+          final lokarClientId =
+              sharedPreferences!.getString("lokar_client_id") ?? '';
+          final lokarApiToken =
+              sharedPreferences!.getString("lokar_api_token") ?? '';
 
-        await _sendLokarOrderPosition(
-          apiLokar: apiLokar,
-          clientId: lokarClientId,
-          apiToken: lokarApiToken,
-          no_do: doNumber,
-          latitude: lat,
-          longitude: lon,
-        );
-      } catch (e) {
-        print('Send lokar position error: $e');
+          await _sendLokarOrderPosition(
+            apiLokar: apiLokar,
+            clientId: lokarClientId,
+            apiToken: lokarApiToken,
+            no_do: doNumber,
+            latitude: lat,
+            longitude: lon,
+          );
+        } catch (e) {
+          print('Send lokar position error: $e');
+        }
       }
 
       if (EasyLoading.isShow) EasyLoading.dismiss();
@@ -5708,6 +5864,12 @@ class _ViewDashboardState extends State<ViewDashboard>
             "Anda tidak punya akses", "error");
       }
     } else if (anpService.idKey == 27) {
+      final String curLogin = (loginname ?? '').trim().toUpperCase();
+      if (curLogin == "DRIVER") {
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses ke menu Foreman", "error");
+        return;
+      }
       var isOK = globals.akses_pages == null
           ? globals.akses_pages
           : globals.akses_pages.where((x) => x == "IN");
@@ -6242,6 +6404,20 @@ class _ViewDashboardState extends State<ViewDashboard>
         _showAlert(globalScaffoldKey.currentContext!, 0,
             "Hanya Admin yang bisa membuka menu ini", "error");
       }
+    } else if (anpService.idKey == 43 ||
+        (anpService.title != null &&
+            anpService.title!.trim().toUpperCase() == "HSE")) {
+      final bool hasHseAccess =
+          username == "ADMIN" || getAkses("HD") || getAkses("OP");
+      if (hasHseAccess) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const HseMainPage()),
+        );
+      } else {
+        _showAlert(globalScaffoldKey.currentContext!, 0,
+            "Anda tidak punya akses ke menu HSE", "error");
+      }
     } else {
       final ctx = globalScaffoldKey.currentContext!;
       if (ctx != null) {
@@ -6268,6 +6444,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   }
 
   void UpdateMenuBottom() async {
+    print('UpdateMenuBottom called, selectedIndexBottom: $selectedIndexBottom, username: $username, loginname: $loginname');
     // Validasi mode developer Android sebelum akses menu bottom
     if (await DeveloperModeGuard.blockIfDeveloperModeEnabled(context,
         redirectToDashboard: false)) {
@@ -6275,23 +6452,35 @@ class _ViewDashboardState extends State<ViewDashboard>
     }
 
     if (selectedIndexBottom == 0) {
-      if (_dashboardTheme == 'custom') {
-        // Tab Beranda pada Custom Theme
-        setState(() {});
+      final String uName = (username ?? '').trim().toUpperCase();
+      final String lName = (loginname ?? '').trim().toUpperCase();
+      final List<dynamic> aksesList = globals.akses_pages ?? [];
+      final bool hasOp =
+          aksesList.any((x) => x.toString().trim().toUpperCase() == 'OP');
+
+      final bool isAllowed = uName == 'ADMIN' ||
+          lName == 'ADMIN' ||
+          uName == 'MECHANIC' ||
+          lName == 'MECHANIC' ||
+          uName == 'DRIVER' ||
+          lName == 'DRIVER' ||
+          hasOp;
+
+      if (!isAllowed) {
+        alert(globalScaffoldKey.currentContext ?? context, 0,
+            "Anda tidak memiliki akses ke Menu Storing", "warning");
         return;
       }
-      var isOK = globals.akses_pages == null
-          ? globals.akses_pages
-          : globals.akses_pages.where((x) => x == "OP");
-      if (username == 'ADMIN' || (isOK != null && isOK.length > 0)) {
-        EasyLoading.show();
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ViewListStoring()),
-        );
-      } else {
-        _navigateToListAbsensi('storing');
-      }
+
+      EasyLoading.show();
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ViewListStoring()),
+      ).then((_) {
+        if (EasyLoading.isShow) {
+          EasyLoading.dismiss();
+        }
+      });
       return;
     }
     if (selectedIndexBottom == 1) {
@@ -6486,7 +6675,11 @@ class _ViewDashboardState extends State<ViewDashboard>
     await LogkarPositionBackgroundService.syncTrackingState();
   }
 
+  bool _isFetchingListDo = false;
+
   void GetListDo() async {
+    if (_isFetchingListDo) return;
+    _isFetchingListDo = true;
     try {
       final JsonDecoder _decoder = new JsonDecoder();
       sharedPreferences = await SharedPreferences.getInstance();
@@ -6500,16 +6693,116 @@ class _ViewDashboardState extends State<ViewDashboard>
       print(myUri.toString());
       var response =
           await http.get(myUri, headers: {"Accept": "application/json"});
-      setState(() {
-        if (response.statusCode == 200) {
-          data_list_do = json.decode(response.body);
-          _syncLogkarMixerTracking();
-        }
-        print("data_list_do");
-        print(data_list_do);
-      });
+      if (mounted) {
+        setState(() {
+          if (response.statusCode == 200) {
+            data_list_do = json.decode(response.body);
+            _syncLogkarMixerTracking();
+          }
+          print("data_list_do");
+          print(data_list_do);
+        });
+      }
+      if (_loginType == "MIXER" || login_type == "MIXER") {
+        await _checkScanQrLogkarStandby(vhcid: vhcid, drvid: drvid);
+      }
     } catch (e) {
       print(e);
+    } finally {
+      _isFetchingListDo = false;
+    }
+  }
+
+  Future<void> _checkScanQrLogkarStandby({String? vhcid, String? drvid}) async {
+    try {
+      sharedPreferences ??= await SharedPreferences.getInstance();
+      final effectiveDrv = (drvid != null && drvid.isNotEmpty)
+          ? drvid
+          : (sharedPreferences!.getString("drvid") ?? '');
+
+      String resolveVhc() {
+        for (final item in data) {
+          if (item is Map && item['name'] == 'status_unit') {
+            final n = (item['nopol'] ?? '').toString().trim();
+            if (n.isNotEmpty && n.toLowerCase() != 'null' && n != '-') {
+              return n;
+            }
+          }
+        }
+        final candidates = [
+          vhcid,
+          sharedPreferences?.getString("vhcid"),
+          sharedPreferences?.getString("vhcid_units"),
+          sharedPreferences?.getString("vhcidfromdo"),
+          sharedPreferences?.getString("vhcid_last_antrian"),
+          sharedPreferences?.getString("vhcid_mixer"),
+          vhcid_units,
+          vhcnopol,
+        ];
+        for (final c in candidates) {
+          if (c != null &&
+              c.trim().isNotEmpty &&
+              c.trim().toLowerCase() != 'null' &&
+              c.trim() != '-') {
+            return c.trim();
+          }
+        }
+        return '';
+      }
+
+      final effectiveVhc = resolveVhc();
+
+      String effectiveDoNumber = '';
+      if (data_list_do.isNotEmpty) {
+        effectiveDoNumber =
+            (data_list_do.first['do_number'] ?? '').toString().trim();
+      }
+
+      final checkParams = <String, String>{
+        'do_number':
+            effectiveDoNumber.isNotEmpty ? effectiveDoNumber : 'STANDBY',
+        'drvid': effectiveDrv,
+      };
+      if (effectiveVhc.isNotEmpty) {
+        checkParams['vhcid'] = effectiveVhc;
+      }
+
+      final checkUri = Uri.parse(
+              '${GlobalData.baseUrl}api/do_mixer/check_scan_qr_logkar.jsp')
+          .replace(queryParameters: checkParams);
+
+      final checkResponse =
+          await http.get(checkUri, headers: {'Accept': 'application/json'});
+      if (checkResponse.statusCode == 200) {
+        final res = jsonDecode(checkResponse.body);
+        final bool isSuccess =
+            res['status'] == 'success' || res['allowed'] == true;
+        if (mounted) {
+          setState(() {
+            _canScanQrLogkarStandby = isSuccess;
+            if (isSuccess && res['data'] is Map) {
+              _scanQrLogkarStandbyData = Map<String, dynamic>.from(res['data']);
+            } else {
+              _scanQrLogkarStandbyData = null;
+            }
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _canScanQrLogkarStandby = false;
+            _scanQrLogkarStandbyData = null;
+          });
+        }
+      }
+    } catch (e) {
+      print("Error _checkScanQrLogkarStandby: $e");
+      if (mounted) {
+        setState(() {
+          _canScanQrLogkarStandby = false;
+          _scanQrLogkarStandbyData = null;
+        });
+      }
     }
   }
 
@@ -6800,7 +7093,8 @@ class _ViewDashboardState extends State<ViewDashboard>
               // Points pill: Tap opens Reward Exchange
               GestureDetector(
                 onTap: () async {
-                  final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
+                  final prefs = sharedPreferences ??
+                      await SharedPreferences.getInstance();
                   final drvid = prefs.getString('drvid') ?? '';
                   final name = prefs.getString('name') ?? '';
                   final locid = prefs.getString('locid') ?? '';
@@ -7097,8 +7391,12 @@ class _ViewDashboardState extends State<ViewDashboard>
           (vhcnopol.isNotEmpty ? vhcnopol : '-');
       final String statusMixer = item['status_do_mixer']?.toString() ?? '';
       final String statusMixerUpper = statusMixer.trim().toUpperCase();
-      final bool canShowScanQr = isMixer &&
-          (statusMixerUpper == "INLOADING" || statusMixerUpper == "OUTLOADING");
+      final bool isOutpoolDone = statusMixerUpper == 'INCUSTOMER' ||
+          statusMixerUpper == 'INUNLOADING' ||
+          statusMixerUpper == 'OUTUNLOADING' ||
+          statusMixerUpper == 'CLOSE';
+      final bool canShowScanQr =
+          isMixer && _canScanQrLogkarStandby && !isOutpoolDone;
       final bool isTerimaDo = item['incustomer']?.toString() == "1";
 
       final String actionLabel = isMixer
@@ -7282,40 +7580,54 @@ class _ViewDashboardState extends State<ViewDashboard>
                         height: 42,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF6600),
+                            backgroundColor: (isMixer && _isUpdatingStatusMixer)
+                                ? Colors.grey
+                                : const Color(0xFFFF6600),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 2,
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
-                          onPressed: () {
-                            if (isMixer) {
-                              _handleScheduleActionMixer(item);
-                            } else {
-                              _handleScheduleAction(item);
-                            }
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.navigation_rounded,
-                                  color: Colors.white, size: 16),
-                              const SizedBox(width: 5),
-                              Flexible(
-                                child: Text(
-                                  actionLabel,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.3,
+                          onPressed: (isMixer && _isUpdatingStatusMixer)
+                              ? null
+                              : () {
+                                  if (isMixer) {
+                                    _handleScheduleActionMixer(item);
+                                  } else {
+                                    _handleScheduleAction(item);
+                                  }
+                                },
+                          child: (isMixer && _isUpdatingStatusMixer)
+                              ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
                                   ),
-                                  overflow: TextOverflow.ellipsis,
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.navigation_rounded,
+                                        color: Colors.white, size: 16),
+                                    const SizedBox(width: 5),
+                                    Flexible(
+                                      child: Text(
+                                        actionLabel,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.3,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ),
@@ -7507,6 +7819,38 @@ class _ViewDashboardState extends State<ViewDashboard>
                           color: Colors.grey.shade600,
                         ),
                       ),
+                      if (isMixer && _canScanQrLogkarStandby) ...[
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 38,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1E88E5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 1,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                            ),
+                            onPressed: () => _handleScanQrLogkarMixer(
+                              _scanQrLogkarStandbyData ?? {},
+                            ),
+                            icon: const Icon(Icons.qr_code_scanner,
+                                color: Colors.white, size: 16),
+                            label: const Text(
+                              'SCAN QR LOGKAR',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -7649,8 +7993,20 @@ class _ViewDashboardState extends State<ViewDashboard>
                         var isOK = globals.akses_pages == null
                             ? globals.akses_pages
                             : globals.akses_pages.where((x) => x == "OP");
-                        if (username == 'ADMIN' ||
-                            (isOK != null && isOK.length > 0)) {
+                        final String uName =
+                            (username ?? '').trim().toUpperCase();
+                        final String lName =
+                            (loginname ?? '').trim().toUpperCase();
+                        final bool hasOp = isOK != null && isOK.isNotEmpty;
+                        final bool isAllowed = uName == 'ADMIN' ||
+                            lName == 'ADMIN' ||
+                            uName == 'MECHANIC' ||
+                            lName == 'MECHANIC' ||
+                            uName == 'DRIVER' ||
+                            lName == 'DRIVER' ||
+                            hasOp;
+
+                        if (isAllowed) {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -8198,7 +8554,8 @@ class _ViewDashboardState extends State<ViewDashboard>
               ),
               const SizedBox(height: 8),
               Row(
-                children: [//
+                children: [
+                  //
                   // STNK Card: Tap opens STNK Photo
                   Expanded(
                     child: GestureDetector(

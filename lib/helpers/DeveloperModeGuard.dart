@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dms_anp/src/Helper/Provider.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -10,6 +11,7 @@ class DeveloperModeGuard {
   static const MethodChannel _channel = MethodChannel('dms_anp/developer_mode');
 
   static Future<bool> isDeveloperModeEnabled() async {
+    if (kDebugMode) return false;
     if (!GlobalData.checkDeveloperMode) return false;
     if (!Platform.isAndroid) return false;
 

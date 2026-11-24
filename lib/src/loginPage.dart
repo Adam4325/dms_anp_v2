@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:dms_anp/helpers/sim_phone_guard.dart';
 import 'package:dms_anp/src/Helper/MasterDataPreloader.dart';
 import 'package:dms_anp/src/Helper/Provider.dart';
+import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:dms_anp/src/flusbar.dart';
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/maintenance/ViewListWoMCN.dart';
@@ -265,7 +266,7 @@ class _LoginPageState extends State<LoginPage> {
     EasyLoading.show();
     try {
       final JsonDecoder _decoder = new JsonDecoder();
-      var endpointUrl = GlobalData.baseUrl + "api/authorize_v14.jsp";
+      var endpointUrl = GlobalData.baseUrl + "api/authorize_v17.jsp";
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String username = TxtUsername.text.trim();
@@ -393,20 +394,27 @@ class _LoginPageState extends State<LoginPage> {
           var api_lokar = result["data"][0]["api_lokar"];
           var lokar_client_id = result["data"][0]["lokar_client_id"];
           var lokar_api_token = result["data"][0]["lokar_api_token"];
-          await getAksesMenuForeMan(_identifier);
-          if (loginname != null && loginname != "DRIVER") {
-            if (akses_page != null) {
-              String s = akses_page;
-              print(s);
-              var dataAkses = s.split(',');
-              List<String> arrAksesPage = [];
-              if (dataAkses.length > 0) {
-                for (var i = 0; i < dataAkses.length; i++) {
-                  print(dataAkses[i]);
-                  arrAksesPage.add(dataAkses[i]);
+          if (loginname != null && loginname == "DRIVER") {
+            isMenuForeman = false;
+            await prefs.setString('isMenuForeman', "0");
+            await prefs.remove("akses_pages");
+            globals.akses_pages = [];
+          } else {
+            await getAksesMenuForeMan(_identifier);
+            if (loginname != null && loginname != "DRIVER") {
+              if (akses_page != null) {
+                String s = akses_page;
+                print(s);
+                var dataAkses = s.split(',');
+                List<String> arrAksesPage = [];
+                if (dataAkses.length > 0) {
+                  for (var i = 0; i < dataAkses.length; i++) {
+                    print(dataAkses[i]);
+                    arrAksesPage.add(dataAkses[i]);
+                  }
                 }
+                await prefs.setStringList("akses_pages", arrAksesPage);
               }
-              await prefs.setStringList("akses_pages", arrAksesPage);
             }
           }
 
@@ -633,8 +641,9 @@ class _LoginPageState extends State<LoginPage> {
             Navigator.pushReplacement(
                 ctx, MaterialPageRoute(builder: (context) => ViewListWoMCN()));
           } else {
+            final bool effectiveForeman = (loginname != "DRIVER" && isMenuForeman == true);
             prefs.setString(
-                'isMenuForeman', (isMenuForeman == true ? "1" : "0"));
+                'isMenuForeman', (effectiveForeman ? "1" : "0"));
             Navigator.pushReplacement(
                 ctx, MaterialPageRoute(builder: (context) => ViewDashboard()));
           }
@@ -952,7 +961,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 30),
                   Text(
-                    "Version 3.16",
+                    "Version 3.17",
                     style: TextStyle(
                       color: textSecondary,
                       fontSize: 14,

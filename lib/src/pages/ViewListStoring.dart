@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dms_anp/src/Helper/Provider.dart';
+import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'package:dms_anp/src/pages/ViewDashboard.dart';
 import 'package:dms_anp/src/pages/ViewMaps.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,21 @@ class _ViewListStoringState extends State<ViewListStoring> {
   final TextEditingController _searchController = TextEditingController();
   List<dynamic> data = [];
 
+  String _username = '';
+  String _loginname = '';
+  List<String> _aksesPages = [];
+  bool _isAuthorized = true;
+
+  bool get isDriverOrMechanic {
+    final u = _username.trim().toUpperCase();
+    final l = _loginname.trim().toUpperCase();
+    return u == 'DRIVER' || l == 'DRIVER' || u == 'MECHANIC' || l == 'MECHANIC';
+  }
+
+  bool get canProcessOrCancel {
+    return _isAuthorized && !isDriverOrMechanic;
+  }
+
   List<dynamic> get _filteredData {
     final keyword = _searchController.text.trim().toLowerCase();
     if (keyword.isEmpty) return data;
@@ -45,16 +61,60 @@ class _ViewListStoringState extends State<ViewListStoring> {
   }
 
   void _goBack(BuildContext context) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => ViewDashboard()),
-    );
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => ViewDashboard()),
+      );
+    }
   }
 
   @override
   void initState() {
     super.initState();
-    getJSONData();
+    _loadUserSessionAndData();
+  }
+
+  Future<void> _loadUserSessionAndData() async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = (prefs.getString("username") ?? "").trim();
+    _loginname = (prefs.getString("loginname") ?? "").trim();
+    final List<String> storedAkses = prefs.getStringList("akses_pages") ?? [];
+    _aksesPages = storedAkses.isNotEmpty
+        ? storedAkses
+        : (globals.akses_pages?.map((e) => e.toString()).toList() ?? <String>[]);
+
+    final String u = _username.toUpperCase();
+    final String l = _loginname.toUpperCase();
+    final bool hasOp =
+        _aksesPages.any((x) => x.trim().toUpperCase() == "OP");
+
+    final bool allowed = (u == 'ADMIN' ||
+        l == 'ADMIN' ||
+        u == 'MECHANIC' ||
+        l == 'MECHANIC' ||
+        u == 'DRIVER' ||
+        l == 'DRIVER' ||
+        hasOp);
+
+    if (!allowed) {
+      if (mounted) {
+        setState(() {
+          _isAuthorized = false;
+          _isLoading = false;
+        });
+        alert(
+            globalScaffoldKey.currentContext ?? context,
+            0,
+            "Anda tidak memiliki hak akses untuk melihat data Storing",
+            "warning");
+      }
+      return;
+    }
+
+    await getJSONData();
   }
 
   @override
@@ -391,6 +451,12 @@ class _ViewListStoringState extends State<ViewListStoring> {
   }
 
   Future<void> _confirmAction(dynamic item, String actionType) async {
+    if (isDriverOrMechanic) {
+      alert(globalScaffoldKey.currentContext ?? context, 0,
+          "Driver dan Mechanic tidak diizinkan membatalkan atau memproses storing", "warning");
+      return;
+    }
+
     final reqnbr = (item['reqnbr'] ?? '').toString();
     final vhcid = (item['vhcid'] ?? '').toString();
     final isClose = actionType == 'CLOSE';
@@ -566,7 +632,48 @@ class _ViewListStoringState extends State<ViewListStoring> {
             ),
           ],
         ),
-        body: Column(
+        body: !_isAuthorized
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.lock_person_rounded,
+                          size: 72, color: Colors.grey.shade400),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "Akses Terbatas",
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF333333)),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Halaman ini hanya dapat diakses oleh MECHANIC, ADMIN, DRIVER, atau pengguna dengan hak akses OP.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.grey.shade600),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () => _goBack(context),
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        label: const Text("Kembali ke Beranda",
+                            style: TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryOrange,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              )
+            : Column(
           children: [
             // Search Bar & Stats Header
             Container(
@@ -1033,57 +1140,59 @@ class _ViewListStoringState extends State<ViewListStoring> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                if (canProcessOrCancel) ...[
+                  const SizedBox(width: 8),
 
-                // Button Batal
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _confirmAction(item, 'CANCEL'),
-                    icon: Icon(Icons.close_rounded,
-                        size: 16, color: Colors.red.shade700),
-                    label: Text(
-                      'Batal',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.red.shade800,
+                  // Button Batal
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _confirmAction(item, 'CANCEL'),
+                      icon: Icon(Icons.close_rounded,
+                          size: 16, color: Colors.red.shade700),
+                      label: Text(
+                        'Batal',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red.shade800,
+                        ),
                       ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      side: BorderSide(color: Colors.red.shade200),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        side: BorderSide(color: Colors.red.shade200),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
+                  const SizedBox(width: 8),
 
-                // Button Proses
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _confirmAction(item, 'CLOSE'),
-                    icon: const Icon(Icons.check_circle_outline_rounded,
-                        size: 16, color: Colors.white),
-                    label: const Text(
-                      'Proses',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                  // Button Proses
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _confirmAction(item, 'CLOSE'),
+                      icon: const Icon(Icons.check_circle_outline_rounded,
+                          size: 16, color: Colors.white),
+                      label: const Text(
+                        'Proses',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade600,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade600,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

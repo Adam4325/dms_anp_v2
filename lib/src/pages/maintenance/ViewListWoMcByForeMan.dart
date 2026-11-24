@@ -1145,6 +1145,24 @@ class _ViewListWoMcByForeManState extends State<ViewListWoMcByForeMan> {
 
   @override
   void initState() {
+    _checkDriverAccessAndInit();
+    super.initState();
+  }
+
+  Future<void> _checkDriverAccessAndInit() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String lName = (prefs.getString("loginname") ?? "").trim().toUpperCase();
+    if (lName == "DRIVER") {
+      if (mounted) {
+        alert(globalScaffoldKey.currentContext ?? context, 0,
+            "Anda tidak memiliki akses ke halaman ini", "error");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ViewDashboard()),
+        );
+      }
+      return;
+    }
     getJSONData();
     getSession();
     if (EasyLoading.isShow) {
@@ -1157,7 +1175,6 @@ class _ViewListWoMcByForeManState extends State<ViewListWoMcByForeMan> {
       selectedStopValue = options[0]; // Default to the first option
     }
     getListGeofenceArea(false);
-    super.initState();
   }
 
   @override

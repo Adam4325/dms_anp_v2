@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dms_anp/src/pages/driver/ListDriverInspeksiV2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
 import 'package:dms_anp/src/Helper/globals.dart' as globals;
 import 'dart:convert';
@@ -17,24 +18,25 @@ import 'package:intl/intl.dart';
 
 class ApprovedDailyCheckScreenP2H extends StatefulWidget {
   @override
-  _ApprovedDailyCheckScreenP2HState createState() => _ApprovedDailyCheckScreenP2HState();
+  _ApprovedDailyCheckScreenP2HState createState() =>
+      _ApprovedDailyCheckScreenP2HState();
 }
 
-class _ApprovedDailyCheckScreenP2HState extends State<ApprovedDailyCheckScreenP2H> {
+class _ApprovedDailyCheckScreenP2HState
+    extends State<ApprovedDailyCheckScreenP2H> {
   List<dynamic> inspections = [];
-  Map<String, String> selectedValues =
-      {}; // key: inspeksi_id, value: 'ya'/'tidak'
-  final Color primaryOrange = Color(0xFFFF8C69);      // Soft orange
-  final Color lightOrange = Color(0xFFFFF4E6);        // Very light orange
-  final Color accentOrange = Color(0xFFFFB347);       // Peach orange
-  final Color darkOrange = Color(0xFFE07B39);         // Darker orange
-  final Color backgroundColor = Color(0xFFFFFAF5);     // Cream white
-  final Color cardColor = Color(0xFFFFF8F0);          // Light cream
-  final Color shadowColor = Color(0x20FF8C69);
+  Map<String, String> selectedValues = {};
+  bool _isLoading = true;
+
+  // MD Palette
+  static const Color primaryOrange = Color(0xFFFF8A50);
+  static const Color darkOrange = Color(0xFFE65100);
+  static const Color scaffoldBg = Color(0xFFF8FAFC);
 
   final TextEditingController kilometerController = TextEditingController();
   final TextEditingController notesController = TextEditingController();
-  final TextEditingController notesVerifikasiController = TextEditingController();
+  final TextEditingController notesVerifikasiController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -42,111 +44,163 @@ class _ApprovedDailyCheckScreenP2HState extends State<ApprovedDailyCheckScreenP2
     fetchInspectionData();
   }
 
-  void fetchInspectionDataOld() async {
-    var urlBase =
-        'https://apps.tuluatas.com/trucking/mobile/api/master_data_inspeksi.jsp?method=list-inspeksi-verifikasi-v2&vhcid=${globals.p2hVhcid.toString()}';
-    final response = await http.get(Uri.parse(urlBase));
-    print(urlBase);
-    if (response.statusCode == 200) {
-      setState(() {
-        inspections = json.decode(response.body);
-      });
-    } else {
-      print('Failed to load data');
-    }
+  @override
+  void dispose() {
+    kilometerController.dispose();
+    notesController.dispose();
+    notesVerifikasiController.dispose();
+    super.dispose();
+  }
+
+  void _goBack() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => ListDriverInspeksiV2()),
+    );
   }
 
   void fetchInspectionData() async {
+    setState(() => _isLoading = true);
     var urlBase =
         'https://apps.tuluatas.com/trucking/mobile/api/master_data_inspeksi.jsp?method=list-inspeksi-verifikasi-v2&vhcid=${globals.p2hVhcid.toString()}';
-    final response = await http.get(Uri.parse(urlBase));
-    print(urlBase);
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
+    try {
+      final response = await http
+          .get(Uri.parse(urlBase))
+          .timeout(const Duration(seconds: 20));
 
-      setState(() {
-        inspections = data;
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            inspections = data;
+            _isLoading = false;
 
-        if (data.isNotEmpty) {
-          // Ambil nilai km dan notes dari elemen pertama
-          kilometerController.text = data[0]['km'] ?? '';
-          notesController.text = data[0]['notes'] ?? '';
-        } else {
-          kilometerController.clear();
-          notesController.clear();
-          notesVerifikasiController.clear();
+            if (data.isNotEmpty) {
+              kilometerController.text = data[0]['km']?.toString() ?? '';
+              notesController.text = data[0]['notes']?.toString() ?? '';
+            } else {
+              kilometerController.clear();
+              notesController.clear();
+              notesVerifikasiController.clear();
+            }
+          });
         }
-      });
-    } else {
-      print('Failed to load data');
+      } else {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          _showToast("Gagal memuat data inspeksi (${response.statusCode})",
+              isError: true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showToast("Terjadi kesalahan koneksi: $e", isError: true);
+      }
     }
   }
 
+  void _showToast(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.redAccent : Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
 
-  void handleSubmit() async {
-    // Cek apakah semua inspeksi sudah dipilih
-    if(inspections.isEmpty){
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Tidak ada yang akan di approved"),
-          duration: Duration(seconds: 2),
-          backgroundColor: Colors.green,
-        ),
+  void _showConfirmActionDialog({required bool isApprove}) {
+    final note = notesVerifikasiController.text.trim();
+    if (note.isEmpty) {
+      _showToast(
+        "Notes Verifikasi tidak boleh kosong! Silakan isi catatan terlebih dahulu.",
+        isError: true,
       );
       return;
     }
-    if(notesVerifikasiController.text.isEmpty){
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Notes Verifikasi tidak boleh kosong!"),
-          duration: Duration(seconds: 2),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var username = prefs.getString("name");
-    final uniqueIds = inspections.map((e) => e['id']).toSet();
 
-    //final incomplete = uniqueIds.any((id) => selectedValues[id] == null);
-
-    print('VHCID ${globals.p2hVhcid}');
-    print('LOCID ${globals.p2hVhclocid}');
-    if (globals.p2hVhcid==null || globals.p2hVhcid=='') {
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Validasi Gagal'),
-          content: const Text('Vehicle ID tidak di temukan.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('OK'),
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              isApprove
+                  ? Icons.check_circle_rounded
+                  : Icons.cancel_outlined,
+              color: isApprove ? Colors.green.shade600 : Colors.red.shade600,
+              size: 26,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              isApprove ? "Konfirmasi Setujui" : "Konfirmasi Tolak",
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
           ],
         ),
-      );
+        content: Text(
+          isApprove
+              ? "Apakah Anda yakin ingin menyetujui hasil verifikasi P2H untuk unit ${globals.p2hVhcid ?? '-'}?"
+              : "Apakah Anda yakin ingin menolak hasil verifikasi P2H untuk unit ${globals.p2hVhcid ?? '-'}?",
+          style: TextStyle(fontSize: 13.5, color: Colors.grey.shade800),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              "Batal",
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              if (isApprove) {
+                handleSubmit();
+              } else {
+                handleCancel();
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  isApprove ? Colors.green.shade600 : Colors.red.shade600,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+            child: Text(
+              isApprove ? "Ya, Setujui" : "Ya, Tolak",
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void handleSubmit() async {
+    if (inspections.isEmpty) {
+      _showToast("Tidak ada data inspeksi yang akan di-approve", isError: true);
+      return;
+    }
+    if (notesVerifikasiController.text.trim().isEmpty) {
+      _showToast("Notes Verifikasi tidak boleh kosong!", isError: true);
+      return;
+    }
+    if (globals.p2hVhcid == null || globals.p2hVhcid == '') {
+      _showToast("Vehicle ID tidak ditemukan.", isError: true);
       return;
     }
 
-    // Jika valid, lanjutkan proses
-    List<Map<String, dynamic>> result = [];
-
-    final grouped = <String, String>{};
-    for (var item in inspections) {
-      grouped[item['id']] = item['inspeksi_name'];
-    }
-
-    grouped.forEach((id, name) {
-      final value = selectedValues[id];
-      result.add({
-        "id": id,
-        "inspeksi_name": name,
-        "inspeksi": value == "ya" ? 1 : 0,
-      });
-    });
+    EasyLoading.show(status: 'Memproses Approved...');
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var username = prefs.getString("name") ?? "";
 
     final data = {
       "method": "approved",
@@ -154,155 +208,66 @@ class _ApprovedDailyCheckScreenP2HState extends State<ApprovedDailyCheckScreenP2
       "vhcid": globals.p2hVhcid.toString(),
       "locid": globals.p2hVhclocid.toString(),
       "userid": username,
-      "notes_verifikasi":notesVerifikasiController.text
+      "notes_verifikasi": notesVerifikasiController.text.trim(),
     };
 
     final jsonString = jsonEncode(data);
-    print("Data to submit: $jsonString");
 
-    // Kirim data ke server via POST
-    var urlBase = 'https://apps.tuluatas.com/trucking/mobile/api/approved_form_inspeksiv2_new.jsp';
-    //var urlBase = 'https://apps.tuluatas.com/trucking/mobile/api/approved_form_inspeksiv2new.jsp';
-    print("URLBASE ${urlBase}");
-    final response = await http.post(
-      Uri.parse(urlBase),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonString,
-    );
+    try {
+      var urlBase =
+          'https://apps.tuluatas.com/trucking/mobile/api/approved_form_inspeksiv2_new.jsp';
+      final response = await http.post(
+        Uri.parse(urlBase),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonString,
+      ).timeout(const Duration(seconds: 30));
 
-    if (response.statusCode == 200) {
-      print("RESPONSE BODY: ${response.body}");
+      if (EasyLoading.isShow) EasyLoading.dismiss();
 
-      if (response.body.isNotEmpty) {
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
         try {
           final responseData = jsonDecode(response.body);
-
           if (responseData['status'] == 'success') {
-            // sukses
-            showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text('Sukses'),
-                content: const Text('Approved inspeksi berhasil disubmit.'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-            );
-            Timer(Duration(seconds: 1), () {
-              Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          ListDriverInspeksiV2()));
+            _showToast("Approved inspeksi P2H berhasil disubmit.");
+            Timer(const Duration(milliseconds: 800), () {
+              if (mounted) _goBack();
             });
-
           } else {
-            // gagal dari sisi server
-            showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text('Gagal'),
-                content: Text(
-                    'Pesan dari server: ${responseData['message'] ?? 'Tidak diketahui'}'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
+            _showToast(
+              "Gagal: ${responseData['message'] ?? 'Tidak diketahui'}",
+              isError: true,
             );
           }
         } catch (e) {
-          print("JSON decode error: $e");
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Gagal'),
-              content: const Text(
-                  'Respon dari server tidak bisa diproses (bukan JSON).'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          );
+          _showToast("Format respon server tidak valid.", isError: true);
         }
       } else {
-        print("Server returned empty response");
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Gagal'),
-            content: const Text('Server tidak mengembalikan data apapun.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+        _showToast("Server tidak mengembalikan data (${response.statusCode})",
+            isError: true);
       }
+    } catch (e) {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      _showToast("Terjadi kesalahan: $e", isError: true);
     }
   }
 
-
   void handleCancel() async {
-    // Cek apakah semua inspeksi sudah dipilih
-    if(inspections.isEmpty){
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Tidak ada yang akan di approved"),
-          duration: Duration(seconds: 2),
-          backgroundColor: Colors.green,
-        ),
-      );
+    if (inspections.isEmpty) {
+      _showToast("Tidak ada data inspeksi yang akan di-cancel", isError: true);
       return;
     }
+    if (notesVerifikasiController.text.trim().isEmpty) {
+      _showToast("Notes Verifikasi tidak boleh kosong!", isError: true);
+      return;
+    }
+    if (globals.p2hVhcid == null || globals.p2hVhcid == '') {
+      _showToast("Vehicle ID tidak ditemukan.", isError: true);
+      return;
+    }
+
+    EasyLoading.show(status: 'Memproses Penolakan...');
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    var username = prefs.getString("name");
-    if (globals.p2hVhcid==null || globals.p2hVhcid=='') {
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Validasi Gagal'),
-          content: const Text('Vehicle ID tidak di temukan.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
-    // Jika valid, lanjutkan proses
-    List<Map<String, dynamic>> result = [];
-
-    final grouped = <String, String>{};
-    for (var item in inspections) {
-      grouped[item['id']] = item['inspeksi_name'];
-    }
-
-    grouped.forEach((id, name) {
-      final value = selectedValues[id];
-      result.add({
-        "id": id,
-        "inspeksi_name": name,
-        "inspeksi": value == "ya" ? 1 : 0,
-      });
-    });
+    var username = prefs.getString("name") ?? "";
 
     final data = {
       "method": "cancel",
@@ -310,121 +275,51 @@ class _ApprovedDailyCheckScreenP2HState extends State<ApprovedDailyCheckScreenP2
       "p2hnumber": globals.p2hNumber.toString(),
       "locid": globals.p2hVhclocid.toString(),
       "userid": username,
-      "notes_verifikasi":notesVerifikasiController.text
+      "notes_verifikasi": notesVerifikasiController.text.trim(),
     };
 
     final jsonString = jsonEncode(data);
-    print("Data to submit: $jsonString");
 
-    // Kirim data ke server via POST
-    final response = await http.post(
-      Uri.parse(
-          'https://apps.tuluatas.com/trucking/mobile/api/approved_form_inspeksiv2_new.jsp'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonString,
-    );
+    try {
+      final response = await http.post(
+        Uri.parse(
+            'https://apps.tuluatas.com/trucking/mobile/api/approved_form_inspeksiv2_new.jsp'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonString,
+      ).timeout(const Duration(seconds: 30));
 
-    if (response.statusCode == 200) {
-      print("RESPONSE BODY: ${response.body}");
+      if (EasyLoading.isShow) EasyLoading.dismiss();
 
-      if (response.body.isNotEmpty) {
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
         try {
           final responseData = jsonDecode(response.body);
-
           if (responseData['status'] == 'success') {
-            // sukses
-            showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text('Sukses'),
-                content: const Text('Cancel/Rejected inspeksi berhasil!.'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-            );
-            Timer(Duration(seconds: 1), () {
-              Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          ListDriverInspeksiV2()));
+            _showToast("Penolakan inspeksi P2H berhasil diproses.");
+            Timer(const Duration(milliseconds: 800), () {
+              if (mounted) _goBack();
             });
           } else {
-            // gagal dari sisi server
-            showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text('Gagal'),
-                content: Text(
-                    'Pesan dari server: ${responseData['message'] ?? 'Tidak diketahui'}'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
+            _showToast(
+              "Gagal: ${responseData['message'] ?? 'Tidak diketahui'}",
+              isError: true,
             );
           }
         } catch (e) {
-          print("JSON decode error: $e");
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Gagal'),
-              content: const Text(
-                  'Respon dari server tidak bisa diproses (bukan JSON).'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          );
+          _showToast("Format respon server tidak valid.", isError: true);
         }
       } else {
-        print("Server returned empty response");
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Gagal'),
-            content: const Text('Server tidak mengembalikan data apapun.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+        _showToast("Server tidak mengembalikan data (${response.statusCode})",
+            isError: true);
       }
+    } catch (e) {
+      if (EasyLoading.isShow) EasyLoading.dismiss();
+      _showToast("Terjadi kesalahan: $e", isError: true);
     }
-  }
-
-  void handleCancelOld() {
-    setState(() {
-      selectedValues.clear();
-      kilometerController.clear();
-      notesController.clear();
-      Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (context) => ListDriverInspeksiV2()));
-    });
   }
 
   Future<void> _generateAndSharePdf() async {
     if (inspections.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak ada data inspeksi untuk dicetak')),
-      );
+      _showToast('Tidak ada data inspeksi untuk dicetak', isError: true);
       return;
     }
 
@@ -441,7 +336,6 @@ class _ApprovedDailyCheckScreenP2HState extends State<ApprovedDailyCheckScreenP2
     final nomorP2h = globals.p2hNumber ?? '';
     final catatan = notesController.text;
 
-    // Font yang punya glyph ✓ dan ✗ agar tidak jadi kotak/X
     pw.Font? checkFont;
     try {
       final fontData = await rootBundle.load('fonts/Montserrat-Regular.ttf');
@@ -455,98 +349,79 @@ class _ApprovedDailyCheckScreenP2HState extends State<ApprovedDailyCheckScreenP2
         build: (pw.Context context) {
           return [
             pw.Center(
-              child: pw.Column(
-                mainAxisSize: pw.MainAxisSize.min,
-                crossAxisAlignment: pw.CrossAxisAlignment.center,
-                children: [
-                  pw.Text(
-                    'FORM DAILY CHECK BEFORE RIDING',
-                    style: pw.TextStyle(
-                      fontSize: 16,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 2),
-                  pw.Text(
-                    'INSPEKSI KENDARAAN',
-                    style: const pw.TextStyle(fontSize: 12),
-                  ),
-                  pw.SizedBox(height: 12),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text('No Polisi : $noPolisi',
-                          style: const pw.TextStyle(fontSize: 10)),
-                      pw.SizedBox(height: 2),
-                      pw.Text('Tanggal : $dateStr',
-                          style: const pw.TextStyle(fontSize: 10)),
-                      pw.SizedBox(height: 2),
-                      pw.Text('Nomor P2h : $nomorP2h',
-                          style: const pw.TextStyle(fontSize: 10)),
-                    ],
-                  ),
-                ],
+              child: pw.Text(
+                'FORM DAILY CHECK BEFORE RIDING',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                ),
               ),
             ),
-            pw.SizedBox(height: 16),
-            ...grouped.entries.toList().asMap().entries.map((sectionEntry) {
-              final sectionIndex = sectionEntry.key + 1;
-              final entry = sectionEntry.value;
+            pw.SizedBox(height: 12),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('No. Polisi : $noPolisi',
+                    style: const pw.TextStyle(fontSize: 10)),
+                pw.Text('Tanggal : $dateStr',
+                    style: const pw.TextStyle(fontSize: 10)),
+              ],
+            ),
+            pw.SizedBox(height: 4),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('No. P2H   : $nomorP2h',
+                    style: const pw.TextStyle(fontSize: 10)),
+                pw.Text('KM        : ${kilometerController.text} KM',
+                    style: const pw.TextStyle(fontSize: 10)),
+              ],
+            ),
+            pw.SizedBox(height: 14),
+            ...grouped.entries.map((entry) {
               final items = entry.value;
-              final sectionTitle =
-                  (items.isNotEmpty ? items.first['inspeksi_name'] : '') ?? '';
-              final isYes = items.isNotEmpty && items.first['point'] == '1';
+              final groupTitle = items.first['inspeksi_name'] ?? '';
+              final isYa = items.first['point'] == "1";
+
               final rows = <pw.TableRow>[
                 pw.TableRow(
                   decoration: const pw.BoxDecoration(
+                    color: PdfColors.grey200,
                     border: pw.Border(
-                      bottom: pw.BorderSide(width: 0.5),
+                      top: pw.BorderSide(width: 0.5),
                       left: pw.BorderSide(width: 0.5),
                       right: pw.BorderSide(width: 0.5),
-                      top: pw.BorderSide(width: 0.5),
+                      bottom: pw.BorderSide(width: 0.5),
                     ),
                   ),
                   children: [
-                    _cell('No', bold: true),
-                    _cell('Item', bold: true),
-                    _cell('Ya', bold: true),
-                    _cell('Tidak', bold: true),
+                    _cell('NO', bold: true),
+                    _cell('ITEM PEMERIKSAAN', bold: true),
+                    _cell('YA', bold: true),
+                    _cell('TIDAK', bold: true),
                   ],
                 ),
+                _dataRow('1', groupTitle, isYa, checkFont),
               ];
-              final subItems = items
-                  .where((item) =>
-                      item['subs_inspeksi_name'] != null &&
-                      item['subs_inspeksi_name'].toString() != '-')
-                  .toList();
-              if (subItems.isEmpty) {
-                rows.add(_dataRow('1', sectionTitle, isYes, checkFont));
-              } else {
-                for (var i = 0; i < subItems.length; i++) {
-                  final sub = subItems[i];
-                  final name =
-                      (sub['subs_inspeksi_name'] ?? sectionTitle).toString();
-                  rows.add(_dataRow('${i + 1}', name, isYes, checkFont));
+
+              int no = 2;
+              for (var item in items) {
+                final sub = item['subs_inspeksi_name'];
+                if (sub != null && sub.toString() != '-') {
+                  rows.add(_dataRow('$no', '   $sub', isYa, checkFont));
+                  no++;
                 }
               }
+
               return pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text(
-                    '$sectionIndex. $sectionTitle',
-                    style: pw.TextStyle(
-                      fontSize: 10,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 4),
                   pw.Table(
-                    border: pw.TableBorder.all(width: 0.5),
-                    columnWidths: {
-                      0: const pw.FlexColumnWidth(0.8),
-                      1: const pw.FlexColumnWidth(4),
-                      2: const pw.FlexColumnWidth(1),
-                      3: const pw.FlexColumnWidth(1.2),
+                    columnWidths: const {
+                      0: pw.FixedColumnWidth(28),
+                      1: pw.FlexColumnWidth(),
+                      2: pw.FixedColumnWidth(36),
+                      3: pw.FixedColumnWidth(42),
                     },
                     children: rows,
                   ),
@@ -567,7 +442,7 @@ class _ApprovedDailyCheckScreenP2HState extends State<ApprovedDailyCheckScreenP2
                   pw.Container(
                     width: double.infinity,
                     padding: const pw.EdgeInsets.symmetric(vertical: 4),
-                    decoration: pw.BoxDecoration(
+                    decoration: const pw.BoxDecoration(
                       border: pw.Border(
                         bottom: pw.BorderSide(width: 0.5),
                       ),
@@ -629,22 +504,9 @@ class _ApprovedDailyCheckScreenP2HState extends State<ApprovedDailyCheckScreenP2
         [XFile(file.path)],
         text: 'Form Daily Check Before Riding - $nomorP2h',
       );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('PDF siap dibagikan'),
-              backgroundColor: Colors.green),
-        );
-      }
+      _showToast('PDF siap dibagikan');
     } catch (e) {
-      if (mounted) {
-        print('Gagal membuat PDF: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Gagal membuat PDF: $e'),
-              backgroundColor: Colors.red),
-        );
-      }
+      _showToast('Gagal membuat PDF: $e', isError: true);
     }
   }
 
@@ -660,13 +522,16 @@ class _ApprovedDailyCheckScreenP2HState extends State<ApprovedDailyCheckScreenP2
       children: [
         _cell(no),
         _cell(item),
-        _cell(isYa ? '✓' : '', color: isYa ? PdfColors.blue : null, font: checkFont),
-        _cell(isYa ? '' : '✗', color: isYa ? null : PdfColors.red, font: checkFont),
+        _cell(isYa ? '✓' : '',
+            color: isYa ? PdfColors.blue : null, font: checkFont),
+        _cell(isYa ? '' : '✗',
+            color: isYa ? null : PdfColors.red, font: checkFont),
       ],
     );
   }
 
-  pw.Widget _cell(String text, {bool bold = false, PdfColor? color, pw.Font? font}) {
+  pw.Widget _cell(String text,
+      {bool bold = false, PdfColor? color, pw.Font? font}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: pw.Text(
@@ -691,273 +556,686 @@ class _ApprovedDailyCheckScreenP2HState extends State<ApprovedDailyCheckScreenP2
     }
 
     return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (bool didPop, dynamic result) {
-          if (didPop) return;
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => ListDriverInspeksiV2()),
-          );
-        },
-    child: Scaffold(
-      appBar: AppBar(
-        backgroundColor: darkOrange,
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+        _goBack();
+      },
+      child: Scaffold(
+        backgroundColor: scaffoldBg,
+        appBar: AppBar(
+          elevation: 0,
           leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back,
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
               color: Colors.white,
+              size: 20,
             ),
-            iconSize: 20.0,
-            onPressed: () {
-              Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => ListDriverInspeksiV2()));
-            },
+            onPressed: _goBack,
           ),
-          //backgroundColor: Colors.transparent,
-          title: Text('Approved Inspeksi ${globals.p2hVhcid.toString()}',
-              style: TextStyle(color: Colors.white))),
-      body: inspections.isEmpty
-          ? const Center(child: Text("Tidak ada data inspeksi"))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(5),
-              child: Column(
-                children: [
-                  Container(
-                    margin: EdgeInsets.all(10),
-                    alignment: Alignment.center,
-                    child: Text("Daily Check Before Riding",
-                        style: TextStyle(fontSize: 20)),
-                  ),
-                  const SizedBox(height: 16),
-                  ...grouped.entries.map((entry) {
-                    final groupId = entry.key;
-                    final items = entry.value;
-                    final groupTitle = items.first['inspeksi_name'];
-                    final isYes = items.first['point'];
-
-                    return Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: const [
-                          BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 4,
-                              offset: Offset(0, 2))
-                        ],
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [primaryOrange, darkOrange],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          centerTitle: true,
+          title: Column(
+            children: [
+              const Text(
+                'Verifikasi P2H',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                'Unit: ${globals.p2hVhcid ?? '-'} | No: ${globals.p2hNumber ?? '-'}',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon:
+                  const Icon(Icons.picture_as_pdf_rounded, color: Colors.white),
+              tooltip: 'Cetak / Bagikan PDF',
+              onPressed: _generateAndSharePdf,
+            ),
+          ],
+        ),
+        body: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: primaryOrange),
+              )
+            : inspections.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Icon(
-                                isYes == "1" ? Icons.check_box : Icons.close,
-                                size: 20,
-                                color: isYes == "1" ? Colors.green : Colors.red,
+                          Container(
+                            width: 70,
+                            height: 70,
+                            decoration: BoxDecoration(
+                              color: primaryOrange.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.fact_check_outlined,
+                              size: 36,
+                              color: primaryOrange,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            "Tidak Ada Data Inspeksi",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "Data pemeriksaan P2H untuk unit ini tidak ditemukan atau telah diproses.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          OutlinedButton.icon(
+                            onPressed: _goBack,
+                            icon: const Icon(Icons.arrow_back_rounded, size: 16),
+                            label: const Text('Kembali ke Daftar'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: primaryOrange,
+                              side: const BorderSide(color: primaryOrange),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Vehicle Info Card (MD3)
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
                               ),
-                              SizedBox(width: 8),
-                              Text(
-                                groupTitle,
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 38,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      color: primaryOrange.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.local_shipping_rounded,
+                                      color: darkOrange,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          globals.p2hVhcid ?? "-",
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                        Text(
+                                          "Daily Check Before Riding",
+                                          style: TextStyle(
+                                            fontSize: 11.5,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade50,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                          color: Colors.orange.shade200),
+                                    ),
+                                    child: Text(
+                                      globals.p2hNumber ?? "-",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.orange.shade900,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              const Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: Color(0xFFF1F5F9)),
+                              const SizedBox(height: 10),
+
+                              // Info Grid: Cabang & KM
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.location_on_outlined,
+                                            size: 16,
+                                            color: Colors.grey.shade600),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "CABANG",
+                                                style: TextStyle(
+                                                  fontSize: 9.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.grey.shade500,
+                                                ),
+                                              ),
+                                              Text(
+                                                globals.p2hVhclocid ?? "-",
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF1E293B),
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 1,
+                                    height: 26,
+                                    color: Colors.grey.shade300,
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 8),
+                                  ),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.speed_rounded,
+                                            size: 16,
+                                            color: Colors.grey.shade600),
+                                        const SizedBox(width: 6),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "KILOMETER",
+                                              style: TextStyle(
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.grey.shade500,
+                                              ),
+                                            ),
+                                            Text(
+                                              "${kilometerController.text.isNotEmpty ? kilometerController.text : '0'} KM",
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              // Driver Note if present
+                              if (notesController.text.trim().isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                        color: Colors.amber.shade200),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(Icons.info_outline_rounded,
+                                          size: 15,
+                                          color: Colors.amber.shade900),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          "Catatan Driver: ${notesController.text}",
+                                          style: TextStyle(
+                                            fontSize: 11.5,
+                                            color: Colors.amber.shade900,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Section Title: Item Hasil Pemeriksaan
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.checklist_rounded,
+                                    size: 17, color: darkOrange),
+                                SizedBox(width: 6),
+                                Text(
+                                  "Hasil Pemeriksaan Unit",
+                                  style: TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: primaryOrange.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                "${grouped.length} Bagian",
                                 style: const TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.bold,
+                                  color: darkOrange,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Inspection Items Group List
+                        ...grouped.entries.map((entry) {
+                          final items = entry.value;
+                          final groupTitle = items.first['inspeksi_name'] ?? '';
+                          final isYes = items.first['point']?.toString() == "1";
+
+                          final subItems = items
+                              .where((item) =>
+                                  item['subs_inspeksi_name'] != null &&
+                                  item['subs_inspeksi_name'].toString() != "-")
+                              .toList();
+
+                          return Container(
+                            margin: const EdgeInsets.symmetric(vertical: 5),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isYes
+                                    ? Colors.grey.shade200
+                                    : Colors.red.shade100,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.02),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      isYes
+                                          ? Icons.check_circle_rounded
+                                          : Icons.cancel_rounded,
+                                      size: 18,
+                                      color: isYes
+                                          ? Colors.green.shade600
+                                          : Colors.red.shade600,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        groupTitle,
+                                        style: const TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF1E293B),
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: isYes
+                                            ? const Color(0xFFDCFCE7)
+                                            : const Color(0xFFFEE2E2),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        isYes ? "BAIK" : "KENDALA",
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: isYes
+                                              ? const Color(0xFF16A34A)
+                                              : const Color(0xFFDC2626),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (subItems.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: subItems.map((sub) {
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 2.5),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Padding(
+                                                padding:
+                                                    EdgeInsets.only(top: 5.0),
+                                                child: Icon(Icons.circle,
+                                                    size: 4,
+                                                    color: Colors.black54),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Expanded(
+                                                child: Text(
+                                                  sub['subs_inspeksi_name']
+                                                      .toString(),
+                                                  style: TextStyle(
+                                                    fontSize: 11.5,
+                                                    color: Colors.grey.shade700,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        }).toList(),
+
+                        const SizedBox(height: 16),
+
+                        // Notes Verifikasi Input Card (Required)
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.rate_review_outlined,
+                                      size: 18, color: darkOrange),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    "Catatan Hasil Verifikasi",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                  const Text(
+                                    " *Wajib",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: notesVerifikasiController,
+                                maxLines: 3,
+                                decoration: InputDecoration(
+                                  hintText:
+                                      "Tuliskan catatan evaluasi hasil verifikasi P2H di sini...",
+                                  hintStyle: TextStyle(
+                                    fontSize: 12.5,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  contentPadding: const EdgeInsets.all(12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                        color: Colors.grey.shade200),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                        color: Colors.grey.shade200),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                        color: primaryOrange, width: 1.5),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
+                        ),
 
-                          const Divider(),
-                          ...items
-                              .where((item) =>
-                                  item['subs_inspeksi_name'] != null &&
-                                  item['subs_inspeksi_name'].toString() != "-")
-                              .map((item) => Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 2),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.circle, size: 6),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child:
-                                              Text(item['subs_inspeksi_name']),
-                                        ),
-                                      ],
-                                    ),
-                                  ))
-                              .toList(),
-                        ],
+                        const SizedBox(height: 90), // Bottom bar spacing
+                      ],
+                    ),
+                  ),
+
+        // Modern Bottom Action Bar
+        bottomNavigationBar: inspections.isEmpty
+            ? null
+            : Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, -3),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
+                child: SafeArea(
+                  top: false,
+                  child: Row(
+                    children: [
+                      // Print / PDF Button
+                      Expanded(
+                        flex: 3,
+                        child: OutlinedButton.icon(
+                          onPressed: _generateAndSharePdf,
+                          icon: const Icon(Icons.picture_as_pdf_outlined,
+                              size: 16),
+                          label: const Text(
+                            "PDF",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: darkOrange,
+                            side: const BorderSide(color: darkOrange),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
                       ),
-                    );
-                  }).toList(),
+                      const SizedBox(width: 8),
 
-                  // --- Kilometer input
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: kilometerController,
-                    readOnly: true,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Kilometer',
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // --- Notes input
-                  TextField(
-                    controller: notesController,
-                    readOnly: true,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: 'Catatan',
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-
-                  const SizedBox(height: 80), // spacing for bottom button
-                ],
-              ),
-            ),
-      backgroundColor: Colors.grey.shade100,
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.only(top:12,left: 12,right: 12,bottom: 50),
-        child: Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: (){
-                  //handleSubmit
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      TextEditingController _notesController = TextEditingController();
-
-                      return AlertDialog(
-                        title: Text("Notes Verifikasi"),
-                        content: TextField(
-                          controller: notesVerifikasiController,
-                          decoration: InputDecoration(
-                            hintText: "Masukkan catatan...",
+                      // Cancel / Reject Button
+                      Expanded(
+                        flex: 3,
+                        child: OutlinedButton.icon(
+                          onPressed: () =>
+                              _showConfirmActionDialog(isApprove: false),
+                          icon: const Icon(Icons.close_rounded, size: 16),
+                          label: const Text(
+                            "Tolak",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red.shade700,
+                            side: BorderSide(color: Colors.red.shade300),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
-                        actions: [
-                          TextButton(
-                            child: Text("Batal"),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Approve Button
+                      Expanded(
+                        flex: 4,
+                        child: ElevatedButton.icon(
+                          onPressed: () =>
+                              _showConfirmActionDialog(isApprove: true),
+                          icon: const Icon(Icons.check_circle_rounded,
+                              size: 16, color: Colors.white),
+                          label: const Text(
+                            "Setujui P2H",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          TextButton(
-                            child: Text("OK"),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              handleSubmit();
-
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  );
-
-                },
-                style: ElevatedButton.styleFrom(
-                    elevation: 2.0,
-                    backgroundColor: darkOrange,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    textStyle: TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600)),
-                icon: const Icon(Icons.check),
-                label: const Text("Approved",style: TextStyle(color: Colors.white),),//BUTTON APPROVE
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _generateAndSharePdf(),
-                icon: const Icon(Icons.picture_as_pdf),
-                style: ElevatedButton.styleFrom(
-                    elevation: 2.0,
-                    backgroundColor: shadowColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    textStyle: TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600)),
-                label: const Text("Print",style: TextStyle(color: Colors.black)),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: (){
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      TextEditingController _notesController = TextEditingController();
-
-                      return AlertDialog(
-                        title: Text("Notes Cancel Verifikasi"),
-                        content: TextField(
-                          controller: notesVerifikasiController,
-                          decoration: InputDecoration(
-                            hintText: "Masukkan catatan...",
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green.shade600,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
-                        actions: [
-                          TextButton(
-                            child: Text("Batal"),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                          TextButton(
-                            child: Text("OK"),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              handleCancel();
-
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                icon: const Icon(Icons.refresh),
-                style: ElevatedButton.styleFrom(
-                    elevation: 2.0,
-                    backgroundColor: shadowColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    textStyle: TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600)),
-                label: const Text("Cancel",style: TextStyle(color: Colors.black)),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
-        ),
       ),
-    ));
+    );
   }
 }

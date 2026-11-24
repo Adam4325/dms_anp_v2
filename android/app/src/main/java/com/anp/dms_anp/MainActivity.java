@@ -3,8 +3,8 @@ package com.anp.dms_anp;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -24,11 +24,10 @@ import io.flutter.embedding.android.FlutterFragmentActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 
-import java.net.NetworkInterface;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public class MainActivity extends FlutterFragmentActivity {
@@ -124,24 +123,18 @@ public class MainActivity extends FlutterFragmentActivity {
                     Network activeNetwork = cm.getActiveNetwork();
                     if (activeNetwork != null) {
                         NetworkCapabilities caps = cm.getNetworkCapabilities(activeNetwork);
-                        if (caps != null) {
-                            if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN) ||
-                                !caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)) {
-                                Log.d(TAG, "VPN detected via activeNetwork (TRANSPORT_VPN or !NET_CAPABILITY_NOT_VPN)");
-                                return true;
-                            }
+                        if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                            Log.d(TAG, "VPN detected via activeNetwork TRANSPORT_VPN");
+                            return true;
                         }
                     }
                     Network[] networks = cm.getAllNetworks();
                     if (networks != null) {
                         for (Network network : networks) {
                             NetworkCapabilities caps = cm.getNetworkCapabilities(network);
-                            if (caps != null) {
-                                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN) ||
-                                    !caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)) {
-                                    Log.d(TAG, "VPN detected via allNetworks TRANSPORT_VPN");
-                                    return true;
-                                }
+                            if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                                Log.d(TAG, "VPN detected via allNetworks TRANSPORT_VPN");
+                                return true;
                             }
                         }
                     }
@@ -154,46 +147,43 @@ public class MainActivity extends FlutterFragmentActivity {
                     }
                 }
             }
-
-            // Layer 2: Cek nama network interface virtual (tun, tap, ppp, vpn, wg)
-            try {
-                Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-                if (interfaces != null) {
-                    while (interfaces.hasMoreElements()) {
-                        NetworkInterface intf = interfaces.nextElement();
-                        try {
-                            String name = intf.getName().toLowerCase();
-                            if (name.contains("tun") || name.contains("tap") ||
-                                name.contains("vpn") || name.startsWith("ppp") ||
-                                name.startsWith("ipsec") || name.startsWith("wg")) {
-
-                                boolean isUp = false;
-                                try {
-                                    isUp = intf.isUp();
-                                } catch (Exception ignored) {}
-
-                                boolean hasAddresses = false;
-                                try {
-                                    hasAddresses = intf.getInterfaceAddresses() != null && !intf.getInterfaceAddresses().isEmpty();
-                                } catch (Exception ignored) {}
-
-                                if (isUp || hasAddresses || name.startsWith("tun") || name.startsWith("tap")) {
-                                    Log.d(TAG, "VPN detected via interface: " + name + " (isUp=" + isUp + ", hasAddresses=" + hasAddresses + ")");
-                                    return true;
-                                }
-                            }
-                        } catch (Exception e) {
-                            Log.w(TAG, "Error checking network interface: " + e.getMessage());
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                Log.w(TAG, "Error enumerating interfaces: " + e.getMessage());
-            }
         } catch (Exception e) {
             Log.e(TAG, "Error checking VPN: " + e.getMessage());
         }
         return false;
+    }
+
+    private boolean isSystemOrBuiltInApp(ApplicationInfo appInfo, String pkg) {
+        if (appInfo == null || pkg == null) {
+            return true;
+        }
+        if ((appInfo.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0) {
+            return true;
+        }
+        String lowerPkg = pkg.toLowerCase(Locale.ROOT);
+        return lowerPkg.equals("com.xiaomi.mipicks")
+                || lowerPkg.startsWith("com.xiaomi.")
+                || lowerPkg.startsWith("com.miui.")
+                || lowerPkg.startsWith("com.mi.")
+                || lowerPkg.startsWith("com.google.android.")
+                || lowerPkg.startsWith("com.android.")
+                || lowerPkg.startsWith("com.samsung.")
+                || lowerPkg.startsWith("com.sec.")
+                || lowerPkg.startsWith("com.coloros.")
+                || lowerPkg.startsWith("com.oplus.")
+                || lowerPkg.startsWith("com.oppo.")
+                || lowerPkg.startsWith("com.heytap.")
+                || lowerPkg.startsWith("com.realme.")
+                || lowerPkg.startsWith("com.oneplus.")
+                || lowerPkg.startsWith("com.vivo.")
+                || lowerPkg.startsWith("com.iqoo.")
+                || lowerPkg.startsWith("com.bbk.")
+                || lowerPkg.startsWith("com.huawei.")
+                || lowerPkg.startsWith("com.hihonor.")
+                || lowerPkg.startsWith("com.transsion.")
+                || lowerPkg.startsWith("com.infinix.")
+                || lowerPkg.startsWith("com.tecno.")
+                || lowerPkg.startsWith("com.itel.");
     }
 
     private List<String> getInstalledVpnApps() {
@@ -202,30 +192,7 @@ public class MainActivity extends FlutterFragmentActivity {
             PackageManager pm = getPackageManager();
             String myPkg = getPackageName();
 
-            // Method 1: Query services implementing android.net.VpnService
-            try {
-                Intent vpnIntent = new Intent("android.net.VpnService");
-                List<ResolveInfo> services = pm.queryIntentServices(vpnIntent, 0);
-                if (services != null) {
-                    for (ResolveInfo ri : services) {
-                        if (ri.serviceInfo != null && ri.serviceInfo.packageName != null) {
-                            String pkg = ri.serviceInfo.packageName;
-                            if (!pkg.equals(myPkg)) {
-                                try {
-                                    CharSequence label = ri.serviceInfo.applicationInfo.loadLabel(pm);
-                                    appNames.add(label != null ? label.toString() : pkg);
-                                } catch (Exception e) {
-                                    appNames.add(pkg);
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                Log.w(TAG, "Error querying VpnService: " + e.getMessage());
-            }
-
-            // Method 2: Cek daftar package VPN populer (Turbo VPN, WARP, OpenVPN, dsb)
+            // Cek khusus daftar package aplikasi VPN populer (abaikan app sistem / bawaan HP)
             String[] knownVpnPackages = new String[] {
                 "free.vpn.unblock.proxy.turbovpn",          // Turbo VPN
                 "free.vpn.unblock.proxy.turbovpn.lite",     // Turbo VPN Lite
@@ -240,8 +207,8 @@ public class MainActivity extends FlutterFragmentActivity {
                 "com.wireguard.android",                    // WireGuard
                 "org.openvpn.openvpn",                      // OpenVPN Connect
                 "de.blinkt.openvpn",                        // OpenVPN for Android
-                "com.psiphon3.subscription",                // Psiphon
-                "com.psiphon3",
+                "com.psiphon3.subscription",                // Psiphon Pro
+                "com.psiphon3",                             // Psiphon
                 "com.fast.free.unblock.secure.vpn",         // SuperVPN
                 "hotspotshield.android.vpn",                // Hotspot Shield
                 "com.purevpn.android",                      // PureVPN
@@ -250,19 +217,30 @@ public class MainActivity extends FlutterFragmentActivity {
                 "com.vpnhub.vpn",                           // VPNhub
                 "com.anchorfree.vpnsentry",                 // Betternet
                 "com.mullvad.vpn",                          // Mullvad
+                "net.mullvad.mullvadvpn",                   // Mullvad VPN
                 "com.tunnelbear.android",                   // TunnelBear
                 "org.proxydroid",                           // ProxyDroid
                 "com.github.shadowsocks",                   // Shadowsocks
+                "com.cyberghostvpn.android",                // CyberGhost VPN
+                "com.privateinternetaccess.android",        // Private Internet Access
+                "com.ipvanish.android",                     // IPVanish
+                "com.vpn.lat",                              // VPN.lat
                 "com.vpn.free.master",
                 "com.supervpn.vpn",
                 "com.freevpn.android"
             };
 
             for (String pkg : knownVpnPackages) {
+                if (pkg.equals(myPkg)) {
+                    continue;
+                }
                 try {
-                    pm.getPackageInfo(pkg, 0);
+                    ApplicationInfo appInfo = pm.getApplicationInfo(pkg, 0);
+                    if (isSystemOrBuiltInApp(appInfo, pkg)) {
+                        continue;
+                    }
                     try {
-                        CharSequence label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0));
+                        CharSequence label = pm.getApplicationLabel(appInfo);
                         appNames.add(label != null ? label.toString() : pkg);
                     } catch (Exception ex) {
                         appNames.add(pkg);

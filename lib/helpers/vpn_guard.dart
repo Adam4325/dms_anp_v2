@@ -74,16 +74,14 @@ class VpnGuard {
     bool popOnDismiss = false,
     String? customMessage,
   }) async {
-    final bool detected = await isVpnDetected();
-    if (!detected) return false;
+    final bool active = await isVpnActive();
+    final List<String> installedApps = await getInstalledVpnApps();
+    if (!active && installedApps.isEmpty) return false;
     if (!context.mounted) return true;
 
     if (EasyLoading.isShow) {
       EasyLoading.dismiss();
     }
-
-    final List<String> installedApps = await getInstalledVpnApps();
-    final bool active = await isVpnActive();
 
     String title = 'Aplikasi VPN Terdeteksi';
     String message = '';

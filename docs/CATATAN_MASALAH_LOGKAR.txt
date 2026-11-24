@@ -1,0 +1,173 @@
+================================================================================
+CATATAN ANALISIS MASALAH INTEGRASI LOGKAR & LOG MONITORING
+Tanggal Dokumen : 20 November 2026
+Sumber Data     : dms_anp/docs/Logkar_Monitoring_2026-11-20.csv
+Aplikasi        : DMS ANP (Flutter Mobile) & Trucking Backend (JSP Tomcat)
+================================================================================
+
+--------------------------------------------------------------------------------
+1. PENJELASAN MENGAPA LOG PER DO BISA > 20 KALI (BUKAN HANYA 6 KALI)
+--------------------------------------------------------------------------------
+Secara alur bisnis Logkar, tahapan status DO terdiri dari 6 status utama:
+  - 3  : Menuju Lokasi Muat
+  - 4  : Tiba di Muat
+  - 12 : Selesai Muat
+  - 5  : Menuju Bongkar
+  - 6  : Tiba di Bongkar
+  - 99 : Pesanan Selesai
+
+Namun pada Log Monitoring tercatat hingga 20+ baris per DO karena:
+
+a. Satu Kali Aksi Menghasilkan Multi-Log (2 - 3 Event):
+   Setiap kali aplikasi driver mengirimkan 1 status, sistem backend mencatat:
+   1) "Driver App Request" : Request masuk dari HP driver (Android Sync).
+   2) "Lookup DO ID"       : Server ANP memanggil API Logkar (/orders/do/get)
+                             untuk mencari do_id berdasarkan do_no.
+   3) "Status Order"       : Server ANP memanggil API Logkar (/transporter/status/order).
+   Saat penyelesaian order, ada aksi "Upload Docs (POD)" yang juga melakukan
+   Lookup DO ID + multipart upload gambar POD.
+   Sehingga hitungan normal: 6 status x 2-3 log + Upload POD = 15 s/d 18 log.
+
+b. Driver Menekan Tombol Berulang Kali (Multiple Tap / Retry):
+   Pada beberapa DO (misal R32083126), tercatat "Driver App Request" beruntun
+   dalam selisih hitungan detik (contoh: 05:59:02, 05:59:07, 05:59:12, 05:59:16, 05:59:24).
+   Hal ini terjadi karena koneksi lambat atau tidak ada loading disable pada tombol,
+   sehingga driver menekan tombol berulang kali.
+
+c. Pengiriman Longitude / Latitude:
+   Setiap request status order (3, 4, 12, 5, 6, 99) WAJIB menyertakan koordinat
+   latitude & longitude driver saat tombol ditekan.
+   Selain itu, pada aplikasi mobile ada background service
+   (LogkarPositionBackgroundService) yang mengirim posisi secara berkala (per 1 menit)
+   ke endpoint /transporter/order/position.
+
+
+--------------------------------------------------------------------------------
+2. STATISTIK LOG MONITORING (20 NOVEMBER 2026)
+--------------------------------------------------------------------------------
+Total Baris Log   : 1.297 baris
+Total DO Unik     : 91 DO
+Status Sukses     : 952 baris
+Status Gagal      : 345 baris
+
+Breakdown Tahapan:
+  - Lookup DO ID            : 418 baris
+  - Driver App Request       : 410 baris
+  - OTHER (Error Internal)  : 128 baris
+  - Upload Docs (POD)       :  85 baris
+  - Tiba Bongkar (Status 6)  :  67 baris
+  - Menuju Bongkar (Status 5):  61 baris
+  - Inloading (Status 12)   :  61 baris
+  - Tiba di Muat (Status 4) :  59 baris
+  - Outunloading (Status 99):   8 baris
+
+
+--------------------------------------------------------------------------------
+3. BREAKDOWN DAN PENYEBAB ERROR (345 KEGAGALAN)
+--------------------------------------------------------------------------------
+
+[1] BUG PARSING ANGKA DESIMAL / QTY PECAHAN (51x GAGAL)
+    - Pesan Error: {"error":"For input string: \"6.5\""}
+      (terjadi juga pada nilai "5.5", "3.5", "2.5", "2.55")
+    - Lokasi Kode : trucking/web/mobile/api/do_mixer/update_status_do_mixerv2.jsp (baris 525-526)
+    - Penyebab    :
+      Muatan unit mixer beton berupa volume m3 sering bernilai desimal (6.5 m3, 5.5 m3, dst).
+      Kode backend memanggil:
+          loadingQty = Integer.parseInt(rows.get(0).toString());
+          reduceQty = Integer.parseInt(rows.get(1).toString());
+      Fungsi Java Integer.parseInt() otomatis crash (NumberFormatException) saat membaca
+      string yang memiliki titik desimal ("6.5").
+    - Akibat      :
+      Pengiriman status ke Logkar langsung GAGAL TOTAL dan masuk ke blok catch (kategori OTHER).
+      Status DO di Logkar tidak ter-update sama sekali.
+
+[2] LOGKAR 400165: INVALID DO STATUS (153x GAGAL - ERROR TERBESAR)
+    - Pesan Error: {"status":"invalid do status"} (Code 400165)
+    - Penyebab    :
+      API Logkar menerapkan state machine urutan status yang ketat:
+      3 -> 4 -> 12 -> 5 -> 6 -> 99.
+      Jika driver melompat status atau status sebelumnya (misal status 12/5) GAGAL
+      terkirim akibat bug desimal di atas, status DO di Logkar masih tertahan di status lama.
+      Saat driver menekan tahap berikutnya (misal Status 6 atau 99), Logkar menolak
+      dengan error 400165 "invalid do status".
+      Juga terjadi jika driver menekan tombol status yang sama berulang kali setelah status
+      tersebut sudah sukses di Logkar.
+
+[3] LOGKAR: DO_ID NOT FOUND / LOOKUP EMPTY (124x GAGAL)
+    - Pesan Error: {"error":"do_id not found for do_no=R58023177"}
+                   {"status":"OK","data":[],"code":200}
+    - Contoh DO   : R58023177, R28094899
+    - Penyebab    :
+      Nomor DO tersebut belum didaftarkan / belum ter-create / belum di-dispatch
+      di sistem Logkar oleh tim Shipper/Logistik. Saat backend mencari ke /orders/do/get,
+      Logkar mengembalikan array kosong "data": [].
+    - Akibat      :
+      Karena do_id tidak ada, semua aksi pengiriman status maupun upload POD untuk
+      DO tersebut dipastikan gagal.
+
+[4] LOGKAR 400166: DO ALREADY COMPLETED (13x GAGAL)
+    - Pesan Error: {"status":"do already completed"} (Code 400166)
+    - Contoh DO   : R32083138, R01162024
+    - Penyebab    :
+      DO sudah berstatus 99 (Selesai), namun aplikasi driver atau retry mencoba
+      mengirimkan status lagi (misal Status 6 atau status lainnya). Logkar menolak
+      karena DO yang sudah closed tidak bisa menerima perubahan status.
+
+[5] ERROR DOKUMEN & FOTO POD (2x GAGAL)
+    - Pesan Error: {"status":"invalid file size"}
+                   {"status":"Document not exists"}
+    - Penyebab    :
+      File foto bukti DO / POD di server memiliki ukuran tidak valid (terlalu kecil/kosong)
+      atau status 99 dipanggil sebelum dokumen POD terupload dengan benar.
+
+
+--------------------------------------------------------------------------------
+4. REKOMENDASI SOLUSI & TINDAK LANJUT
+--------------------------------------------------------------------------------
+
+A. PERBAIKAN BACKEND JSP (PRIORITAS TINGGI):
+   File: trucking/web/mobile/api/do_mixer/update_status_do_mixerv2.jsp
+   (dan file terkait: update_status_do_mixerv2_v2.jsp, update_status_do_mixerv3.jsp)
+   1. Ganti Integer.parseInt dengan parsing double yang aman:
+      Ganti baris 525-526:
+      ------------------------------------------------------------------
+      double loadQtyRaw = Double.parseDouble(rows.get(0).toString().trim());
+      double redQtyRaw  = Double.parseDouble(rows.get(1).toString().trim());
+      loadingQty = (int) Math.round(loadQtyRaw);
+      reduceQty  = (int) Math.round(redQtyRaw);
+      ------------------------------------------------------------------
+      Atau ubah loadingQty dan reduceQty menjadi double jika Logkar menerima
+      nilai desimal untuk volume beton ready mix.
+
+B. PERBAIKAN APLIKASI ANDROID (FLUTTER):
+   1. Implementasikan Debouncing / Loading State:
+      Saat driver menekan tombol status, segera nonaktifkan tombol (disabled)
+      dan tampilkan spinner loading agar driver tidak menekan berkali-kali (mencegah double tap).
+   2. Validasi Kesiapan DO:
+      Bila DO belum terdaftar di Logkar (do_id kosong), berikan notifikasi yang jelas
+      ke driver bahwa DO belum aktif di sistem Logkar.
+
+C. OPERASIONAL / SINKRONISASI DATA:
+   1. Pastikan nomor DO sudah dibuat/dikirim ke Logkar sebelum driver mulai jalan
+      agar tidak muncul error "do_id not found".
+
+--------------------------------------------------------------------------------
+5. STATUS IMPLEMENTASI PERBAIKAN (SELESAI DIKERJAKAN 20 NOV 2026)
+--------------------------------------------------------------------------------
+[x] BACKEND JSP (update_status_do_mixerv2.jsp & update_status_do_mixerv2_v2.jsp):
+    - Ditambahkan fungsi helper parseDoubleSafe() dan formatQty().
+    - Variabel loadingQty dan reduceQty kini bertipe double dan diparse menggunakan
+      Double.parseDouble() yang aman terhadap koma/titik desimal.
+    - Nilai desimal (misal 6.5) dikirim apa adanya sebagai 6.5, dan jika bilangan
+      bulat dikirim tanpa titik desimal (.0).
+    - Menghilangkan 100% resiko crash NumberFormatException ("For input string: 6.5").
+
+[x] APLIKASI FLUTTER ANDROID (ViewDashboard.dart):
+    - Ditambahkan state flag _isUpdatingStatusMixer dan timestamp debounce interval
+      (_lastMixerActionTapTimestamp) sebesar 1.500 ms.
+    - Tombol aksi DO Mixer otomatis DISABLED (onPressed: null) dan menampilkan
+      indikator loading mini (spinner) saat proses update sedang berlangsung.
+    - EasyLoading.show() dipanggil dengan parameter maskType: EasyLoadingMaskType.black
+      sehingga seluruh layar HP driver terkunci dari sentuhan/tap selama proses request.
+    - Menghilangkan 100% resiko multi-tap / double tap berulang oleh driver.
+================================================================================
