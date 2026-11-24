@@ -63,6 +63,7 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
   String stnkBerlaku = "";
   String kryid = "";
   String status_karyawan = "";
+  String userPhotoUrl = "";
   bool _isLoading = true;
 
   @override
@@ -97,12 +98,92 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
       status_karyawan = prefs.getString("status_karyawan") ?? "";
       kryid = prefs.getString("kryid") ?? "";
       txtUsername.text = username;
+
+      // Load photo URL
+      final bool isDriver = (loginname == "DRIVER" || status_karyawan.toUpperCase() == "DRIVER");
+      if (isDriver) {
+        final photoDriver = (prefs.getString("photo_driver") ?? "").trim();
+        if (photoDriver.isNotEmpty && photoDriver.toLowerCase() != "null") {
+          userPhotoUrl = "${GlobalData.baseUrlOri}photo_trucking/PHOTO_DRIVER/$photoDriver";
+        }
+      } else {
+        final photoKry = (prefs.getString("photo_karyawan") ?? "").trim();
+        if (photoKry.isNotEmpty && photoKry.toLowerCase() != "null") {
+          userPhotoUrl = photoKry;
+        }
+      }
+
       _isLoading = false;
     });
+
+    _fetchFreshUserPhoto();
 
     if (loginname == "DRIVER") {
       await _loadDriverProfile();
     }
+  }
+
+  Future<void> _fetchFreshUserPhoto() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final bool isDriver = (loginname == "DRIVER" || status_karyawan.toUpperCase() == "DRIVER");
+      if (isDriver) {
+        if (drvid.isNotEmpty) {
+          final uri = Uri.parse("${GlobalData.baseUrlOri}api/do/refference_master.jsp").replace(queryParameters: {
+            "method": "get_photo_driver",
+            "id": drvid,
+          });
+          final res = await http.get(uri).timeout(const Duration(seconds: 10));
+          if (res.statusCode == 200) {
+            final dynamic body = json.decode(res.body);
+            if (body is List && body.isNotEmpty && body[0]['data'] != null) {
+              final String fetchedPhoto = body[0]['data'].toString().trim();
+              if (fetchedPhoto.isNotEmpty && fetchedPhoto.toLowerCase() != "null") {
+                await prefs.setString("photo_driver", fetchedPhoto);
+                final url = "${GlobalData.baseUrlOri}photo_trucking/PHOTO_DRIVER/$fetchedPhoto";
+                if (mounted && userPhotoUrl != url) {
+                  setState(() {
+                    userPhotoUrl = url;
+                  });
+                }
+              }
+            }
+          }
+        }
+      } else {
+        final imeiid = (prefs.getString("androidID") ?? "").trim();
+        if (kryid.isNotEmpty || imeiid.isNotEmpty) {
+          final uri = Uri.parse("${GlobalData.baseUrlProd}api/absensi/face_enroll.jsp").replace(queryParameters: {
+            "method": "status",
+            if (kryid.isNotEmpty) "kryid": kryid,
+            if (imeiid.isNotEmpty) "imeiid": imeiid,
+          });
+          final res = await http.get(uri).timeout(const Duration(seconds: 10));
+          if (res.statusCode == 200) {
+            final dynamic jsonRes = json.decode(res.body);
+            if (jsonRes is Map && jsonRes['data'] != null) {
+              final data = jsonRes['data'];
+              final String photoUrl = (data['photo_url'] ?? '').toString().trim();
+              final String photoFile = (data['photo_file'] ?? '').toString().trim();
+              String fullUrl = '';
+              if (photoUrl.isNotEmpty && photoUrl.toLowerCase() != 'null') {
+                fullUrl = photoUrl.startsWith('http') ? photoUrl : '${GlobalData.baseUrlOri}$photoUrl';
+              } else if (photoFile.isNotEmpty && photoFile.toLowerCase() != 'null') {
+                fullUrl = '${GlobalData.baseUrlOri}photo_trucking/PHOTO_FACE/$photoFile';
+              }
+              if (fullUrl.isNotEmpty) {
+                await prefs.setString("photo_karyawan", fullUrl);
+                if (mounted && userPhotoUrl != fullUrl) {
+                  setState(() {
+                    userPhotoUrl = fullUrl;
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadDriverProfile() async {
@@ -702,7 +783,7 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Avatar Initials with Ring
+                    // Avatar Initials / Photo with Ring
                     Container(
                       width: 68,
                       height: 68,
@@ -713,6 +794,7 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
                           end: Alignment.bottomRight,
                         ),
                         shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
                         boxShadow: [
                           BoxShadow(
                             color: primaryOrange.withOpacity(0.3),
@@ -721,15 +803,37 @@ class _ViewProfileUserState extends State<ViewProfileUser> {
                           ),
                         ],
                       ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        initials,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
+                      child: ClipOval(
+                        child: userPhotoUrl.isNotEmpty
+                            ? Image.network(
+                                userPhotoUrl,
+                                width: 68,
+                                height: 68,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Center(
+                                  child: Text(
+                                    initials,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Center(
+                                child: Text(
+                                  initials,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(width: 16),

@@ -146,6 +146,7 @@ class _ViewDashboardState extends State<ViewDashboard>
   String vhcnopol = '';
   String locid = '';
   String firstName = '';
+  String _userPhotoUrl = '';
   String username = '';
   String cpyid = '';
   String cpyname = '';
@@ -1044,6 +1045,7 @@ class _ViewDashboardState extends State<ViewDashboard>
         _setupMenuItems();
         _setupBannerItems();
       }
+      _fetchUserPhoto();
     });
     _fetchRunningInfo();
     await _refreshAduanRoleUsers();
@@ -2567,6 +2569,192 @@ class _ViewDashboardState extends State<ViewDashboard>
     );
   }
 
+  Widget _buildUserAvatar({
+    double size = 50,
+    double radius = 25,
+    IconData fallbackIcon = Icons.person,
+  }) {
+    final String photoUrl = _userPhotoUrl.trim();
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: photoUrl.isNotEmpty
+            ? Image.network(
+                photoUrl,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Center(
+                    child: Icon(fallbackIcon,
+                        color: Colors.white, size: size * 0.56),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: SizedBox(
+                      width: size * 0.42,
+                      height: size * 0.42,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            const AlwaysStoppedAnimation<Color>(Colors.white),
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+              )
+            : Center(
+                child: Icon(fallbackIcon,
+                    color: Colors.white, size: size * 0.56),
+              ),
+      ),
+    );
+  }
+
+  Future<void> _fetchUserPhoto() async {
+    try {
+      final prefs = sharedPreferences ?? await SharedPreferences.getInstance();
+      final statusKaryawan =
+          (prefs.getString('status_karyawan') ?? '').trim().toUpperCase();
+      final currentLoginName =
+          (prefs.getString('loginname') ?? '').trim().toUpperCase();
+      final isDriver =
+          statusKaryawan == 'DRIVER' || currentLoginName == 'DRIVER';
+
+      if (isDriver) {
+        final drvid = (prefs.getString('drvid') ?? '').trim();
+        String photoDriver = (prefs.getString('photo_driver') ?? '').trim();
+
+        // 1. Tampilkan dari SharedPreferences jika sudah ada
+        if (photoDriver.isNotEmpty &&
+            photoDriver.toLowerCase() != 'null' &&
+            photoDriver.toLowerCase() != 'undefined') {
+          final url =
+              '${GlobalData.baseUrlOri}photo_trucking/PHOTO_DRIVER/$photoDriver';
+          if (mounted && _userPhotoUrl != url) {
+            setState(() {
+              _userPhotoUrl = url;
+            });
+          }
+        }
+
+        // 2. Query ke server untuk memastikan data terbaru:
+        // select * from tblphotodriver where drvid=??? and photo_driver is not null
+        if (drvid.isNotEmpty) {
+          final uri = Uri.parse(
+                  '${GlobalData.baseUrlOri}api/do/refference_master.jsp')
+              .replace(queryParameters: {
+            'method': 'get_photo_driver',
+            'id': drvid,
+          });
+          final res =
+              await http.get(uri).timeout(const Duration(seconds: 10));
+          if (res.statusCode == 200) {
+            final dynamic body = json.decode(res.body);
+            if (body is List && body.isNotEmpty && body[0]['data'] != null) {
+              final String fetchedPhoto = body[0]['data'].toString().trim();
+              if (fetchedPhoto.isNotEmpty &&
+                  fetchedPhoto.toLowerCase() != 'null' &&
+                  fetchedPhoto.toLowerCase() != 'undefined') {
+                await prefs.setString('photo_driver', fetchedPhoto);
+                final url =
+                    '${GlobalData.baseUrlOri}photo_trucking/PHOTO_DRIVER/$fetchedPhoto';
+                if (mounted && _userPhotoUrl != url) {
+                  setState(() {
+                    _userPhotoUrl = url;
+                  });
+                }
+              }
+            }
+          }
+        }
+      } else {
+        // Karyawan: ambil dari foto enrollment
+        // /usr/java/apache-tomcat-9.0.120/webapps/trucking/photo_trucking/PHOTO_FACE
+        // select * from tblfaceenroll where kryid like '...'
+        final kryid = (prefs.getString('kryid') ?? '').trim();
+        final imeiid = (prefs.getString('androidID') ?? '').trim();
+
+        // Cek cache prefs karyawan jika ada
+        final cachedPhoto = (prefs.getString('photo_karyawan') ?? '').trim();
+        if (cachedPhoto.isNotEmpty &&
+            cachedPhoto.toLowerCase() != 'null' &&
+            cachedPhoto.toLowerCase() != 'undefined') {
+          if (mounted && _userPhotoUrl != cachedPhoto) {
+            setState(() {
+              _userPhotoUrl = cachedPhoto;
+            });
+          }
+        }
+
+        if (kryid.isNotEmpty || imeiid.isNotEmpty) {
+          final uri = Uri.parse(
+                  '${GlobalData.baseUrlProd}api/absensi/face_enroll.jsp')
+              .replace(queryParameters: {
+            'method': 'status',
+            if (kryid.isNotEmpty) 'kryid': kryid,
+            if (imeiid.isNotEmpty) 'imeiid': imeiid,
+          });
+          final res =
+              await http.get(uri).timeout(const Duration(seconds: 10));
+          if (res.statusCode == 200) {
+            final dynamic jsonRes = json.decode(res.body);
+            if (jsonRes is Map && jsonRes['data'] != null) {
+              final data = jsonRes['data'];
+              final String photoUrl =
+                  (data['photo_url'] ?? '').toString().trim();
+              final String photoFile =
+                  (data['photo_file'] ?? '').toString().trim();
+              String fullUrl = '';
+              if (photoUrl.isNotEmpty &&
+                  photoUrl.toLowerCase() != 'null' &&
+                  photoUrl.toLowerCase() != 'undefined') {
+                fullUrl = photoUrl.startsWith('http')
+                    ? photoUrl
+                    : '${GlobalData.baseUrlOri}$photoUrl';
+              } else if (photoFile.isNotEmpty &&
+                  photoFile.toLowerCase() != 'null' &&
+                  photoFile.toLowerCase() != 'undefined') {
+                fullUrl =
+                    '${GlobalData.baseUrlOri}photo_trucking/PHOTO_FACE/$photoFile';
+              }
+              if (fullUrl.isNotEmpty) {
+                await prefs.setString('photo_karyawan', fullUrl);
+                if (mounted && _userPhotoUrl != fullUrl) {
+                  setState(() {
+                    _userPhotoUrl = fullUrl;
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching user photo: $e');
+    }
+  }
+
   Widget _buildProfileHeader() {
     return Container(
       margin: EdgeInsets.all(16),
@@ -2592,14 +2780,14 @@ class _ViewDashboardState extends State<ViewDashboard>
       ),
       child: Row(
         children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(25),
-            ),
-            child: Icon(Icons.person, color: Colors.white, size: 28),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ViewProfileUser()),
+              );
+            },
+            child: _buildUserAvatar(size: 50, radius: 25),
           ),
           SizedBox(width: 16),
           Expanded(
@@ -4165,6 +4353,7 @@ class _ViewDashboardState extends State<ViewDashboard>
     _fetchMenusFromApi();
     _loadSavedBackground();
     _fetchRunningInfo();
+    _fetchUserPhoto();
   }
 
   void _showNotificationList() {
@@ -6961,18 +7150,7 @@ class _ViewDashboardState extends State<ViewDashboard>
             },
             child: Stack(
               children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.22),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: Colors.white.withOpacity(0.6), width: 1.5),
-                  ),
-                  child:
-                      const Icon(Icons.person, color: Colors.white, size: 30),
-                ),
+                _buildUserAvatar(size: 52, radius: 26),
                 Positioned(
                   bottom: 2,
                   right: 2,
@@ -7234,17 +7412,10 @@ class _ViewDashboardState extends State<ViewDashboard>
                 },
                 child: Stack(
                   children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.22),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: Colors.white.withOpacity(0.6), width: 1.5),
-                      ),
-                      child: const Icon(Icons.manage_accounts_rounded,
-                          color: Colors.white, size: 28),
+                    _buildUserAvatar(
+                      size: 48,
+                      radius: 24,
+                      fallbackIcon: Icons.manage_accounts_rounded,
                     ),
                     Positioned(
                       bottom: 1,
