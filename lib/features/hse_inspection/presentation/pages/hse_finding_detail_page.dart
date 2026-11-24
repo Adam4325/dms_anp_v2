@@ -640,7 +640,7 @@ class _HseFindingDetailPageState extends State<HseFindingDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Verifikasi Tahap 1 (Tim SHE / HD)',
+                'Verifikasi Tahap 1 (Tim SHE / HS)',
                 style: TextStyle(
                   color: HseTheme.darkOrange,
                   fontWeight: FontWeight.w700,

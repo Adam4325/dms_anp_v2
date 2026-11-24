@@ -246,7 +246,7 @@ class HseSummaryModel {
       totalComplete: _toInt(json['total_complete']),
       canCreate: json['can_create'] == true,
       isAdmin: json['is_admin'] == true,
-      isHd: json['is_hd'] == true,
+      isHd: json['is_hd'] == true || json['is_hs'] == true,
       isOp: json['is_op'] == true,
     );
   }

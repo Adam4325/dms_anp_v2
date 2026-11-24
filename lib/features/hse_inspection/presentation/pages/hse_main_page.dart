@@ -56,7 +56,7 @@ class _HseMainPageState extends State<HseMainPage>
         .toSet();
 
     final isAdmin = u == 'ADMIN' || l == 'ADMIN' || u.startsWith('ADMIN');
-    final isHd = isAdmin || roleSet.contains('HD');
+    final isHd = isAdmin || roleSet.contains('HS') || roleSet.contains('HD');
     final isOp = isAdmin || roleSet.contains('OP');
 
     TabController? controller;
@@ -190,7 +190,7 @@ class _HseMainPageState extends State<HseMainPage>
                   Icon(Icons.lock_outline, size: 52, color: HseTheme.lockRed),
                   SizedBox(height: 12),
                   Text(
-                    'Akses modul HSE hanya tersedia untuk role ADMIN, HRD (HD), dan OPR (OP).',
+                    'Akses modul HSE hanya tersedia untuk role ADMIN, HSE (HS), dan OPR (OP).',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),

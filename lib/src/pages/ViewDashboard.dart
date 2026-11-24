@@ -1392,7 +1392,7 @@ class _ViewDashboardState extends State<ViewDashboard>
       ));
     }
 
-    bool hasHseRole = (username == "ADMIN" || getAkses("HD") || getAkses("OP"));
+    bool hasHseRole = (username == "ADMIN" || getAkses("HS") || getAkses("OP"));
     if (hasHseRole &&
         !_anpServiceList.any((m) =>
             m.idKey == 43 ||
@@ -6597,7 +6597,7 @@ class _ViewDashboardState extends State<ViewDashboard>
         (anpService.title != null &&
             anpService.title!.trim().toUpperCase() == "HSE")) {
       final bool hasHseAccess =
-          username == "ADMIN" || getAkses("HD") || getAkses("OP");
+          username == "ADMIN" || getAkses("HS") || getAkses("OP");
       if (hasHseAccess) {
         Navigator.push(
           context,
